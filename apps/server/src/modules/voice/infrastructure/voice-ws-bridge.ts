@@ -38,7 +38,14 @@ export function attachVoiceWebSocketBridge(
             return;
           }
 
-          const text = Buffer.isBuffer(data) ? data.toString('utf8') : String(data);
+          let text: string;
+          if (Buffer.isBuffer(data)) {
+            text = data.toString('utf8');
+          } else if (Array.isArray(data)) {
+            text = Buffer.concat(data).toString('utf8');
+          } else {
+            text = Buffer.from(data).toString('utf8');
+          }
           const parsed: unknown = JSON.parse(text);
           const message = voiceClientMessageSchema.parse(parsed);
 
