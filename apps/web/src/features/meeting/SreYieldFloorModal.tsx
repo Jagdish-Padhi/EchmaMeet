@@ -37,22 +37,21 @@ export function SreYieldFloorModal({
             <div className="sre-agent-emblem">
               <svg
                 viewBox="0 0 24 24"
-                width="18"
-                height="18"
+                width="16"
+                height="16"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
               >
-                <rect x="3" y="11" width="18" height="10" rx="2" />
-                <circle cx="12" cy="5" r="2" />
-                <path d="M12 7v4" />
-                <line x1="8" y1="16" x2="8" y2="16" />
-                <line x1="16" y1="16" x2="16" y2="16" />
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 3" />
               </svg>
             </div>
             <div>
-              <div className="sre-agent-name">Meta Spark Open &bull; Autonomous Lead SRE</div>
-              <div className="sre-agent-subtitle">Spoken Architectural Hazard Analysis</div>
+              <div className="sre-agent-name">
+                Meta AI SRE &bull; Autonomous Architecture Review
+              </div>
+              <div className="sre-agent-subtitle">Continuous Resilience Analysis</div>
             </div>
           </div>
           <button
@@ -76,10 +75,7 @@ export function SreYieldFloorModal({
           </h3>
 
           <div className="sre-speech-bubble">
-            <p className="sre-speech-text">
-              &ldquo;Team, I noticed this configuration during the review. {currentHazard.risk}
-              &rdquo;
-            </p>
+            <p className="sre-speech-text">{currentHazard.risk}</p>
           </div>
 
           <div className="sre-recommendation-box">
