@@ -707,6 +707,16 @@ body {
   color: #ffffff;
 }
 
+.dock-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.dock-btn-danger:hover:not(:disabled) {
+  color: var(--color-danger);
+  background: rgba(244, 63, 94, 0.12);
+}
+
 /* Collapsible Side Drawer */
 .studio-side-drawer {
   width: 440px;
@@ -1158,66 +1168,54 @@ body {
 .node-box {
   fill: var(--node-box-fill);
   stroke: var(--node-box-stroke);
-  stroke-width: 1.5;
-  transition: all 0.15s ease;
+  stroke-width: 1.25;
+  transition:
+    stroke 0.15s ease,
+    filter 0.15s ease;
+}
+
+.canvas-node:hover .node-box {
+  stroke: rgba(56, 189, 248, 0.4);
 }
 
 .canvas-node-selected .node-box {
   stroke: var(--color-accent);
-  stroke-width: 2.5;
-  filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.45));
+  stroke-width: 2;
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.35));
 }
 
 .canvas-node-error .node-box {
   stroke: var(--color-danger);
-  stroke-width: 2.5;
-  filter: drop-shadow(0 0 12px rgba(244, 63, 94, 0.45));
+  stroke-width: 2;
+  filter: drop-shadow(0 0 10px rgba(244, 63, 94, 0.35));
 }
 
 .node-title {
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: -0.01em;
   fill: var(--node-title-fill);
 }
 
 .node-kind-text {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 9.5px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  fill: var(--color-text-muted);
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
 }
 
 .node-meta-text {
-  font-size: 11px;
+  font-size: 10.5px;
   font-family: var(--font-mono);
-  fill: var(--node-meta-fill);
-}
-
-.entry-badge-bg {
-  fill: rgba(16, 185, 129, 0.2);
-  stroke: #10b981;
-  stroke-width: 1;
+  fill: var(--color-text-muted);
 }
 
 .entry-badge-text {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.05em;
-  fill: #34d399;
-}
-
-.error-badge-bg {
-  fill: rgba(244, 63, 94, 0.25);
-  stroke: #f43f5e;
-  stroke-width: 1;
-}
-
-.error-badge-text {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  fill: #f87171;
+  fill: #10b981;
 }
 
 .edge-hitbox {
@@ -1229,21 +1227,27 @@ body {
 
 .edge-path {
   stroke: var(--edge-path-stroke);
-  stroke-width: 2;
+  stroke-width: 1.75;
   fill: none;
   transition: stroke 0.15s ease;
 }
 
 .canvas-edge-selected .edge-path {
   stroke: var(--color-accent);
-  stroke-width: 2.5;
-  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.5));
+  stroke-width: 2.25;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.4));
 }
 
 .canvas-edge-error .edge-path {
   stroke: var(--color-danger);
-  stroke-width: 2.5;
-  filter: drop-shadow(0 0 8px rgba(244, 63, 94, 0.5));
+  stroke-width: 2.25;
+  filter: drop-shadow(0 0 6px rgba(244, 63, 94, 0.4));
+}
+
+.edge-packet-dot {
+  fill: var(--color-accent);
+  filter: drop-shadow(0 0 4px var(--color-accent));
+  opacity: 0.85;
 }
 
 .edge-tag-bg {
@@ -1256,7 +1260,7 @@ body {
   font-size: 10px;
   font-family: var(--font-mono);
   font-weight: 600;
-  fill: var(--edge-tag-text);
+  fill: var(--edge-tag-text-fill);
 }
 
 /* Data Tables */

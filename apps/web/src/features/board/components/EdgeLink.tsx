@@ -22,11 +22,11 @@ export function EdgeLink({
 }: EdgeLinkProps) {
   if (!sourceNode || !targetNode) return null;
 
-  // Node centers (nodes are 180x90)
-  const sx = sourceNode.position.x + 180;
-  const sy = sourceNode.position.y + 45;
+  // Node dimensions: 184 x 76 (center Y = 38)
+  const sx = sourceNode.position.x + 184;
+  const sy = sourceNode.position.y + 38;
   const tx = targetNode.position.x;
-  const ty = targetNode.position.y + 45;
+  const ty = targetNode.position.y + 38;
 
   const dx = tx - sx;
   const cx1 = sx + Math.max(40, dx / 2);
@@ -39,11 +39,11 @@ export function EdgeLink({
   )} ${String(cy2)}, ${String(tx)} ${String(ty)}`;
 
   const midX = (sx + tx) / 2;
-  const midY = (sy + ty) / 2 - 12;
+  const midY = (sy + ty) / 2 - 10;
 
   const hasProblems = problems.some((p) => p.edgeId === edge.id);
 
-  const policySummary = `${edge.policy.timeoutMs !== null ? `${String(edge.policy.timeoutMs)}ms` : 'no timeout'} | ${String(edge.policy.retry.maxAttempts)}x retry`;
+  const policySummary = `${edge.policy.timeoutMs !== null ? `${String(edge.policy.timeoutMs)}ms` : 'no timeout'} · ${String(edge.policy.retry.maxAttempts)}x`;
 
   return (
     <g
@@ -61,34 +61,47 @@ export function EdgeLink({
       {/* Invisible wider stroke for easy clicking */}
       <path d={pathData} className="edge-hitbox" />
 
-      {/* Hazard Pulse Aura if flagged */}
+      {/* Hazard Pulse Aura if flagged by SRE agent */}
       {isHazard && (
         <path
           d={pathData}
           fill="none"
           stroke="#f59e0b"
-          strokeWidth={6}
-          strokeDasharray="8 4"
+          strokeWidth={5}
+          strokeDasharray="6 4"
           className="edge-hazard-pulse"
         />
       )}
 
-      {/* Visible line */}
+      {/* Visible Sleek Connecting Line */}
       <path
         d={pathData}
         className="edge-path"
         markerEnd={isSelected ? 'url(#arrow-selected)' : 'url(#arrow)'}
       />
 
-      {/* Edge tag badge */}
-      <g transform={`translate(${String(midX - 58)}, ${String(midY - 11)})`}>
+      {/* Breakscale Signature Flow: Subtle Live Network Packet Dot */}
+      <circle r={2.5} className="edge-packet-dot">
+        <animateMotion
+          path={pathData}
+          dur={
+            edge.policy.timeoutMs !== null
+              ? `${String(Math.max(1.5, edge.policy.timeoutMs / 300))}s`
+              : '2.4s'
+          }
+          repeatCount="indefinite"
+        />
+      </circle>
+
+      {/* Minimal Policy Capsule Tag */}
+      <g transform={`translate(${String(midX - 44)}, ${String(midY - 10)})`}>
         <rect
-          width={116}
-          height={22}
-          rx={11}
+          width={88}
+          height={20}
+          rx={10}
           className={`edge-tag-bg ${isHazard ? 'edge-tag-hazard' : ''}`}
         />
-        <text x={58} y={15} className="edge-tag-text" textAnchor="middle">
+        <text x={44} y={13.5} className="edge-tag-text" textAnchor="middle">
           {policySummary}
         </text>
       </g>

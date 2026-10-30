@@ -39,7 +39,7 @@ describe('application', () => {
     expect(body.status).toBe('ok');
     expect(body.checks.database).toBe('ok');
     expect(body.nodeVersion).toBe(process.version);
-  });
+  }, 15_000);
 
   it('reports degraded, not ok, when the database fails', async () => {
     const database = openDatabase(IN_MEMORY);

@@ -27,22 +27,78 @@ export function NodeCard({
 }: NodeCardProps) {
   const hasProblems = problems.some((p) => p.nodeId === node.id);
 
-  const getKindColor = (kind: string): string => {
+  const getKindDetails = (kind: string) => {
     switch (kind) {
-      case 'service':
-        return '#38bdf8'; // Sky Cyan
       case 'cache':
-        return '#f59e0b'; // Amber
+        return {
+          color: '#f59e0b',
+          bgTint: 'rgba(245, 158, 11, 0.12)',
+          icon: (
+            <path
+              d="M13 2L3 14h8l-1 8 11-12h-8l1-8z"
+              fill="none"
+              stroke="#f59e0b"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          ),
+        };
       case 'queue_consumer':
-        return '#a855f7'; // Violet
+        return {
+          color: '#a855f7',
+          bgTint: 'rgba(168, 85, 247, 0.12)',
+          icon: (
+            <path
+              d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
+              fill="none"
+              stroke="#a855f7"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          ),
+        };
       case 'ledger_sink':
-        return '#10b981'; // Emerald Green
+        return {
+          color: '#10b981',
+          bgTint: 'rgba(16, 185, 129, 0.12)',
+          icon: (
+            <path
+              d="M4 6c0-1.657 3.582-3 8-3s8 1.343 8 3m-16 0v6c0 1.657 3.582 3 8 3s8-1.343 8-3V6m-16 6v6c0 1.657 3.582 3 8 3s8-1.343 8-3v-6"
+              fill="none"
+              stroke="#10b981"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          ),
+        };
+      case 'service':
       default:
-        return '#38bdf8';
+        return {
+          color: '#38bdf8',
+          bgTint: 'rgba(56, 189, 248, 0.12)',
+          icon: (
+            <path
+              d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6zm0 10a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2z"
+              fill="none"
+              stroke="#38bdf8"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          ),
+        };
     }
   };
 
-  const kindColor = getKindColor(node.kind);
+  const kindDetails = getKindDetails(node.kind);
+  const latencyText =
+    node.processing.distribution === 'constant'
+      ? `${String(node.processing.ms)}ms`
+      : `${String(node.processing.medianMs)}ms`;
+  const specSummary = `${String(node.concurrency.maxWorkers)}w · ${latencyText} · ${node.queue.mode}`;
 
   return (
     <g
@@ -63,11 +119,11 @@ export function NodeCard({
       {/* Radar Hazard Pulsing Ring */}
       {isHazard && (
         <rect
-          x={-5}
-          y={-5}
-          width={190}
-          height={100}
-          rx={12}
+          x={-4}
+          y={-4}
+          width={192}
+          height={84}
+          rx={14}
           fill="none"
           stroke="#f59e0b"
           strokeWidth={2}
@@ -75,67 +131,77 @@ export function NodeCard({
         />
       )}
 
-      {/* Node Container Box */}
+      {/* Main Sleek Card Body */}
       <rect
-        width={180}
-        height={90}
-        rx={8}
+        width={184}
+        height={76}
+        rx={10}
         className="node-box"
         filter={isSelected ? 'url(#node-shadow)' : undefined}
       />
 
-      {/* Top Accent Stripe based on Kind */}
-      <rect x={1} y={1} width={178} height={3} rx={1.5} fill={kindColor} />
+      {/* Left Icon Rounded Backdrop */}
+      <rect x={12} y={12} width={28} height={28} rx={6} fill={kindDetails.bgTint} />
 
-      {/* Entry badge */}
+      {/* Kind SVG Icon */}
+      <g transform="translate(14, 14) scale(1)">
+        <svg width="24" height="24" viewBox="0 0 24 24">
+          {kindDetails.icon}
+        </svg>
+      </g>
+
+      {/* Node Label */}
+      <text x={48} y={26} className="node-title">
+        {node.label}
+      </text>
+
+      {/* Kind Subtitle */}
+      <text x={48} y={38} className="node-kind-text" fill={kindDetails.color}>
+        {node.kind.replace('_', ' ')}
+      </text>
+
+      {/* Entry Indicator Pill */}
       {isEntry && (
-        <g transform="translate(8, -10)">
-          <rect width={54} height={18} rx={4} className="entry-badge-bg" />
-          <text x={27} y={13} className="entry-badge-text" textAnchor="middle">
+        <g transform="translate(136, 12)">
+          <rect
+            width={38}
+            height={16}
+            rx={4}
+            fill="rgba(16, 185, 129, 0.15)"
+            stroke="#10b981"
+            strokeWidth={1}
+          />
+          <text x={19} y={11.5} className="entry-badge-text" textAnchor="middle">
             ENTRY
           </text>
         </g>
       )}
 
-      {/* Problem badge */}
+      {/* Problem Alert Dot */}
       {hasProblems && (
-        <g transform="translate(136, -10)">
-          <rect width={36} height={18} rx={4} className="error-badge-bg" />
-          <text x={18} y={13} className="error-badge-text" textAnchor="middle">
-            ERR
-          </text>
-        </g>
+        <circle cx={170} cy={16} r={5} fill="#f43f5e" className="error-alert-dot">
+          <title>Validation warning on this node</title>
+        </circle>
       )}
 
-      {/* Title */}
-      <text x={14} y={28} className="node-title">
-        {node.label}
-      </text>
-
-      {/* Kind indicator dot & text */}
-      <circle cx={18} cy={44} r={3.5} fill={kindColor} />
-      <text x={26} y={48} className="node-kind-text">
-        {node.kind.replace('_', ' ')}
-      </text>
-
-      {/* Metadata Pill */}
-      <rect
-        x={10}
-        y={58}
-        width={160}
-        height={22}
-        rx={4}
-        fill="rgba(15, 23, 42, 0.6)"
-        stroke="rgba(255, 255, 255, 0.05)"
+      {/* Bottom Technical Spec Pill */}
+      <line
+        x1={12}
+        y1={50}
+        x2={172}
+        y2={50}
+        stroke="rgba(255, 255, 255, 0.06)"
+        strokeWidth={1}
+        className="node-divider"
       />
-      <text x={16} y={73} className="node-meta-text">
-        Workers: {node.concurrency.maxWorkers} | Queue: {node.queue.mode}
+      <text x={14} y={64} className="node-meta-text">
+        {specSummary}
       </text>
 
-      {/* Left Input Port Indicator */}
-      <circle cx={0} cy={45} r={4.5} className="port-dot-target" />
+      {/* Target Input Port (Left Edge) */}
+      <circle cx={0} cy={38} r={4.5} className="port-dot-target" />
 
-      {/* Right Output Connector Port Handle (drag-to-connect) */}
+      {/* Source Output Connector Handle (Right Edge, Drag-to-connect) */}
       <g
         className="node-port-handle"
         onMouseDown={(e) => {
@@ -143,9 +209,9 @@ export function NodeCard({
           onStartConnect?.(node.id, e);
         }}
       >
-        <title>Drag wire to connect to another service</title>
-        <circle cx={180} cy={45} r={12} fill="transparent" style={{ cursor: 'crosshair' }} />
-        <circle cx={180} cy={45} r={6} className="port-dot-handle" />
+        <title>Drag wire to connect to downstream service</title>
+        <circle cx={184} cy={38} r={12} fill="transparent" style={{ cursor: 'crosshair' }} />
+        <circle cx={184} cy={38} r={5} className="port-dot-handle" />
       </g>
     </g>
   );

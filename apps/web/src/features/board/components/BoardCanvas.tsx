@@ -11,6 +11,7 @@ export interface BoardCanvasProps {
   readonly onMoveNode: (id: NodeId, x: number, y: number) => void;
   readonly onAddNode: (kind?: NodeKind) => void;
   readonly onAddEdge: (source: NodeId, target: NodeId) => void;
+  readonly onDuplicateNode?: (id: NodeId) => void;
   readonly onDeleteNode?: (id: NodeId) => void;
   readonly onDeleteEdge?: (id: EdgeId) => void;
   readonly hazardEdgeId?: EdgeId | null;
@@ -22,7 +23,9 @@ export function BoardCanvas({
   onSelectNode,
   onSelectEdge,
   onMoveNode,
+  onAddNode,
   onAddEdge,
+  onDuplicateNode,
   onDeleteNode,
   onDeleteEdge,
   hazardEdgeId,
@@ -30,7 +33,7 @@ export function BoardCanvas({
 }: BoardCanvasProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  // Pan & Zoom State (Excalidraw / Figma grade)
+  // Pan & Zoom State (Excalidraw / Breakscale grade)
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const isPanningRef = useRef(false);
@@ -50,7 +53,7 @@ export function BoardCanvas({
     clientY: number;
   } | null>(null);
 
-  // Keyboard Shortcuts: Delete/Backspace to remove, Esc to deselect, Space to pan
+  // Fast Keyboard Shortcuts: Ctrl+D duplicate, Del/Backspace remove, 1-4 quick add, Esc deselect, Space pan
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if user is currently typing in an input, textarea, or select
@@ -59,10 +62,20 @@ export function BoardCanvas({
         return;
       }
 
+      // Space to Pan
       if (e.code === 'Space' && !isSpacePressed) {
         setIsSpacePressed(true);
       }
 
+      // Ctrl+D or Cmd+D to Duplicate Selected Node
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+        if (board.selectedNodeId && onDuplicateNode) {
+          e.preventDefault();
+          onDuplicateNode(board.selectedNodeId);
+        }
+      }
+
+      // Delete or Backspace to Remove Selected Element
       if (e.key === 'Backspace' || e.key === 'Delete') {
         if (board.selectedNodeId && onDeleteNode) {
           e.preventDefault();
@@ -73,6 +86,18 @@ export function BoardCanvas({
         }
       }
 
+      // Quick-add shortcuts (1=Service, 2=Cache, 3=Queue, 4=Sink)
+      if (e.key === '1') {
+        onAddNode('service');
+      } else if (e.key === '2') {
+        onAddNode('cache');
+      } else if (e.key === '3') {
+        onAddNode('queue_consumer');
+      } else if (e.key === '4') {
+        onAddNode('ledger_sink');
+      }
+
+      // Escape to Deselect / Cancel Wire
       if (e.key === 'Escape') {
         onSelectNode(null);
         onSelectEdge(null);
@@ -97,6 +122,8 @@ export function BoardCanvas({
     board.selectedNodeId,
     board.selectedEdgeId,
     isSpacePressed,
+    onAddNode,
+    onDuplicateNode,
     onDeleteNode,
     onDeleteEdge,
     onSelectNode,
@@ -196,7 +223,7 @@ export function BoardCanvas({
     }
   };
 
-  // Mouse Wheel Zoom: Zoom toward cursor position
+  // Mouse Wheel Zoom: Zoom smoothly toward cursor position
   const handleWheel = (e: WheelEvent<SVGSVGElement>) => {
     e.preventDefault();
     if (!svgRef.current) return;
@@ -224,9 +251,9 @@ export function BoardCanvas({
   const sourceConnectingNode = connectingSource ? nodeMap.get(connectingSource) : null;
 
   return (
-    <div className="canvas-container">
-      {/* Zoom & Canvas Navigation Controls Overlay */}
-      <div className="canvas-zoom-dock">
+    <div className="board-canvas-container">
+      {/* Floating Excalidraw-Grade Zoom Controls */}
+      <div className="canvas-zoom-dock" role="toolbar" aria-label="Canvas zoom controls">
         <button
           type="button"
           className="zoom-btn"
@@ -268,40 +295,41 @@ export function BoardCanvas({
           <pattern id="canvas-grid" width="28" height="28" patternUnits="userSpaceOnUse">
             <circle cx="2" cy="2" r="1" fill="var(--canvas-dot)" />
           </pattern>
+          {/* Sleek Excalidraw / Breakscale Sharp Arrowhead */}
           <marker
             id="arrow"
             viewBox="0 0 10 10"
-            refX="6"
+            refX="7.5"
             refY="5"
-            markerWidth="6"
-            markerHeight="6"
+            markerWidth="7"
+            markerHeight="7"
             orient="auto-start-reverse"
           >
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
+            <path d="M 0 1.5 L 7.5 5 L 0 8.5 Z" fill="#64748b" />
           </marker>
           <marker
             id="arrow-selected"
             viewBox="0 0 10 10"
-            refX="6"
+            refX="7.5"
             refY="5"
-            markerWidth="6"
-            markerHeight="6"
+            markerWidth="7"
+            markerHeight="7"
             orient="auto-start-reverse"
           >
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-accent)" />
+            <path d="M 0 1.5 L 7.5 5 L 0 8.5 Z" fill="var(--color-accent)" />
           </marker>
           <filter id="node-shadow" x="-20%" y="-20%" width="140%" height="140%">
             <feDropShadow
               dx="0"
               dy="0"
-              stdDeviation="6"
+              stdDeviation="5"
               floodColor="var(--color-accent)"
-              floodOpacity="0.45"
+              floodOpacity="0.35"
             />
           </filter>
         </defs>
 
-        {/* Blueprint Matrix Grid (Infinite Canvas Area) */}
+        {/* Matrix Grid (Infinite Canvas Area) */}
         <rect id="canvas-matrix-bg" width="100%" height="100%" fill="url(#canvas-grid)" />
 
         {/* Zoomed & Panned Scene Container */}
@@ -320,20 +348,20 @@ export function BoardCanvas({
             />
           ))}
 
-          {/* Live Dragged Wire (Rubberband Connection Preview) */}
+          {/* Live Dragged Wire (Rubberband Connection Preview to 184x76 Node) */}
           {sourceConnectingNode && connectingCursor && (
             <path
-              d={`M ${String(sourceConnectingNode.position.x + 180)} ${String(
-                sourceConnectingNode.position.y + 45,
+              d={`M ${String(sourceConnectingNode.position.x + 184)} ${String(
+                sourceConnectingNode.position.y + 38,
               )} C ${String(sourceConnectingNode.position.x + 240)} ${String(
-                sourceConnectingNode.position.y + 45,
-              )}, ${String(connectingCursor.x - 60)} ${String(connectingCursor.y)}, ${String(
+                sourceConnectingNode.position.y + 38,
+              )}, ${String(connectingCursor.x - 50)} ${String(connectingCursor.y)}, ${String(
                 connectingCursor.x,
               )} ${String(connectingCursor.y)}`}
               fill="none"
               stroke="var(--color-accent)"
-              strokeWidth={2.5}
-              strokeDasharray="6 3"
+              strokeWidth={2}
+              strokeDasharray="5 3"
               markerEnd="url(#arrow-selected)"
               className="rubberband-wire"
             />

@@ -222,10 +222,44 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
     [triggerValidation],
   );
 
+  const duplicateNode = useCallback(
+    (nodeId: NodeId) => {
+      setBoard((prev) => {
+        const target = prev.nodes.find((n) => n.id === nodeId);
+        if (!target) return prev;
+        let count = prev.nodes.length + 1;
+        let newId = nodeIdSchema.parse(`node-${String(count)}`);
+        while (prev.nodes.some((n) => n.id === newId)) {
+          count += 1;
+          newId = nodeIdSchema.parse(`node-${String(count)}`);
+        }
+        const clonedNode: BoardNode = {
+          ...target,
+          id: newId,
+          label: `${target.label} Copy`,
+          position: {
+            x: target.position.x + 36,
+            y: target.position.y + 36,
+          },
+        };
+        const next: BoardState = {
+          ...prev,
+          isDirty: true,
+          nodes: [...prev.nodes, clonedNode],
+          selectedNodeId: newId,
+          selectedEdgeId: null,
+        };
+        triggerValidation(next);
+        return next;
+      });
+    },
+    [triggerValidation],
+  );
+
   const addEdge = useCallback(
     (source: NodeId, target: NodeId) => {
       setBoard((prev) => {
-        const id = edgeIdSchema.parse(`${source}->${target}`);
+        const id = edgeIdSchema.parse(`${source}-to-${target}`);
         if (prev.edges.some((e) => e.id === id || (e.source === source && e.target === target))) {
           return prev;
         }
@@ -283,6 +317,7 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
     updateNode,
     updateEdgePolicy,
     addNode,
+    duplicateNode,
     removeNode,
     addEdge,
     removeEdge,

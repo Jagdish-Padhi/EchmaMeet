@@ -113,6 +113,7 @@ export function App() {
     updateNode,
     updateEdgePolicy,
     addNode,
+    duplicateNode,
     removeNode,
     addEdge,
     removeEdge,
@@ -264,6 +265,42 @@ export function App() {
     setView('studio');
   };
 
+  const handleExportRfc = () => {
+    const rfcMarkdown = [
+      `# ChaosBoard Architecture Resilience RFC`,
+      `**Room / Topology**: ${board.name} (\`${board.id}\`)`,
+      `**Date**: ${new Date().toISOString().slice(0, 10)}`,
+      `**Entry Node**: \`${board.entryNodeId}\``,
+      '',
+      `## Topology Mesh`,
+      `- **Nodes (${String(board.nodes.length)})**: ${board.nodes.map((n) => `${n.label} [${n.kind}]`).join(', ')}`,
+      `- **Edges (${String(board.edges.length)})**: ${board.edges
+        .map(
+          (e) =>
+            `${e.source} ➔ ${e.target} (${
+              e.policy.timeoutMs !== null ? `${String(e.policy.timeoutMs)}ms` : 'none'
+            } timeout, ${String(e.policy.retry.maxAttempts)}x retries)`,
+        )
+        .join(', ')}`,
+      '',
+      `## SRE Watcher Hazards (${String(sreWatcher.hazards.length)})`,
+      sreWatcher.hazards.length === 0
+        ? `> No critical resilience anti-patterns detected.`
+        : sreWatcher.hazards
+            .map(
+              (h) =>
+                `- **[${h.severity.toUpperCase()}] ${h.title}**\n  - *Risk*: ${h.risk}\n  - *Recommendation*: ${h.recommendation}`,
+            )
+            .join('\n'),
+      '',
+      `## Verification & Proof`,
+      `Generated via ChaosBoard Autonomous Resilience Engine (Meta Global AI Hackathon).`,
+    ].join('\n');
+
+    void navigator.clipboard.writeText(rfcMarkdown);
+    alert('Resilience RFC copied to clipboard (Markdown ADR format)!');
+  };
+
   // 1. Landing Page View
   if (view === 'landing') {
     return (
@@ -352,63 +389,76 @@ export function App() {
           </select>
         </div>
 
-        {/* Studio Drawer Action Toggles */}
+        {/* Clean Enterprise Actions */}
         <div className="studio-topbar-actions">
+          {/* Primary Quick Run Action */}
+          {experimentSession.status === 'running' || experimentSession.status === 'starting' ? (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => {
+                void experimentSession.cancelExperiment();
+              }}
+            >
+              Cancel Run
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={!canStartExperiment}
+              onClick={() => {
+                setActiveDrawer('telemetry');
+                void experimentSession.startExperiment(currentTopology);
+              }}
+              title="Run physical 5s sandbox resilience trial"
+            >
+              ⚡ 5s Sandbox Proof
+            </Button>
+          )}
+
           <button
             type="button"
-            className={`studio-action-pill ${activeDrawer === 'chaos' ? 'active' : ''}`}
-            onClick={() => setActiveDrawer(activeDrawer === 'chaos' ? 'none' : 'chaos')}
+            className="studio-action-pill"
+            onClick={handleExportRfc}
+            title="Export Architecture Review ADR in Markdown"
           >
-            <span>Fault &amp; Invariants</span>
+            <span>📄 Export RFC</span>
           </button>
 
           <button
             type="button"
-            className={`studio-action-pill ${activeDrawer === 'telemetry' ? 'active' : ''}`}
-            onClick={() => setActiveDrawer(activeDrawer === 'telemetry' ? 'none' : 'telemetry')}
+            className={`studio-action-pill ${activeDrawer === 'inspect' ? 'active' : ''}`}
+            onClick={() => setActiveDrawer(activeDrawer === 'inspect' ? 'none' : 'inspect')}
+            title="Inspect & configure selected node / edge policies"
           >
-            <span>Live Telemetry</span>
+            <span>⚙️ Inspector</span>
           </button>
 
-          <button
-            type="button"
-            className={`studio-action-pill ${activeDrawer === 'repair' ? 'active' : ''}`}
-            onClick={() => setActiveDrawer(activeDrawer === 'repair' ? 'none' : 'repair')}
+          {/* More Panels Dropdown */}
+          <select
+            className="studio-scenario-select"
+            style={{ width: 'auto', padding: '4px 8px', fontSize: 11 }}
+            value={
+              ['chaos', 'repair', 'voice', 'vision', 'reports', 'benchmarks', 'runs'].includes(
+                activeDrawer,
+              )
+                ? activeDrawer
+                : ''
+            }
+            onChange={(e) => {
+              setActiveDrawer(e.target.value as StudioDrawerTab);
+            }}
           >
-            <span>AI Repair</span>
-          </button>
-
-          <button
-            type="button"
-            className={`studio-action-pill ${activeDrawer === 'voice' ? 'active' : ''}`}
-            onClick={() => setActiveDrawer(activeDrawer === 'voice' ? 'none' : 'voice')}
-          >
-            <span>Voice</span>
-          </button>
-
-          <button
-            type="button"
-            className={`studio-action-pill ${activeDrawer === 'vision' ? 'active' : ''}`}
-            onClick={() => setActiveDrawer(activeDrawer === 'vision' ? 'none' : 'vision')}
-          >
-            <span>Vision</span>
-          </button>
-
-          <button
-            type="button"
-            className={`studio-action-pill ${activeDrawer === 'reports' ? 'active' : ''}`}
-            onClick={() => setActiveDrawer(activeDrawer === 'reports' ? 'none' : 'reports')}
-          >
-            <span>Reports</span>
-          </button>
-
-          <button
-            type="button"
-            className={`studio-action-pill ${activeDrawer === 'benchmarks' ? 'active' : ''}`}
-            onClick={() => setActiveDrawer(activeDrawer === 'benchmarks' ? 'none' : 'benchmarks')}
-          >
-            <span>Benchmarks</span>
-          </button>
+            <option value="">More Panels...</option>
+            <option value="chaos">Fault &amp; Invariants</option>
+            <option value="repair">AI Repair Session</option>
+            <option value="voice">Voice Stream</option>
+            <option value="vision">Vision Sketch</option>
+            <option value="reports">Executive Reports</option>
+            <option value="benchmarks">Benchmarks</option>
+            <option value="runs">Run History</option>
+          </select>
 
           <div className="studio-topbar-divider" />
 
@@ -471,31 +521,6 @@ export function App() {
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
           </button>
-
-          {/* Primary Quick Run Action */}
-          {experimentSession.status === 'running' || experimentSession.status === 'starting' ? (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => {
-                void experimentSession.cancelExperiment();
-              }}
-            >
-              Cancel Run
-            </Button>
-          ) : (
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={!canStartExperiment}
-              onClick={() => {
-                setActiveDrawer('telemetry');
-                void experimentSession.startExperiment(currentTopology);
-              }}
-            >
-              Run Chaos
-            </Button>
-          )}
         </div>
       </header>
 
@@ -509,7 +534,7 @@ export function App() {
               type="button"
               className="dock-btn"
               onClick={() => addNode('service')}
-              title="Add standard service node"
+              title="Add standard service node (Key: 1)"
             >
               + Service
             </button>
@@ -517,7 +542,7 @@ export function App() {
               type="button"
               className="dock-btn"
               onClick={() => addNode('cache')}
-              title="Add in-memory cache"
+              title="Add in-memory cache (Key: 2)"
             >
               + Cache
             </button>
@@ -525,7 +550,7 @@ export function App() {
               type="button"
               className="dock-btn"
               onClick={() => addNode('queue_consumer')}
-              title="Add queue worker"
+              title="Add queue worker (Key: 3)"
             >
               + Queue
             </button>
@@ -533,9 +558,38 @@ export function App() {
               type="button"
               className="dock-btn"
               onClick={() => addNode('ledger_sink')}
-              title="Add database / ledger sink"
+              title="Add database / ledger sink (Key: 4)"
             >
               + Sink
+            </button>
+            <div style={{ width: 1, height: 16, background: 'var(--color-border)' }} />
+            <button
+              type="button"
+              className="dock-btn"
+              disabled={!board.selectedNodeId}
+              onClick={() => {
+                if (board.selectedNodeId) duplicateNode(board.selectedNodeId);
+              }}
+              title="Duplicate selected node (Ctrl+D)"
+            >
+              Duplicate
+            </button>
+            <button
+              type="button"
+              className="dock-btn dock-btn-danger"
+              disabled={!board.selectedNodeId && !board.selectedEdgeId}
+              onClick={() => {
+                if (board.selectedNodeId) {
+                  removeNode(board.selectedNodeId);
+                  if (activeDrawer === 'inspect') setActiveDrawer('none');
+                } else if (board.selectedEdgeId) {
+                  removeEdge(board.selectedEdgeId);
+                  if (activeDrawer === 'inspect') setActiveDrawer('none');
+                }
+              }}
+              title="Delete selected element (Delete / Backspace)"
+            >
+              Delete
             </button>
             <div style={{ width: 1, height: 16, background: 'var(--color-border)' }} />
             <span style={{ fontSize: 11, color: 'var(--color-text-dim)', padding: '0 4px' }}>
@@ -551,6 +605,7 @@ export function App() {
             onMoveNode={updateNodePosition}
             onAddNode={addNode}
             onAddEdge={addEdge}
+            onDuplicateNode={duplicateNode}
             onDeleteNode={(nodeId) => {
               removeNode(nodeId);
               if (activeDrawer === 'inspect') setActiveDrawer('none');
