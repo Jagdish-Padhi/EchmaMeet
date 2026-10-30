@@ -777,14 +777,14 @@ body {
   z-index: 15;
   width: 320px;
   max-width: calc(100% - 36px);
-  background: rgba(10, 16, 28, 0.9);
+  background: var(--color-surface-elevated);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(8, 102, 255, 0.28);
   border-radius: 12px;
   padding: 14px 16px;
   box-shadow:
-    0 12px 36px rgba(0, 0, 0, 0.55),
+    0 12px 36px rgba(0, 0, 0, 0.45),
     0 0 0 1px rgba(8, 102, 255, 0.12);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   animation: calloutFadeIn 0.25s ease-out;
@@ -839,7 +839,7 @@ body {
 .callout-title {
   font-size: 12px;
   font-weight: 700;
-  color: #38bdf8;
+  color: var(--color-accent);
   letter-spacing: -0.01em;
 }
 
@@ -862,7 +862,7 @@ body {
 .callout-description {
   font-size: 11.5px;
   line-height: 1.5;
-  color: #94a3b8;
+  color: var(--color-text-muted);
   margin: 0 0 12px 0;
   font-family: var(--font-sans);
 }
@@ -1156,6 +1156,24 @@ body {
 [data-theme='light'] .btn-secondary {
   background: #f1f5f9;
   border-color: #cbd5e1;
+}
+
+[data-theme='light'] .meeting-dialog-card {
+  box-shadow:
+    0 20px 48px rgba(15, 23, 42, 0.14),
+    0 0 0 1px #e2e8f0;
+}
+
+[data-theme='light'] .meetings-menu {
+  box-shadow:
+    0 16px 36px rgba(15, 23, 42, 0.12),
+    0 0 0 1px #e2e8f0;
+}
+
+[data-theme='light'] .canvas-sre-callout {
+  box-shadow:
+    0 12px 32px rgba(15, 23, 42, 0.1),
+    0 0 0 1px rgba(8, 102, 255, 0.2);
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -1848,8 +1866,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-full);
   padding: 5px 12px;
   font-family: var(--font-sans);
@@ -1861,14 +1879,14 @@ body {
 }
 
 .navbar-meeting-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.16);
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-glow);
   color: var(--color-text);
 }
 
 .navbar-meeting-btn.active {
-  background: rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.4);
   color: #10b981;
 }
 
@@ -1888,14 +1906,14 @@ body {
   left: 0;
   z-index: 100;
   width: 280px;
-  background: rgba(11, 17, 32, 0.95);
+  background: var(--color-surface-elevated);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(8, 102, 255, 0.1);
+    0 16px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px var(--color-border);
   padding: 8px;
   animation: menuAppear 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1927,7 +1945,7 @@ body {
 }
 
 .meetings-menu-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--color-surface-hover);
 }
 
 .menu-item-icon {
@@ -1936,7 +1954,7 @@ body {
   border-radius: 8px;
   background: rgba(8, 102, 255, 0.15);
   border: 1px solid rgba(8, 102, 255, 0.25);
-  color: #38bdf8;
+  color: var(--color-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2008,30 +2026,30 @@ body {
   gap: 10px;
   padding: 6px 8px;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--color-surface-hover);
 }
 
 .roster-avatar {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #1e293b;
+  background: var(--color-border);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 9px;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--color-text-muted);
 }
 
 .roster-avatar.host {
-  background: rgba(8, 102, 255, 0.25);
-  color: #38bdf8;
-  border: 1px solid #0866ff;
+  background: rgba(8, 102, 255, 0.2);
+  color: var(--color-accent);
+  border: 1px solid var(--color-meta-blue);
 }
 
 .roster-avatar.ai {
-  background: rgba(16, 185, 129, 0.25);
+  background: rgba(16, 185, 129, 0.2);
   color: #10b981;
   border: 1px solid #10b981;
 }
@@ -2069,7 +2087,7 @@ body {
 }
 
 .meetings-menu-action:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--color-surface-hover);
   color: var(--color-text);
 }
 
@@ -2082,13 +2100,13 @@ body {
 .meeting-dialog-card {
   width: 480px;
   max-width: calc(100vw - 32px);
-  background: #0d1322;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
   padding: 24px;
   box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(8, 102, 255, 0.15);
+    0 24px 64px rgba(0, 0, 0, 0.5),
+    0 0 0 1px var(--color-border);
   animation: modalScaleUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2104,9 +2122,9 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: rgba(8, 102, 255, 0.15);
-  border: 1px solid rgba(8, 102, 255, 0.3);
-  color: #38bdf8;
+  background: rgba(8, 102, 255, 0.12);
+  border: 1px solid rgba(8, 102, 255, 0.28);
+  color: var(--color-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2153,25 +2171,27 @@ body {
 
 .meeting-text-input {
   flex: 1;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 9px 12px;
   font-size: 13px;
   color: var(--color-text);
   font-family: var(--font-sans);
   outline: none;
-  transition: border-color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .meeting-text-input:focus {
-  border-color: #0866ff;
+  border-color: var(--color-meta-blue);
   box-shadow: 0 0 0 2px rgba(8, 102, 255, 0.2);
 }
 
 .btn-meeting-inline {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-surface-hover);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0 14px;
   font-size: 12px;
@@ -2182,18 +2202,23 @@ body {
 }
 
 .btn-meeting-inline:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-surface);
   color: var(--color-text);
 }
 
 .meeting-select-input {
-  background: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 9px 12px;
   font-size: 13px;
   color: var(--color-text);
   outline: none;
+}
+
+.meeting-select-input:focus {
+  border-color: var(--color-meta-blue);
+  box-shadow: 0 0 0 2px rgba(8, 102, 255, 0.2);
 }
 
 .meeting-form-hint {
@@ -2213,8 +2238,8 @@ body {
   display: flex;
   gap: 6px;
   padding: 4px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   margin-bottom: 20px;
 }
@@ -2241,8 +2266,8 @@ body {
 }
 
 .meeting-tab-btn.active {
-  background: rgba(8, 102, 255, 0.18);
-  color: #38bdf8;
+  background: rgba(8, 102, 255, 0.15);
+  color: var(--color-accent);
   border: 1px solid rgba(8, 102, 255, 0.3);
 }
 
@@ -2254,8 +2279,8 @@ body {
 }
 
 .solo-ai-card {
-  background: rgba(8, 102, 255, 0.06);
-  border: 1px solid rgba(8, 102, 255, 0.2);
+  background: rgba(8, 102, 255, 0.08);
+  border: 1px solid rgba(8, 102, 255, 0.25);
   border-radius: 10px;
   padding: 16px;
 }
@@ -2264,61 +2289,37 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
 }
 
 .solo-ai-emblem {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: rgba(8, 102, 255, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .solo-ai-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #0082fb;
-  box-shadow: 0 0 8px rgba(0, 130, 251, 0.9);
+  background: var(--color-meta-blue);
+  box-shadow: 0 0 8px rgba(8, 102, 255, 0.9);
 }
 
 .solo-ai-title {
   font-size: 13.5px;
   font-weight: 700;
-  color: #38bdf8;
+  color: var(--color-accent);
 }
 
 .solo-ai-desc {
-  font-size: 11.5px;
-  color: var(--color-text-dim);
-  margin-top: 2px;
-}
-
-.solo-ai-perks {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.solo-ai-perks li {
   font-size: 12px;
-  color: #94a3b8;
-  position: relative;
-  padding-left: 16px;
-}
-
-.solo-ai-perks li::before {
-  content: '✓';
-  position: absolute;
-  left: 0;
-  color: #10b981;
-  font-weight: 700;
+  color: var(--color-text-muted);
+  margin-top: 2px;
 }
 
 /* Enterprise Google Meet / Figma Huddle Bar */

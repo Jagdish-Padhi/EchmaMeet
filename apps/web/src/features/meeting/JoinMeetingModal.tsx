@@ -57,10 +57,10 @@ export function JoinMeetingModal({
           </div>
           <div>
             <h2 id="join-meeting-title" className="meeting-dialog-title">
-              Join Architecture Review Session
+              Join Meeting
             </h2>
             <p className="meeting-dialog-subtitle">
-              Connect to an existing team room or launch a private solo AI review session.
+              Connect to a team room or start a solo review with AI.
             </p>
           </div>
           <button type="button" className="btn-close-drawer" onClick={onClose} aria-label="Close">
@@ -88,7 +88,7 @@ export function JoinMeetingModal({
               <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
             </svg>
-            <span>Enter Meeting Code</span>
+            <span>Team Code</span>
           </button>
           <button
             type="button"
@@ -108,7 +108,7 @@ export function JoinMeetingModal({
               <circle cx="12" cy="12" r="9" />
               <path d="M12 7v5l3 3" />
             </svg>
-            <span>Solo with AI SRE</span>
+            <span>Solo with AI</span>
           </button>
         </div>
 
@@ -117,7 +117,7 @@ export function JoinMeetingModal({
           <form onSubmit={handleSubmitCode} className="meeting-dialog-form">
             <div className="meeting-form-field">
               <label htmlFor="join-room-code" className="meeting-form-label">
-                Meeting Code or Invite Link
+                Room Code or Link
               </label>
               <input
                 id="join-room-code"
@@ -129,9 +129,6 @@ export function JoinMeetingModal({
                 autoFocus
                 required
               />
-              <span className="meeting-form-hint">
-                Paste the room code or full URL shared by your peer reviewer.
-              </span>
             </div>
 
             <div className="meeting-dialog-actions">
@@ -139,7 +136,7 @@ export function JoinMeetingModal({
                 Cancel
               </button>
               <button type="submit" className="btn-primary" disabled={!roomCode.trim()}>
-                Join Review Room
+                Join Room
               </button>
             </div>
           </form>
@@ -154,19 +151,12 @@ export function JoinMeetingModal({
                   <span className="solo-ai-dot" />
                 </div>
                 <div>
-                  <div className="solo-ai-title">Autonomous Meta AI SRE Reviewer</div>
+                  <div className="solo-ai-title">Meta AI SRE Session</div>
                   <div className="solo-ai-desc">
-                    Continuous real-time invariant monitoring &amp; hazard detection
+                    Private 1-on-1 review with live hazard detection and sandbox proof.
                   </div>
                 </div>
               </div>
-              <ul className="solo-ai-perks">
-                <li>Instant 1-on-1 private architecture session without waiting for peers</li>
-                <li>Continuous queue saturation, retry storm, and cascade failure detection</li>
-                <li>
-                  Live sandbox proof execution &amp; automated resilience policy patch proposal
-                </li>
-              </ul>
             </div>
 
             <div className="meeting-dialog-actions">
@@ -174,7 +164,7 @@ export function JoinMeetingModal({
                 Cancel
               </button>
               <button type="button" className="btn-primary" onClick={handleStartSolo}>
-                Start Solo AI Review
+                Start Solo Review
               </button>
             </div>
           </div>

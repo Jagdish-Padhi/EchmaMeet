@@ -48,10 +48,10 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
           </div>
           <div>
             <h2 id="create-meeting-title" className="meeting-dialog-title">
-              Create Architecture Review Meeting
+              New Meeting
             </h2>
             <p className="meeting-dialog-subtitle">
-              Launch a live multi-cursor review room observed by Meta AI SRE.
+              Start an architecture review room with live AI SRE analysis.
             </p>
           </div>
           <button type="button" className="btn-close-drawer" onClick={onClose} aria-label="Close">
@@ -62,7 +62,7 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
         <form onSubmit={handleSubmit} className="meeting-dialog-form">
           <div className="meeting-form-field">
             <label htmlFor="create-room-code" className="meeting-form-label">
-              Meeting Room Code
+              Room Code
             </label>
             <div className="meeting-input-with-action">
               <input
@@ -77,7 +77,7 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
                 type="button"
                 className="btn-meeting-inline"
                 onClick={handleGenerateCode}
-                title="Generate fresh room code"
+                title="Generate fresh code"
               >
                 Regenerate
               </button>
@@ -86,7 +86,7 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
 
           <div className="meeting-form-field">
             <label htmlFor="create-topic" className="meeting-form-label">
-              Review Topic / RFC
+              Session Topic
             </label>
             <input
               id="create-topic"
@@ -94,14 +94,14 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
               className="meeting-text-input"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g. Checkout Service Architecture Review"
+              placeholder="e.g. Checkout Service Review"
               required
             />
           </div>
 
           <div className="meeting-form-field">
             <label htmlFor="create-role" className="meeting-form-label">
-              Your Reviewer Role
+              Your Role
             </label>
             <select
               id="create-role"
@@ -111,11 +111,9 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
                 setRole(e.target.value as 'Staff SRE' | 'Tech Lead' | 'Principal Architect')
               }
             >
-              <option value="Staff SRE">Staff SRE (Production Resilience)</option>
-              <option value="Tech Lead">Tech Lead (System Boundaries)</option>
-              <option value="Principal Architect">
-                Principal Architect (Distributed Topology)
-              </option>
+              <option value="Staff SRE">Staff SRE</option>
+              <option value="Tech Lead">Tech Lead</option>
+              <option value="Principal Architect">Principal Architect</option>
             </select>
           </div>
 
@@ -124,7 +122,7 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
               Cancel
             </button>
             <button type="submit" className="btn-primary">
-              Create & Launch Session
+              Create &amp; Join
             </button>
           </div>
         </form>

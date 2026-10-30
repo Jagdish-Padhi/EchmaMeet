@@ -116,7 +116,7 @@ export function MeetingsDropdown({
                 </div>
                 <div className="menu-item-content">
                   <div className="menu-item-title">Create Meeting</div>
-                  <div className="menu-item-subtitle">Host a new review room with AI SRE</div>
+                  <div className="menu-item-subtitle">Host a new review room</div>
                 </div>
               </button>
 
@@ -145,7 +145,7 @@ export function MeetingsDropdown({
                 </div>
                 <div className="menu-item-content">
                   <div className="menu-item-title">Join Meeting</div>
-                  <div className="menu-item-subtitle">Enter meeting code or start solo with AI</div>
+                  <div className="menu-item-subtitle">Enter code or start solo</div>
                 </div>
               </button>
             </div>
