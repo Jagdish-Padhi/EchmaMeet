@@ -67,9 +67,9 @@ export function EdgeLink({
       />
 
       {/* Edge tag badge */}
-      <g transform={`translate(${String(midX - 50)}, ${String(midY - 10)})`}>
-        <rect width={100} height={20} rx={3} className="edge-tag-bg" />
-        <text x={50} y={14} className="edge-tag-text" textAnchor="middle">
+      <g transform={`translate(${String(midX - 58)}, ${String(midY - 11)})`}>
+        <rect width={116} height={22} rx={11} className="edge-tag-bg" />
+        <text x={58} y={15} className="edge-tag-text" textAnchor="middle">
           {policySummary}
         </text>
       </g>

@@ -96,6 +96,9 @@ export function BoardCanvas({
         onMouseUp={handleMouseUp}
       >
         <defs>
+          <pattern id="canvas-grid" width="28" height="28" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1" fill="rgba(255, 255, 255, 0.08)" />
+          </pattern>
           <marker
             id="arrow"
             viewBox="0 0 10 10"
@@ -116,9 +119,15 @@ export function BoardCanvas({
             markerHeight="6"
             orient="auto-start-reverse"
           >
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb" />
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8" />
           </marker>
+          <filter id="node-shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="0" stdDeviation="6" floodColor="#38bdf8" floodOpacity="0.45" />
+          </filter>
         </defs>
+
+        {/* Blueprint Matrix Grid */}
+        <rect width="100%" height="100%" fill="url(#canvas-grid)" />
 
         {/* Edges */}
         {board.edges.map((edge) => (

@@ -40,7 +40,7 @@ export const ParsedCommandCard: React.FC<ParsedCommandCardProps> = ({
             checked={autoConfirm}
             onChange={onToggleAutoConfirm}
           />
-          <label htmlFor="auto-confirm-check" style={{ fontSize: 12, color: '#334155' }}>
+          <label htmlFor="auto-confirm-check" style={{ fontSize: 12, color: '#94a3b8' }}>
             Auto-confirm voice actions (defaults to OFF for safety)
           </label>
         </div>
@@ -58,12 +58,13 @@ export const ParsedCommandCard: React.FC<ParsedCommandCardProps> = ({
           <div
             style={{
               margin: '12px 0',
-              padding: 10,
-              background: '#f8fafc',
-              borderRadius: 4,
-              border: '1px solid #e2e8f0',
+              padding: 12,
+              background: 'rgba(2, 6, 23, 0.7)',
+              borderRadius: 6,
+              border: '1px solid rgba(255, 255, 255, 0.08)',
               fontSize: 12,
-              fontFamily: 'monospace',
+              fontFamily: 'var(--font-mono)',
+              color: '#e2e8f0',
             }}
           >
             <pre style={{ margin: 0 }}>{JSON.stringify(result.command, null, 2)}</pre>

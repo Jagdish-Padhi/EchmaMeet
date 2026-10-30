@@ -193,11 +193,39 @@ export function App() {
       {/* Top Header */}
       <header className="app-header">
         <div className="header-brand">
-          <h1 className="app-title">ChaosBoard</h1>
-          <span className="app-tagline">
-            Design-time resilience testing. Draw a system, break it on purpose, measure it, repair
-            it.
-          </span>
+          <div className="brand-emblem" aria-hidden="true">
+            <svg
+              className="brand-emblem-svg"
+              viewBox="0 0 32 32"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <polygon
+                points="16,3 29,10 29,24 16,30 3,24 3,10"
+                stroke="#38bdf8"
+                strokeWidth="2.2"
+                strokeLinejoin="round"
+              />
+              <circle cx="16" cy="16.5" r="4" fill="#38bdf8" />
+              <circle
+                cx="16"
+                cy="16.5"
+                r="7.5"
+                stroke="#818cf8"
+                strokeWidth="1.5"
+                strokeDasharray="3 2"
+              />
+            </svg>
+          </div>
+          <div className="brand-details">
+            <div className="brand-row">
+              <h1 className="app-title">ChaosBoard</h1>
+              <span className="hackathon-badge">Meta AI Systems Track</span>
+            </div>
+            <span className="app-tagline">
+              Autonomous Resilience Testing &amp; Self-Healing Architecture Engine
+            </span>
+          </div>
         </div>
         <SystemStatus />
       </header>

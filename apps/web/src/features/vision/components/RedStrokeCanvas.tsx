@@ -104,9 +104,9 @@ export const RedStrokeCanvas: React.FC<RedStrokeCanvasProps> = ({
 
       <div
         style={{
-          border: '1px solid #cbd5e1',
-          borderRadius: 6,
-          background: '#ffffff',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: 8,
+          background: '#080d1a',
           position: 'relative',
           height: 180,
           cursor: 'crosshair',

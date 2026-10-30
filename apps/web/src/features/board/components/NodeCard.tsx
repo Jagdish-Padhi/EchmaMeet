@@ -20,6 +20,23 @@ export function NodeCard({
 }: NodeCardProps) {
   const hasProblems = problems.some((p) => p.nodeId === node.id);
 
+  const getKindColor = (kind: string): string => {
+    switch (kind) {
+      case 'service':
+        return '#38bdf8';
+      case 'database':
+        return '#10b981';
+      case 'queue':
+        return '#f59e0b';
+      case 'gateway':
+        return '#818cf8';
+      default:
+        return '#94a3b8';
+    }
+  };
+
+  const kindColor = getKindColor(node.kind);
+
   return (
     <g
       className={`canvas-node ${isSelected ? 'canvas-node-selected' : ''} ${
@@ -39,16 +56,19 @@ export function NodeCard({
       <rect
         width={180}
         height={90}
-        rx={6}
+        rx={8}
         className="node-box"
         filter={isSelected ? 'url(#node-shadow)' : undefined}
       />
 
+      {/* Top Accent Stripe based on Kind */}
+      <rect x={1} y={1} width={178} height={3} rx={1.5} fill={kindColor} />
+
       {/* Entry badge */}
       {isEntry && (
         <g transform="translate(8, -10)">
-          <rect width={50} height={18} rx={3} className="entry-badge-bg" />
-          <text x={25} y={13} className="entry-badge-text" textAnchor="middle">
+          <rect width={54} height={18} rx={4} className="entry-badge-bg" />
+          <text x={27} y={13} className="entry-badge-text" textAnchor="middle">
             ENTRY
           </text>
         </g>
@@ -56,26 +76,36 @@ export function NodeCard({
 
       {/* Problem badge */}
       {hasProblems && (
-        <g transform="translate(140, -10)">
-          <rect width={32} height={18} rx={3} className="error-badge-bg" />
-          <text x={16} y={13} className="error-badge-text" textAnchor="middle">
+        <g transform="translate(136, -10)">
+          <rect width={36} height={18} rx={4} className="error-badge-bg" />
+          <text x={18} y={13} className="error-badge-text" textAnchor="middle">
             ERR
           </text>
         </g>
       )}
 
       {/* Title */}
-      <text x={12} y={28} className="node-title">
+      <text x={14} y={28} className="node-title">
         {node.label}
       </text>
 
-      {/* Kind badge */}
-      <text x={12} y={48} className="node-kind-text">
+      {/* Kind indicator dot & text */}
+      <circle cx={18} cy={44} r={3.5} fill={kindColor} />
+      <text x={26} y={48} className="node-kind-text">
         Kind: {node.kind}
       </text>
 
-      {/* Metadata */}
-      <text x={12} y={68} className="node-meta-text">
+      {/* Metadata Pill */}
+      <rect
+        x={10}
+        y={58}
+        width={160}
+        height={22}
+        rx={4}
+        fill="rgba(15, 23, 42, 0.6)"
+        stroke="rgba(255, 255, 255, 0.05)"
+      />
+      <text x={16} y={73} className="node-meta-text">
         Workers: {node.concurrency.maxWorkers} | Queue: {node.queue.mode}
       </text>
     </g>

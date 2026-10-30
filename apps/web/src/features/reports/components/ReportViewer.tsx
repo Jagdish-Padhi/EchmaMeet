@@ -137,14 +137,16 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
             style={{
               padding: '6px 14px',
               borderRadius: 6,
-              background: activeView === 'summary' ? '#b45309' : '#1e293b',
+              background:
+                activeView === 'summary' ? 'linear-gradient(135deg, #0284c7, #2563eb)' : '#1e293b',
               color: '#f8fafc',
-              border: '1px solid #475569',
+              border: activeView === 'summary' ? '1px solid #38bdf8' : '1px solid #475569',
+              boxShadow: activeView === 'summary' ? '0 0 12px rgba(56, 189, 248, 0.3)' : 'none',
               cursor: 'pointer',
-              fontWeight: 500,
+              fontWeight: 600,
             }}
           >
-            Summary & Card
+            Summary &amp; Card
           </button>
           <button
             type="button"
@@ -154,11 +156,13 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
             style={{
               padding: '6px 14px',
               borderRadius: 6,
-              background: activeView === 'diagram' ? '#b45309' : '#1e293b',
+              background:
+                activeView === 'diagram' ? 'linear-gradient(135deg, #0284c7, #2563eb)' : '#1e293b',
               color: '#f8fafc',
-              border: '1px solid #475569',
+              border: activeView === 'diagram' ? '1px solid #38bdf8' : '1px solid #475569',
+              boxShadow: activeView === 'diagram' ? '0 0 12px rgba(56, 189, 248, 0.3)' : 'none',
               cursor: 'pointer',
-              fontWeight: 500,
+              fontWeight: 600,
             }}
           >
             Deterministic SVG
@@ -171,11 +175,13 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
             style={{
               padding: '6px 14px',
               borderRadius: 6,
-              background: activeView === 'markdown' ? '#b45309' : '#1e293b',
+              background:
+                activeView === 'markdown' ? 'linear-gradient(135deg, #0284c7, #2563eb)' : '#1e293b',
               color: '#f8fafc',
-              border: '1px solid #475569',
+              border: activeView === 'markdown' ? '1px solid #38bdf8' : '1px solid #475569',
+              boxShadow: activeView === 'markdown' ? '0 0 12px rgba(56, 189, 248, 0.3)' : 'none',
               cursor: 'pointer',
-              fontWeight: 500,
+              fontWeight: 600,
             }}
           >
             Markdown Preview
