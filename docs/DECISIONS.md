@@ -137,6 +137,14 @@ Otherwise, the orchestrator rolls back immediately to the previous best topology
 
 **Confirmation guard before destructive actions.** Spoken fault injections, invariant modifications, and repair loops require visual preview and human confirmation by default. An optional explicit auto-confirm toggle is provided with visible indicators, ensuring accidental spoken utterances never silently inject chaos into running systems.
 
+## Report export, provenance, and deterministic blueprint card (Phase 10)
+
+**Truthful, self-contained report generation strictly from stored runs.** Reports are assembled purely from persisted `RunRecord` instances in SQLite (`reporting/domain`). The report includes complete topology configurations, injected faults, invariant thresholds, empirical median and IQR distributions, verdict explanations, and machine-verifiable provenance (run ID, git commit, host platform, node version, and Toxiproxy version).
+
+**Pure vector SVG topology diagram.** Rather than relying on external image generation models that may fabricate numbers or hallucinate architectural details, ChaosBoard produces a deterministic SVG architecture diagram directly from the topology and fault contracts.
+
+**Graceful blueprint card degradation with visible disclaimer.** If Muse Image is unavailable or fails text fidelity checks, the system degrades visibly to the deterministic vector diagram with an explicit note (`fallback_to_diagram`). Authoritative measured numbers from the run record are permanently rendered beside the card, preventing illustrative graphics from being mistaken for empirical evidence.
+
 ## Open decisions
 
 **License.** A public repository is required. Choose a license before submission. This was left to the builder on purpose.
