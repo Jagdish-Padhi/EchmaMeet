@@ -6,6 +6,7 @@ import { createMeasurementService } from './modules/measurement';
 import { createExperimentOrchestrator, registerExperimentRoutes } from './modules/experiments';
 import { OpenAiCompatibleAdapter, type StructuredModelPort } from './modules/meta-ai';
 import { createRepairOrchestrator, registerRepairRoutes } from './modules/repair';
+import { createBenchmarkModule } from './modules/benchmarks';
 import type { SqlDatabase } from './platform/db';
 import { registerHealthRoute } from './platform/health';
 import { registerProblemHandlers } from './platform/http-kit';
@@ -69,6 +70,14 @@ export function buildApp({
     model: modelClient,
   });
   registerRepairRoutes(app, repairOrchestrator, runsService);
+
+  const benchmarks = createBenchmarkModule({
+    experiments: experimentOrchestrator,
+    runs: runsService,
+    model: modelClient,
+    repairOrchestrator,
+  });
+  benchmarks.registerRoutes(app);
 
   return app;
 }

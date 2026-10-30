@@ -22,6 +22,7 @@
     "test": "pnpm -r --workspace-concurrency=1 run test && vitest run --config tools/vitest.config.ts",
     "test:integration": "pnpm -r --if-present --workspace-concurrency=1 run test:integration",
     "check": "pnpm typecheck && pnpm lint && pnpm boundaries && pnpm graph:check && pnpm docs:check && pnpm test",
+    "benchmark": "tsx apps/server/src/cli/benchmark.ts",
     "smoke:spark-open": "pnpm --filter @chaosboard/scripts run spark-open",
     "smoke:toxiproxy": "pnpm --filter @chaosboard/scripts run toxiproxy",
     "smoke:probe": "pnpm --filter @chaosboard/scripts run probe",
