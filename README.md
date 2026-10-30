@@ -39,12 +39,12 @@ The complete dependency graph is regenerated automatically and verified in [`doc
 
 ChaosBoard integrates Meta open-weight and multimodal models with deterministic fallback mechanisms:
 
-| Capability | Meta Model | Host / Provider | Fallback When Unconfigured |
-|---|---|---|---|
-| **Autonomous Repair Proposer** | Meta Spark Open (`meta-models/muse-spark-open-1026`) | OpenAI-compatible endpoint (Baseten, Fireworks, Together, or local vLLM) | Deterministic rule-based proposer with symptom heuristics |
-| **Voice Intent Parser** | Meta Spark Open | Streaming WebSocket bridge | Deterministic regex / token intent parser |
-| **Whiteboard Segmentation** | Meta SAM 3.1 | Meta Model API (`/v1/models/sam-3.1`) | Pure TypeScript color-threshold detector ($R > 130, G < 110, B < 110$) |
-| **Blueprint Card Rendering** | Meta Muse Image | Meta Model API (`/v1/models/muse-image`) | Pure deterministic vector SVG diagram generator |
+| Capability                     | Meta Model                                           | Host / Provider                                                          | Fallback When Unconfigured                                             |
+| ------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| **Autonomous Repair Proposer** | Meta Spark Open (`meta-models/muse-spark-open-1026`) | OpenAI-compatible endpoint (Baseten, Fireworks, Together, or local vLLM) | Deterministic rule-based proposer with symptom heuristics              |
+| **Voice Intent Parser**        | Meta Spark Open                                      | Streaming WebSocket bridge                                               | Deterministic regex / token intent parser                              |
+| **Whiteboard Segmentation**    | Meta SAM 3.1                                         | Meta Model API (`/v1/models/sam-3.1`)                                    | Pure TypeScript color-threshold detector ($R > 130, G < 110, B < 110$) |
+| **Blueprint Card Rendering**   | Meta Muse Image                                      | Meta Model API (`/v1/models/muse-image`)                                 | Pure deterministic vector SVG diagram generator                        |
 
 ---
 
@@ -102,15 +102,15 @@ pnpm dev
 
 ## Key Commands
 
-| Command | Description |
-|---|---|
-| `pnpm check` | Runs full typecheck, lint, boundary checks, graph verification, and unit tests |
-| `pnpm test:integration` | Runs end-to-end integration tests with real sockets, sandboxes, and Toxiproxy |
-| `pnpm dev` | Starts server and web development servers concurrently |
-| `pnpm calibrate` | Calibrates local host capacity and measures event-loop noise threshold |
-| `pnpm benchmark` | Executes the 6-scenario benchmark suite and regenerates `docs/benchmark-results.md` |
-| `pnpm boundaries` | Verifies strict architectural layer rules using Dependency Cruiser |
-| `pnpm graph` | Regenerates the architecture Mermaid graph in `docs/architecture.md` |
+| Command                 | Description                                                                         |
+| ----------------------- | ----------------------------------------------------------------------------------- |
+| `pnpm check`            | Runs full typecheck, lint, boundary checks, graph verification, and unit tests      |
+| `pnpm test:integration` | Runs end-to-end integration tests with real sockets, sandboxes, and Toxiproxy       |
+| `pnpm dev`              | Starts server and web development servers concurrently                              |
+| `pnpm calibrate`        | Calibrates local host capacity and measures event-loop noise threshold              |
+| `pnpm benchmark`        | Executes the 6-scenario benchmark suite and regenerates `docs/benchmark-results.md` |
+| `pnpm boundaries`       | Verifies strict architectural layer rules using Dependency Cruiser                  |
+| `pnpm graph`            | Regenerates the architecture Mermaid graph in `docs/architecture.md`                |
 
 ---
 
