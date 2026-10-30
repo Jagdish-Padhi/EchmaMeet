@@ -17,6 +17,7 @@ import {
   ImportDiagramModal,
   ImportDropdown,
   NodeInspector,
+  UserProfileMenu,
   ValidationBanner,
   toTopology,
   useBoardState,
@@ -362,229 +363,233 @@ export function App() {
     <div className="studio-root">
       {/* Minimalist Topbar */}
       <header className="studio-topbar">
-        {/* Left: 1-Row Compact Distributed Architecture Palette Strip */}
+        {/* Left: 2-Row Compact Distributed Architecture Palette Strip */}
         <div className="navbar-palette-strip" role="toolbar" aria-label="Distributed primitives">
-          <button
-            type="button"
-            className="navbar-palette-btn"
-            onClick={() =>
-              addNode('service', { label: 'API Gateway', processingMs: 5, maxWorkers: 20 })
-            }
-            title="Add ingress API Gateway (Envoy/Kong)"
-          >
-            <span className="palette-dot blue" />
-            <span>+ Gateway</span>
-          </button>
-          <button
-            type="button"
-            className="navbar-palette-btn"
-            onClick={() =>
-              addNode('service', { label: 'Microservice', processingMs: 15, maxWorkers: 15 })
-            }
-            title="Add standard Microservice (Key: 1)"
-          >
-            <span className="palette-dot blue" />
-            <span>+ Service</span>
-          </button>
-          <button
-            type="button"
-            className="navbar-palette-btn"
-            onClick={() =>
-              addNode('service', { label: 'Auth Service', processingMs: 10, maxWorkers: 10 })
-            }
-            title="Add Auth / Identity token validator"
-          >
-            <span className="palette-dot blue" />
-            <span>+ Auth</span>
-          </button>
-          <button
-            type="button"
-            className="navbar-palette-btn"
-            onClick={() =>
-              addNode('service', { label: 'Postgres DB', processingMs: 35, maxWorkers: 5 })
-            }
-            title="Add stateful database store"
-          >
-            <span className="palette-dot blue" />
-            <span>+ Database</span>
-          </button>
-          <button
-            type="button"
-            className="navbar-palette-btn"
-            onClick={() =>
-              addNode('service', { label: 'External API', processingMs: 85, maxWorkers: 5 })
-            }
-            title="Add third-party external API (Stripe, Twilio)"
-          >
-            <span className="palette-dot amber" />
-            <span>+ 3rd-Party</span>
-          </button>
-
-          <div className="navbar-palette-divider" />
-
-          <button
-            type="button"
-            className="navbar-palette-btn"
-            onClick={() =>
-              addNode('cache', {
-                label: 'Redis Cache',
-                processingMs: 2,
-                maxWorkers: 25,
-                ttlMs: 60000,
-              })
-            }
-            title="Add in-memory Redis cache (Key: 2)"
-          >
-            <span className="palette-dot yellow" />
-            <span>+ Redis</span>
-          </button>
-          <button
-            type="button"
-            className="navbar-palette-btn"
-            onClick={() =>
-              addNode('cache', {
-                label: 'CDN Edge',
-                processingMs: 1,
-                maxWorkers: 50,
-                ttlMs: 300000,
-              })
-            }
-            title="Add Cloudflare/Fastly CDN Edge Cache"
-          >
-            <span className="palette-dot yellow" />
-            <span>+ CDN</span>
-          </button>
-
-          <div className="navbar-palette-divider" />
-
-          <button
-            type="button"
-            className="navbar-palette-btn"
-            onClick={() =>
-              addNode('queue_consumer', {
-                label: 'Queue Worker',
-                processingMs: 25,
-                maxWorkers: 15,
-                consumeRateRps: 50,
-              })
-            }
-            title="Add BullMQ / SQS queue worker (Key: 3)"
-          >
-            <span className="palette-dot cyan" />
-            <span>+ Queue</span>
-          </button>
-          <button
-            type="button"
-            className="navbar-palette-btn"
-            onClick={() =>
-              addNode('queue_consumer', {
-                label: 'Kafka Stream',
-                processingMs: 10,
-                maxWorkers: 30,
-                consumeRateRps: 100,
-              })
-            }
-            title="Add high-throughput Kafka streaming consumer"
-          >
-            <span className="palette-dot cyan" />
-            <span>+ Kafka</span>
-          </button>
-
-          <div className="navbar-palette-divider" />
-
-          <button
-            type="button"
-            className="navbar-palette-btn"
-            onClick={() =>
-              addNode('ledger_sink', {
-                label: 'Financial Ledger',
-                processingMs: 50,
-                maxWorkers: 5,
-                dedupeByKey: true,
-              })
-            }
-            title="Add idempotent ledger deduplication sink (Key: 4)"
-          >
-            <span className="palette-dot green" />
-            <span>+ Ledger</span>
-          </button>
-          <button
-            type="button"
-            className="navbar-palette-btn"
-            onClick={() =>
-              addNode('ledger_sink', {
-                label: 'Object Store',
-                processingMs: 35,
-                maxWorkers: 10,
-                dedupeByKey: false,
-              })
-            }
-            title="Add S3 / GCS object storage sink"
-          >
-            <span className="palette-dot green" />
-            <span>+ S3</span>
-          </button>
-
-          <div className="navbar-palette-divider" />
-
-          {/* Quick Canvas Actions: Duplicate & Delete */}
-          <button
-            type="button"
-            className="navbar-palette-tool"
-            disabled={!board.selectedNodeId}
-            onClick={() => {
-              if (board.selectedNodeId) duplicateNode(board.selectedNodeId);
-            }}
-            title="Duplicate selected node (Ctrl+D)"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="11"
-              height="11"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-            </svg>
-            <span>Duplicate</span>
-          </button>
-          <button
-            type="button"
-            className="navbar-palette-tool danger"
-            disabled={!board.selectedNodeId && !board.selectedEdgeId}
-            onClick={() => {
-              if (board.selectedNodeId) {
-                removeNode(board.selectedNodeId);
-                if (activeDrawer === 'inspect') setActiveDrawer('none');
-              } else if (board.selectedEdgeId) {
-                removeEdge(board.selectedEdgeId);
-                if (activeDrawer === 'inspect') setActiveDrawer('none');
+          {/* Row 1: Compute & Gateways */}
+          <div className="navbar-palette-row">
+            <button
+              type="button"
+              className="navbar-palette-btn"
+              onClick={() =>
+                addNode('service', { label: 'API Gateway', processingMs: 5, maxWorkers: 20 })
               }
-            }}
-            title="Delete selected element (Del / Backspace)"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="11"
-              height="11"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+              title="Add ingress API Gateway (Envoy/Kong)"
             >
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            </svg>
-            <span>Delete</span>
-          </button>
+              <span className="palette-dot blue" />
+              <span>+ Gateway</span>
+            </button>
+            <button
+              type="button"
+              className="navbar-palette-btn"
+              onClick={() =>
+                addNode('service', { label: 'Microservice', processingMs: 15, maxWorkers: 15 })
+              }
+              title="Add standard Microservice (Key: 1)"
+            >
+              <span className="palette-dot blue" />
+              <span>+ Service</span>
+            </button>
+            <button
+              type="button"
+              className="navbar-palette-btn"
+              onClick={() =>
+                addNode('service', { label: 'Auth Service', processingMs: 10, maxWorkers: 10 })
+              }
+              title="Add Auth / Identity token validator"
+            >
+              <span className="palette-dot blue" />
+              <span>+ Auth</span>
+            </button>
+            <button
+              type="button"
+              className="navbar-palette-btn"
+              onClick={() =>
+                addNode('service', { label: 'Postgres DB', processingMs: 35, maxWorkers: 5 })
+              }
+              title="Add stateful database store"
+            >
+              <span className="palette-dot blue" />
+              <span>+ Database</span>
+            </button>
+            <button
+              type="button"
+              className="navbar-palette-btn"
+              onClick={() =>
+                addNode('service', { label: 'External API', processingMs: 85, maxWorkers: 5 })
+              }
+              title="Add third-party external API (Stripe, Twilio)"
+            >
+              <span className="palette-dot amber" />
+              <span>+ 3rd-Party</span>
+            </button>
+          </div>
 
-          <span className="navbar-stats-chip">
-            {board.nodes.length}N &bull; {board.edges.length}L
-          </span>
+          {/* Row 2: Caching, Queues, Storage & Canvas Actions */}
+          <div className="navbar-palette-row">
+            <button
+              type="button"
+              className="navbar-palette-btn"
+              onClick={() =>
+                addNode('cache', {
+                  label: 'Redis Cache',
+                  processingMs: 2,
+                  maxWorkers: 25,
+                  ttlMs: 60000,
+                })
+              }
+              title="Add in-memory Redis cache (Key: 2)"
+            >
+              <span className="palette-dot yellow" />
+              <span>+ Redis</span>
+            </button>
+            <button
+              type="button"
+              className="navbar-palette-btn"
+              onClick={() =>
+                addNode('cache', {
+                  label: 'CDN Edge',
+                  processingMs: 1,
+                  maxWorkers: 50,
+                  ttlMs: 300000,
+                })
+              }
+              title="Add Cloudflare/Fastly CDN Edge Cache"
+            >
+              <span className="palette-dot yellow" />
+              <span>+ CDN</span>
+            </button>
+
+            <div className="navbar-palette-divider" />
+
+            <button
+              type="button"
+              className="navbar-palette-btn"
+              onClick={() =>
+                addNode('queue_consumer', {
+                  label: 'Queue Worker',
+                  processingMs: 25,
+                  maxWorkers: 15,
+                  consumeRateRps: 50,
+                })
+              }
+              title="Add BullMQ / SQS queue worker (Key: 3)"
+            >
+              <span className="palette-dot cyan" />
+              <span>+ Queue</span>
+            </button>
+            <button
+              type="button"
+              className="navbar-palette-btn"
+              onClick={() =>
+                addNode('queue_consumer', {
+                  label: 'Kafka Stream',
+                  processingMs: 10,
+                  maxWorkers: 30,
+                  consumeRateRps: 100,
+                })
+              }
+              title="Add high-throughput Kafka streaming consumer"
+            >
+              <span className="palette-dot cyan" />
+              <span>+ Kafka</span>
+            </button>
+
+            <div className="navbar-palette-divider" />
+
+            <button
+              type="button"
+              className="navbar-palette-btn"
+              onClick={() =>
+                addNode('ledger_sink', {
+                  label: 'Financial Ledger',
+                  processingMs: 50,
+                  maxWorkers: 5,
+                  dedupeByKey: true,
+                })
+              }
+              title="Add idempotent ledger deduplication sink (Key: 4)"
+            >
+              <span className="palette-dot green" />
+              <span>+ Ledger</span>
+            </button>
+            <button
+              type="button"
+              className="navbar-palette-btn"
+              onClick={() =>
+                addNode('ledger_sink', {
+                  label: 'Object Store',
+                  processingMs: 35,
+                  maxWorkers: 10,
+                  dedupeByKey: false,
+                })
+              }
+              title="Add S3 / GCS object storage sink"
+            >
+              <span className="palette-dot green" />
+              <span>+ S3</span>
+            </button>
+
+            <div className="navbar-palette-divider" />
+
+            {/* Quick Canvas Actions: Duplicate & Delete */}
+            <button
+              type="button"
+              className="navbar-palette-tool"
+              disabled={!board.selectedNodeId}
+              onClick={() => {
+                if (board.selectedNodeId) duplicateNode(board.selectedNodeId);
+              }}
+              title="Duplicate selected node (Ctrl+D)"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="11"
+                height="11"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              <span>Duplicate</span>
+            </button>
+            <button
+              type="button"
+              className="navbar-palette-tool danger"
+              disabled={!board.selectedNodeId && !board.selectedEdgeId}
+              onClick={() => {
+                if (board.selectedNodeId) {
+                  removeNode(board.selectedNodeId);
+                  if (activeDrawer === 'inspect') setActiveDrawer('none');
+                } else if (board.selectedEdgeId) {
+                  removeEdge(board.selectedEdgeId);
+                  if (activeDrawer === 'inspect') setActiveDrawer('none');
+                }
+              }}
+              title="Delete selected element (Del / Backspace)"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="11"
+                height="11"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+              <span>Delete</span>
+            </button>
+
+            <span className="navbar-stats-chip">
+              {board.nodes.length}N &bull; {board.edges.length}L
+            </span>
+          </div>
         </div>
 
-        {/* Right: Operational Actions (Meetings, Proof, Telemetry, Import, Export, Settings) */}
+        {/* Right: Operational Actions (Meetings, Proof, Telemetry, Import, Export, Theme, User) */}
         <div className="studio-topbar-actions">
           {/* Clean Enterprise Meetings Dropdown (Create, Join, Active Session) */}
           <MeetingsDropdown
@@ -598,33 +603,6 @@ export function App() {
               void navigator.clipboard.writeText(url);
             }}
           />
-
-          {/* Quick Scenario Switcher */}
-          <select
-            className="studio-scenario-select"
-            value={scenariosState.selectedScenarioId ?? ''}
-            onChange={(e) => {
-              const scId = e.target.value;
-              if (scId) {
-                const sc = scenariosState.scenarios.find((s) => s.id === scId);
-                if (sc) {
-                  scenariosState.selectScenario(sc.id);
-                  loadTopology(sc.topology);
-                  const fault = sc.faults[0];
-                  if (fault) experimentSession.updateFault(fault);
-                  experimentSession.updateInvariants(sc.invariants);
-                  experimentSession.updateTrialConfig(sc.trialConfig);
-                }
-              }
-            }}
-          >
-            <option value="">Scenario...</option>
-            {scenariosState.scenarios.map((sc) => (
-              <option key={sc.id} value={sc.id}>
-                {sc.name}
-              </option>
-            ))}
-          </select>
 
           {/* Primary Quick Run Action */}
           {experimentSession.status === 'running' || experimentSession.status === 'starting' ? (
@@ -655,10 +633,19 @@ export function App() {
           {/* Analysis & Drawer Tools Dropdown */}
           <AnalysisDropdown activeTab={activeDrawer} onSelectTab={setActiveDrawer} />
 
-          {/* Import Dropdown: Diagram (Mermaid/JSON) or Whiteboard Camera Vision */}
+          {/* Import Dropdown: Diagram (Mermaid/JSON), Scenarios, or Whiteboard Camera Vision */}
           <ImportDropdown
             onImportDiagram={() => setIsImportModalOpen(true)}
             onScanWhiteboard={() => setActiveDrawer('vision')}
+            scenarios={scenariosState.scenarios}
+            onSelectScenario={(sc) => {
+              scenariosState.selectScenario(sc.id);
+              loadTopology(sc.topology);
+              const fault = sc.faults[0];
+              if (fault) experimentSession.updateFault(fault);
+              experimentSession.updateInvariants(sc.invariants);
+              experimentSession.updateTrialConfig(sc.trialConfig);
+            }}
           />
 
           {/* Export Artifacts Dropdown (IaC & RFC) */}
@@ -708,26 +695,12 @@ export function App() {
             )}
           </button>
 
-          {/* Settings Gear Button */}
-          <button
-            type="button"
-            className="btn-icon-toggle"
-            onClick={() => setIsSettingsOpen(true)}
-            title="Engine Settings"
-            aria-label="Open settings"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="15"
-              height="15"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          </button>
+          {/* Authenticated Staff User Profile Avatar with Hover Menu (Settings & Logout) */}
+          <UserProfileMenu
+            user={currentReviewer}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onSignOut={() => setView('landing')}
+          />
         </div>
       </header>
 

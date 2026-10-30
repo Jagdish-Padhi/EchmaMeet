@@ -1,18 +1,28 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ScenarioSpec } from '@chaosboard/contracts';
 
 export interface ImportDropdownProps {
   readonly onImportDiagram: () => void;
   readonly onScanWhiteboard: () => void;
+  readonly scenarios?: readonly ScenarioSpec[];
+  readonly onSelectScenario?: (scenario: ScenarioSpec) => void;
 }
 
-export function ImportDropdown({ onImportDiagram, onScanWhiteboard }: ImportDropdownProps) {
+export function ImportDropdown({
+  onImportDiagram,
+  onScanWhiteboard,
+  scenarios = [],
+  onSelectScenario,
+}: ImportDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScenarioSubmenuOpen, setIsScenarioSubmenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsOpen(false);
+        setIsScenarioSubmenuOpen(false);
       }
     };
     if (isOpen) {
@@ -28,10 +38,13 @@ export function ImportDropdown({ onImportDiagram, onScanWhiteboard }: ImportDrop
       <button
         type="button"
         className={`navbar-meeting-btn ${isOpen ? 'active' : ''}`}
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          setIsOpen((prev) => !prev);
+          setIsScenarioSubmenuOpen(false);
+        }}
         aria-haspopup="true"
         aria-expanded={isOpen}
-        title="Import architecture topology"
+        title="Import architecture topology or load scenario"
       >
         <svg
           viewBox="0 0 24 24"
@@ -118,6 +131,72 @@ export function ImportDropdown({ onImportDiagram, onScanWhiteboard }: ImportDrop
               <div className="menu-item-subtitle">Extract diagram via Vision SAM AI</div>
             </div>
           </button>
+
+          {scenarios.length > 0 && onSelectScenario && (
+            <>
+              <div className="menu-divider" />
+              <button
+                type="button"
+                className="meetings-menu-item"
+                role="menuitem"
+                onClick={() => setIsScenarioSubmenuOpen((prev) => !prev)}
+              >
+                <div className="menu-item-icon">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="15"
+                    height="15"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <line x1="3" y1="9" x2="21" y2="9" />
+                    <line x1="9" y1="21" x2="9" y2="9" />
+                  </svg>
+                </div>
+                <div className="menu-item-content">
+                  <div className="menu-item-title">Architecture Scenarios</div>
+                  <div className="menu-item-subtitle">Load standard resilience benchmark</div>
+                </div>
+                <svg
+                  viewBox="0 0 24 24"
+                  width="11"
+                  height="11"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  style={{
+                    marginLeft: 'auto',
+                    transform: isScenarioSubmenuOpen ? 'rotate(90deg)' : 'none',
+                    transition: 'transform 0.15s ease',
+                  }}
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+
+              {isScenarioSubmenuOpen && (
+                <div className="scenario-inline-list">
+                  {scenarios.map((sc) => (
+                    <button
+                      key={sc.id}
+                      type="button"
+                      className="scenario-subitem"
+                      onClick={() => {
+                        setIsOpen(false);
+                        setIsScenarioSubmenuOpen(false);
+                        onSelectScenario(sc);
+                      }}
+                    >
+                      <span className="scenario-subitem-bullet" />
+                      <span className="scenario-subitem-name">{sc.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>
