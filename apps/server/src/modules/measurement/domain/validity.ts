@@ -32,7 +32,7 @@ export function evaluateTrialValidity(params: {
     };
   }
 
-  const maxP99Lag = limits.maxP99GeneratorLagMs ?? 25;
+  const maxP99Lag = limits.maxP99GeneratorLagMs ?? 50;
   if (generatorLag.p99Ms > maxP99Lag) {
     return {
       valid: false,

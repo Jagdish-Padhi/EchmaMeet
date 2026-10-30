@@ -12,6 +12,7 @@ export {
 } from './domain/metrics';
 export { evaluateTrialValidity, type ValidityLimits } from './domain/validity';
 export { computeMedianAndIQR, aggregateTrialResults } from './domain/aggregate';
+export { evaluateInvariantVerdict, computeOverallStatus } from './domain/verdict';
 
 export function createMeasurementService(): MeasurementService {
   return new MeasurementService();
