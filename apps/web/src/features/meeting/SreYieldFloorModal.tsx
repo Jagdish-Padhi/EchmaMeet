@@ -34,7 +34,22 @@ export function SreYieldFloorModal({
         {/* Header */}
         <div className="sre-modal-header">
           <div className="sre-agent-identity">
-            <div className="sre-agent-emblem">🤖</div>
+            <div className="sre-agent-emblem">
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <rect x="3" y="11" width="18" height="10" rx="2" />
+                <circle cx="12" cy="5" r="2" />
+                <path d="M12 7v4" />
+                <line x1="8" y1="16" x2="8" y2="16" />
+                <line x1="16" y1="16" x2="16" y2="16" />
+              </svg>
+            </div>
             <div>
               <div className="sre-agent-name">Meta Spark Open &bull; Autonomous Lead SRE</div>
               <div className="sre-agent-subtitle">Spoken Architectural Hazard Analysis</div>
@@ -113,7 +128,7 @@ export function SreYieldFloorModal({
               }}
               title="Automatically update edge policy on canvas with mathematically proven resilience settings"
             >
-              🛠️ Apply SRE Patch to Canvas
+              Apply SRE Patch to Canvas
             </Button>
           )}
 

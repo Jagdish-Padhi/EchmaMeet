@@ -108,6 +108,7 @@ export function NodeCard({
       transform={`translate(${String(node.position.x)}, ${String(node.position.y)})`}
       onClick={(e) => {
         e.stopPropagation();
+        onDropConnect?.(node.id);
         onSelect(node.id);
       }}
       onMouseDown={(e) => onDragStart(node.id, e)}
@@ -116,29 +117,8 @@ export function NodeCard({
       tabIndex={0}
       aria-label={`Node ${node.label} (${node.kind})`}
     >
-      {/* Radar Hazard Pulsing Ring */}
-      {isHazard && (
-        <rect
-          x={-4}
-          y={-4}
-          width={192}
-          height={84}
-          rx={14}
-          fill="none"
-          stroke="#f59e0b"
-          strokeWidth={2}
-          className="hazard-pulse-ring"
-        />
-      )}
-
       {/* Main Sleek Card Body */}
-      <rect
-        width={184}
-        height={76}
-        rx={10}
-        className="node-box"
-        filter={isSelected ? 'url(#node-shadow)' : undefined}
-      />
+      <rect width={184} height={76} rx={8} className="node-box" />
 
       {/* Left Icon Rounded Backdrop */}
       <rect x={12} y={12} width={28} height={28} rx={6} fill={kindDetails.bgTint} />
@@ -161,7 +141,7 @@ export function NodeCard({
       </text>
 
       {/* Entry Indicator Pill */}
-      {isEntry && (
+      {isEntry && !isHazard && (
         <g transform="translate(136, 12)">
           <rect
             width={38}
@@ -177,9 +157,26 @@ export function NodeCard({
         </g>
       )}
 
+      {/* Hazard Indicator Pill */}
+      {isHazard && (
+        <g transform="translate(136, 12)">
+          <rect
+            width={38}
+            height={16}
+            rx={4}
+            fill="rgba(245, 158, 11, 0.15)"
+            stroke="#f59e0b"
+            strokeWidth={1}
+          />
+          <text x={19} y={11.5} className="entry-badge-text" textAnchor="middle" fill="#f59e0b">
+            RISK
+          </text>
+        </g>
+      )}
+
       {/* Problem Alert Dot */}
       {hasProblems && (
-        <circle cx={170} cy={16} r={5} fill="#f43f5e" className="error-alert-dot">
+        <circle cx={170} cy={16} r={4} fill="#f43f5e" className="error-alert-dot">
           <title>Validation warning on this node</title>
         </circle>
       )}
@@ -199,19 +196,23 @@ export function NodeCard({
       </text>
 
       {/* Target Input Port (Left Edge) */}
-      <circle cx={0} cy={38} r={4.5} className="port-dot-target" />
+      <circle cx={0} cy={38} r={4} className="port-dot-target" />
 
-      {/* Source Output Connector Handle (Right Edge, Drag-to-connect) */}
+      {/* Source Output Connector Handle (Right Edge, Drag-to-connect or Click-to-connect) */}
       <g
         className="node-port-handle"
+        onClick={(e) => {
+          e.stopPropagation();
+          onStartConnect?.(node.id, e);
+        }}
         onMouseDown={(e) => {
           e.stopPropagation();
           onStartConnect?.(node.id, e);
         }}
       >
-        <title>Drag wire to connect to downstream service</title>
-        <circle cx={184} cy={38} r={12} fill="transparent" style={{ cursor: 'crosshair' }} />
-        <circle cx={184} cy={38} r={5} className="port-dot-handle" />
+        <title>Click or drag to connect downstream service</title>
+        <circle cx={184} cy={38} r={16} fill="transparent" style={{ cursor: 'crosshair' }} />
+        <circle cx={184} cy={38} r={4.5} className="port-dot-handle" />
       </g>
     </g>
   );

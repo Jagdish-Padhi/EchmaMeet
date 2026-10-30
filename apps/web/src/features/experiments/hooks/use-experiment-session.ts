@@ -16,7 +16,7 @@ import type { ExperimentSessionState } from '../types';
 
 export function useExperimentSession(api: ApiClient, currentTopology: Topology | null) {
   const [state, setState] = useState<ExperimentSessionState>(() => {
-    const defaultEdge = currentTopology?.edges[0]?.id ?? ('gateway->inventory' as EdgeId);
+    const defaultEdge = currentTopology?.edges[0]?.id ?? ('gateway-to-inventory' as EdgeId);
     return {
       runId: null,
       status: 'idle',
@@ -137,9 +137,13 @@ export function useExperimentSession(api: ApiClient, currentTopology: Topology |
         totalTrials: prev.trialConfig.trials * 2,
       }));
 
+      const targetEdge =
+        topology.edges.find((e) => e.id === state.fault.edgeId) ?? topology.edges[0];
+      const faultToRun = targetEdge ? { ...state.fault, edgeId: targetEdge.id } : state.fault;
+
       const request: StartExperimentRequest = {
         topology,
-        faults: [state.fault],
+        faults: targetEdge ? [faultToRun] : [],
         invariants: [...state.invariants],
         trialConfig: state.trialConfig,
       };

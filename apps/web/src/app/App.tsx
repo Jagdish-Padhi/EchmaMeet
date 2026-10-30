@@ -14,6 +14,7 @@ import { Button } from '../components/ui/Button';
 import {
   BoardCanvas,
   EdgeInspector,
+  ImportDiagramModal,
   NodeInspector,
   ValidationBanner,
   useBoardState,
@@ -107,6 +108,7 @@ export function App() {
   const {
     board,
     loadTopology,
+    importDiagram,
     updateNodePosition,
     selectNode,
     selectEdge,
@@ -118,6 +120,10 @@ export function App() {
     addEdge,
     removeEdge,
   } = useBoardState(null, api);
+
+  // Live Review Collaboration Room state
+  const [isMeetingLive, setIsMeetingLive] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Meeting Room SRE Watcher
   const [isSreModalOpen, setIsSreModalOpen] = useState(false);
@@ -350,7 +356,9 @@ export function App() {
 
           {/* Architecture Review Room & SRE Watcher Bar */}
           <MeetingBar
-            aiRaisedHand={sreWatcher.aiRaisedHand}
+            isConnected={isMeetingLive}
+            onToggleConnect={() => setIsMeetingLive((prev) => !prev)}
+            aiRaisedHand={isMeetingLive && sreWatcher.aiRaisedHand}
             hazards={sreWatcher.hazards}
             onYieldFloor={() => setIsSreModalOpen(true)}
             onShareRoom={() => {
@@ -413,9 +421,30 @@ export function App() {
               }}
               title="Run physical 5s sandbox resilience trial"
             >
-              ⚡ 5s Sandbox Proof
+              Sandbox Proof
             </Button>
           )}
+
+          <button
+            type="button"
+            className="studio-action-pill"
+            onClick={() => setIsImportModalOpen(true)}
+            title="Import architecture from Mermaid flowchart or template"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="12"
+              height="12"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              style={{ marginRight: 4 }}
+            >
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22,6 12,13 2,6" />
+            </svg>
+            <span>Import</span>
+          </button>
 
           <button
             type="button"
@@ -423,7 +452,7 @@ export function App() {
             onClick={handleExportRfc}
             title="Export Architecture Review ADR in Markdown"
           >
-            <span>📄 Export RFC</span>
+            <span>Export RFC</span>
           </button>
 
           <button
@@ -432,7 +461,7 @@ export function App() {
             onClick={() => setActiveDrawer(activeDrawer === 'inspect' ? 'none' : 'inspect')}
             title="Inspect & configure selected node / edge policies"
           >
-            <span>⚙️ Inspector</span>
+            <span>Inspector</span>
           </button>
 
           {/* More Panels Dropdown */}
@@ -614,8 +643,8 @@ export function App() {
               removeEdge(edgeId);
               if (activeDrawer === 'inspect') setActiveDrawer('none');
             }}
-            hazardEdgeId={sreWatcher.primaryHazard?.targetEdgeId ?? experimentSession.fault.edgeId}
-            hazardNodeId={sreWatcher.primaryHazard?.targetNodeId ?? null}
+            hazardEdgeId={isMeetingLive ? (sreWatcher.primaryHazard?.targetEdgeId ?? null) : null}
+            hazardNodeId={isMeetingLive ? (sreWatcher.primaryHazard?.targetNodeId ?? null) : null}
           />
         </main>
 
@@ -1000,6 +1029,15 @@ export function App() {
         onClose={() => setIsSettingsOpen(false)}
         onSave={setSettings}
         currentSettings={settings}
+      />
+
+      {/* Import Architecture Diagram Modal */}
+      <ImportDiagramModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={(nodes, edges, entryNodeId) => {
+          importDiagram(nodes, edges, entryNodeId, 'Imported Architecture');
+        }}
       />
 
       {/* SRE Yield Floor Modal */}

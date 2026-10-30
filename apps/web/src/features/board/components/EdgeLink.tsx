@@ -1,5 +1,6 @@
 import type { EdgeId, TopologyEdge, TopologyProblem } from '@chaosboard/contracts';
 import type { BoardNode } from '../types';
+import { computeEdgeRoute } from '../utils/edge-router';
 
 export interface EdgeLinkProps {
   readonly edge: TopologyEdge;
@@ -22,24 +23,12 @@ export function EdgeLink({
 }: EdgeLinkProps) {
   if (!sourceNode || !targetNode) return null;
 
-  // Node dimensions: 184 x 76 (center Y = 38)
-  const sx = sourceNode.position.x + 184;
-  const sy = sourceNode.position.y + 38;
-  const tx = targetNode.position.x;
-  const ty = targetNode.position.y + 38;
-
-  const dx = tx - sx;
-  const cx1 = sx + Math.max(40, dx / 2);
-  const cy1 = sy;
-  const cx2 = tx - Math.max(40, dx / 2);
-  const cy2 = ty;
-
-  const pathData = `M ${String(sx)} ${String(sy)} C ${String(cx1)} ${String(cy1)}, ${String(
-    cx2,
-  )} ${String(cy2)}, ${String(tx)} ${String(ty)}`;
-
-  const midX = (sx + tx) / 2;
-  const midY = (sy + ty) / 2 - 10;
+  const { pathData, midX, midY } = computeEdgeRoute(
+    sourceNode.position,
+    targetNode.position,
+    184,
+    76,
+  );
 
   const hasProblems = problems.some((p) => p.edgeId === edge.id);
 

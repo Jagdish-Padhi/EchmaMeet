@@ -101,6 +101,34 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
     [triggerValidation],
   );
 
+  const importDiagram = useCallback(
+    (
+      nodes: readonly BoardNode[],
+      edges: readonly TopologyEdge[],
+      entryNodeId: NodeId,
+      name = 'Imported Architecture',
+    ) => {
+      setBoard((prev) => {
+        const next: BoardState = {
+          ...prev,
+          id: `diag-${Date.now().toString(36)}`,
+          name,
+          entryNodeId,
+          nodes: [...nodes],
+          edges: [...edges],
+          selectedNodeId: entryNodeId,
+          selectedEdgeId: null,
+          validationProblems: [],
+          isValidating: false,
+          isDirty: true,
+        };
+        triggerValidation(next);
+        return next;
+      });
+    },
+    [triggerValidation],
+  );
+
   const updateNodePosition = useCallback((nodeId: NodeId, x: number, y: number) => {
     setBoard((prev) => ({
       ...prev,
@@ -311,6 +339,7 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
   return {
     board,
     loadTopology,
+    importDiagram,
     updateNodePosition,
     selectNode,
     selectEdge,

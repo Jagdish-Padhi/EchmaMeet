@@ -248,6 +248,9 @@ importers:
       '@chaosboard/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@chaosboard/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       react:
         specifier: 19.3.0
         version: 19.3.0

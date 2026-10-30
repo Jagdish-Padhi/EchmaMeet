@@ -1,14 +1,14 @@
 :root {
-  --color-bg: #070a11;
-  --color-bg-mesh: radial-gradient(circle at 50% 0%, #151e34 0%, #090d18 55%, #05070c 100%);
-  --color-surface: rgba(15, 23, 42, 0.82);
-  --color-surface-elevated: #0f172a;
-  --color-surface-hover: rgba(30, 41, 59, 0.88);
-  --color-border: rgba(255, 255, 255, 0.09);
-  --color-border-subtle: #1e293b;
-  --color-border-glow: rgba(56, 189, 248, 0.35);
+  --color-bg: #090a0f;
+  --color-bg-mesh: radial-gradient(circle at 50% 0%, #111422 0%, #090a0f 65%, #050608 100%);
+  --color-surface: rgba(14, 16, 23, 0.88);
+  --color-surface-elevated: #11131a;
+  --color-surface-hover: rgba(22, 26, 38, 0.95);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-subtle: #181c28;
+  --color-border-glow: rgba(56, 189, 248, 0.25);
 
-  --color-text: #f8fafc;
+  --color-text: #f1f5f9;
   --color-text-muted: #94a3b8;
   --color-text-dim: #64748b;
 
@@ -22,15 +22,15 @@
   --color-danger: #f43f5e;
   --color-warning: #f59e0b;
 
-  --canvas-bg: #080d1a;
-  --canvas-dot: rgba(255, 255, 255, 0.08);
-  --node-box-fill: #0f172a;
-  --node-box-stroke: #334155;
+  --canvas-bg: #090a0f;
+  --canvas-dot: rgba(255, 255, 255, 0.07);
+  --node-box-fill: #11131a;
+  --node-box-stroke: rgba(255, 255, 255, 0.09);
   --node-title-fill: #f8fafc;
   --node-meta-fill: #64748b;
-  --edge-path-stroke: #475569;
-  --edge-tag-fill: #0b1120;
-  --edge-tag-stroke: #334155;
+  --edge-path-stroke: #334155;
+  --edge-tag-fill: #11131a;
+  --edge-tag-stroke: rgba(255, 255, 255, 0.09);
   --edge-tag-text: #cbd5e1;
 
   --font-sans:
@@ -1367,23 +1367,34 @@ body {
 }
 
 /* Canvas SVG & Nodes */
-.canvas-container {
+.canvas-container,
+.board-canvas-container {
   width: 100%;
   height: 100%;
+  position: absolute;
+  inset: 0;
   background: var(--canvas-bg);
   overflow: hidden;
-  position: relative;
 }
 
 .canvas-svg {
   width: 100%;
   height: 100%;
   cursor: default;
+  display: block;
 }
 
 .canvas-node {
   cursor: grab;
-  transition: transform 0.15s ease;
+  outline: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: transform 0.12s ease;
+}
+
+.canvas-node:focus,
+.canvas-node:focus-visible {
+  outline: none;
 }
 
 .canvas-node:active {
@@ -1393,26 +1404,29 @@ body {
 .node-box {
   fill: var(--node-box-fill);
   stroke: var(--node-box-stroke);
-  stroke-width: 1.25;
+  stroke-width: 1;
   transition:
-    stroke 0.15s ease,
-    filter 0.15s ease;
+    stroke 0.12s ease,
+    fill 0.12s ease;
 }
 
 .canvas-node:hover .node-box {
-  stroke: rgba(56, 189, 248, 0.4);
+  stroke: rgba(56, 189, 248, 0.55);
 }
 
 .canvas-node-selected .node-box {
   stroke: var(--color-accent);
-  stroke-width: 2;
-  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.35));
+  stroke-width: 1.5;
 }
 
 .canvas-node-error .node-box {
   stroke: var(--color-danger);
-  stroke-width: 2;
-  filter: drop-shadow(0 0 10px rgba(244, 63, 94, 0.35));
+  stroke-width: 1.5;
+}
+
+.canvas-node-hazard .node-box {
+  stroke: var(--color-warning);
+  stroke-width: 1.5;
 }
 
 .node-title {
@@ -1797,86 +1811,99 @@ body {
 /* ============================================================================
    5. ARCHITECTURE REVIEW ROOM & SRE MEETING WATCHER
    ============================================================================ */
+.btn-live-session-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-live-session-start:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.live-dot-idle {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-dim);
+}
+
+.live-dot-active {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulseGlow 2s infinite;
+}
+
 .meeting-bar-container {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.meeting-attendees-group {
-  display: flex;
+.meeting-session-badge {
+  display: inline-flex;
   align-items: center;
-}
-
-.attendee-avatar {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: rgba(148, 163, 184, 0.15);
-  border: 1.5px solid var(--color-surface);
-  color: var(--color-text-muted);
-  font-size: 10px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: -6px;
-  transition: all 0.15s ease;
-  user-select: none;
-}
-
-.attendee-avatar:first-child {
-  margin-left: 0;
-}
-
-.attendee-avatar:hover {
-  transform: translateY(-2px);
-  z-index: 2;
-}
-
-.ai-avatar {
-  background: rgba(56, 189, 248, 0.2);
-  border-color: var(--color-accent);
-  position: relative;
-  font-size: 13px;
-}
-
-.ai-raised-hand {
-  animation: pulseGlow 1.5s infinite;
-  border-color: #f59e0b;
-}
-
-.hand-badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
+  gap: 6px;
+  padding: 3px 9px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-full);
   font-size: 11px;
+  font-weight: 700;
+  color: #34d399;
+}
+
+.meeting-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.meeting-ai-alert {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
 }
 
 .yield-floor-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  background: rgba(245, 158, 11, 0.15);
-  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 3px 10px;
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.45);
   border-radius: var(--radius-full);
   color: #fbbf24;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
 }
 
 .yield-floor-btn:hover {
-  background: rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.3);
   border-color: #f59e0b;
-  transform: translateY(-1px);
-}
-
-.pulse-hand {
-  animation: pulseGlow 1.2s infinite;
 }
 
 .hazard-count-badge {
@@ -1892,28 +1919,11 @@ body {
   justify-content: center;
 }
 
-.ai-status-listening {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--color-text-dim);
-  font-family: var(--font-mono);
-}
-
-.listening-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  opacity: 0.8;
-}
-
 .btn-share-room {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: 5px;
+  padding: 3px 9px;
   background: transparent;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-full);
@@ -1926,8 +1936,24 @@ body {
 
 .btn-share-room:hover {
   color: var(--color-text);
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.25);
   background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-leave-room {
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-text-dim);
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.12s ease;
+}
+
+.btn-leave-room:hover {
+  color: #f87171;
+  background: rgba(244, 63, 94, 0.1);
 }
 
 /* SRE Yield Floor Modal Card */

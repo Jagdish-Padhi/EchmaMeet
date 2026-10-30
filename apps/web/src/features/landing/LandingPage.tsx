@@ -173,9 +173,7 @@ export function LandingPage({
                 <span>#rfc-checkout-v2 &bull; Architecture Review Session</span>
               </div>
               <div className="preview-presence">
-                <span className="avatar">SC</span>
-                <span className="avatar">AM</span>
-                <span className="avatar avatar-ai">🤖 Meta AI</span>
+                <span className="avatar avatar-ai">Meta AI</span>
               </div>
             </div>
 
@@ -422,14 +420,14 @@ export function LandingPage({
                     className="btn-ai-action"
                     onClick={() => onLaunchStudio('retry-storm')}
                   >
-                    ⚡ Run 5s Sandbox Proof
+                    Run Sandbox Proof
                   </button>
                   <button
                     type="button"
                     className="btn-ai-patch"
                     onClick={() => onLaunchStudio('retry-storm')}
                   >
-                    🛠️ Apply SRE Patch
+                    Apply SRE Patch
                   </button>
                 </div>
               </div>

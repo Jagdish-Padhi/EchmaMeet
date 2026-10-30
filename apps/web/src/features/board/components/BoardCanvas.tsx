@@ -3,6 +3,7 @@ import type { EdgeId, NodeId, NodeKind } from '@chaosboard/contracts';
 import type { BoardNode, BoardState } from '../types';
 import { EdgeLink } from './EdgeLink';
 import { NodeCard } from './NodeCard';
+import { computeRubberbandRoute } from '../utils/edge-router';
 
 export interface BoardCanvasProps {
   readonly board: BoardState;
@@ -43,6 +44,8 @@ export function BoardCanvas({
   // Wire Connection Dragging State
   const [connectingSource, setConnectingSource] = useState<NodeId | null>(null);
   const [connectingCursor, setConnectingCursor] = useState<{ x: number; y: number } | null>(null);
+  const connectStartPosRef = useRef<{ clientX: number; clientY: number } | null>(null);
+  const hasMovedWireRef = useRef(false);
 
   // Node Dragging State
   const draggingNodeRef = useRef<{
@@ -159,6 +162,8 @@ export function BoardCanvas({
     e.stopPropagation();
     setConnectingSource(sourceId);
     setConnectingCursor(screenToCanvasCoords(e.clientX, e.clientY));
+    connectStartPosRef.current = { clientX: e.clientX, clientY: e.clientY };
+    hasMovedWireRef.current = false;
   };
 
   // Drop wire on target node
@@ -168,6 +173,8 @@ export function BoardCanvas({
     }
     setConnectingSource(null);
     setConnectingCursor(null);
+    connectStartPosRef.current = null;
+    hasMovedWireRef.current = false;
   };
 
   // Canvas Mouse Down: Start Pan if Space pressed or Middle-Click
@@ -179,12 +186,14 @@ export function BoardCanvas({
       return;
     }
 
-    // Left click on empty canvas deselects
+    // Left click on empty canvas deselects and cancels active wire
     if (e.target === svgRef.current || (e.target as SVGElement).id === 'canvas-matrix-bg') {
       onSelectNode(null);
       onSelectEdge(null);
       setConnectingSource(null);
       setConnectingCursor(null);
+      connectStartPosRef.current = null;
+      hasMovedWireRef.current = false;
     }
   };
 
@@ -198,9 +207,16 @@ export function BoardCanvas({
       return;
     }
 
-    // 2. Wire Connection Dragging
+    // 2. Wire Connection Dragging / Moving
     if (connectingSource) {
       setConnectingCursor(screenToCanvasCoords(e.clientX, e.clientY));
+      if (connectStartPosRef.current) {
+        const dX = Math.abs(e.clientX - connectStartPosRef.current.clientX);
+        const dY = Math.abs(e.clientY - connectStartPosRef.current.clientY);
+        if (dX > 6 || dY > 6) {
+          hasMovedWireRef.current = true;
+        }
+      }
       return;
     }
 
@@ -217,9 +233,12 @@ export function BoardCanvas({
   const handleMouseUp = () => {
     isPanningRef.current = false;
     draggingNodeRef.current = null;
-    if (connectingSource) {
+    // Only cancel wire on mouseUp if the user was actively dragging and released over empty space
+    if (connectingSource && hasMovedWireRef.current) {
       setConnectingSource(null);
       setConnectingCursor(null);
+      connectStartPosRef.current = null;
+      hasMovedWireRef.current = false;
     }
   };
 
@@ -348,16 +367,10 @@ export function BoardCanvas({
             />
           ))}
 
-          {/* Live Dragged Wire (Rubberband Connection Preview to 184x76 Node) */}
+          {/* Live Dragged Wire (Rubberband Connection Preview) */}
           {sourceConnectingNode && connectingCursor && (
             <path
-              d={`M ${String(sourceConnectingNode.position.x + 184)} ${String(
-                sourceConnectingNode.position.y + 38,
-              )} C ${String(sourceConnectingNode.position.x + 240)} ${String(
-                sourceConnectingNode.position.y + 38,
-              )}, ${String(connectingCursor.x - 50)} ${String(connectingCursor.y)}, ${String(
-                connectingCursor.x,
-              )} ${String(connectingCursor.y)}`}
+              d={computeRubberbandRoute(sourceConnectingNode.position, connectingCursor, 184, 76)}
               fill="none"
               stroke="var(--color-accent)"
               strokeWidth={2}
