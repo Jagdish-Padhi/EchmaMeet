@@ -120,4 +120,3 @@ describe('CircuitBreaker', () => {
     expect(breaker.getTransitionCount()).toBe(0);
   });
 });
-

@@ -63,4 +63,3 @@ export class QueueConsumerWorker {
     this.queue.length = 0;
   }
 }
-

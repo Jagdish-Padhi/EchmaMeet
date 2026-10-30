@@ -20,4 +20,3 @@ export const networkPlanSchema = z.strictObject({
   edges: z.array(edgeProxyAllocationSchema),
 });
 export type NetworkPlan = z.infer<typeof networkPlanSchema>;
-

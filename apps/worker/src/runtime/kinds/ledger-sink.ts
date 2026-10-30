@@ -46,4 +46,3 @@ export class LedgerSinkStore {
     this.duplicateCount = 0;
   }
 }
-

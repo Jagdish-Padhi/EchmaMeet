@@ -101,4 +101,3 @@ describe('worker-control contracts', () => {
     });
   });
 });
-

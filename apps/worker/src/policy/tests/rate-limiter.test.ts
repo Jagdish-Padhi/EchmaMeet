@@ -60,4 +60,3 @@ describe('TokenBucketRateLimiter', () => {
     expect(limiter.tryAcquire()).toBe(false);
   });
 });
-

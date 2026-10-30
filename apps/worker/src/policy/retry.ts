@@ -41,4 +41,3 @@ export function computeBackoffDelayMs(
 export function canRetry(attemptsMade: number, maxAttempts: number): boolean {
   return attemptsMade < maxAttempts;
 }
-

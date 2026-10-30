@@ -58,4 +58,3 @@ export const workerShutdownResponseSchema = z.strictObject({
   status: z.literal('shutting_down'),
 });
 export type WorkerShutdownResponse = z.infer<typeof workerShutdownResponseSchema>;
-

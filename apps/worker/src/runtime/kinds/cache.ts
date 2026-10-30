@@ -39,4 +39,3 @@ export class InProcessCache<T = unknown> {
     this.entries.clear();
   }
 }
-

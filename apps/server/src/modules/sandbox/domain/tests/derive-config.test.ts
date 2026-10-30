@@ -104,4 +104,3 @@ describe('deriveNodeConfigurations', () => {
     expect(gatewaySeed).not.toBe(backendSeed);
   });
 });
-
