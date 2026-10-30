@@ -1,0 +1,20 @@
+{
+  "name": "@chaosboard/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../.env src/main.ts",
+    "start": "tsx --env-file-if-exists=../../.env src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
+  },
+  "dependencies": {
+    "@chaosboard/contracts": "workspace:*",
+    "@chaosboard/shared": "workspace:*",
+    "fastify": "5.12.7",
+    "pino": "10.4.0",
+    "zod": "4.6.7"
+  }
+}
