@@ -121,6 +121,14 @@ Otherwise, the orchestrator rolls back immediately to the previous best topology
 
 **No client-side derivation of metrics or verdicts.** The UI acts as a pure renderer for backend contracts. Invariant verdicts, percentile aggregates, Pareto trade-off frontiers, and agreement metrics are computed solely by server domain modules.
 
+## Vision ingestion and red-stroke gesture (Phase 8)
+
+**Deterministic pure TypeScript image decoding and red-stroke detection.** To avoid platform-dependent native C++ compilation (e.g. libvips or sharp binaries on Windows/Docker), image header parsing and PNG pixel unfiltering are implemented in pure Node.js/TypeScript using `node:zlib.inflateSync`. Red-stroke detection operates on raw pixel data via color threshold ratios ($R > 130$, $G < 110$, $B < 110$, $R > 1.35 \times \max(G, B) + 20$) and orders cluster centroids into simplified polylines.
+
+**Dual-path gesture architecture (SAM 3.1 with deterministic fallback).** When SAM 3.1 is available, segmentation masks locate the red stroke on a single keyframe; when unavailable, the color-threshold detector executes automatically. The API and UI explicitly identify which detector produced the result (`detector: 'sam' | 'color_threshold'`).
+
+**Human-in-the-loop confirmation guard.** Unconfirmed drafts never trigger experiments. Extracted nodes and directed edges are overlaid on the source diagram with visible ambiguity callouts and confidence percentages, requiring explicit human review and confirmation before importing into the active canvas.
+
 ## Open decisions
 
 **License.** A public repository is required. Choose a license before submission. This was left to the builder on purpose.
