@@ -129,6 +129,14 @@ Otherwise, the orchestrator rolls back immediately to the previous best topology
 
 **Human-in-the-loop confirmation guard.** Unconfirmed drafts never trigger experiments. Extracted nodes and directed edges are overlaid on the source diagram with visible ambiguity callouts and confidence percentages, requiring explicit human review and confirmation before importing into the active canvas.
 
+## Voice commands and speech-to-intent bridge (Phase 9)
+
+**Push-to-talk with streaming WebSocket and fallback HTTP.** Voice commands use MediaRecorder in the browser to stream WebM/PCM chunks over `/ws/voice` or via fallback HTTP `POST /api/voice/parse`. The bridge streams partial transcription status updates and final parsed intents with millisecond-precision timing breakdowns (`captureMs`, `transcriptMs`, `parseMs`).
+
+**Deterministic name resolution and intent parsing.** Spoken labels (e.g. "gateway", "backend", "auth service", "between client and api") resolve against active topology node and edge labels using exact and case-insensitive substring matching. If a target is missing or ambiguous, the intent parser marks the result as `status: 'ambiguous'` with candidate suggestions rather than guessing.
+
+**Confirmation guard before destructive actions.** Spoken fault injections, invariant modifications, and repair loops require visual preview and human confirmation by default. An optional explicit auto-confirm toggle is provided with visible indicators, ensuring accidental spoken utterances never silently inject chaos into running systems.
+
 ## Open decisions
 
 **License.** A public repository is required. Choose a license before submission. This was left to the builder on purpose.

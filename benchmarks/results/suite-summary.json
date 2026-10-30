@@ -90,12 +90,8 @@
                 "p75": 1050,
                 "iqr": 100
               },
-              "baselineValues": [
-                100
-              ],
-              "faultedValues": [
-                1000
-              ]
+              "baselineValues": [100],
+              "faultedValues": [1000]
             }
           },
           {
@@ -121,12 +117,8 @@
                 "p75": 0.99,
                 "iqr": 0.02
               },
-              "baselineValues": [
-                1
-              ],
-              "faultedValues": [
-                0.98
-              ]
+              "baselineValues": [1],
+              "faultedValues": [0.98]
             }
           }
         ],
