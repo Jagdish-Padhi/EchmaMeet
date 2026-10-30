@@ -1,5 +1,8 @@
 export { CanvasSreCallout } from './CanvasSreCallout';
+export { CreateMeetingModal } from './CreateMeetingModal';
+export { JoinMeetingModal } from './JoinMeetingModal';
 export { MeetingBar } from './MeetingBar';
+export { MeetingsDropdown } from './MeetingsDropdown';
 export { SreYieldFloorModal } from './SreYieldFloorModal';
 export { useCollaborationPresence } from './useCollaborationPresence';
 export { useMeetingSreWatcher } from './useMeetingSreWatcher';

@@ -61,7 +61,9 @@ import { ReportViewer } from '../features/reports';
 import { LandingPage } from '../features/landing/LandingPage';
 import {
   CanvasSreCallout,
-  MeetingBar,
+  CreateMeetingModal,
+  JoinMeetingModal,
+  MeetingsDropdown,
   SreYieldFloorModal,
   useCollaborationPresence,
   useMeetingSreWatcher,
@@ -130,8 +132,26 @@ export function App() {
 
   // Live Review Collaboration Room state
   const [isMeetingLive, setIsMeetingLive] = useState(false);
+  const [meetingRoomCode, setMeetingRoomCode] = useState('#rfc-checkout-v2');
+  const [isCreateMeetingOpen, setIsCreateMeetingOpen] = useState(false);
+  const [isJoinMeetingOpen, setIsJoinMeetingOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isIacModalOpen, setIsIacModalOpen] = useState(false);
+
+  const handleCreateMeeting = (roomCode: string) => {
+    setMeetingRoomCode(roomCode);
+    setIsMeetingLive(true);
+  };
+
+  const handleJoinWithCode = (roomCode: string) => {
+    setMeetingRoomCode(roomCode);
+    setIsMeetingLive(true);
+  };
+
+  const handleJoinSoloAi = () => {
+    setMeetingRoomCode('#solo-ai-sre');
+    setIsMeetingLive(true);
+  };
 
   // Multi-Cursor Real-Time Collaboration
   const [currentReviewer] = useState(() => ({
@@ -360,13 +380,13 @@ export function App() {
             <span className="studio-brand-name">Resilio</span>
           </button>
 
-          {/* Architecture Review Room & SRE Watcher Bar */}
-          <MeetingBar
-            isConnected={isMeetingLive}
-            onToggleConnect={() => setIsMeetingLive((prev) => !prev)}
-            aiRaisedHand={isMeetingLive && sreWatcher.aiRaisedHand}
-            hazards={sreWatcher.hazards}
-            onYieldFloor={() => setIsSreModalOpen(true)}
+          {/* Clean Enterprise Meetings Dropdown (Create, Join, Active Session) */}
+          <MeetingsDropdown
+            isMeetingActive={isMeetingLive}
+            roomCode={meetingRoomCode}
+            onOpenCreate={() => setIsCreateMeetingOpen(true)}
+            onOpenJoin={() => setIsJoinMeetingOpen(true)}
+            onLeaveMeeting={() => setIsMeetingLive(false)}
             onShareRoom={() => {
               const url = window.location.href;
               void navigator.clipboard.writeText(url);
@@ -1100,6 +1120,21 @@ export function App() {
         isOpen={isIacModalOpen}
         topology={currentTopology}
         onClose={() => setIsIacModalOpen(false)}
+      />
+
+      {/* Create Architecture Review Meeting Modal */}
+      <CreateMeetingModal
+        isOpen={isCreateMeetingOpen}
+        onClose={() => setIsCreateMeetingOpen(false)}
+        onCreate={handleCreateMeeting}
+      />
+
+      {/* Join Architecture Review Meeting Modal (Code or Solo with AI) */}
+      <JoinMeetingModal
+        isOpen={isJoinMeetingOpen}
+        onClose={() => setIsJoinMeetingOpen(false)}
+        onJoinWithCode={handleJoinWithCode}
+        onJoinSoloAi={handleJoinSoloAi}
       />
 
       {/* SRE Yield Floor Modal */}
