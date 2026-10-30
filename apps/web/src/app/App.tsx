@@ -49,12 +49,14 @@ import {
   VoiceQuickCommands,
   VoiceTranscriptStream,
 } from '../features/voice';
+import { ReportViewer } from '../features/reports';
 import { SystemStatus } from '../features/system-status';
-import { edgeIdSchema, faultIdSchema } from '@chaosboard/contracts';
+import { edgeIdSchema, faultIdSchema, type RunId } from '@chaosboard/contracts';
 
 export function App() {
   const api = useMemo(() => createApiClient(), []);
   const [activeTab, setActiveTab] = useState('board');
+  const [selectedReportRunId, setSelectedReportRunId] = useState<RunId | null>(null);
 
   // Scenarios catalog
   const scenariosState = useScenarios(api);
@@ -210,6 +212,7 @@ export function App() {
           { id: 'voice', label: 'Voice Control' },
           { id: 'repair', label: 'Autonomous Repair' },
           { id: 'runs', label: 'Past Runs History', badge: runsHistory.runs.length },
+          { id: 'reports', label: 'Report & Blueprint Export' },
           { id: 'benchmarks', label: 'Benchmark Results' },
         ]}
       />
@@ -515,6 +518,59 @@ export function App() {
             )}
           </div>
         )}
+
+        {/* Tab 3.5: Report & Blueprint Export */}
+        {activeTab === 'reports' &&
+          (() => {
+            const firstRun = runsHistory.runs[0];
+            const activeReportRunId: RunId | null =
+              selectedReportRunId ??
+              experimentSession.runId ??
+              runsHistory.selectedRunId ??
+              (firstRun ? firstRun.id : null);
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {runsHistory.runs.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <label style={{ fontSize: 13, color: '#94a3b8' }}>Select Run to Inspect:</label>
+                    <select
+                      value={activeReportRunId ?? ''}
+                      onChange={(e) => {
+                        setSelectedReportRunId(e.target.value as RunId);
+                      }}
+                      style={{
+                        background: '#1e293b',
+                        color: '#f8fafc',
+                        border: '1px solid #475569',
+                        borderRadius: 6,
+                        padding: '6px 10px',
+                        fontSize: 13,
+                        fontFamily: 'monospace',
+                      }}
+                    >
+                      {runsHistory.runs.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.id} ({r.topology.name} - {r.status})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {activeReportRunId ? (
+                  <ReportViewer api={api} runId={activeReportRunId} />
+                ) : (
+                  <Card title="Run Report & Artifact Export">
+                    <p style={{ color: '#94a3b8' }}>
+                      No runs recorded yet. Run a chaos experiment or scenario from the Canvas tab
+                      first to generate a deterministic report and blueprint card.
+                    </p>
+                  </Card>
+                )}
+              </div>
+            );
+          })()}
 
         {/* Tab 4: Benchmark Results */}
         {activeTab === 'benchmarks' && (

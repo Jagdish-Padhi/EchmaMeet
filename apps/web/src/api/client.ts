@@ -14,6 +14,8 @@ import {
   topologySchema,
   redStrokeDetectionResultSchema,
   voiceIntentParseResultSchema,
+  reportExportSchema,
+  blueprintCardSchema,
   type BenchmarkSuiteSummary,
   type CancelExperimentResponse,
   type HealthResponse,
@@ -35,6 +37,8 @@ import {
   type RedStrokeGestureRequest,
   type RedStrokeDetectionResult,
   type VoiceIntentParseResult,
+  type ReportExport,
+  type BlueprintCard,
 } from '@chaosboard/contracts';
 import { z, type ZodType } from 'zod';
 
@@ -121,6 +125,10 @@ export interface ApiClient {
     },
     signal?: AbortSignal,
   ): Promise<VoiceIntentParseResult>;
+  getReportMarkdown(runId: RunId, signal?: AbortSignal): Promise<string>;
+  getReportJson(runId: RunId, signal?: AbortSignal): Promise<ReportExport>;
+  getReportDiagramSvg(runId: RunId, signal?: AbortSignal): Promise<string>;
+  getBlueprintCard(runId: RunId, signal?: AbortSignal): Promise<BlueprintCard>;
 }
 
 /**
@@ -187,6 +195,31 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
       });
     }
     return parsed.data;
+  }
+
+  async function requestText(path: string, init: RequestInit = {}): Promise<string> {
+    let response: Response;
+    try {
+      response = await fetchFn(`${baseUrl}${path}`, init);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw error;
+      }
+      throw new ApiError({
+        kind: 'network',
+        message: error instanceof Error ? error.message : 'unknown network error',
+      });
+    }
+
+    if (!response.ok) {
+      throw new ApiError({
+        kind: 'unexpected_response',
+        status: response.status,
+        message: `HTTP error ${String(response.status)}`,
+      });
+    }
+
+    return response.text();
   }
 
   const withSignal = (method: string, signal?: AbortSignal, body?: string): RequestInit => {
@@ -323,5 +356,17 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
         voiceIntentParseResultSchema,
         withSignal('POST', signal, JSON.stringify(body)),
       ),
+
+    getReportMarkdown: (runId, signal) =>
+      requestText(`/api/reports/${runId}/markdown`, withSignal('GET', signal)),
+
+    getReportJson: (runId, signal) =>
+      request(`/api/reports/${runId}/json`, reportExportSchema, withSignal('GET', signal)),
+
+    getReportDiagramSvg: (runId, signal) =>
+      requestText(`/api/reports/${runId}/diagram`, withSignal('GET', signal)),
+
+    getBlueprintCard: (runId, signal) =>
+      request(`/api/reports/${runId}/card`, blueprintCardSchema, withSignal('GET', signal)),
   };
 }
