@@ -76,6 +76,16 @@ Every non-obvious choice, with the reason and what was rejected. Newest decision
 
 **Scripts test hypotheses and record what happened.** The Spark Open script uses the OpenAI-compatible chat completions convention the guide describes, labeled as a hypothesis. Capabilities whose request shape must come from provider docs (SAM, Muse Image, Muse Wonder, Muse Voice Transcribe) use generic probe files that the builder writes from the docs, so no request shape is invented. Recordings go to `.smoke-output/` (git-ignored), are redacted, and are reviewed by hand before anything is copied into `docs/api-notes.md` or committed as a fixture.
 
+## Experiment orchestration and storage (Phase 4)
+
+**Single-host mutual exclusion lock.** A node process may only run one active experiment at a time to prevent port collisions, cross-talk in Toxiproxy, and resource contention on worker processes. Concurrent requests receive an HTTP 409 Conflict with RFC 7807 Problem Details (`code: "experiment_busy"`).
+
+**The baseline-must-be-healthy rule.** If an invariant condition is violated during the un-faulted baseline run, the invariant verdict evaluates to `INVALID` with a detailed evidence explanation rather than reporting false chaos violation.
+
+**Strict 4-state verdict evaluation.** Invariant verdicts evaluate strictly to `PASS`, `VIOLATED`, `INCONCLUSIVE` (when the interquartile range straddles the threshold), or `INVALID` (if baseline is unhealthy or zero valid trials completed).
+
+**Transactional SQLite run and event persistence.** Runs and strictly monotonic event sequences are recorded transactionally with SQLite v1 migrations. Replaying events from `/api/runs/:id/events` yields the identical historical SSE event stream.
+
 ## Open decisions
 
 **License.** A public repository is required. Choose a license before submission. This was left to the builder on purpose.
