@@ -187,3 +187,33 @@ export type {
   RepairOutcomeSummary,
   StaticPrediction,
 } from './benchmark';
+export {
+  visionBoxSchema,
+  visionConfirmRequestSchema,
+  visionExtractedEdgeSchema,
+  visionExtractedNodeSchema,
+  visionExtractionSchema,
+} from './vision-draft';
+export type {
+  VisionBox,
+  VisionConfirmRequest,
+  VisionExtractedEdge,
+  VisionExtractedNode,
+  VisionExtraction,
+} from './vision-draft';
+export {
+  candidateEdgeSchema,
+  redStrokeDetectionResultSchema,
+  redStrokeGestureRequestSchema,
+  redStrokeIntersectionSchema,
+  redStrokePointSchema,
+  redStrokeSelectionSchema,
+} from './gesture';
+export type {
+  CandidateEdge,
+  RedStrokeDetectionResult,
+  RedStrokeGestureRequest,
+  RedStrokeIntersection,
+  RedStrokePoint,
+  RedStrokeSelection,
+} from './gesture';
