@@ -29,4 +29,15 @@ export function registerRunsRoutes(app: FastifyInstance, runsService: RunsServic
     }
     return runsService.getEvents(id);
   });
+
+  app.get('/api/runs/:id/export', (request, reply) => {
+    const params = request.params as { id: string };
+    const id = runIdSchema.parse(params.id);
+    const run = runsService.getRun(id);
+    if (!run) {
+      throw new AppError('not_found', 'run_not_found', `Run ${id} was not found.`);
+    }
+    void reply.header('content-disposition', `attachment; filename="${id}.json"`);
+    return run;
+  });
 }
