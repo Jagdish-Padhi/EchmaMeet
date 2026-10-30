@@ -5,9 +5,10 @@ export {
   faultIdSchema,
   invariantIdSchema,
   nodeIdSchema,
+  runIdSchema,
   topologyIdSchema,
 } from './ids';
-export type { EdgeId, FaultId, InvariantId, NodeId, TopologyId } from './ids';
+export type { EdgeId, FaultId, InvariantId, NodeId, RunId, TopologyId } from './ids';
 export {
   breakerPolicySchema,
   edgeModeSchema,
@@ -111,3 +112,29 @@ export {
 export type { TrialDiagnostics, TrialMetrics, TrialResult, TrialValidity } from './trial-result';
 export { metricAggregateSchema, trialAggregateSchema } from './trial-aggregate';
 export type { MetricAggregate, TrialAggregate } from './trial-aggregate';
+export {
+  experimentVerdictsSchema,
+  invariantVerdictSchema,
+  verdictEvidenceSchema,
+  verdictStatusSchema,
+} from './verdict';
+export type {
+  ExperimentVerdicts,
+  InvariantVerdict,
+  VerdictEvidence,
+  VerdictStatus,
+} from './verdict';
+export { runEventSchema, runEventTypeSchema } from './run-event';
+export type { RunEvent, RunEventType } from './run-event';
+export { provenanceSchema, runRecordSchema, runStatusSchema, runSummarySchema } from './run-record';
+export type { Provenance, RunRecord, RunStatus, RunSummary } from './run-record';
+export {
+  cancelExperimentResponseSchema,
+  startExperimentRequestSchema,
+  startExperimentResponseSchema,
+} from './experiment';
+export type {
+  CancelExperimentResponse,
+  StartExperimentRequest,
+  StartExperimentResponse,
+} from './experiment';

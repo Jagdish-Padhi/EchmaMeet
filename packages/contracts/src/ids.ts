@@ -21,3 +21,12 @@ export type FaultId = z.infer<typeof faultIdSchema>;
 
 export const invariantIdSchema = z.string().regex(slugPattern, slugMessage).brand<'InvariantId'>();
 export type InvariantId = z.infer<typeof invariantIdSchema>;
+
+export const runIdSchema = z
+  .string()
+  .regex(
+    /^run-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$|^run-[a-z0-9-]{8,64}$/,
+    'must be a valid run ID (e.g. run-<uuid>)',
+  )
+  .brand<'RunId'>();
+export type RunId = z.infer<typeof runIdSchema>;
