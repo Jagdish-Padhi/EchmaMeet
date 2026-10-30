@@ -145,7 +145,10 @@ export function useVoiceSession(
     }));
 
     try {
-      if (typeof (navigator.mediaDevices as unknown as { getUserMedia?: unknown }).getUserMedia !== 'function') {
+      if (
+        typeof (navigator.mediaDevices as unknown as { getUserMedia?: unknown }).getUserMedia !==
+        'function'
+      ) {
         throw new Error('Microphone audio capture is not supported in this browser.');
       }
 
@@ -198,10 +201,12 @@ export function useVoiceSession(
               const commaIdx = resultStr.indexOf(',');
               const base64 = commaIdx >= 0 ? resultStr.slice(commaIdx + 1) : resultStr;
 
-              const nodes = (activeTopology?.nodes ?? []).map((n: { id: string; label: string }) => ({
-                id: n.id,
-                label: n.label,
-              }));
+              const nodes = (activeTopology?.nodes ?? []).map(
+                (n: { id: string; label: string }) => ({
+                  id: n.id,
+                  label: n.label,
+                }),
+              );
               const edges = (activeTopology?.edges ?? []).map(
                 (e: { id: string; source: string; target: string }) => ({
                   id: e.id,
@@ -233,7 +238,10 @@ export function useVoiceSession(
               setState((prev) => ({
                 ...prev,
                 isProcessing: false,
-                error: innerErr instanceof Error ? innerErr.message : 'Failed to process recorded audio.',
+                error:
+                  innerErr instanceof Error
+                    ? innerErr.message
+                    : 'Failed to process recorded audio.',
               }));
             }
           })();
