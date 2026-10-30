@@ -86,6 +86,21 @@ Every non-obvious choice, with the reason and what was rejected. Newest decision
 
 **Transactional SQLite run and event persistence.** Runs and strictly monotonic event sequences are recorded transactionally with SQLite v1 migrations. Replaying events from `/api/runs/:id/events` yields the identical historical SSE event stream.
 
+## Repair agent, catalog, and model adapter (Phase 5)
+
+**Pure patch validation against catalog bounds.** All repair operations (`set_timeout`, `set_retry`, `set_circuit_breaker`, `set_fallback`, `set_edge_mode`, `set_concurrency`, `set_queue`, `set_ingress_rate_limit`) are validated purely against the frozen catalog bounds and the current topology structure before application. Disallowed operations (such as non-existent nodes/edges, unbounded queues on rate-limited nodes, or values outside catalog limits) reject immediately with structured issue details without mutating topology.
+
+**Pareto improvement decision rule for rollback protection.** Candidate patches are measured against real experiment trials. A patch is accepted if and only if:
+1. No previously passed invariant regressed to violated or invalid status.
+2. At least one targeted invariant transitioned to PASS or moved closer to its threshold.
+Otherwise, the orchestrator rolls back immediately to the previous best topology.
+
+**Single structured model re-ask on schema validation failure.** If the structured LLM adapter encounters invalid JSON or schema validation mismatch, it issues a single automatic re-ask payload containing the specific validation issues before reporting a failure.
+
+**Deterministic fallback rule-based proposer.** In rule-based mode, the proposer selects pure symptom-based heuristics (capping retries under retry storm, adding exponential backoff with full jitter, enabling circuit breakers, scaling worker pools) without scenario name leakage.
+
+**Lock orchestration between sequential experiment iterations.** Because experiment teardown cleans up sandboxes and resets Toxiproxy toxics asynchronously, the repair orchestrator waits for `isBusy() === false` before launching subsequent iterations, preventing concurrency lock collisions.
+
 ## Open decisions
 
 **License.** A public repository is required. Choose a license before submission. This was left to the builder on purpose.
