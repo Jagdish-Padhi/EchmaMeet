@@ -2940,6 +2940,15 @@ body {
   animation: menuAppear 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Right-anchored dropdowns (Export, Import, Telemetry) expand inwards/left to prevent viewport overflow */
+.meetings-menu.export-menu,
+.meetings-menu.import-menu,
+.meetings-menu.analysis-menu {
+  left: auto;
+  right: 0;
+  width: 280px;
+}
+
 @keyframes menuAppear {
   from {
     opacity: 0;
