@@ -1,4 +1,5 @@
 export { BoardCanvas } from './components/BoardCanvas';
+export type { RemoteCursor } from './components/BoardCanvas';
 export { EdgeInspector } from './components/EdgeInspector';
 export { ImportDiagramModal } from './components/ImportDiagramModal';
 export { NodeInspector } from './components/NodeInspector';

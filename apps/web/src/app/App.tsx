@@ -59,7 +59,13 @@ import {
 } from '../features/voice';
 import { ReportViewer } from '../features/reports';
 import { LandingPage } from '../features/landing/LandingPage';
-import { MeetingBar, SreYieldFloorModal, useMeetingSreWatcher } from '../features/meeting';
+import {
+  MeetingBar,
+  SreYieldFloorModal,
+  useCollaborationPresence,
+  useMeetingSreWatcher,
+} from '../features/meeting';
+import { IacExportModal } from '../features/repair';
 import {
   loadSettingsFromStorage,
   saveSettingsToStorage,
@@ -124,6 +130,19 @@ export function App() {
   // Live Review Collaboration Room state
   const [isMeetingLive, setIsMeetingLive] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isIacModalOpen, setIsIacModalOpen] = useState(false);
+
+  // Multi-Cursor Real-Time Collaboration
+  const [currentReviewer] = useState(() => ({
+    userId: 'eng-alex-chen',
+    name: 'Alex Chen',
+    role: 'Staff SRE',
+    avatar: 'AC',
+  }));
+  const { remoteReviewers, broadcastCursor } = useCollaborationPresence(
+    currentReviewer,
+    board.selectedNodeId,
+  );
 
   // Meeting Room SRE Watcher
   const [isSreModalOpen, setIsSreModalOpen] = useState(false);
@@ -477,6 +496,15 @@ export function App() {
             <span>AI Repair</span>
           </button>
 
+          <button
+            type="button"
+            className="studio-action-pill"
+            onClick={() => setIsIacModalOpen(true)}
+            title="Export calibrated Istio & Envoy resilience CRD manifest"
+          >
+            <span>Export IaC</span>
+          </button>
+
           <div className="studio-topbar-divider" />
 
           {/* Theme Toggle Button */}
@@ -623,6 +651,8 @@ export function App() {
             onAddNode={addNode}
             onAddEdge={addEdge}
             onDuplicateNode={duplicateNode}
+            remoteCursors={remoteReviewers}
+            onCursorMove={broadcastCursor}
             onDeleteNode={(nodeId) => {
               removeNode(nodeId);
               if (activeDrawer === 'inspect') setActiveDrawer('none');
@@ -1026,6 +1056,13 @@ export function App() {
         onImport={(nodes, edges, entryNodeId) => {
           importDiagram(nodes, edges, entryNodeId, 'Imported Architecture');
         }}
+      />
+
+      {/* Production Infrastructure-as-Code Export Modal */}
+      <IacExportModal
+        isOpen={isIacModalOpen}
+        topology={currentTopology}
+        onClose={() => setIsIacModalOpen(false)}
       />
 
       {/* SRE Yield Floor Modal */}

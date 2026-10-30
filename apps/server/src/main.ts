@@ -9,6 +9,7 @@ import { createShutdownRegistry, installProcessHandlers } from './platform/lifec
 import { createLogger } from './platform/logging';
 import { runMigrations } from './platform/migrations';
 import { createDistributedQueueManager } from './platform/queue';
+import { attachCollaborationWebSocketBridge } from './platform/collaboration-ws';
 import { systemClock } from './platform/system-clock';
 
 const CLEANUP_TIMEOUT_MS = 10_000;
@@ -58,6 +59,7 @@ async function main(): Promise<void> {
   installProcessHandlers(process, shutdown, logger);
 
   await app.listen({ host: settings.host, port: settings.port });
+  attachCollaborationWebSocketBridge(app.server);
 }
 
 main().catch((error: unknown) => {

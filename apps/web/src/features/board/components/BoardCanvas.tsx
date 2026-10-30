@@ -5,8 +5,17 @@ import { EdgeLink } from './EdgeLink';
 import { NodeCard } from './NodeCard';
 import { computeRubberbandRoute } from '../utils/edge-router';
 
+export interface RemoteCursor {
+  readonly userId: string;
+  readonly name: string;
+  readonly role: string;
+  readonly cursor: { readonly x: number; readonly y: number };
+}
+
 export interface BoardCanvasProps {
   readonly board: BoardState;
+  readonly remoteCursors?: readonly RemoteCursor[];
+  readonly onCursorMove?: (x: number, y: number) => void;
   readonly onSelectNode: (id: NodeId | null) => void;
   readonly onSelectEdge: (id: EdgeId | null) => void;
   readonly onMoveNode: (id: NodeId, x: number, y: number) => void;
@@ -21,6 +30,8 @@ export interface BoardCanvasProps {
 
 export function BoardCanvas({
   board,
+  remoteCursors = [],
+  onCursorMove,
   onSelectNode,
   onSelectEdge,
   onMoveNode,
@@ -263,6 +274,12 @@ export function BoardCanvas({
         const dy = (e.clientY - clientY) / zoom;
         onMoveNode(id, Math.round(startX + dx), Math.round(startY + dy));
       }
+
+      // 4. Collaborative Presence Broadcast
+      if (onCursorMove) {
+        const canvasCoords = screenToCanvasCoords(e.clientX, e.clientY);
+        onCursorMove(canvasCoords.x, canvasCoords.y);
+      }
     };
 
     const handleGlobalMouseUp = () => {
@@ -282,7 +299,7 @@ export function BoardCanvas({
       window.removeEventListener('mousemove', handleGlobalMouseMove);
       window.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, [connectingSource, onMoveNode, pan.x, pan.y, screenToCanvasCoords, zoom]);
+  }, [connectingSource, onCursorMove, onMoveNode, pan.x, pan.y, screenToCanvasCoords, zoom]);
 
   // Canvas Mouse Up
   const handleMouseUp = () => {
@@ -450,6 +467,43 @@ export function BoardCanvas({
               onStartConnect={handleStartConnect}
               onDropConnect={handleDropConnect}
             />
+          ))}
+          {/* Remote Reviewer Cursors (Google Meet / Figma Presence) */}
+          {remoteCursors.map((rc) => (
+            <g
+              key={rc.userId}
+              transform={`translate(${String(rc.cursor.x)}, ${String(rc.cursor.y)})`}
+              className="remote-presence-cursor"
+              style={{ pointerEvents: 'none' }}
+            >
+              {/* Figma-style sharp cursor SVG */}
+              <path
+                d="M 0 0 L 0 16 L 4.5 12.5 L 8 18 L 10.5 16.5 L 7 11 L 12 11 Z"
+                fill="#0866ff"
+                stroke="#ffffff"
+                strokeWidth={1}
+              />
+              <g transform="translate(12, 14)">
+                <rect
+                  x={0}
+                  y={0}
+                  width={rc.name.length * 6.5 + 16}
+                  height={18}
+                  rx={4}
+                  fill="#0866ff"
+                />
+                <text
+                  x={8}
+                  y={12}
+                  fill="#ffffff"
+                  fontSize={10}
+                  fontWeight={600}
+                  fontFamily="var(--font-sans)"
+                >
+                  {rc.name}
+                </text>
+              </g>
+            </g>
           ))}
         </g>
       </svg>
