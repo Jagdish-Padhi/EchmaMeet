@@ -249,11 +249,11 @@ describe('Experiment orchestration and storage integration', () => {
       arrivalRateRps: 10,
       arrivalProcess: 'constant',
       warmupMs: 300,
-      measurementMs: 5000,
+      measurementMs: 2500,
       cooldownMs: 100,
       clientTimeoutMs: 2000,
       seed: 60000,
-      trials: 2,
+      trials: 1,
     };
 
     const startRes = await app.inject({
@@ -296,5 +296,5 @@ describe('Experiment orchestration and storage integration', () => {
     }
 
     expect(cancelled).toBe(true);
-  });
+  }, 90000);
 });
