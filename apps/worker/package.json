@@ -1,0 +1,17 @@
+{
+  "name": "@chaosboard/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@chaosboard/contracts": "workspace:*",
+    "@chaosboard/shared": "workspace:*",
+    "undici": "8.11.2",
+    "zod": "4.6.7"
+  }
+}
+
