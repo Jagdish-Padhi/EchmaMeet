@@ -571,8 +571,9 @@ body {
   align-items: center;
   padding: 0 14px;
   gap: 12px;
-  z-index: 30;
-  overflow: hidden;
+  z-index: 100;
+  overflow: visible;
+  position: relative;
 }
 
 /* Navbar Palette Strip (2-Row Architecture Palette on Left) */
@@ -1006,6 +1007,9 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
+  z-index: 101;
+  overflow: visible;
 }
 
 .studio-action-pill {
@@ -2481,8 +2485,12 @@ body {
 }
 
 .export-menu,
-.analysis-menu {
+.analysis-menu,
+.import-menu {
   width: 270px;
+  right: 0;
+  left: auto;
+  z-index: 200;
 }
 
 .meetings-menu-item.active-item {
@@ -2918,7 +2926,7 @@ body {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  z-index: 100;
+  z-index: 200;
   width: 280px;
   background: var(--color-surface-elevated);
   backdrop-filter: blur(20px);
