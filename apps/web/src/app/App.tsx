@@ -283,7 +283,7 @@ export function App() {
       `- **Edges (${String(board.edges.length)})**: ${board.edges
         .map(
           (e) =>
-            `${e.source} ➔ ${e.target} (${
+            `${e.source} -> ${e.target} (${
               e.policy.timeoutMs !== null ? `${String(e.policy.timeoutMs)}ms` : 'none'
             } timeout, ${String(e.policy.retry.maxAttempts)}x retries)`,
         )
@@ -459,35 +459,37 @@ export function App() {
             type="button"
             className={`studio-action-pill ${activeDrawer === 'inspect' ? 'active' : ''}`}
             onClick={() => setActiveDrawer(activeDrawer === 'inspect' ? 'none' : 'inspect')}
-            title="Inspect & configure selected node / edge policies"
+            title="Inspect selected node or edge policies"
           >
             <span>Inspector</span>
           </button>
 
-          {/* More Panels Dropdown */}
-          <select
-            className="studio-scenario-select"
-            style={{ width: 'auto', padding: '4px 8px', fontSize: 11 }}
-            value={
-              ['chaos', 'repair', 'voice', 'vision', 'reports', 'benchmarks', 'runs'].includes(
-                activeDrawer,
-              )
-                ? activeDrawer
-                : ''
-            }
-            onChange={(e) => {
-              setActiveDrawer(e.target.value as StudioDrawerTab);
-            }}
+          <button
+            type="button"
+            className={`studio-action-pill ${activeDrawer === 'chaos' ? 'active' : ''}`}
+            onClick={() => setActiveDrawer(activeDrawer === 'chaos' ? 'none' : 'chaos')}
+            title="Configure physical chaos faults and invariant bounds"
           >
-            <option value="">More Panels...</option>
-            <option value="chaos">Fault &amp; Invariants</option>
-            <option value="repair">AI Repair Session</option>
-            <option value="voice">Voice Stream</option>
-            <option value="vision">Vision Sketch</option>
-            <option value="reports">Executive Reports</option>
-            <option value="benchmarks">Benchmarks</option>
-            <option value="runs">Run History</option>
-          </select>
+            <span>Faults</span>
+          </button>
+
+          <button
+            type="button"
+            className={`studio-action-pill ${activeDrawer === 'telemetry' ? 'active' : ''}`}
+            onClick={() => setActiveDrawer(activeDrawer === 'telemetry' ? 'none' : 'telemetry')}
+            title="View empirical sandbox latency & error telemetry"
+          >
+            <span>Telemetry</span>
+          </button>
+
+          <button
+            type="button"
+            className={`studio-action-pill ${activeDrawer === 'repair' ? 'active' : ''}`}
+            onClick={() => setActiveDrawer(activeDrawer === 'repair' ? 'none' : 'repair')}
+            title="Open Meta AI autonomous repair session"
+          >
+            <span>AI Repair</span>
+          </button>
 
           <div className="studio-topbar-divider" />
 

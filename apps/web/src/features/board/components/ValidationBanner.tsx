@@ -7,21 +7,12 @@ export interface ValidationBannerProps {
 }
 
 export function ValidationBanner({ problems, isValidating }: ValidationBannerProps) {
-  if (isValidating) {
-    return <div className="validation-checking">Validating topology with backend...</div>;
-  }
-
-  if (problems.length === 0) {
-    return (
-      <div className="validation-valid" role="status">
-        <span className="valid-dot" aria-hidden="true" />
-        <span>Topology valid and structurally sound</span>
-      </div>
-    );
+  if (isValidating || problems.length === 0) {
+    return null;
   }
 
   return (
-    <Alert variant="error" title={`${String(problems.length)} Validation Issues Found`}>
+    <Alert variant="error" title={`${String(problems.length)} Validation Issues`}>
       <ul className="problem-list">
         {problems.map((p, idx) => (
           <li key={`${p.code}-${String(idx)}`} className="problem-item">

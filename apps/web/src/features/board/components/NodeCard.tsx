@@ -113,8 +113,6 @@ export function NodeCard({
       }}
       onMouseDown={(e) => onDragStart(node.id, e)}
       onMouseUp={() => onDropConnect?.(node.id)}
-      role="button"
-      tabIndex={0}
       aria-label={`Node ${node.label} (${node.kind})`}
     >
       {/* Main Sleek Card Body */}

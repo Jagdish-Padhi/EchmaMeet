@@ -201,23 +201,19 @@ export function LandingPage({
 
                 {/* Wire 1: Gateway -> Auth */}
                 <path
-                  d="M 234 118 C 300 118, 320 118, 380 118"
+                  d="M 234 118 L 307 118 Q 307 118, 307 118 L 380 118"
                   fill="none"
                   stroke="#38bdf8"
                   strokeWidth="2"
                   markerEnd="url(#p-arrow)"
                 />
                 <circle r="3" fill="#38bdf8">
-                  <animateMotion
-                    path="M 234 118 C 300 118, 320 118, 380 118"
-                    dur="1.8s"
-                    repeatCount="indefinite"
-                  />
+                  <animateMotion path="M 234 118 L 380 118" dur="1.8s" repeatCount="indefinite" />
                 </circle>
 
-                {/* Wire 2: Gateway -> Order Svc */}
+                {/* Wire 2: Gateway -> Order Svc (Orthogonal elbow bend) */}
                 <path
-                  d="M 234 118 C 300 118, 320 238, 380 238"
+                  d="M 234 118 L 293 118 Q 307 118, 307 132 L 307 224 Q 307 238, 321 238 L 380 238"
                   fill="none"
                   stroke="#64748b"
                   strokeWidth="1.8"
@@ -225,7 +221,7 @@ export function LandingPage({
                 />
                 <circle r="3" fill="#38bdf8">
                   <animateMotion
-                    path="M 234 118 C 300 118, 320 238, 380 238"
+                    path="M 234 118 L 293 118 Q 307 118, 307 132 L 307 224 Q 307 238, 321 238 L 380 238"
                     dur="2.4s"
                     repeatCount="indefinite"
                   />
@@ -233,18 +229,14 @@ export function LandingPage({
 
                 {/* Wire 3: Order Svc -> Ledger Sink */}
                 <path
-                  d="M 564 238 C 620 238, 640 238, 680 238"
+                  d="M 564 238 L 680 238"
                   fill="none"
                   stroke="#10b981"
                   strokeWidth="2"
                   markerEnd="url(#p-arrow)"
                 />
                 <circle r="3" fill="#10b981">
-                  <animateMotion
-                    path="M 564 238 C 620 238, 640 238, 680 238"
-                    dur="1.6s"
-                    repeatCount="indefinite"
-                  />
+                  <animateMotion path="M 564 238 L 680 238" dur="1.6s" repeatCount="indefinite" />
                 </circle>
 
                 {/* Node 1: API Gateway */}
@@ -406,12 +398,12 @@ export function LandingPage({
               {/* Floating SRE AI Reviewer Callout */}
               <div className="preview-ai-card">
                 <div className="ai-card-badge">
-                  <span>✋ Meta AI Raised Hand</span>
+                  <span>[Meta AI Raised Hand]</span>
                   <span className="badge-critical">Critical Anti-Pattern</span>
                 </div>
                 <div className="ai-card-title">Cascading Retry Storm Vulnerability</div>
                 <div className="ai-card-desc">
-                  Immediate 3x retries on link [gateway ➔ auth-service] without full jitter or
+                  Immediate 3x retries on link [gateway -&gt; auth-service] without full jitter or
                   circuit breaker will exhaust upstream worker queues under latency blips.
                 </div>
                 <div className="ai-card-actions">

@@ -6,14 +6,11 @@ export interface VoiceQuickCommandsProps {
   readonly isProcessing: boolean;
 }
 
-const TEST_PHRASES = [
-  { label: 'Inject Latency', phrase: 'inject latency 300ms from gateway to backend' },
-  { label: 'Set Invariant', phrase: 'set invariant completion rate at least 95 percent' },
-  { label: 'Run Experiment', phrase: 'run experiment with 5 trials' },
-  { label: 'Start Repair', phrase: 'start repair with model proposer' },
-  { label: 'Cancel Run', phrase: 'cancel active run' },
-  { label: 'Test Ambiguous', phrase: 'inject latency on backend' },
-  { label: 'Test Unsupported', phrase: 'order a pepperoni pizza' },
+const RECOMMENDED_PHRASES = [
+  { label: 'Inject 300ms Latency', phrase: 'inject latency 300ms from gateway to auth' },
+  { label: 'Run 5s Sandbox Proof', phrase: 'run experiment with 5 trials' },
+  { label: 'Start Autonomous Repair', phrase: 'start repair with model proposer' },
+  { label: 'Cancel Active Run', phrase: 'cancel active run' },
 ];
 
 export const VoiceQuickCommands: React.FC<VoiceQuickCommandsProps> = ({
@@ -22,11 +19,18 @@ export const VoiceQuickCommands: React.FC<VoiceQuickCommandsProps> = ({
 }) => {
   return (
     <div style={{ marginTop: 16 }}>
-      <h4 style={{ margin: '0 0 8px 0', fontSize: 12, fontWeight: 600, color: '#475569' }}>
-        Quick Voice Command Testing Palette:
+      <h4
+        style={{
+          margin: '0 0 8px 0',
+          fontSize: 12,
+          fontWeight: 600,
+          color: 'var(--color-text-dim)',
+        }}
+      >
+        Spoken Command Suggestions:
       </h4>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {TEST_PHRASES.map((item) => (
+        {RECOMMENDED_PHRASES.map((item) => (
           <Button
             key={item.label}
             variant="ghost"

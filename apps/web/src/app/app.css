@@ -831,10 +831,23 @@ body {
   border: 1px solid var(--color-border);
   color: var(--color-text);
   border-radius: var(--radius-sm);
-  padding: 4px 8px;
+  padding: 5px 10px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
+  outline: none;
   cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.studio-scenario-select:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--color-surface-hover);
+}
+
+.studio-scenario-select:focus {
+  border-color: var(--color-accent);
 }
 
 .studio-topbar-actions {
@@ -1382,6 +1395,14 @@ body {
   height: 100%;
   cursor: default;
   display: block;
+  outline: none !important;
+}
+
+.canvas-svg:focus,
+.canvas-svg:focus-visible,
+.canvas-svg *:focus,
+.canvas-svg *:focus-visible {
+  outline: none !important;
 }
 
 .canvas-node {
@@ -1389,7 +1410,6 @@ body {
   outline: none;
   -webkit-user-select: none;
   user-select: none;
-  transition: transform 0.12s ease;
 }
 
 .canvas-node:focus,
@@ -1411,7 +1431,7 @@ body {
 }
 
 .canvas-node:hover .node-box {
-  stroke: rgba(56, 189, 248, 0.55);
+  stroke: rgba(255, 255, 255, 0.16);
 }
 
 .canvas-node-selected .node-box {
@@ -1457,11 +1477,22 @@ body {
   fill: #10b981;
 }
 
+.canvas-edge {
+  cursor: pointer;
+  outline: none;
+}
+
+.canvas-edge:focus,
+.canvas-edge:focus-visible {
+  outline: none !important;
+}
+
 .edge-hitbox {
   stroke: transparent;
   stroke-width: 16;
   fill: none;
   cursor: pointer;
+  outline: none;
 }
 
 .edge-path {
@@ -1728,21 +1759,21 @@ body {
   stroke: var(--color-bg);
   stroke-width: 2;
   transition:
-    transform 0.12s ease,
-    fill 0.12s ease;
+    fill 0.12s ease,
+    stroke 0.12s ease;
 }
 
 .node-port-handle:hover .port-dot-handle {
-  transform: scale(1.4);
-  fill: #38bdf8;
-  filter: drop-shadow(0 0 6px #38bdf8);
+  fill: #ffffff;
+  stroke: var(--color-accent);
+  stroke-width: 2.5;
 }
 
 .port-dot-target {
-  fill: #64748b;
+  fill: #475569;
   stroke: var(--color-bg);
   stroke-width: 1.5;
-  transition: all 0.12s ease;
+  transition: fill 0.12s ease;
 }
 
 .canvas-node:hover .port-dot-target {
@@ -2100,4 +2131,34 @@ body {
   justify-content: flex-end;
   align-items: center;
   gap: 10px;
+}
+
+/* Parsed Voice Intent Key-Value Cards */
+.parsed-command-summary {
+  margin: 12px 0;
+  padding: 10px 14px;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.parsed-command-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.parsed-command-key {
+  color: var(--color-text-dim);
+  font-weight: 500;
+}
+
+.parsed-command-val {
+  color: var(--color-text-main);
+  font-family: var(--font-mono);
+  font-weight: 600;
 }

@@ -111,7 +111,7 @@ export function SreYieldFloorModal({
               }}
               title="Spawn sandbox processes and simulate latency to test this failure live"
             >
-              ⚡ Run 5s Sandbox Proof
+              Run 5s Sandbox Proof
             </Button>
           )}
 

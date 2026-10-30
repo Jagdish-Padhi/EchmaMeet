@@ -55,19 +55,27 @@ export const ParsedCommandCard: React.FC<ParsedCommandCardProps> = ({
             <strong>Action:</strong> {result.plainTextConfirmation ?? result.command.command}
           </Alert>
 
-          <div
-            style={{
-              margin: '12px 0',
-              padding: 12,
-              background: 'rgba(2, 6, 23, 0.7)',
-              borderRadius: 6,
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              fontSize: 12,
-              fontFamily: 'var(--font-mono)',
-              color: '#e2e8f0',
-            }}
-          >
-            <pre style={{ margin: 0 }}>{JSON.stringify(result.command, null, 2)}</pre>
+          <div className="parsed-command-summary">
+            <div className="parsed-command-row">
+              <span className="parsed-command-key">Intent:</span>
+              <span className="parsed-command-val">
+                {result.command.command.replace('_', ' ').toUpperCase()}
+              </span>
+            </div>
+            {'source' in result.command && (
+              <div className="parsed-command-row">
+                <span className="parsed-command-key">Target Link:</span>
+                <span className="parsed-command-val">
+                  {result.command.source} -&gt; {result.command.target}
+                </span>
+              </div>
+            )}
+            {'faultType' in result.command && (
+              <div className="parsed-command-row">
+                <span className="parsed-command-key">Fault Type:</span>
+                <span className="parsed-command-val">{result.command.faultType}</span>
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>

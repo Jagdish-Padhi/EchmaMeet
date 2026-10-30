@@ -43,8 +43,6 @@ export function EdgeLink({
         e.stopPropagation();
         onSelect(edge.id);
       }}
-      role="button"
-      tabIndex={0}
       aria-label={`Edge from ${edge.source} to ${edge.target}`}
     >
       {/* Invisible wider stroke for easy clicking */}

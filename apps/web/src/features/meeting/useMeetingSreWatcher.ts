@@ -20,7 +20,7 @@ export function detectSreHazards(board: BoardState): SreHazard[] {
         targetEdgeId: edge.id,
         title: 'Cascading Retry Storm Vulnerability',
         severity: 'critical',
-        risk: `Immediate ${String(edge.policy.retry.maxAttempts)}x retries on link [${edge.source} ➔ ${edge.target}] without jitter or circuit breaker will trigger queue saturation and upstream cascade under downstream latency blips.`,
+        risk: `Immediate ${String(edge.policy.retry.maxAttempts)}x retries on link [${edge.source} -> ${edge.target}] without jitter or circuit breaker will trigger queue saturation and upstream cascade under downstream latency blips.`,
         recommendation:
           'Enable exponential backoff with full jitter and configure a 50% trip circuit breaker with 2s cooldown.',
         patch: {
@@ -49,7 +49,7 @@ export function detectSreHazards(board: BoardState): SreHazard[] {
         targetEdgeId: edge.id,
         title: 'Cascading Timeout / Thread Exhaustion Risk',
         severity: 'high',
-        risk: `Link [${edge.source} ➔ ${edge.target}] has ${edge.policy.timeoutMs === null ? 'no timeout' : `${String(edge.policy.timeoutMs)}ms timeout`}. Slow downstream responses will hold worker connections open indefinitely, starving the thread pool.`,
+        risk: `Link [${edge.source} -> ${edge.target}] has ${edge.policy.timeoutMs === null ? 'no timeout' : `${String(edge.policy.timeoutMs)}ms timeout`}. Slow downstream responses will hold worker connections open indefinitely, starving the thread pool.`,
         recommendation: 'Enforce a strict 500ms timeout boundary with fail_fast_503 fallback.',
         patch: {
           timeoutMs: 500,
