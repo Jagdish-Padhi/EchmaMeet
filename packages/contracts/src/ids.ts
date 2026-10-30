@@ -30,3 +30,9 @@ export const runIdSchema = z
   )
   .brand<'RunId'>();
 export type RunId = z.infer<typeof runIdSchema>;
+
+export const scenarioIdSchema = z
+  .string()
+  .regex(/^[a-z][a-z0-9-]{0,63}$/, 'must be a valid scenario slug')
+  .brand<'ScenarioId'>();
+export type ScenarioId = z.infer<typeof scenarioIdSchema>;

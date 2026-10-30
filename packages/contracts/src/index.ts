@@ -6,9 +6,10 @@ export {
   invariantIdSchema,
   nodeIdSchema,
   runIdSchema,
+  scenarioIdSchema,
   topologyIdSchema,
 } from './ids';
-export type { EdgeId, FaultId, InvariantId, NodeId, RunId, TopologyId } from './ids';
+export type { EdgeId, FaultId, InvariantId, NodeId, RunId, ScenarioId, TopologyId } from './ids';
 export {
   breakerPolicySchema,
   edgeModeSchema,
@@ -172,3 +173,17 @@ export type {
   StartRepairRequest,
   StartRepairResponse,
 } from './repair-session';
+export { expectedOutcomeSchema, scenarioSpecSchema } from './scenario';
+export type { ExpectedOutcome, ScenarioSpec } from './scenario';
+export {
+  benchmarkComparisonSchema,
+  benchmarkSuiteSummarySchema,
+  repairOutcomeSummarySchema,
+  staticPredictionSchema,
+} from './benchmark';
+export type {
+  BenchmarkComparison,
+  BenchmarkSuiteSummary,
+  RepairOutcomeSummary,
+  StaticPrediction,
+} from './benchmark';
