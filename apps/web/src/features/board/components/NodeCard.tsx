@@ -103,6 +103,24 @@ export function NodeCard({
   const dedupeSuffix = node.kind === 'ledger_sink' && node.dedupeByKey ? ' · dedupe:true' : '';
   const specSummary = `${String(node.concurrency.maxWorkers)}w · ${latencyText} · ${node.queue.mode}${dedupeSuffix}`;
 
+  let subtitleText = node.kind.replace('_', ' ').toUpperCase();
+  let subtitleColor = kindDetails.color;
+
+  if (node.kind === 'queue_consumer') {
+    subtitleText = 'QUEUE WORKER';
+  } else if (node.kind === 'ledger_sink') {
+    subtitleText = 'LEDGER SINK';
+    subtitleColor = '#10b981';
+  }
+
+  if (isHazard) {
+    subtitleText = `${subtitleText} • HAZARD`;
+    subtitleColor = '#f59e0b';
+  } else if (isEntry) {
+    subtitleText = `${subtitleText} • ENTRY`;
+    subtitleColor = '#0082fb';
+  }
+
   const isSink = node.kind === 'ledger_sink';
 
   return (
@@ -153,43 +171,9 @@ export function NodeCard({
       </text>
 
       {/* Kind Subtitle */}
-      <text x={48} y={38} className="node-kind-text" fill={kindDetails.color}>
-        {node.kind.replace('_', ' ')}
+      <text x={48} y={38} className="node-kind-text" fill={subtitleColor}>
+        {subtitleText}
       </text>
-
-      {/* Entry Indicator Pill */}
-      {isEntry && !isHazard && (
-        <g transform="translate(136, 12)">
-          <rect
-            width={38}
-            height={16}
-            rx={4}
-            fill="rgba(16, 185, 129, 0.15)"
-            stroke="#10b981"
-            strokeWidth={1}
-          />
-          <text x={19} y={11.5} className="entry-badge-text" textAnchor="middle">
-            ENTRY
-          </text>
-        </g>
-      )}
-
-      {/* Hazard Indicator Pill */}
-      {isHazard && (
-        <g transform="translate(136, 12)">
-          <rect
-            width={38}
-            height={16}
-            rx={4}
-            fill="rgba(245, 158, 11, 0.15)"
-            stroke="#f59e0b"
-            strokeWidth={1}
-          />
-          <text x={19} y={11.5} className="entry-badge-text" textAnchor="middle" fill="#f59e0b">
-            RISK
-          </text>
-        </g>
-      )}
 
       {/* Problem Alert Dot */}
       {hasProblems && (

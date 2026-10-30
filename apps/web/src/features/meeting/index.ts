@@ -1,3 +1,4 @@
+export { CanvasSreCallout } from './CanvasSreCallout';
 export { MeetingBar } from './MeetingBar';
 export { SreYieldFloorModal } from './SreYieldFloorModal';
 export { useCollaborationPresence } from './useCollaborationPresence';

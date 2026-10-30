@@ -91,7 +91,9 @@ export function MeetingBar({
       {/* Session Channel Status */}
       <div className="huddle-room-badge">
         <span className="live-dot-active" />
-        <span className="huddle-room-name">#arch-review-checkout</span>
+        <span className="huddle-room-name">
+          #rfc-checkout-v2 &bull; Architecture Review Session
+        </span>
       </div>
 
       {/* Enterprise Reviewer Persona Stack */}

@@ -60,6 +60,7 @@ import {
 import { ReportViewer } from '../features/reports';
 import { LandingPage } from '../features/landing/LandingPage';
 import {
+  CanvasSreCallout,
   MeetingBar,
   SreYieldFloorModal,
   useCollaborationPresence,
@@ -505,6 +506,17 @@ export function App() {
             <span>Export IaC</span>
           </button>
 
+          {/* Meta AI SRE Reviewer Pill */}
+          <button
+            type="button"
+            className={`meta-ai-pill-btn ${sreWatcher.hazards.length > 0 ? 'has-hazards' : ''}`}
+            onClick={() => setIsSreModalOpen(true)}
+            title="Meta AI SRE continuous architectural resilience watcher"
+          >
+            <span className="meta-ai-dot" />
+            <span>Meta AI</span>
+          </button>
+
           <div className="studio-topbar-divider" />
 
           {/* Theme Toggle Button */}
@@ -663,6 +675,31 @@ export function App() {
             }}
             hazardEdgeId={isMeetingLive ? (sreWatcher.primaryHazard?.targetEdgeId ?? null) : null}
             hazardNodeId={isMeetingLive ? (sreWatcher.primaryHazard?.targetNodeId ?? null) : null}
+          />
+
+          {/* SRE Risk Callout Card (Meta AI SRE in-canvas proactive alert) */}
+          <CanvasSreCallout
+            hazard={sreWatcher.primaryHazard}
+            onOpenDetails={() => setIsSreModalOpen(true)}
+            onTestInSandbox={() => {
+              if (sreWatcher.primaryHazard) {
+                const targetEdgeId = sreWatcher.primaryHazard.targetEdgeId;
+                if (targetEdgeId) {
+                  experimentSession.updateFault({
+                    id: faultIdSchema.parse(`fault-proof-${String(Date.now())}`),
+                    edgeId: targetEdgeId,
+                    type: 'latency',
+                    latencyMs: 300,
+                    jitterMs: 50,
+                    toxicity: 1,
+                    direction: 'downstream',
+                    startOffsetMs: 0,
+                  });
+                }
+                setActiveDrawer('telemetry');
+                void experimentSession.startExperiment(currentTopology);
+              }
+            }}
           />
         </main>
 
