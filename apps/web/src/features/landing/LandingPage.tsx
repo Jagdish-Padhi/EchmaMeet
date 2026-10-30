@@ -121,9 +121,429 @@ export function LandingPage({
         </div>
       </header>
 
-      {/* Hero Section with Deep Glow */}
-      <section id="overview" className="landing-hero">
-        <div className="hero-content">
+      {/* Unified Cinematic Hero Section */}
+      <section id="overview" className="landing-hero-cinematic">
+        {/* Atmospheric Background Layer: Architecture Topology (Left) & Meta AI Meeting Review (Right) */}
+        <div className="hero-backdrop-layer" aria-hidden="true">
+          <svg
+            className="hero-backdrop-svg"
+            viewBox="0 0 1440 680"
+            preserveAspectRatio="xMidYMid slice"
+          >
+            <defs>
+              <pattern id="hero-matrix-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1" fill="rgba(255, 255, 255, 0.04)" />
+              </pattern>
+
+              {/* Smooth linear gradient masks fading graphics towards the center text */}
+              <linearGradient id="fade-to-center-left" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+                <stop offset="65%" stopColor="#ffffff" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+              </linearGradient>
+
+              <linearGradient id="fade-to-center-right" x1="100%" y1="0%" x2="0%" y2="0%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+                <stop offset="65%" stopColor="#ffffff" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+              </linearGradient>
+
+              <mask id="mask-left-graph">
+                <rect x="0" y="0" width="800" height="680" fill="url(#fade-to-center-left)" />
+              </mask>
+
+              <mask id="mask-right-ai">
+                <rect x="640" y="0" width="800" height="680" fill="url(#fade-to-center-right)" />
+              </mask>
+
+              <marker
+                id="hero-arrow"
+                viewBox="0 0 10 10"
+                refX="7.5"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 1.5 L 7.5 5 L 0 8.5 Z" fill="#475569" />
+              </marker>
+            </defs>
+
+            <rect width="100%" height="100%" fill="url(#hero-matrix-grid)" />
+
+            {/* LEFT SIDE: Connected Architecture Blocks & Live Stepped Dataflow */}
+            <g mask="url(#mask-left-graph)">
+              {/* Stepped Link 1: Gateway -> Order API */}
+              <path
+                d="M 230 190 L 290 190 Q 304 190, 304 204 L 304 296 Q 304 310, 318 310 L 360 310"
+                fill="none"
+                stroke="#334155"
+                strokeWidth="1.8"
+                markerEnd="url(#hero-arrow)"
+              />
+              <circle r="3" fill="#38bdf8">
+                <animateMotion
+                  path="M 230 190 L 290 190 Q 304 190, 304 204 L 304 296 Q 304 310, 318 310 L 360 310"
+                  dur="2.8s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+
+              {/* Stepped Link 2: Gateway -> Auth Cluster */}
+              <path
+                d="M 230 190 L 290 190 Q 304 190, 304 176 L 304 114 Q 304 100, 318 100 L 360 100"
+                fill="none"
+                stroke="#38bdf8"
+                strokeWidth="2"
+                markerEnd="url(#hero-arrow)"
+              />
+              <circle r="3" fill="#38bdf8">
+                <animateMotion
+                  path="M 230 190 L 290 190 Q 304 190, 304 176 L 304 114 Q 304 100, 318 100 L 360 100"
+                  dur="2s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+
+              {/* Stepped Link 3: Order API Flowing behind center text */}
+              <path
+                d="M 530 310 L 610 310 Q 624 310, 624 324 L 624 380 Q 624 394, 638 394 L 800 394"
+                fill="none"
+                stroke="#2563eb"
+                strokeWidth="1.8"
+                strokeDasharray="5 3"
+              />
+              <circle r="3" fill="#60a5fa">
+                <animateMotion
+                  path="M 530 310 L 610 310 Q 624 310, 624 324 L 624 380 Q 624 394, 638 394 L 800 394"
+                  dur="3.2s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+
+              {/* Block 1: API Gateway (Left Entry) */}
+              <g transform="translate(60, 155)">
+                <rect
+                  width="170"
+                  height="70"
+                  rx="8"
+                  fill="rgba(14, 18, 28, 0.75)"
+                  stroke="rgba(56, 189, 248, 0.35)"
+                  strokeWidth="1.2"
+                />
+                <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.12)" />
+                <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+                  API Gateway
+                </text>
+                <text
+                  x="44"
+                  y="35"
+                  fill="#38bdf8"
+                  fontSize="8.5"
+                  fontFamily="var(--font-mono)"
+                  fontWeight="700"
+                >
+                  SERVICE &bull; ENTRY
+                </text>
+                <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+                  20w &bull; 10ms &bull; bounded
+                </text>
+              </g>
+
+              {/* Block 2: Auth Cluster (Top Left) */}
+              <g transform="translate(360, 65)">
+                <rect
+                  width="170"
+                  height="70"
+                  rx="8"
+                  fill="rgba(14, 18, 28, 0.75)"
+                  stroke="rgba(245, 158, 11, 0.35)"
+                  strokeWidth="1.2"
+                />
+                <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(245, 158, 11, 0.12)" />
+                <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+                  Auth Cluster
+                </text>
+                <text
+                  x="44"
+                  y="35"
+                  fill="#f59e0b"
+                  fontSize="8.5"
+                  fontFamily="var(--font-mono)"
+                  fontWeight="700"
+                >
+                  SERVICE &bull; HAZARD
+                </text>
+                <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+                  10w &bull; 15ms &bull; retry:3x
+                </text>
+              </g>
+
+              {/* Block 3: Order Processor (Bottom Left) */}
+              <g transform="translate(360, 275)">
+                <rect
+                  width="170"
+                  height="70"
+                  rx="8"
+                  fill="rgba(14, 18, 28, 0.75)"
+                  stroke="rgba(37, 99, 235, 0.35)"
+                  strokeWidth="1.2"
+                />
+                <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(37, 99, 235, 0.14)" />
+                <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+                  Order Processor
+                </text>
+                <text
+                  x="44"
+                  y="35"
+                  fill="#3b82f6"
+                  fontSize="8.5"
+                  fontFamily="var(--font-mono)"
+                  fontWeight="700"
+                >
+                  QUEUE WORKER
+                </text>
+                <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+                  15w &bull; 25ms &bull; bounded
+                </text>
+              </g>
+
+              {/* Block 4: Cache Sink (Deep Left Bottom) */}
+              <g transform="translate(130, 395)">
+                <rect
+                  width="170"
+                  height="70"
+                  rx="8"
+                  fill="rgba(14, 18, 28, 0.55)"
+                  stroke="rgba(16, 185, 129, 0.25)"
+                  strokeWidth="1"
+                />
+                <text x="44" y="24" fill="#cbd5e1" fontSize="12" fontWeight="600">
+                  Redis Cache
+                </text>
+                <text
+                  x="44"
+                  y="35"
+                  fill="#10b981"
+                  fontSize="8.5"
+                  fontFamily="var(--font-mono)"
+                  fontWeight="700"
+                >
+                  CACHE SINK
+                </text>
+                <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+                  5w &bull; 2ms &bull; write-through
+                </text>
+              </g>
+            </g>
+
+            {/* RIGHT SIDE: Meta AI Thinking Node & Collaborative Review Room */}
+            <g mask="url(#mask-right-ai)">
+              {/* Telemetry line connecting AI node to Meeting Room */}
+              <path
+                d="M 1180 200 L 1180 320"
+                fill="none"
+                stroke="#0866ff"
+                strokeWidth="1.5"
+                strokeDasharray="4 3"
+              />
+              <circle r="3" fill="#38bdf8">
+                <animateMotion path="M 1180 200 L 1180 320" dur="2s" repeatCount="indefinite" />
+              </circle>
+
+              {/* Data stream flowing from AI toward center text */}
+              <path
+                d="M 1040 155 L 940 155 Q 920 155, 920 175 L 920 260 Q 920 280, 900 280 L 740 280"
+                fill="none"
+                stroke="#38bdf8"
+                strokeWidth="1.5"
+                strokeDasharray="5 4"
+                opacity="0.6"
+              />
+
+              {/* 1. Meta AI Thinking Node (Top Right) */}
+              <g transform="translate(1040, 110)">
+                <circle
+                  cx="45"
+                  cy="45"
+                  r="44"
+                  fill="none"
+                  stroke="#0866ff"
+                  strokeWidth="1.2"
+                  opacity="0.3"
+                  className="ai-breath-ring"
+                />
+                <circle
+                  cx="45"
+                  cy="45"
+                  r="34"
+                  fill="none"
+                  stroke="#38bdf8"
+                  strokeWidth="1.5"
+                  opacity="0.5"
+                  className="ai-breath-ring-inner"
+                />
+
+                <rect
+                  x="0"
+                  y="0"
+                  width="280"
+                  height="90"
+                  rx="10"
+                  fill="rgba(14, 18, 28, 0.75)"
+                  stroke="rgba(8, 102, 255, 0.4)"
+                  strokeWidth="1.2"
+                />
+
+                <g transform="translate(20, 25)">
+                  <circle cx="20" cy="20" r="18" fill="rgba(8, 102, 255, 0.18)" />
+                  <path
+                    d="M 12 20 Q 20 12, 28 20 Q 20 28, 12 20 Z"
+                    fill="none"
+                    stroke="#38bdf8"
+                    strokeWidth="1.8"
+                  />
+                  <circle cx="20" cy="20" r="3.5" fill="#38bdf8" />
+                </g>
+
+                <text x="68" y="34" fill="#f8fafc" fontSize="13" fontWeight="700">
+                  Meta AI SRE
+                </text>
+                <text
+                  x="68"
+                  y="48"
+                  fill="#38bdf8"
+                  fontSize="9.5"
+                  fontFamily="var(--font-mono)"
+                  fontWeight="700"
+                >
+                  MUSE WONDER &bull; LIVE REASONING
+                </text>
+                <text x="68" y="68" fill="#94a3b8" fontSize="10.5">
+                  Real-time blast radius inference
+                </text>
+              </g>
+
+              {/* 2. Collaborative Meeting Environment (Bottom Right) */}
+              <g transform="translate(1040, 320)">
+                <rect
+                  width="280"
+                  height="150"
+                  rx="10"
+                  fill="rgba(14, 18, 28, 0.75)"
+                  stroke="rgba(255, 255, 255, 0.08)"
+                  strokeWidth="1.2"
+                />
+
+                {/* Meeting Room Header */}
+                <rect x="14" y="14" width="8" height="8" rx="4" fill="#10b981" />
+                <text x="28" y="21" fill="#e2e8f0" fontSize="11" fontWeight="600">
+                  #arch-review &bull; Live Room
+                </text>
+                <text x="186" y="21" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+                  3 ENGINEERS
+                </text>
+
+                <line
+                  x1="14"
+                  y1="34"
+                  x2="266"
+                  y2="34"
+                  stroke="rgba(255, 255, 255, 0.06)"
+                  strokeWidth="1"
+                />
+
+                {/* Attendee 1 */}
+                <g transform="translate(14, 46)">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="12"
+                    fill="#1e293b"
+                    stroke="#38bdf8"
+                    strokeWidth="1.2"
+                  />
+                  <text
+                    x="12"
+                    y="15.5"
+                    fill="#38bdf8"
+                    fontSize="9.5"
+                    fontWeight="700"
+                    textAnchor="middle"
+                  >
+                    SC
+                  </text>
+                  <text x="32" y="12" fill="#f1f5f9" fontSize="11" fontWeight="600">
+                    Sarah C.
+                  </text>
+                  <text x="32" y="23" fill="#64748b" fontSize="9.5">
+                    Lead SRE &bull; Speaking
+                  </text>
+                  <circle cx="240" cy="12" r="3" fill="#10b981" />
+                </g>
+
+                {/* Attendee 2 */}
+                <g transform="translate(14, 80)">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="12"
+                    fill="#1e293b"
+                    stroke="rgba(255, 255, 255, 0.15)"
+                    strokeWidth="1"
+                  />
+                  <text
+                    x="12"
+                    y="15.5"
+                    fill="#94a3b8"
+                    fontSize="9.5"
+                    fontWeight="700"
+                    textAnchor="middle"
+                  >
+                    AM
+                  </text>
+                  <text x="32" y="12" fill="#f1f5f9" fontSize="11" fontWeight="600">
+                    Alex M.
+                  </text>
+                  <text x="32" y="23" fill="#64748b" fontSize="9.5">
+                    Platform Staff
+                  </text>
+                </g>
+
+                {/* Attendee 3 */}
+                <g transform="translate(14, 114)">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="12"
+                    fill="#1e293b"
+                    stroke="rgba(255, 255, 255, 0.15)"
+                    strokeWidth="1"
+                  />
+                  <text
+                    x="12"
+                    y="15.5"
+                    fill="#94a3b8"
+                    fontSize="9.5"
+                    fontWeight="700"
+                    textAnchor="middle"
+                  >
+                    DK
+                  </text>
+                  <text x="32" y="12" fill="#f1f5f9" fontSize="11" fontWeight="600">
+                    Devon K.
+                  </text>
+                  <text x="32" y="23" fill="#64748b" fontSize="9.5">
+                    Security Architect
+                  </text>
+                </g>
+              </g>
+            </g>
+          </svg>
+        </div>
+
+        {/* Center Hero Content (Prominent, High Contrast, Centered) */}
+        <div className="hero-center-content">
           <h1 className="hero-headline">
             Distributed Systems Architecture.
             <br />
@@ -149,280 +569,8 @@ export function LandingPage({
               className="btn btn-secondary btn-hero"
               onClick={() => onLaunchStudio(scenarios[0]?.id ?? 'retry-storm')}
             >
-              Simulate Retry Storm
+              Simulate Live Scenario
             </button>
-          </div>
-
-          {/* Interactive Hero Visual Showcase: Breakscale / Excalidraw Style Preview */}
-          <div id="canvas" className="hero-canvas-preview">
-            <div className="preview-window-bar">
-              <div className="preview-dots">
-                <span className="dot dot-red" />
-                <span className="dot dot-yellow" />
-                <span className="dot dot-green" />
-              </div>
-              <div className="preview-room-title">
-                <span className="room-indicator" />
-                <span>#rfc-checkout-v2 &bull; Architecture Review Session</span>
-              </div>
-              <div className="preview-presence">
-                <span className="avatar avatar-ai">Meta AI</span>
-              </div>
-            </div>
-
-            <div className="preview-canvas-viewport">
-              {/* Simulated Topology Graph */}
-              <svg className="preview-svg" viewBox="0 0 880 340">
-                <defs>
-                  <pattern id="preview-grid" width="24" height="24" patternUnits="userSpaceOnUse">
-                    <circle cx="2" cy="2" r="1" fill="rgba(255, 255, 255, 0.08)" />
-                  </pattern>
-                  <marker
-                    id="p-arrow"
-                    viewBox="0 0 10 10"
-                    refX="7.5"
-                    refY="5"
-                    markerWidth="7"
-                    markerHeight="7"
-                    orient="auto-start-reverse"
-                  >
-                    <path d="M 0 1.5 L 7.5 5 L 0 8.5 Z" fill="#64748b" />
-                  </marker>
-                </defs>
-
-                <rect width="100%" height="100%" fill="url(#preview-grid)" />
-
-                {/* Wire 1: Gateway -> Auth */}
-                <path
-                  d="M 234 118 L 307 118 Q 307 118, 307 118 L 380 118"
-                  fill="none"
-                  stroke="#38bdf8"
-                  strokeWidth="2"
-                  markerEnd="url(#p-arrow)"
-                />
-                <circle r="3" fill="#38bdf8">
-                  <animateMotion path="M 234 118 L 380 118" dur="1.8s" repeatCount="indefinite" />
-                </circle>
-
-                {/* Wire 2: Gateway -> Order Svc (Orthogonal elbow bend) */}
-                <path
-                  d="M 234 118 L 293 118 Q 307 118, 307 132 L 307 224 Q 307 238, 321 238 L 380 238"
-                  fill="none"
-                  stroke="#64748b"
-                  strokeWidth="1.8"
-                  markerEnd="url(#p-arrow)"
-                />
-                <circle r="3" fill="#38bdf8">
-                  <animateMotion
-                    path="M 234 118 L 293 118 Q 307 118, 307 132 L 307 224 Q 307 238, 321 238 L 380 238"
-                    dur="2.4s"
-                    repeatCount="indefinite"
-                  />
-                </circle>
-
-                {/* Wire 3: Order Svc -> Ledger Sink */}
-                <path
-                  d="M 564 238 L 680 238"
-                  fill="none"
-                  stroke="#10b981"
-                  strokeWidth="2"
-                  markerEnd="url(#p-arrow)"
-                />
-                <circle r="3" fill="#10b981">
-                  <animateMotion path="M 564 238 L 680 238" dur="1.6s" repeatCount="indefinite" />
-                </circle>
-
-                {/* Node 1: API Gateway */}
-                <g transform="translate(50, 80)">
-                  <rect
-                    width="184"
-                    height="76"
-                    rx="10"
-                    fill="#0f172a"
-                    stroke="#38bdf8"
-                    strokeWidth="1.5"
-                  />
-                  <rect
-                    x="12"
-                    y="12"
-                    width="28"
-                    height="28"
-                    rx="6"
-                    fill="rgba(56, 189, 248, 0.12)"
-                  />
-                  <text x="48" y="26" fill="#f8fafc" fontSize="13" fontWeight="600">
-                    API Gateway
-                  </text>
-                  <text
-                    x="48"
-                    y="38"
-                    fill="#38bdf8"
-                    fontSize="9.5"
-                    fontFamily="var(--font-mono)"
-                    fontWeight="700"
-                  >
-                    SERVICE &bull; ENTRY
-                  </text>
-                  <text x="14" y="64" fill="#64748b" fontSize="10.5" fontFamily="var(--font-mono)">
-                    20w &bull; 10ms &bull; bounded
-                  </text>
-                </g>
-
-                {/* Node 2: Auth Service (Flagged Hazard) */}
-                <g transform="translate(380, 80)">
-                  <rect
-                    x="-3"
-                    y="-3"
-                    width="190"
-                    height="82"
-                    rx="12"
-                    fill="none"
-                    stroke="#f59e0b"
-                    strokeWidth="2"
-                    className="hazard-pulse-ring"
-                  />
-                  <rect
-                    width="184"
-                    height="76"
-                    rx="10"
-                    fill="#0f172a"
-                    stroke="#f59e0b"
-                    strokeWidth="1.5"
-                  />
-                  <rect
-                    x="12"
-                    y="12"
-                    width="28"
-                    height="28"
-                    rx="6"
-                    fill="rgba(245, 158, 11, 0.12)"
-                  />
-                  <text x="48" y="26" fill="#f8fafc" fontSize="13" fontWeight="600">
-                    Auth Service
-                  </text>
-                  <text
-                    x="48"
-                    y="38"
-                    fill="#f59e0b"
-                    fontSize="9.5"
-                    fontFamily="var(--font-mono)"
-                    fontWeight="700"
-                  >
-                    SERVICE &bull; HAZARD
-                  </text>
-                  <text x="14" y="64" fill="#64748b" fontSize="10.5" fontFamily="var(--font-mono)">
-                    10w &bull; 15ms &bull; bounded
-                  </text>
-                </g>
-
-                {/* Node 3: Order Svc */}
-                <g transform="translate(380, 200)">
-                  <rect
-                    width="184"
-                    height="76"
-                    rx="10"
-                    fill="#0f172a"
-                    stroke="#334155"
-                    strokeWidth="1.25"
-                  />
-                  <rect
-                    x="12"
-                    y="12"
-                    width="28"
-                    height="28"
-                    rx="6"
-                    fill="rgba(37, 99, 235, 0.14)"
-                  />
-                  <text x="48" y="26" fill="#f8fafc" fontSize="13" fontWeight="600">
-                    Order Processor
-                  </text>
-                  <text
-                    x="48"
-                    y="38"
-                    fill="#3b82f6"
-                    fontSize="9.5"
-                    fontFamily="var(--font-mono)"
-                    fontWeight="700"
-                  >
-                    QUEUE WORKER
-                  </text>
-                  <text x="14" y="64" fill="#64748b" fontSize="10.5" fontFamily="var(--font-mono)">
-                    15w &bull; 25ms &bull; bounded
-                  </text>
-                </g>
-
-                {/* Node 4: Ledger Sink */}
-                <g transform="translate(680, 200)">
-                  <rect
-                    width="184"
-                    height="76"
-                    rx="10"
-                    fill="#0f172a"
-                    stroke="#10b981"
-                    strokeWidth="1.5"
-                  />
-                  <rect
-                    x="12"
-                    y="12"
-                    width="28"
-                    height="28"
-                    rx="6"
-                    fill="rgba(16, 185, 129, 0.12)"
-                  />
-                  <text x="48" y="26" fill="#f8fafc" fontSize="13" fontWeight="600">
-                    Financial Ledger
-                  </text>
-                  <text
-                    x="48"
-                    y="38"
-                    fill="#10b981"
-                    fontSize="9.5"
-                    fontFamily="var(--font-mono)"
-                    fontWeight="700"
-                  >
-                    LEDGER SINK
-                  </text>
-                  <text x="14" y="64" fill="#64748b" fontSize="10.5" fontFamily="var(--font-mono)">
-                    5w &bull; 50ms &bull; dedupe:true
-                  </text>
-                </g>
-              </svg>
-
-              {/* Floating SRE AI Detection Chip */}
-              <div className="preview-ai-card">
-                <div className="ai-card-header">
-                  <span className="ai-indicator-dot" />
-                  <span className="ai-card-title">Meta AI SRE &bull; Retry Storm Risk</span>
-                </div>
-                <div className="ai-card-desc">
-                  Link gateway &rarr; auth lacks backoff jitter. Cascading queue exhaustion
-                  detected.
-                </div>
-                <button
-                  type="button"
-                  className="btn-ai-action"
-                  onClick={() => onLaunchStudio('retry-storm')}
-                >
-                  Test in Sandbox &rarr;
-                </button>
-              </div>
-
-              {/* Live Telemetry HUD */}
-              <div className="preview-telemetry-hud">
-                <span className="hud-metric">
-                  <span className="hud-label">p99 Latency</span>
-                  <span className="hud-value">142ms</span>
-                </span>
-                <span className="hud-metric">
-                  <span className="hud-label">Error Rate</span>
-                  <span className="hud-value green">0.0%</span>
-                </span>
-                <span className="hud-metric">
-                  <span className="hud-label">Throughput</span>
-                  <span className="hud-value">420 RPS</span>
-                </span>
-              </div>
-            </div>
           </div>
         </div>
       </section>
