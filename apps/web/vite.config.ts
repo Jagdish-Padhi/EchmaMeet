@@ -11,6 +11,7 @@ export default defineConfig({
     // the server, so no cross-origin access (and no CORS configuration) is needed.
     proxy: {
       '/api': { target: apiTarget, changeOrigin: false },
+      '/ws': { target: apiTarget, ws: true, changeOrigin: false },
     },
   },
 });
