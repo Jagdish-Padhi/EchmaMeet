@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "id": "oversensitive-breaker",
+  "name": "Over-sensitive circuit breaker",
+  "source": "scenario",
+  "entry": {
+    "nodeId": "gateway"
+  },
+  "nodes": [
+    {
+      "id": "gateway",
+      "label": "Gateway",
+      "kind": "service",
+      "processing": {
+        "distribution": "constant",
+        "ms": 20
+      },
+      "concurrency": {
+        "maxWorkers": 20
+      },
+      "queue": {
+        "mode": "bounded",
+        "maxDepth": 500
+      },
+      "ingressRateLimitRps": null
+    },
+    {
+      "id": "profile",
+      "label": "Profile service",
+      "kind": "service",
+      "processing": {
+        "distribution": "constant",
+        "ms": 20
+      },
+      "concurrency": {
+        "maxWorkers": 20
+      },
+      "queue": {
+        "mode": "bounded",
+        "maxDepth": 500
+      },
+      "ingressRateLimitRps": null
+    },
+    {
+      "id": "profile-db",
+      "label": "Profile store",
+      "kind": "service",
+      "processing": {
+        "distribution": "constant",
+        "ms": 20
+      },
+      "concurrency": {
+        "maxWorkers": 20
+      },
+      "queue": {
+        "mode": "bounded",
+        "maxDepth": 500
+      },
+      "ingressRateLimitRps": null
+    }
+  ],
+  "edges": [
+    {
+      "id": "gateway-to-profile",
+      "source": "gateway",
+      "target": "profile",
+      "mode": "sync_call",
+      "policy": {
+        "timeoutMs": 1000,
+        "retry": {
+          "maxAttempts": 1,
+          "backoffBaseMs": 0,
+          "backoffMultiplier": 1,
+          "maxBackoffMs": 0,
+          "jitter": "none"
+        },
+        "breaker": {
+          "enabled": true,
+          "failureThresholdPct": 10,
+          "windowRequests": 5,
+          "cooldownMs": 5000,
+          "halfOpenProbes": 1
+        },
+        "fallback": "fail_fast_503",
+        "idempotency": {
+          "sendKey": false
+        },
+        "pool": {
+          "maxConnections": 50
+        }
+      }
+    },
+    {
+      "id": "profile-to-profile-db",
+      "source": "profile",
+      "target": "profile-db",
+      "mode": "sync_call",
+      "policy": {
+        "timeoutMs": 5000,
+        "retry": {
+          "maxAttempts": 3,
+          "backoffBaseMs": 0,
+          "backoffMultiplier": 1,
+          "maxBackoffMs": 0,
+          "jitter": "none"
+        },
+        "breaker": {
+          "enabled": false,
+          "failureThresholdPct": 50,
+          "windowRequests": 20,
+          "cooldownMs": 2000,
+          "halfOpenProbes": 2
+        },
+        "fallback": "fail_fast_503",
+        "idempotency": {
+          "sendKey": false
+        },
+        "pool": {
+          "maxConnections": 50
+        }
+      }
+    }
+  ]
+}

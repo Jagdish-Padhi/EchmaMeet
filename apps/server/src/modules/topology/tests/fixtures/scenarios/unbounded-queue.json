@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "id": "unbounded-queue",
+  "name": "Unbounded queue",
+  "source": "scenario",
+  "entry": {
+    "nodeId": "api"
+  },
+  "nodes": [
+    {
+      "id": "api",
+      "label": "Order API",
+      "kind": "service",
+      "processing": {
+        "distribution": "constant",
+        "ms": 20
+      },
+      "concurrency": {
+        "maxWorkers": 20
+      },
+      "queue": {
+        "mode": "bounded",
+        "maxDepth": 500
+      },
+      "ingressRateLimitRps": null
+    },
+    {
+      "id": "order-consumer",
+      "label": "Order consumer",
+      "kind": "queue_consumer",
+      "processing": {
+        "distribution": "constant",
+        "ms": 20
+      },
+      "concurrency": {
+        "maxWorkers": 20
+      },
+      "queue": {
+        "mode": "unbounded"
+      },
+      "ingressRateLimitRps": null,
+      "consumeRateRps": 50
+    },
+    {
+      "id": "ledger",
+      "label": "Order ledger",
+      "kind": "ledger_sink",
+      "processing": {
+        "distribution": "constant",
+        "ms": 20
+      },
+      "concurrency": {
+        "maxWorkers": 20
+      },
+      "queue": {
+        "mode": "bounded",
+        "maxDepth": 500
+      },
+      "ingressRateLimitRps": null,
+      "dedupeByKey": false
+    }
+  ],
+  "edges": [
+    {
+      "id": "api-to-order-consumer",
+      "source": "api",
+      "target": "order-consumer",
+      "mode": "async_enqueue",
+      "policy": {
+        "timeoutMs": 5000,
+        "retry": {
+          "maxAttempts": 1,
+          "backoffBaseMs": 0,
+          "backoffMultiplier": 1,
+          "maxBackoffMs": 0,
+          "jitter": "none"
+        },
+        "breaker": {
+          "enabled": false,
+          "failureThresholdPct": 50,
+          "windowRequests": 20,
+          "cooldownMs": 2000,
+          "halfOpenProbes": 2
+        },
+        "fallback": "fail_fast_503",
+        "idempotency": {
+          "sendKey": false
+        },
+        "pool": {
+          "maxConnections": 50
+        }
+      }
+    },
+    {
+      "id": "order-consumer-to-ledger",
+      "source": "order-consumer",
+      "target": "ledger",
+      "mode": "sync_call",
+      "policy": {
+        "timeoutMs": 5000,
+        "retry": {
+          "maxAttempts": 3,
+          "backoffBaseMs": 0,
+          "backoffMultiplier": 1,
+          "maxBackoffMs": 0,
+          "jitter": "none"
+        },
+        "breaker": {
+          "enabled": false,
+          "failureThresholdPct": 50,
+          "windowRequests": 20,
+          "cooldownMs": 2000,
+          "halfOpenProbes": 2
+        },
+        "fallback": "fail_fast_503",
+        "idempotency": {
+          "sendKey": false
+        },
+        "pool": {
+          "maxConnections": 50
+        }
+      }
+    }
+  ]
+}
