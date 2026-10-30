@@ -13,6 +13,7 @@ import {
   registerVisionRoutes,
   VisionService,
 } from './modules/vision';
+import { registerVoiceRoutes, VoiceService } from './modules/voice';
 import type { SqlDatabase } from './platform/db';
 import { registerHealthRoute } from './platform/health';
 import { registerProblemHandlers } from './platform/http-kit';
@@ -93,6 +94,9 @@ export function buildApp({
     normalizeTopologyDraft,
   });
   registerVisionRoutes(app, visionService);
+
+  const voiceService = new VoiceService({});
+  registerVoiceRoutes(app, voiceService);
 
   return app;
 }
