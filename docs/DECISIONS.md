@@ -18,6 +18,12 @@ Every non-obvious choice, with the reason and what was rejected. Newest decision
 
 **Cross-process tree termination.** On Windows, standard `process.kill(pid)` signals only the direct child and can leave spawned sub-processes active. The sandbox supervisor terminates processes via `taskkill /pid <PID> /T /F` on Windows and detached process groups (`kill(-pid, 'SIGKILL')`) on Unix, verifying death via `process.kill(pid, 0)` checks with timeout deadlines to ensure no stray processes or orphaned ports remain.
 
+**Load generator open-loop design (`apps/loadgen`).** Pre-computed arrival schedule (constant or Poisson) seeded for determinism, drift-corrected high-resolution monotonic timer loop (`process.hrtime.bigint()`), and asynchronous non-blocking request dispatch. Measuring duration from scheduled offset (`completedNs - targetNs`) rather than actual send time eliminates coordinated omission.
+
+**Toxiproxy container-to-host routing on Docker.** The Toxiproxy control API is contacted at `127.0.0.1:8474`. Proxies listen on `0.0.0.0:<proxyPort>`. When running in Docker on Windows/Mac, upstream worker destinations on the host use `host.docker.internal:<nodePort>`.
+
+**Cross-module integration tests live in `apps/server/tests/`.** Tests that integrate multiple server modules (e.g. `sandbox` + `chaos` + `measurement` + `topology`) live in `apps/server/tests/`, preserving module isolation inside `src/modules/` where depcruise enforces that modules cannot import one another outside the allowed module matrix.
+
 ## Language, runtime, and tooling
 
 **TypeScript everywhere, strict.** One language for contracts, server, worker, load generator, and web, so a schema is written once and validates every boundary. Rejected: a Python backend (a second type system and a second contract definition), and Go for the load generator (a new language during a seven-day build).

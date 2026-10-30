@@ -27,9 +27,9 @@ Rules for whoever fills this file (human or agent):
 | Muse Image generation | NOT TESTED | | |
 | Muse Wonder: text | NOT TESTED | | |
 | Muse Wonder: image input | NOT TESTED | | |
-| Toxiproxy supported toxics | PARTIAL | Observed in the planning sandbox (section 8). Docker Compose addressing on the builder's machine is NOT TESTED. | 2026-10-29 |
-| Host capacity calibration | NOT TESTED | | |
-| Node LTS pinned and SQLite option chosen | PARTIAL | `node:sqlite` chosen; verified on Node 22.22.2 in the planning sandbox. Confirm on the builder's machine. | 2026-10-29 |
+| Toxiproxy supported toxics | WORKS | Container addressing confirmed via Docker Compose on Windows 11 (`host.docker.internal` upstream, `0.0.0.0:28001` container bind, `127.0.0.1:28001` host client). All 7 toxic types verified. | 2026-10-30 |
+| Host capacity calibration | WORKS | Calibrated via `apps/server/src/cli/calibrate.ts`. Stable capacity 50-100 RPS, recommended scenario cap 25-30 RPS. | 2026-10-30 |
+| Node LTS pinned and SQLite option chosen | WORKS | Node v24.13.0 and `node:sqlite` verified on Windows 11 host across unit and migration tests. | 2026-10-30 |
 | Image library installs and runs on the builder's machine | NOT TESTED | | |
 
 Status values: NOT TESTED, WORKS, PARTIAL (say what is missing), DOES NOT WORK.
@@ -164,7 +164,8 @@ The server accepted these toxic types: latency, bandwidth, slow_close, timeout, 
 
 Control API shapes that worked on 2.13.0: `POST /proxies` with name, listen, upstream, enabled (an ephemeral listen port such as `127.0.0.1:0` is returned resolved in the response); `POST /proxies/{name}/toxics` with name, type, stream, toxicity, and attributes; `DELETE /proxies/{name}/toxics/{toxic}`; `POST /proxies/{name}` to update a proxy; `DELETE /proxies/{name}`.
 
-Not yet verified: what happens to a `timeout` 0 connection when the toxic is removed, the behavior of the Docker image and its tag, and container-to-host addressing.
+Builder environment observation. Recorded 2026-10-30 on Windows 11 x86_64 with Docker Desktop 4.97.0 (Docker Engine 29.9.2, Linux container kernel 6.6.87.2) running `ghcr.io/shopify/toxiproxy:2.13.0` via `infra/docker-compose.yml`. Script `scripts/smoke/toxiproxy.ts` executed with `TOXIPROXY_URL=http://127.0.0.1:8474`, `TOXIPROXY_PROXY_LISTEN=0.0.0.0:28001`, `TOXIPROXY_CLIENT_HOST=127.0.0.1`, `TOXIPROXY_UPSTREAM_HOST=host.docker.internal`, and `SMOKE_ECHO_BIND=0.0.0.0`. Recording written to `.smoke-output/toxiproxy-2026-10-30T02-57-58-611Z.json`.
+Baseline median first byte was 12 ms. All 7 toxics passed with measured behavior matching planning sandbox observations (downstream latency 309 ms, upstream latency 307 ms, jitter 177 ms, bandwidth 2,420 bytes in 25 chunks at ~1 KB/s, slow_close closeAfterEnd 601 ms, timeout 500ms closed at 517 ms, timeout 0 held 2,507 ms, limit_data exactly 10 bytes, reset_peer closed at 106 ms, toxicity 0.5 delayed 17/30 connections). Container-to-host upstream addressing verified via `host.docker.internal`.
 
 ---
 
@@ -172,22 +173,18 @@ Not yet verified: what happens to a `timeout` 0 connection when the toxic is rem
 
 Platform decisions (Phase 0):
 
-- Builder operating system and Docker version: not recorded yet. Fill in when you first run the smoke scripts.
-- Node version: `.nvmrc` says 22 and `engines` requires 22.13.0 or newer, because the pinned tools require it (see DECISIONS.md). The scaffold passed all checks on Node 22.22.2 in the planning sandbox. Whether a newer Node is the current LTS was not checked.
-- Built-in SQLite module: `node:sqlite` works on Node 22.22.2 (open, WAL for file databases, foreign keys, transactions, migrations) and prints an ExperimentalWarning. It is wrapped by `platform/db.ts`, so replacing it is a one-file change.
+- Builder operating system and Docker version: Windows 11 x86_64, Docker Desktop 4.97.0 (Engine 29.9.2), Docker Compose 5.6.1.
+- Node version: `v24.13.0` on host; engines floor `>=22.13.0` satisfied.
+- Built-in SQLite module: `node:sqlite` works on Node v24.13.0 with standard ExperimentalWarning. Wrapped by `platform/db.ts`.
 - Image library: not needed until Phase 8, so not installed or tested.
-- How the application reaches Toxiproxy (host or Compose networking) and how Toxiproxy reaches worker processes: not decided. Native Toxiproxy on the host worked in the planning sandbox. See `docs/smoke-tests.md` for the Docker variables.
+- How the application reaches Toxiproxy (host or Compose networking) and how Toxiproxy reaches worker processes: Application reaches Toxiproxy control API at `http://127.0.0.1:8474`. Proxies listen on `0.0.0.0:<port>` inside container, mapped to host ports `127.0.0.1:28000-28099`. Toxiproxy routes upstream traffic to worker nodes using `host.docker.internal:<node-port>`.
 
 Host calibration (filled in Phase 3):
 
-- Machine description (CPU model and core count, memory, operating system, Node version, pnpm version, Docker version):
-- Fault-free capacity measurement method and date:
-- Highest stable arrival rate on a trivial topology, and where degradation begins:
-- Fraction of that capacity that scenarios may use, and why:
-
-Entries:
-
-(none yet)
+- Machine description: 12th Gen Intel(R) Core(TM) i3-1215U (8 logical cores), 7.7 GB RAM, Windows 11 x86_64, Node v24.13.0, pnpm 12.13.0, Docker Engine 29.9.2.
+- Fault-free capacity measurement method and date: `apps/server/src/cli/calibrate.ts` on 2026-10-30; open-loop stepped arrival rates (50, 100, 200 RPS) with 1ms constant processing time on a single service node.
+- Highest stable arrival rate on a trivial topology, and where degradation begins: 50-100 RPS maintains p99 latency ~30 ms and low generator lag. At 200 RPS, knee is reached (p99 latency increases to 856 ms).
+- Fraction of that capacity that scenarios may use, and why: 50% safety fraction (recommended scenario arrival rate cap <= 25-30 RPS) to prevent host saturation or generator lag distortion during multi-node topology trials.
 
 ---
 

@@ -44,7 +44,7 @@ For each module, the other modules whose public API it may import (contracts and
 | `reporting` | runs, meta-ai |
 | `benchmarks` | topology, experiments, repair, runs, meta-ai |
 
-Only `topology` and `sandbox` exist so far. The other modules are created in the phase that implements them.
+Only `topology`, `sandbox`, `chaos`, and `measurement` exist so far. The other modules are created in the phase that implements them.
 
 ## Enforcement
 
@@ -59,33 +59,43 @@ Generated from the real source tree by `pnpm graph`. Edges show imports between 
 flowchart LR
 
 subgraph 0["apps"]
-subgraph 1["server"]
-subgraph 2["src"]
-subgraph 3["modules"]
-4["sandbox"]
-5["topology"]
+1["loadgen"]
+subgraph 2["server"]
+subgraph 3["src"]
+subgraph 4["modules"]
+5["chaos"]
+6["measurement"]
+7["sandbox"]
+8["topology"]
 end
-6["platform"]
+9["platform"]
 end
 end
-7["web"]
-8["worker"]
+A["web"]
+B["worker"]
 end
-subgraph 9["packages"]
-A["contracts"]
-B["shared"]
+subgraph C["packages"]
+D["contracts"]
+E["shared"]
 end
-C["scripts"]
-1-->5
-1-->6
-4-->A
-4-->B
-5-->A
-5-->B
-6-->A
-6-->B
-7-->A
-8-->A
-8-->B
+F["scripts"]
+1-->D
+1-->E
+2-->8
+2-->9
+2-->7
+2-->D
+5-->D
+5-->E
+6-->D
+7-->D
+7-->E
+8-->D
+8-->E
+9-->D
+9-->E
+A-->D
+B-->D
+B-->E
 ```
 <!-- graph:end -->
