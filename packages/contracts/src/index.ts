@@ -217,3 +217,19 @@ export type {
   RedStrokePoint,
   RedStrokeSelection,
 } from './gesture';
+export {
+  voiceClientMessageSchema,
+  voiceCommandSchema,
+  voiceFaultParametersSchema,
+  voiceIntentParseResultSchema,
+  voiceServerMessageSchema,
+  voiceTimingsSchema,
+} from './voice-command';
+export type {
+  VoiceClientMessage,
+  VoiceCommand,
+  VoiceFaultParameters,
+  VoiceIntentParseResult,
+  VoiceServerMessage,
+  VoiceTimings,
+} from './voice-command';
