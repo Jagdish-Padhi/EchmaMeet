@@ -44,7 +44,7 @@ For each module, the other modules whose public API it may import (contracts and
 | `reporting` | runs, meta-ai |
 | `benchmarks` | topology, experiments, repair, runs, meta-ai |
 
-Only `topology`, `sandbox`, `chaos`, and `measurement` exist so far. The other modules are created in the phase that implements them.
+All 12 capability modules are fully implemented with strict inward-pointing dependencies and verified by dependency-cruiser.
 
 ## Enforcement
 
