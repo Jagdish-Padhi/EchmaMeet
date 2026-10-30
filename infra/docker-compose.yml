@@ -1,15 +1,32 @@
-# Toxiproxy only, for now. The application services are added in Phase 11.
-# The image tag matches the Toxiproxy server release exercised in the planning sandbox (2.13.0,
-# run natively). Confirm that this tag pulls before relying on it.
 services:
   toxiproxy:
     image: ghcr.io/shopify/toxiproxy:2.13.0
     ports:
       # Control API
       - '127.0.0.1:8474:8474'
-      # Proxy listen ports used by smoke tests and, later, by experiments
+      # Proxy listen ports used by smoke tests and experiments
       - '127.0.0.1:28000-28099:28000-28099'
     extra_hosts:
-      # Lets the container reach services on the host (Linux needs this mapping explicitly)
       - 'host.docker.internal:host-gateway'
     restart: unless-stopped
+
+  chaosboard:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=3000
+      - TOXIPROXY_URL=http://toxiproxy:8474
+      - DATA_DIR=/data
+    ports:
+      - '3000:3000'
+    volumes:
+      - chaosboard-data:/data
+    depends_on:
+      - toxiproxy
+    restart: unless-stopped
+
+volumes:
+  chaosboard-data:

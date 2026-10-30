@@ -1,4 +1,6 @@
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import fastifyStatic from '@fastify/static';
 import { buildApp } from './app';
 import { moduleMigrations } from './module-migrations';
 import { ConfigError, loadSettings } from './platform/config';
@@ -25,6 +27,14 @@ async function main(): Promise<void> {
     partnerApiKey: settings.partnerApiKey,
     partnerModelId: settings.partnerModelId,
   });
+
+  const webDistPath = join(import.meta.dirname, '../../web/dist');
+  if (existsSync(webDistPath)) {
+    await app.register(fastifyStatic, {
+      root: webDistPath,
+      prefix: '/',
+    });
+  }
 
   const shutdown = createShutdownRegistry({ logger, cleanupTimeoutMs: CLEANUP_TIMEOUT_MS });
   shutdown.register('database', () => {
