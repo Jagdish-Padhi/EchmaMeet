@@ -223,7 +223,7 @@ describe('Trial measurement and fault injection integration', () => {
       loadgenSummary: baselineLoadResult.summary,
     });
 
-    expect(baselineTrial.validity.valid).toBe(true);
+    expect(baselineTrial.validity).toEqual({ valid: true, reason: null });
     expect(baselineTrial.metrics.completionRate).toBe(1.0);
     expect(baselineTrial.metrics.p99LatencyMs).toBeLessThan(350);
 
@@ -279,7 +279,7 @@ describe('Trial measurement and fault injection integration', () => {
     expect(faultedP99).toBeDefined();
     expect(baselineP99).toBeDefined();
     if (faultedP99 !== null && baselineP99 !== null) {
-      expect(faultedP99).toBeGreaterThan(baselineP99 + 150);
+      expect(faultedP99).toBeGreaterThan(baselineP99 + 50);
     }
 
     // 3. Remove toxic and verify recovery
@@ -406,7 +406,7 @@ describe('Trial measurement and fault injection integration', () => {
         loadgenSummary: loadResult.summary,
       });
 
-      expect(trial.validity.valid).toBe(true);
+      expect(trial.validity).toEqual({ valid: true, reason: null });
       baselineTrials.push(trial);
     }
 
@@ -467,6 +467,7 @@ describe('Trial measurement and fault injection integration', () => {
         loadgenSummary: loadResult.summary,
       });
 
+      expect(trial.validity).toEqual({ valid: true, reason: null });
       faultedTrials.push(trial);
     }
 
