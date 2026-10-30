@@ -10,6 +10,7 @@ describe('loadSettings', () => {
       port: 8787,
       dataDir: './data',
       logLevel: 'info',
+      toxiproxyUrl: 'http://127.0.0.1:8474',
     });
   });
 

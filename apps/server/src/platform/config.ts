@@ -6,6 +6,7 @@ const settingsSchema = z.strictObject({
   SERVER_PORT: z.coerce.number().int().min(1).max(65_535).default(8787),
   DATA_DIR: z.string().min(1).default('./data'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  TOXIPROXY_URL: z.url().default('http://127.0.0.1:8474'),
 });
 
 export interface Settings {
@@ -14,6 +15,7 @@ export interface Settings {
   readonly port: number;
   readonly dataDir: string;
   readonly logLevel: 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'silent';
+  readonly toxiproxyUrl: string;
 }
 
 export class ConfigError extends Error {
@@ -55,5 +57,6 @@ export function loadSettings(env: Readonly<Record<string, string | undefined>>):
     port: parsed.data.SERVER_PORT,
     dataDir: parsed.data.DATA_DIR,
     logLevel: parsed.data.LOG_LEVEL,
+    toxiproxyUrl: parsed.data.TOXIPROXY_URL,
   };
 }
