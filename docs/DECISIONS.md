@@ -101,6 +101,16 @@ Otherwise, the orchestrator rolls back immediately to the previous best topology
 
 **Lock orchestration between sequential experiment iterations.** Because experiment teardown cleans up sandboxes and resets Toxiproxy toxics asynchronously, the repair orchestrator waits for `isBusy() === false` before launching subsequent iterations, preventing concurrency lock collisions.
 
+## Benchmark suite and static-model baseline (Phase 6)
+
+**Pre-registered static predictions committed before empirical runs.** Static predictions for all six core scenarios are captured with frozen prompt version `prediction-v1` and persisted under `benchmarks/predictions/<scenarioId>.json`. They record violation forecasts, numeric p99 and error rate predictions, and failure mode hypotheses prior to empirical measurement to prevent cherry-picking.
+
+**Pure domain agreement and magnitude error calculation.** The static baseline is evaluated against real empirical sandbox trials in `benchmarks/domain/metrics.ts`. Violation agreement is measured per invariant; magnitude errors are expressed as distribution ratios (`p99Ratio = predicted / measured`) rather than misleading single averages; and failure modes are token-matched.
+
+**Truthful report generation strictly from stored runs.** `docs/benchmark-results.md` is produced directly by `generateBenchmarkReport(suiteSummary)` from raw run data. It contains no hand-coded or fabricated numbers, records host hardware and commit metadata, reports surprises (such as order-of-magnitude prediction divergence under cascading timeouts), and documents system limitations plainly.
+
+**Workspace root discovery for benchmark assets.** `FileBenchmarkStorage` locates the workspace root via parent traversal for `pnpm-workspace.yaml`. This guarantees consistent reading and writing of `benchmarks/scenarios`, `benchmarks/predictions`, and `benchmarks/results` across server dev, CLI (`pnpm benchmark`), and Vitest test runners.
+
 ## Open decisions
 
 **License.** A public repository is required. Choose a license before submission. This was left to the builder on purpose.
