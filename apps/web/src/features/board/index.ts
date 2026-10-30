@@ -1,3 +1,4 @@
+export { AnalysisDropdown } from './components/AnalysisDropdown';
 export { BoardCanvas } from './components/BoardCanvas';
 export type { RemoteCursor } from './components/BoardCanvas';
 export { EdgeInspector } from './components/EdgeInspector';

@@ -11,6 +11,7 @@ import { createApiClient } from '../api/client';
 import { Alert } from '../components/ui/Alert';
 import { Button } from '../components/ui/Button';
 import {
+  AnalysisDropdown,
   BoardCanvas,
   EdgeInspector,
   ImportDiagramModal,
@@ -62,13 +63,14 @@ import { LandingPage } from '../features/landing/LandingPage';
 import {
   CanvasSreCallout,
   CreateMeetingModal,
+  FloatingMeetingPiP,
   JoinMeetingModal,
   MeetingsDropdown,
   SreYieldFloorModal,
   useCollaborationPresence,
   useMeetingSreWatcher,
 } from '../features/meeting';
-import { IacExportModal } from '../features/repair';
+import { ExportDropdown, IacExportModal } from '../features/repair';
 import {
   loadSettingsFromStorage,
   saveSettingsToStorage,
@@ -451,79 +453,35 @@ export function App() {
             </Button>
           )}
 
+          {/* Analysis & Drawer Tools Dropdown */}
+          <AnalysisDropdown activeTab={activeDrawer} onSelectTab={setActiveDrawer} />
+
+          {/* Export Artifacts Dropdown (IaC & RFC) */}
+          <ExportDropdown
+            onExportIac={() => setIsIacModalOpen(true)}
+            onExportRfc={handleExportRfc}
+          />
+
+          {/* Quick Import Architecture Diagram */}
           <button
             type="button"
-            className="studio-action-pill"
+            className="navbar-meeting-btn"
             onClick={() => setIsImportModalOpen(true)}
             title="Import architecture from Mermaid flowchart or template"
           >
             <svg
               viewBox="0 0 24 24"
-              width="12"
-              height="12"
+              width="13"
+              height="13"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              style={{ marginRight: 4 }}
             >
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-              <polyline points="22,6 12,13 2,6" />
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
             </svg>
-            <span>Import</span>
-          </button>
-
-          <button
-            type="button"
-            className="studio-action-pill"
-            onClick={handleExportRfc}
-            title="Export Architecture Review ADR in Markdown"
-          >
-            <span>Export RFC</span>
-          </button>
-
-          <button
-            type="button"
-            className={`studio-action-pill ${activeDrawer === 'inspect' ? 'active' : ''}`}
-            onClick={() => setActiveDrawer(activeDrawer === 'inspect' ? 'none' : 'inspect')}
-            title="Inspect selected node or edge policies"
-          >
-            <span>Inspector</span>
-          </button>
-
-          <button
-            type="button"
-            className={`studio-action-pill ${activeDrawer === 'chaos' ? 'active' : ''}`}
-            onClick={() => setActiveDrawer(activeDrawer === 'chaos' ? 'none' : 'chaos')}
-            title="Configure physical chaos faults and invariant bounds"
-          >
-            <span>Faults</span>
-          </button>
-
-          <button
-            type="button"
-            className={`studio-action-pill ${activeDrawer === 'telemetry' ? 'active' : ''}`}
-            onClick={() => setActiveDrawer(activeDrawer === 'telemetry' ? 'none' : 'telemetry')}
-            title="View empirical sandbox latency & error telemetry"
-          >
-            <span>Telemetry</span>
-          </button>
-
-          <button
-            type="button"
-            className={`studio-action-pill ${activeDrawer === 'repair' ? 'active' : ''}`}
-            onClick={() => setActiveDrawer(activeDrawer === 'repair' ? 'none' : 'repair')}
-            title="Open Meta AI autonomous repair session"
-          >
-            <span>AI Repair</span>
-          </button>
-
-          <button
-            type="button"
-            className="studio-action-pill"
-            onClick={() => setIsIacModalOpen(true)}
-            title="Export calibrated Istio & Envoy resilience CRD manifest"
-          >
-            <span>Export IaC</span>
+            <span className="meeting-btn-label">Import</span>
           </button>
 
           {/* Meta AI SRE Reviewer Pill */}
@@ -720,6 +678,15 @@ export function App() {
                 void experimentSession.startExperiment(currentTopology);
               }
             }}
+          />
+
+          {/* Google Meet-Style Floating Picture-in-Picture Mini-Window (Bottom-Right) */}
+          <FloatingMeetingPiP
+            isActive={isMeetingLive}
+            roomCode={meetingRoomCode}
+            aiRaisedHand={sreWatcher.aiRaisedHand}
+            onOpenSreFinding={() => setIsSreModalOpen(true)}
+            onLeaveMeeting={() => setIsMeetingLive(false)}
           />
         </main>
 

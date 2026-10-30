@@ -1,3 +1,4 @@
+export { ExportDropdown } from './components/ExportDropdown';
 export { IacExportModal } from './components/IacExportModal';
 export { IterationTimeline } from './components/IterationTimeline';
 export { PatchDiffCard } from './components/PatchDiffCard';

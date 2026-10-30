@@ -1856,6 +1856,402 @@ body {
   animation: pulseGlow 2s infinite;
 }
 
+.export-dropdown-wrapper,
+.analysis-dropdown-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.export-menu,
+.analysis-menu {
+  width: 270px;
+}
+
+.meetings-menu-item.active-item {
+  background: rgba(8, 102, 255, 0.12);
+  border-left: 3px solid var(--color-meta-blue);
+}
+
+/* Google Meet Floating Picture-in-Picture Mini-Window & Floating Bubble */
+.meeting-pip-bubble {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface-elevated);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: var(--radius-full);
+  padding: 6px 14px 6px 12px;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(16, 185, 129, 0.2);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: bubblePop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.meeting-pip-bubble:hover {
+  transform: translateY(-2px) scale(1.02);
+  border-color: #10b981;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.55),
+    0 0 12px rgba(16, 185, 129, 0.3);
+}
+
+@keyframes bubblePop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pip-live-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: liveBlink 1.8s infinite ease-in-out;
+}
+
+@keyframes liveBlink {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.25);
+  }
+}
+
+.pip-bubble-title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.pip-badge-count {
+  font-size: 10px;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+  border-radius: var(--radius-full);
+  padding: 1px 6px;
+}
+
+.pip-expand-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.pip-expand-btn:hover {
+  color: var(--color-text);
+}
+
+/* Expanded Floating Mini Window (Google Meet on laptop style) */
+.meeting-pip-window {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 95;
+  width: 320px;
+  background: var(--color-surface-elevated);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(8, 102, 255, 0.15);
+  overflow: hidden;
+  animation: pipWindowOpen 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pipWindowOpen {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pip-window-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.18);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.pip-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pip-window-title {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.pip-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pip-control-icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.pip-control-icon-btn:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+/* Meet Video Grid */
+.pip-video-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  padding: 10px;
+}
+
+.pip-tile {
+  position: relative;
+  height: 80px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.pip-tile.tile-self {
+  grid-column: span 2;
+  height: 60px;
+}
+
+.pip-avatar-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.pip-avatar-wrap.speaking {
+  border: 2px solid #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  animation: speakingPulse 1.4s infinite ease-in-out;
+}
+
+@keyframes speakingPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.25);
+  }
+}
+
+.pip-avatar-wrap.ai-pulse {
+  background: rgba(8, 102, 255, 0.2);
+  color: #38bdf8;
+  border: 1px solid #0866ff;
+}
+
+.pip-avatar-wrap.self {
+  background: rgba(8, 102, 255, 0.15);
+  color: var(--color-text);
+  border: 1px solid rgba(8, 102, 255, 0.3);
+}
+
+.pip-tile-meta {
+  position: absolute;
+  bottom: 4px;
+  left: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pip-tile-name {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pip-tile-name.ai {
+  color: #38bdf8;
+}
+
+.pip-speaking-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 8px;
+}
+
+.pip-speaking-bars .bar {
+  width: 2px;
+  background: #10b981;
+  border-radius: 1px;
+  animation: barBounce 0.8s infinite ease-in-out;
+}
+
+.pip-speaking-bars .bar:nth-child(1) {
+  height: 4px;
+  animation-delay: 0s;
+}
+.pip-speaking-bars .bar:nth-child(2) {
+  height: 8px;
+  animation-delay: 0.2s;
+}
+.pip-speaking-bars .bar:nth-child(3) {
+  height: 6px;
+  animation-delay: 0.4s;
+}
+
+@keyframes barBounce {
+  0%,
+  100% {
+    height: 3px;
+  }
+  50% {
+    height: 8px;
+  }
+}
+
+.pip-alert-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 6px #f59e0b;
+}
+
+/* Google Meet Bottom Floating Control Bar */
+.pip-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 12px 10px;
+  background: rgba(0, 0, 0, 0.12);
+  border-top: 1px solid var(--color-border);
+}
+
+.pip-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-surface-hover);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pip-action-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.pip-action-btn.muted {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.4);
+  color: #f43f5e;
+}
+
+.pip-action-btn.highlight {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+.pip-action-btn.end-call {
+  background: #dc2626;
+  border-color: #b91c1c;
+  color: #ffffff;
+  width: 44px;
+  border-radius: var(--radius-full);
+}
+
+.pip-action-btn.end-call:hover {
+  background: #b91c1c;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+/* Light Mode Overrides for PiP */
+[data-theme='light'] .meeting-pip-bubble {
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+[data-theme='light'] .meeting-pip-window {
+  background: #ffffff;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.18);
+}
+
+[data-theme='light'] .pip-tile {
+  background: #f1f5f9;
+}
+
+[data-theme='light'] .pip-tile-name {
+  color: #0f172a;
+  text-shadow: none;
+}
+
 /* Meetings Dropdown in Topbar */
 .meetings-dropdown-wrapper {
   position: relative;

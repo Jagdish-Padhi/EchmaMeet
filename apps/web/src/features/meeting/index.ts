@@ -1,5 +1,6 @@
 export { CanvasSreCallout } from './CanvasSreCallout';
 export { CreateMeetingModal } from './CreateMeetingModal';
+export { FloatingMeetingPiP } from './FloatingMeetingPiP';
 export { JoinMeetingModal } from './JoinMeetingModal';
 export { MeetingBar } from './MeetingBar';
 export { MeetingsDropdown } from './MeetingsDropdown';
