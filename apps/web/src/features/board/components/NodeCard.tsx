@@ -46,13 +46,13 @@ export function NodeCard({
         };
       case 'queue_consumer':
         return {
-          color: '#a855f7',
-          bgTint: 'rgba(168, 85, 247, 0.12)',
+          color: '#3b82f6',
+          bgTint: 'rgba(37, 99, 235, 0.12)',
           icon: (
             <path
               d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
               fill="none"
-              stroke="#a855f7"
+              stroke="#3b82f6"
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"

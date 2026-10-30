@@ -28,16 +28,16 @@ export function LandingPage({
               <svg viewBox="0 0 32 32" width="22" height="22" fill="none">
                 <polygon
                   points="16,3 29,10 29,24 16,30 3,24 3,10"
-                  stroke="#38bdf8"
+                  stroke="#0866ff"
                   strokeWidth="2.2"
                   strokeLinejoin="round"
                 />
-                <circle cx="16" cy="16.5" r="4" fill="#38bdf8" />
+                <circle cx="16" cy="16.5" r="4" fill="#0866ff" />
                 <circle
                   cx="16"
                   cy="16.5"
                   r="7.5"
-                  stroke="#818cf8"
+                  stroke="#38bdf8"
                   strokeWidth="1.5"
                   strokeDasharray="3 2"
                 />
@@ -45,7 +45,7 @@ export function LandingPage({
             </div>
             <div className="brand-title-wrap">
               <span className="landing-title">Resilio</span>
-              <span className="hackathon-tag">Meta AI Systems</span>
+              <span className="platform-tag">Enterprise SRE</span>
             </div>
           </div>
 
@@ -338,7 +338,7 @@ export function LandingPage({
                     width="28"
                     height="28"
                     rx="6"
-                    fill="rgba(168, 85, 247, 0.12)"
+                    fill="rgba(37, 99, 235, 0.14)"
                   />
                   <text x="48" y="26" fill="#f8fafc" fontSize="13" fontWeight="600">
                     Order Processor
@@ -346,7 +346,7 @@ export function LandingPage({
                   <text
                     x="48"
                     y="38"
-                    fill="#a855f7"
+                    fill="#3b82f6"
                     fontSize="9.5"
                     fontFamily="var(--font-mono)"
                     fontWeight="700"
@@ -504,7 +504,7 @@ export function LandingPage({
           </div>
 
           <div className="pillar-card">
-            <div className="pillar-icon-box purple">
+            <div className="pillar-icon-box blue">
               <svg
                 viewBox="0 0 24 24"
                 width="22"
@@ -570,14 +570,13 @@ export function LandingPage({
           <div className="footer-brand">
             <span className="footer-title">Resilio</span>
             <span className="footer-tagline">
-              Autonomous Architecture Review &amp; Distributed Resilience Engine
+              Autonomous Systems Architecture &amp; Physical Fault Validation
             </span>
           </div>
 
           <div className="footer-meta">
-            <span className="footer-pill">Meta Global AI Developer Hackathon 2026</span>
             <span className="footer-copy">
-              &copy; 2026 Resilio Systems. Built for high-reliability engineering teams.
+              &copy; 2026 Resilio Systems Inc. Enterprise SRE &amp; Resilience Platform.
             </span>
           </div>
         </div>
