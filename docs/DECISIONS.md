@@ -111,6 +111,16 @@ Otherwise, the orchestrator rolls back immediately to the previous best topology
 
 **Workspace root discovery for benchmark assets.** `FileBenchmarkStorage` locates the workspace root via parent traversal for `pnpm-workspace.yaml`. This guarantees consistent reading and writing of `benchmarks/scenarios`, `benchmarks/predictions`, and `benchmarks/results` across server dev, CLI (`pnpm benchmark`), and Vitest test runners.
 
+## Web UI, design system, and live experience (Phase 7)
+
+**Zero-dependency, accessible SVG telemetry and canvas architecture.** Instead of adding heavyweight third-party graphing libraries (such as Recharts or Chart.js) or external canvas dependencies with React 19 peer-dependency risks, ChaosBoard uses custom pure SVG/CSS components (`LiveTelemetryChart`, `BoardCanvas`). Real percentile points (p50, p95, p99) and error rates map directly to SVG paths without artificial smoothing or synthetic animations.
+
+**Contract-enforced API client and SSE stream consumer.** `createApiClient` in `apps/web/src/api/client.ts` parses every HTTP response through its Zod contract schema; schema violations or RFC 9457 problem details reject with typed errors. Server-sent events (`/api/experiments/:id/events` and `/api/repairs/:id/events`) are validated by `subscribeToRunEvents` using `runEventSchema`, guaranteeing the UI never displays corrupted or ungrounded data.
+
+**Design system and accessibility charter.** One sans-serif font stack, one monospace stack for numbers and identifiers, a small spacing scale, single warm amber accent (`#b45309`), high-contrast dark slate text (`#0f172a`), visible keyboard focus rings (`2px solid #2563eb`), and status indicators that never convey state by color alone (always distinct text label + semantic border/icon).
+
+**No client-side derivation of metrics or verdicts.** The UI acts as a pure renderer for backend contracts. Invariant verdicts, percentile aggregates, Pareto trade-off frontiers, and agreement metrics are computed solely by server domain modules.
+
 ## Open decisions
 
 **License.** A public repository is required. Choose a license before submission. This was left to the builder on purpose.
