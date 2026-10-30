@@ -1,9 +1,16 @@
-import { useMemo, useState } from 'react';
-import { topologyIdSchema, type Topology } from '@chaosboard/contracts';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  edgeIdSchema,
+  faultIdSchema,
+  topologyIdSchema,
+  type EdgeId,
+  type NodeId,
+  type RunId,
+  type Topology,
+} from '@chaosboard/contracts';
 import { createApiClient } from '../api/client';
 import { Alert } from '../components/ui/Alert';
-import { Card } from '../components/ui/Card';
-import { Tabs } from '../components/ui/Tabs';
+import { Button } from '../components/ui/Button';
 import {
   BoardCanvas,
   EdgeInspector,
@@ -34,7 +41,7 @@ import {
   SurprisesSection,
   useBenchmarks,
 } from '../features/benchmarks';
-import { ScenarioPicker, useScenarios } from '../features/scenarios';
+import { useScenarios } from '../features/scenarios';
 import {
   GestureResultBanner,
   ImageUploader,
@@ -50,13 +57,47 @@ import {
   VoiceTranscriptStream,
 } from '../features/voice';
 import { ReportViewer } from '../features/reports';
-import { SystemStatus } from '../features/system-status';
-import { edgeIdSchema, faultIdSchema, type RunId } from '@chaosboard/contracts';
+import { LandingPage } from '../features/landing/LandingPage';
+import {
+  loadSettingsFromStorage,
+  saveSettingsToStorage,
+  SettingsModal,
+  type AppSettings,
+} from '../features/settings/SettingsModal';
+
+type StudioDrawerTab =
+  | 'none'
+  | 'inspect'
+  | 'chaos'
+  | 'telemetry'
+  | 'repair'
+  | 'voice'
+  | 'vision'
+  | 'reports'
+  | 'benchmarks'
+  | 'runs';
 
 export function App() {
   const api = useMemo(() => createApiClient(), []);
-  const [activeTab, setActiveTab] = useState('board');
+
+  // View & Theme State
+  const [view, setView] = useState<'landing' | 'studio'>('studio');
+  const [settings, setSettings] = useState<AppSettings>(loadSettingsFromStorage);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeDrawer, setActiveDrawer] = useState<StudioDrawerTab>('none');
   const [selectedReportRunId, setSelectedReportRunId] = useState<RunId | null>(null);
+
+  // Sync theme with HTML data-theme attribute
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', settings.theme);
+  }, [settings.theme]);
+
+  const handleToggleTheme = () => {
+    const nextTheme: 'dark' | 'light' = settings.theme === 'dark' ? 'light' : 'dark';
+    const updated: AppSettings = { ...settings, theme: nextTheme };
+    setSettings(updated);
+    saveSettingsToStorage(updated);
+  };
 
   // Scenarios catalog
   const scenariosState = useScenarios(api);
@@ -91,11 +132,25 @@ export function App() {
   // Vision flow state
   const visionFlow = useVisionFlow(api, (topology) => {
     loadTopology(topology);
-    setActiveTab('board');
+    setActiveDrawer('none');
   });
 
   const selectedNode = board.nodes.find((n) => n.id === board.selectedNodeId) ?? null;
   const selectedEdge = board.edges.find((e) => e.id === board.selectedEdgeId) ?? null;
+
+  const handleSelectNode = (id: NodeId | null) => {
+    selectNode(id);
+    if (id) {
+      setActiveDrawer('inspect');
+    }
+  };
+
+  const handleSelectEdge = (id: EdgeId | null) => {
+    selectEdge(id);
+    if (id) {
+      setActiveDrawer('inspect');
+    }
+  };
 
   const currentTopology: Topology = useMemo(() => {
     return {
@@ -165,13 +220,13 @@ export function App() {
             startOffsetMs: 0,
           });
         }
-        setActiveTab('board');
+        setActiveDrawer('chaos');
       }
     } else if (cmd.command === 'run_experiment') {
-      setActiveTab('board');
+      setActiveDrawer('telemetry');
       void experimentSession.startExperiment(currentTopology);
     } else if (cmd.command === 'start_repair') {
-      setActiveTab('repair');
+      setActiveDrawer('repair');
       void repairSession.startRepair(
         currentTopology,
         experimentSession.fault,
@@ -184,117 +239,325 @@ export function App() {
     } else if (cmd.command === 'load_scenario') {
       const scenario = await api.getScenario(cmd.scenarioId);
       loadTopology(scenario.topology);
-      setActiveTab('board');
+      setActiveDrawer('none');
     }
   });
 
+  const handleLaunchStudioFromLanding = (scenarioId?: string) => {
+    if (scenarioId) {
+      const match = scenariosState.scenarios.find((s) => s.id === scenarioId);
+      if (match) {
+        loadTopology(match.topology);
+        const fault = match.faults[0];
+        if (fault) {
+          experimentSession.updateFault(fault);
+        }
+        experimentSession.updateInvariants(match.invariants);
+        experimentSession.updateTrialConfig(match.trialConfig);
+      }
+    }
+    setView('studio');
+  };
+
+  // 1. Landing Page View
+  if (view === 'landing') {
+    return (
+      <>
+        <LandingPage
+          onLaunchStudio={handleLaunchStudioFromLanding}
+          scenarios={scenariosState.scenarios}
+          theme={settings.theme}
+          onToggleTheme={handleToggleTheme}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+        />
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          onSave={setSettings}
+          currentSettings={settings}
+        />
+      </>
+    );
+  }
+
+  // 2. Studio Workspace View
   return (
-    <div className="app-layout">
-      {/* Top Header */}
-      <header className="app-header">
-        <div className="header-brand">
-          <div className="brand-emblem" aria-hidden="true">
-            <svg
-              className="brand-emblem-svg"
-              viewBox="0 0 32 32"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <polygon
-                points="16,3 29,10 29,24 16,30 3,24 3,10"
-                stroke="#38bdf8"
-                strokeWidth="2.2"
-                strokeLinejoin="round"
-              />
-              <circle cx="16" cy="16.5" r="4" fill="#38bdf8" />
-              <circle
-                cx="16"
-                cy="16.5"
-                r="7.5"
-                stroke="#818cf8"
-                strokeWidth="1.5"
-                strokeDasharray="3 2"
-              />
-            </svg>
-          </div>
-          <div className="brand-details">
-            <div className="brand-row">
-              <h1 className="app-title">ChaosBoard</h1>
-              <span className="hackathon-badge">Meta AI Systems Track</span>
+    <div className="studio-root">
+      {/* Minimalist Topbar */}
+      <header className="studio-topbar">
+        <div className="studio-brand-group">
+          <button
+            type="button"
+            className="studio-brand-link"
+            onClick={() => setView('landing')}
+            title="Return to Product Overview"
+          >
+            <div className="brand-emblem" style={{ width: 28, height: 28 }} aria-hidden="true">
+              <svg viewBox="0 0 32 32" width="16" height="16" fill="none">
+                <polygon
+                  points="16,3 29,10 29,24 16,30 3,24 3,10"
+                  stroke="var(--color-accent)"
+                  strokeWidth="2.4"
+                  strokeLinejoin="round"
+                />
+                <circle cx="16" cy="16.5" r="3.5" fill="var(--color-accent)" />
+              </svg>
             </div>
-            <span className="app-tagline">
-              Autonomous Resilience Testing &amp; Self-Healing Architecture Engine
-            </span>
-          </div>
+            <span className="studio-brand-name">ChaosBoard</span>
+          </button>
+
+          <div className="studio-topbar-divider" />
+
+          {/* Quick Scenario Switcher */}
+          <select
+            className="studio-scenario-select"
+            value={scenariosState.selectedScenarioId ?? ''}
+            onChange={(e) => {
+              const scId = e.target.value;
+              if (scId) {
+                const sc = scenariosState.scenarios.find((s) => s.id === scId);
+                if (sc) {
+                  scenariosState.selectScenario(sc.id);
+                  loadTopology(sc.topology);
+                  const fault = sc.faults[0];
+                  if (fault) experimentSession.updateFault(fault);
+                  experimentSession.updateInvariants(sc.invariants);
+                  experimentSession.updateTrialConfig(sc.trialConfig);
+                }
+              }
+            }}
+          >
+            <option value="">Choose Scenario...</option>
+            {scenariosState.scenarios.map((sc) => (
+              <option key={sc.id} value={sc.id}>
+                {sc.name}
+              </option>
+            ))}
+          </select>
         </div>
-        <SystemStatus />
+
+        {/* Studio Drawer Action Toggles */}
+        <div className="studio-topbar-actions">
+          <button
+            type="button"
+            className={`studio-action-pill ${activeDrawer === 'chaos' ? 'active' : ''}`}
+            onClick={() => setActiveDrawer(activeDrawer === 'chaos' ? 'none' : 'chaos')}
+          >
+            <span>Fault &amp; Invariants</span>
+          </button>
+
+          <button
+            type="button"
+            className={`studio-action-pill ${activeDrawer === 'telemetry' ? 'active' : ''}`}
+            onClick={() => setActiveDrawer(activeDrawer === 'telemetry' ? 'none' : 'telemetry')}
+          >
+            <span>Live Telemetry</span>
+          </button>
+
+          <button
+            type="button"
+            className={`studio-action-pill ${activeDrawer === 'repair' ? 'active' : ''}`}
+            onClick={() => setActiveDrawer(activeDrawer === 'repair' ? 'none' : 'repair')}
+          >
+            <span>AI Repair</span>
+          </button>
+
+          <button
+            type="button"
+            className={`studio-action-pill ${activeDrawer === 'voice' ? 'active' : ''}`}
+            onClick={() => setActiveDrawer(activeDrawer === 'voice' ? 'none' : 'voice')}
+          >
+            <span>Voice</span>
+          </button>
+
+          <button
+            type="button"
+            className={`studio-action-pill ${activeDrawer === 'vision' ? 'active' : ''}`}
+            onClick={() => setActiveDrawer(activeDrawer === 'vision' ? 'none' : 'vision')}
+          >
+            <span>Vision</span>
+          </button>
+
+          <button
+            type="button"
+            className={`studio-action-pill ${activeDrawer === 'reports' ? 'active' : ''}`}
+            onClick={() => setActiveDrawer(activeDrawer === 'reports' ? 'none' : 'reports')}
+          >
+            <span>Reports</span>
+          </button>
+
+          <button
+            type="button"
+            className={`studio-action-pill ${activeDrawer === 'benchmarks' ? 'active' : ''}`}
+            onClick={() => setActiveDrawer(activeDrawer === 'benchmarks' ? 'none' : 'benchmarks')}
+          >
+            <span>Benchmarks</span>
+          </button>
+
+          <div className="studio-topbar-divider" />
+
+          {/* Theme Toggle Button */}
+          <button
+            type="button"
+            className="btn-icon-toggle"
+            onClick={handleToggleTheme}
+            title={`Switch to ${settings.theme === 'dark' ? 'Light' : 'Dark'} Theme`}
+            aria-label="Toggle visual theme"
+          >
+            {settings.theme === 'dark' ? (
+              <svg
+                viewBox="0 0 24 24"
+                width="15"
+                height="15"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+              </svg>
+            ) : (
+              <svg
+                viewBox="0 0 24 24"
+                width="15"
+                height="15"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            )}
+          </button>
+
+          {/* Settings Gear Button */}
+          <button
+            type="button"
+            className="btn-icon-toggle"
+            onClick={() => setIsSettingsOpen(true)}
+            title="Engine Settings"
+            aria-label="Open settings"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="15"
+              height="15"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
+
+          {/* Primary Quick Run Action */}
+          {experimentSession.status === 'running' || experimentSession.status === 'starting' ? (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => {
+                void experimentSession.cancelExperiment();
+              }}
+            >
+              Cancel Run
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={!canStartExperiment}
+              onClick={() => {
+                setActiveDrawer('telemetry');
+                void experimentSession.startExperiment(currentTopology);
+              }}
+            >
+              Run Chaos
+            </Button>
+          )}
+        </div>
       </header>
 
-      {/* Main Navigation Tabs */}
-      <Tabs
-        activeTab={activeTab}
-        onChange={setActiveTab}
-        tabs={[
-          { id: 'board', label: 'Canvas & Chaos Experiment' },
-          { id: 'vision', label: 'Photo Ingestion & Red-Stroke' },
-          { id: 'voice', label: 'Voice Control' },
-          { id: 'repair', label: 'Autonomous Repair' },
-          { id: 'runs', label: 'Past Runs History', badge: runsHistory.runs.length },
-          { id: 'reports', label: 'Report & Blueprint Export' },
-          { id: 'benchmarks', label: 'Benchmark Results' },
-        ]}
-      />
+      {/* Main Studio Canvas Layout */}
+      <div className="studio-canvas-layout">
+        {/* Spatial Canvas Container */}
+        <main className="studio-canvas-main">
+          {/* Excalidraw-style Floating Tool Dock */}
+          <div className="studio-floating-dock">
+            <button type="button" className="dock-btn" onClick={addNode}>
+              + Add Node
+            </button>
+            <div style={{ width: 1, height: 16, background: 'var(--color-border)' }} />
+            <span style={{ fontSize: 11, color: 'var(--color-text-dim)', padding: '0 4px' }}>
+              Nodes: {board.nodes.length} &bull; Links: {board.edges.length}
+            </span>
+          </div>
 
-      {/* Tab Panels */}
-      <main className="tab-container">
-        {/* Tab 1: Board & Chaos Experiment */}
-        {activeTab === 'board' && (
-          <div className="board-view-layout">
-            {/* Scenarios Loader Drawer */}
-            <ScenarioPicker
-              scenarios={scenariosState.scenarios}
-              selectedScenarioId={scenariosState.selectedScenarioId}
-              isLoading={scenariosState.isLoading}
-              error={scenariosState.error}
-              onSelect={scenariosState.selectScenario}
-              onLoadIntoBoard={(scenario) => {
-                loadTopology(scenario.topology);
-                const fault = scenario.faults[0];
-                if (fault) {
-                  experimentSession.updateFault(fault);
-                }
-                experimentSession.updateInvariants(scenario.invariants);
-                experimentSession.updateTrialConfig(scenario.trialConfig);
-              }}
-            />
+          {/* Board Canvas */}
+          <BoardCanvas
+            board={board}
+            onSelectNode={handleSelectNode}
+            onSelectEdge={handleSelectEdge}
+            onMoveNode={updateNodePosition}
+            onAddNode={addNode}
+            onAddEdge={addEdge}
+          />
+        </main>
 
-            {/* Validation Banner */}
-            <ValidationBanner
-              problems={board.validationProblems}
-              isValidating={board.isValidating}
-            />
-
-            {/* Canvas and Inspector Grid */}
-            <div className="canvas-and-inspectors">
-              <div className="canvas-pane">
-                <BoardCanvas
-                  board={board}
-                  onSelectNode={selectNode}
-                  onSelectEdge={selectEdge}
-                  onMoveNode={updateNodePosition}
-                  onAddNode={addNode}
-                  onAddEdge={addEdge}
-                />
+        {/* Collapsible Right Dock / Inspector Panel */}
+        {activeDrawer !== 'none' && (
+          <aside className="studio-side-drawer" aria-label="Control and inspection panel">
+            <div className="studio-drawer-header">
+              <div className="studio-drawer-title">
+                {activeDrawer === 'inspect' && 'Inspector'}
+                {activeDrawer === 'chaos' && 'Chaos Fault & Invariants'}
+                {activeDrawer === 'telemetry' && 'Live Telemetry & Verdicts'}
+                {activeDrawer === 'repair' && 'Autonomous AI Repair'}
+                {activeDrawer === 'voice' && 'Spoken Push-to-Talk'}
+                {activeDrawer === 'vision' && 'Whiteboard Vision'}
+                {activeDrawer === 'reports' && 'Export & Blueprint Card'}
+                {activeDrawer === 'benchmarks' && 'Benchmark Suite'}
+                {activeDrawer === 'runs' && 'Execution History'}
               </div>
 
-              {/* Inspector Sidebar */}
-              {(selectedNode || selectedEdge) && (
-                <div className="inspector-pane">
+              <button
+                type="button"
+                className="btn-close-drawer"
+                onClick={() => {
+                  selectNode(null);
+                  selectEdge(null);
+                  setActiveDrawer('none');
+                }}
+                title="Close drawer (Esc)"
+                aria-label="Close drawer"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="studio-drawer-content">
+              {/* Validation Status */}
+              <ValidationBanner
+                problems={board.validationProblems}
+                isValidating={board.isValidating}
+              />
+
+              {/* 1. Inspector Tab */}
+              {activeDrawer === 'inspect' && (
+                <>
                   {selectedNode && (
                     <NodeInspector
                       node={selectedNode}
                       onUpdate={(patch) => updateNode(selectedNode.id, patch)}
-                      onDelete={() => removeNode(selectedNode.id)}
+                      onDelete={() => {
+                        removeNode(selectedNode.id);
+                        setActiveDrawer('none');
+                      }}
                       onClose={() => selectNode(null)}
                     />
                   )}
@@ -302,324 +565,332 @@ export function App() {
                     <EdgeInspector
                       edge={selectedEdge}
                       onUpdatePolicy={(p) => updateEdgePolicy(selectedEdge.id, p)}
-                      onDelete={() => removeEdge(selectedEdge.id)}
+                      onDelete={() => {
+                        removeEdge(selectedEdge.id);
+                        setActiveDrawer('none');
+                      }}
                       onClose={() => selectEdge(null)}
                     />
                   )}
-                </div>
+                  {!selectedNode && !selectedEdge && (
+                    <p style={{ color: 'var(--color-text-dim)', fontSize: 13 }}>
+                      Click on any node or edge on the canvas to inspect and configure its
+                      parameters.
+                    </p>
+                  )}
+                </>
               )}
-            </div>
 
-            {/* Experiment Controls & Real-time Telemetry */}
-            <div className="experiment-panels-grid">
-              <FaultConfigForm
-                fault={experimentSession.fault}
-                availableEdges={board.edges.map((e) => e.id)}
-                onChange={experimentSession.updateFault}
-                disabled={experimentSession.status === 'running'}
-              />
+              {/* 2. Chaos & Invariants Tab */}
+              {activeDrawer === 'chaos' && (
+                <>
+                  <FaultConfigForm
+                    fault={experimentSession.fault}
+                    availableEdges={board.edges.map((e) => e.id)}
+                    onChange={experimentSession.updateFault}
+                    disabled={experimentSession.status === 'running'}
+                  />
 
-              <InvariantConfigForm
-                invariants={experimentSession.invariants}
-                onChange={experimentSession.updateInvariants}
-                disabled={experimentSession.status === 'running'}
-              />
+                  <InvariantConfigForm
+                    invariants={experimentSession.invariants}
+                    onChange={experimentSession.updateInvariants}
+                    disabled={experimentSession.status === 'running'}
+                  />
 
-              <TrialControls
-                config={experimentSession.trialConfig}
-                status={experimentSession.status}
-                onConfigChange={experimentSession.updateTrialConfig}
-                onStart={() => {
-                  void experimentSession.startExperiment(currentTopology);
-                }}
-                onCancel={() => {
-                  void experimentSession.cancelExperiment();
-                }}
-                canStart={canStartExperiment}
-              />
-            </div>
-
-            {/* Status & Live Telemetry Output */}
-            <div className="live-execution-grid">
-              <TrialProgressCard
-                status={experimentSession.status}
-                currentTrial={experimentSession.currentTrialIndex}
-                totalTrials={experimentSession.totalTrials}
-                errorMessage={experimentSession.errorMessage}
-                runId={experimentSession.runId}
-              />
-
-              <LiveTelemetryChart
-                telemetry={experimentSession.telemetry}
-                currentTrial={experimentSession.currentTrialIndex}
-                totalTrials={experimentSession.totalTrials}
-              />
-            </div>
-
-            {/* Verdicts Display */}
-            <VerdictsSummary
-              verdicts={experimentSession.verdicts}
-              overallStatus={experimentSession.overallStatus}
-              finalRecord={experimentSession.finalRecord}
-            />
-          </div>
-        )}
-
-        {/* Tab 1.5: Photo Ingestion & Red-Stroke Gesture */}
-        {activeTab === 'vision' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {visionFlow.error && <Alert variant="error">{visionFlow.error}</Alert>}
-
-            {visionFlow.imagePreviewUrl && visionFlow.extraction ? (
-              <VisionDraftOverlay
-                previewUrl={visionFlow.imagePreviewUrl}
-                extraction={visionFlow.extraction}
-                onConfirm={(draft) => {
-                  void visionFlow.confirmDraft(draft);
-                }}
-                onCancel={visionFlow.reset}
-              />
-            ) : (
-              <Card title="Whiteboard / Sketch Photo Ingestion">
-                <ImageUploader
-                  onImageSelected={(file) => {
-                    void visionFlow.uploadImage(file);
-                  }}
-                  isExtracting={visionFlow.isExtracting}
-                />
-              </Card>
-            )}
-
-            <Card title="Interactive Red-Stroke Gesture">
-              <p style={{ margin: '0 0 12px 0', fontSize: 13, color: '#475569' }}>
-                Draw a red stroke cutting across an active topology link to target it for chaos
-                fault injection.
-              </p>
-              <RedStrokeCanvas
-                candidateEdges={currentTopology.edges.map((e, idx) => ({
-                  id: e.id,
-                  source: e.source,
-                  target: e.target,
-                  polyline: [
-                    [0.2 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
-                    [0.4 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
-                  ],
-                }))}
-                onDetect={(stroke) => {
-                  const candidates = currentTopology.edges.map((e, idx) => ({
-                    id: e.id,
-                    source: e.source,
-                    target: e.target,
-                    polyline: [
-                      [0.2 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
-                      [0.4 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
-                    ],
-                  }));
-                  void visionFlow.triggerGestureDetection(stroke, candidates);
-                }}
-                isDetecting={visionFlow.isDetectingGesture}
-              />
-
-              {visionFlow.gestureResult && (
-                <GestureResultBanner
-                  result={visionFlow.gestureResult}
-                  onApplyFault={(fault) => {
-                    experimentSession.updateFault(fault);
-                    setActiveTab('board');
-                  }}
-                />
+                  <TrialControls
+                    config={experimentSession.trialConfig}
+                    status={experimentSession.status}
+                    onConfigChange={experimentSession.updateTrialConfig}
+                    onStart={() => {
+                      setActiveDrawer('telemetry');
+                      void experimentSession.startExperiment(currentTopology);
+                    }}
+                    onCancel={() => {
+                      void experimentSession.cancelExperiment();
+                    }}
+                    canStart={canStartExperiment}
+                  />
+                </>
               )}
-            </Card>
-          </div>
-        )}
 
-        {/* Tab 1.6: Voice Control & Push-To-Talk */}
-        {activeTab === 'voice' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {voiceSession.error && <Alert variant="error">{voiceSession.error}</Alert>}
+              {/* 3. Telemetry & Verdicts Tab */}
+              {activeDrawer === 'telemetry' && (
+                <>
+                  <TrialProgressCard
+                    status={experimentSession.status}
+                    currentTrial={experimentSession.currentTrialIndex}
+                    totalTrials={experimentSession.totalTrials}
+                    errorMessage={experimentSession.errorMessage}
+                    runId={experimentSession.runId}
+                  />
 
-            <Card title="Push-to-Talk Spoken Command Bridge">
-              <PushToTalkButton
-                isRecording={voiceSession.isRecording}
-                isProcessing={voiceSession.isProcessing}
-                onStartRecording={() => {
-                  void voiceSession.startRecording();
-                }}
-                onStopRecording={() => {
-                  voiceSession.stopRecording();
-                }}
-              />
+                  <LiveTelemetryChart
+                    telemetry={experimentSession.telemetry}
+                    currentTrial={experimentSession.currentTrialIndex}
+                    totalTrials={experimentSession.totalTrials}
+                  />
 
-              <div style={{ marginTop: 16 }}>
-                <VoiceTranscriptStream
-                  partialTranscript={voiceSession.partialTranscript}
-                  finalTranscript={voiceSession.finalTranscript}
-                  isRecording={voiceSession.isRecording}
-                  isProcessing={voiceSession.isProcessing}
-                  timings={voiceSession.timings}
-                />
-              </div>
+                  <VerdictsSummary
+                    verdicts={experimentSession.verdicts}
+                    overallStatus={experimentSession.overallStatus}
+                    finalRecord={experimentSession.finalRecord}
+                  />
+                </>
+              )}
 
-              <VoiceQuickCommands
-                onSelectPhrase={(phrase) => {
-                  void voiceSession.submitTranscript(phrase);
-                }}
-                isProcessing={voiceSession.isProcessing}
-              />
-            </Card>
+              {/* 4. Autonomous Repair Tab */}
+              {activeDrawer === 'repair' && (
+                <>
+                  <RepairControls
+                    status={repairSession.status}
+                    proposerKind={repairSession.proposerKind}
+                    maxIterations={repairSession.maxIterations}
+                    onProposerChange={repairSession.setProposerKind}
+                    onMaxIterationsChange={repairSession.setMaxIterations}
+                    onStart={() => {
+                      void repairSession.startRepair(
+                        currentTopology,
+                        experimentSession.fault,
+                        experimentSession.invariants,
+                        experimentSession.trialConfig,
+                      );
+                    }}
+                    onCancel={() => {
+                      void repairSession.cancelRepair();
+                    }}
+                    canStart={canStartExperiment}
+                  />
 
-            <ParsedCommandCard
-              result={voiceSession.parseResult}
-              autoConfirm={voiceSession.autoConfirm}
-              onToggleAutoConfirm={voiceSession.toggleAutoConfirm}
-              onConfirmAndExecute={() => {
-                void voiceSession.confirmAndExecute();
-              }}
-              onClear={voiceSession.clearSession}
-              onSelectCandidate={(cand) => {
-                // if user selects an ambiguous candidate edge
-                const match = currentTopology.edges.find((e) => e.id === cand);
-                if (match) {
-                  void voiceSession.submitTranscript(
-                    `inject latency 300ms from ${match.source} to ${match.target}`,
-                  );
-                }
-              }}
-            />
-          </div>
-        )}
+                  <TradeOffCard report={repairSession.tradeOffReport} />
 
-        {/* Tab 2: Autonomous Repair */}
-        {activeTab === 'repair' && (
-          <div className="repair-view-layout">
-            <RepairControls
-              status={repairSession.status}
-              proposerKind={repairSession.proposerKind}
-              maxIterations={repairSession.maxIterations}
-              onProposerChange={repairSession.setProposerKind}
-              onMaxIterationsChange={repairSession.setMaxIterations}
-              onStart={() => {
-                void repairSession.startRepair(
-                  currentTopology,
-                  experimentSession.fault,
-                  experimentSession.invariants,
-                  experimentSession.trialConfig,
-                );
-              }}
-              onCancel={() => {
-                void repairSession.cancelRepair();
-              }}
-              canStart={canStartExperiment}
-            />
+                  <IterationTimeline iterations={repairSession.iterations} />
+                </>
+              )}
 
-            <TradeOffCard report={repairSession.tradeOffReport} />
+              {/* 5. Voice Tab */}
+              {activeDrawer === 'voice' && (
+                <>
+                  {voiceSession.error && <Alert variant="error">{voiceSession.error}</Alert>}
 
-            <IterationTimeline iterations={repairSession.iterations} />
-          </div>
-        )}
+                  <PushToTalkButton
+                    isRecording={voiceSession.isRecording}
+                    isProcessing={voiceSession.isProcessing}
+                    onStartRecording={() => {
+                      void voiceSession.startRecording();
+                    }}
+                    onStopRecording={() => {
+                      voiceSession.stopRecording();
+                    }}
+                  />
 
-        {/* Tab 3: Runs History */}
-        {activeTab === 'runs' && (
-          <div className="runs-view-layout">
-            <RunHistoryTable
-              runs={runsHistory.runs}
-              isLoading={runsHistory.isLoading}
-              onRefresh={runsHistory.refreshRuns}
-              onView={runsHistory.viewRun}
-              onReplay={runsHistory.startReplay}
-              onExport={runsHistory.exportRunJson}
-            />
+                  <VoiceTranscriptStream
+                    partialTranscript={voiceSession.partialTranscript}
+                    finalTranscript={voiceSession.finalTranscript}
+                    isRecording={voiceSession.isRecording}
+                    isProcessing={voiceSession.isProcessing}
+                    timings={voiceSession.timings}
+                  />
 
-            {runsHistory.selectedRunRecord && (
-              <RunDetailView
-                record={runsHistory.selectedRunRecord}
-                onClose={runsHistory.closeDetail}
-              />
-            )}
+                  <VoiceQuickCommands
+                    onSelectPhrase={(phrase) => {
+                      void voiceSession.submitTranscript(phrase);
+                    }}
+                    isProcessing={voiceSession.isProcessing}
+                  />
 
-            {runsHistory.replayingEvents && runsHistory.selectedRunId && (
-              <ReplayModal
-                runId={runsHistory.selectedRunId}
-                events={runsHistory.replayingEvents}
-                onClose={runsHistory.closeReplay}
-              />
-            )}
-          </div>
-        )}
+                  <ParsedCommandCard
+                    result={voiceSession.parseResult}
+                    autoConfirm={voiceSession.autoConfirm}
+                    onToggleAutoConfirm={voiceSession.toggleAutoConfirm}
+                    onConfirmAndExecute={() => {
+                      void voiceSession.confirmAndExecute();
+                    }}
+                    onClear={voiceSession.clearSession}
+                    onSelectCandidate={(cand) => {
+                      const match = currentTopology.edges.find((e) => e.id === cand);
+                      if (match) {
+                        void voiceSession.submitTranscript(
+                          `inject latency 300ms from ${match.source} to ${match.target}`,
+                        );
+                      }
+                    }}
+                  />
+                </>
+              )}
 
-        {/* Tab 3.5: Report & Blueprint Export */}
-        {activeTab === 'reports' &&
-          (() => {
-            const firstRun = runsHistory.runs[0];
-            const activeReportRunId: RunId | null =
-              selectedReportRunId ??
-              experimentSession.runId ??
-              runsHistory.selectedRunId ??
-              (firstRun ? firstRun.id : null);
+              {/* 6. Vision Tab */}
+              {activeDrawer === 'vision' && (
+                <>
+                  {visionFlow.error && <Alert variant="error">{visionFlow.error}</Alert>}
 
-            return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {runsHistory.runs.length > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <label style={{ fontSize: 13, color: '#94a3b8' }}>Select Run to Inspect:</label>
-                    <select
-                      value={activeReportRunId ?? ''}
-                      onChange={(e) => {
-                        setSelectedReportRunId(e.target.value as RunId);
+                  {visionFlow.imagePreviewUrl && visionFlow.extraction ? (
+                    <VisionDraftOverlay
+                      previewUrl={visionFlow.imagePreviewUrl}
+                      extraction={visionFlow.extraction}
+                      onConfirm={(draft) => {
+                        void visionFlow.confirmDraft(draft);
                       }}
+                      onCancel={visionFlow.reset}
+                    />
+                  ) : (
+                    <ImageUploader
+                      onImageSelected={(file) => {
+                        void visionFlow.uploadImage(file);
+                      }}
+                      isExtracting={visionFlow.isExtracting}
+                    />
+                  )}
+
+                  <div style={{ marginTop: 16 }}>
+                    <p
                       style={{
-                        background: '#1e293b',
-                        color: '#f8fafc',
-                        border: '1px solid #475569',
-                        borderRadius: 6,
-                        padding: '6px 10px',
-                        fontSize: 13,
-                        fontFamily: 'monospace',
+                        margin: '0 0 8px 0',
+                        fontSize: 12,
+                        color: 'var(--color-text-muted)',
                       }}
                     >
-                      {runsHistory.runs.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.id} ({r.topology.name} - {r.status})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {activeReportRunId ? (
-                  <ReportViewer api={api} runId={activeReportRunId} />
-                ) : (
-                  <Card title="Run Report & Artifact Export">
-                    <p style={{ color: '#94a3b8' }}>
-                      No runs recorded yet. Run a chaos experiment or scenario from the Canvas tab
-                      first to generate a deterministic report and blueprint card.
+                      Draw a red stroke cutting across a link to target it for chaos fault
+                      injection:
                     </p>
-                  </Card>
-                )}
-              </div>
-            );
-          })()}
+                    <RedStrokeCanvas
+                      candidateEdges={currentTopology.edges.map((e, idx) => ({
+                        id: e.id,
+                        source: e.source,
+                        target: e.target,
+                        polyline: [
+                          [0.2 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
+                          [0.4 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
+                        ],
+                      }))}
+                      onDetect={(stroke) => {
+                        const candidates = currentTopology.edges.map((e, idx) => ({
+                          id: e.id,
+                          source: e.source,
+                          target: e.target,
+                          polyline: [
+                            [0.2 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
+                            [0.4 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
+                          ],
+                        }));
+                        void visionFlow.triggerGestureDetection(stroke, candidates);
+                      }}
+                      isDetecting={visionFlow.isDetectingGesture}
+                    />
 
-        {/* Tab 4: Benchmark Results */}
-        {activeTab === 'benchmarks' && (
-          <div className="benchmarks-view-layout">
-            {benchmarksState.isLoading && (
-              <p className="state-message">Loading benchmark suite results from storage...</p>
-            )}
-            {benchmarksState.error && (
-              <p className="state-message error-message">{benchmarksState.error}</p>
-            )}
-            {benchmarksState.summary && (
-              <>
-                <ExecutiveSummaryCard summary={benchmarksState.summary} />
-                <ComparisonTable results={benchmarksState.summary.results} />
-                <RepairComparisonCard results={benchmarksState.summary.results} />
-                <SurprisesSection />
-              </>
-            )}
-          </div>
+                    {visionFlow.gestureResult && (
+                      <GestureResultBanner
+                        result={visionFlow.gestureResult}
+                        onApplyFault={(fault) => {
+                          experimentSession.updateFault(fault);
+                          setActiveDrawer('chaos');
+                        }}
+                      />
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* 7. Reports Tab */}
+              {activeDrawer === 'reports' &&
+                (() => {
+                  const firstRun = runsHistory.runs[0];
+                  const activeReportRunId: RunId | null =
+                    selectedReportRunId ??
+                    experimentSession.runId ??
+                    runsHistory.selectedRunId ??
+                    (firstRun ? firstRun.id : null);
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      {runsHistory.runs.length > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <label style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
+                            Run:
+                          </label>
+                          <select
+                            value={activeReportRunId ?? ''}
+                            onChange={(e) => setSelectedReportRunId(e.target.value as RunId)}
+                            className="input-select"
+                            style={{ padding: '4px 8px', fontSize: 12 }}
+                          >
+                            {runsHistory.runs.map((r) => (
+                              <option key={r.id} value={r.id}>
+                                {r.id} ({r.topology.name} - {r.status})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      {activeReportRunId ? (
+                        <ReportViewer api={api} runId={activeReportRunId} />
+                      ) : (
+                        <p style={{ color: 'var(--color-text-dim)', fontSize: 13 }}>
+                          No runs recorded yet. Execute a chaos run to generate reports.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
+
+              {/* 8. Benchmarks Tab */}
+              {activeDrawer === 'benchmarks' && (
+                <>
+                  {benchmarksState.isLoading && (
+                    <p style={{ color: 'var(--color-text-dim)' }}>Loading benchmark summary...</p>
+                  )}
+                  {benchmarksState.error && <Alert variant="error">{benchmarksState.error}</Alert>}
+                  {benchmarksState.summary && (
+                    <>
+                      <ExecutiveSummaryCard summary={benchmarksState.summary} />
+                      <ComparisonTable results={benchmarksState.summary.results} />
+                      <RepairComparisonCard results={benchmarksState.summary.results} />
+                      <SurprisesSection />
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* 9. Execution History Tab */}
+              {activeDrawer === 'runs' && (
+                <>
+                  <RunHistoryTable
+                    runs={runsHistory.runs}
+                    isLoading={runsHistory.isLoading}
+                    onRefresh={runsHistory.refreshRuns}
+                    onView={runsHistory.viewRun}
+                    onReplay={runsHistory.startReplay}
+                    onExport={runsHistory.exportRunJson}
+                  />
+
+                  {runsHistory.selectedRunRecord && (
+                    <RunDetailView
+                      record={runsHistory.selectedRunRecord}
+                      onClose={runsHistory.closeDetail}
+                    />
+                  )}
+
+                  {runsHistory.replayingEvents && runsHistory.selectedRunId && (
+                    <ReplayModal
+                      runId={runsHistory.selectedRunId}
+                      events={runsHistory.replayingEvents}
+                      onClose={runsHistory.closeReplay}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          </aside>
         )}
-      </main>
+      </div>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onSave={setSettings}
+        currentSettings={settings}
+      />
     </div>
   );
 }
