@@ -8,7 +8,8 @@
     "start": "tsx --env-file-if-exists=../../.env src/main.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "calibrate": "tsx src/cli/calibrate.ts"
   },
   "dependencies": {
     "@chaosboard/contracts": "workspace:*",

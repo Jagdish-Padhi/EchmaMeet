@@ -1,4 +1,7 @@
 import type {
+  LoadgenConfig,
+  LoadgenRecord,
+  LoadgenSummary,
   NetworkPlan,
   NodeConfig,
   NodeId,
@@ -8,6 +11,25 @@ import type {
   WorkerShutdownResponse,
   WorkerStatus,
 } from '@chaosboard/contracts';
+
+export interface LoadgenHandle {
+  readonly pid: number;
+  readonly getLogs: () => string;
+  readonly isRunning: () => boolean;
+  readonly waitForCompletion: (timeoutMs?: number) => Promise<{
+    records: LoadgenRecord[];
+    summary: LoadgenSummary;
+  }>;
+  readonly stop: () => Promise<void>;
+  readonly forceKill: () => Promise<void>;
+}
+
+export interface LoadgenSupervisorPort {
+  spawnLoadgen(
+    config: LoadgenConfig,
+    onRecord?: (record: LoadgenRecord) => void,
+  ): Promise<LoadgenHandle>;
+}
 
 export interface WorkerProcessHandle {
   readonly config: NodeConfig;
