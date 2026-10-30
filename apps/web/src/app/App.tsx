@@ -345,7 +345,7 @@ export function App() {
                 <circle cx="16" cy="16.5" r="3.5" fill="var(--color-accent)" />
               </svg>
             </div>
-            <span className="studio-brand-name">ChaosBoard</span>
+            <span className="studio-brand-name">Resilio</span>
           </button>
 
           {/* Architecture Review Room & SRE Watcher Bar */}
