@@ -6,6 +6,8 @@ export interface LandingPageProps {
   readonly theme: 'dark' | 'light';
   readonly onToggleTheme: () => void;
   readonly onOpenSettings: () => void;
+  readonly isAuthenticated?: boolean;
+  readonly onOpenAuth?: () => void;
 }
 
 export function LandingPage({
@@ -14,6 +16,8 @@ export function LandingPage({
   theme,
   onToggleTheme,
   onOpenSettings,
+  isAuthenticated = false,
+  onOpenAuth,
 }: LandingPageProps) {
   return (
     <div className="landing-page-root">
@@ -114,8 +118,20 @@ export function LandingPage({
               </svg>
             </button>
 
-            <button type="button" className="btn btn-primary" onClick={() => onLaunchStudio()}>
-              Launch Studio &rarr;
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                if (isAuthenticated) {
+                  onLaunchStudio();
+                } else if (onOpenAuth) {
+                  onOpenAuth();
+                } else {
+                  onLaunchStudio();
+                }
+              }}
+            >
+              {isAuthenticated ? 'Enter Studio \u2192' : 'Sign In / Launch \u2192'}
             </button>
           </div>
         </div>

@@ -99,9 +99,7 @@
 
 html,
 body {
-  height: 100%;
-  overflow: hidden;
-  overscroll-behavior: none;
+  min-height: 100%;
   font-family: var(--font-sans);
   background: var(--color-bg);
   background-image: var(--color-bg-mesh);
@@ -942,6 +940,239 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Enterprise Auth Modal Styling */
+.auth-scenario-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(8, 102, 255, 0.12);
+  border: 1px solid rgba(8, 102, 255, 0.28);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  color: #38bdf8;
+}
+
+.auth-notice-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0082fb;
+  box-shadow: 0 0 6px #0082fb;
+  flex-shrink: 0;
+}
+
+.auth-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-dim);
+  margin-bottom: 8px;
+}
+
+.auth-account-tile {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.auth-account-tile:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.auth-account-tile.selected {
+  background: rgba(8, 102, 255, 0.12);
+  border-color: #0082fb;
+  box-shadow: 0 0 0 1px #0082fb;
+}
+
+.auth-tile-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0866ff 0%, #0056df 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffffff;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.auth-tile-avatar.guest {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.auth-online-dot {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 1.5px solid var(--color-surface);
+}
+
+.auth-tile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.auth-tile-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.auth-tile-meta {
+  font-size: 11px;
+  color: var(--color-text-dim);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.auth-tile-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 16px 0 12px;
+  text-align: center;
+  color: var(--color-text-dim);
+  font-size: 11px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.auth-divider span {
+  padding: 0 10px;
+}
+
+.auth-sso-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.auth-sso-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.auth-sso-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.auth-primary-submit-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0866ff 0%, #0082fb 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 11px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(8, 102, 255, 0.4);
+  transition: all 0.15s ease;
+}
+
+.auth-primary-submit-btn:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(8, 102, 255, 0.5);
+}
+
+.auth-primary-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-security-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--color-text-dim);
+}
+
+/* Light Theme Parity for Auth Modal */
+[data-theme='light'] .auth-account-tile {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme='light'] .auth-account-tile:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+[data-theme='light'] .auth-account-tile.selected {
+  background: #eff6ff;
+  border-color: #0866ff;
+  box-shadow: 0 0 0 1px #0866ff;
+}
+
+[data-theme='light'] .auth-sso-btn {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #1e293b;
+}
+
+[data-theme='light'] .auth-sso-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 .studio-brand-group {

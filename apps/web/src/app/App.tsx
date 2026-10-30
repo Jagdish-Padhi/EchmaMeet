@@ -21,7 +21,9 @@ import {
   ValidationBanner,
   toTopology,
   useBoardState,
+  type UserProfile,
 } from '../features/board';
+import { AuthModal } from '../features/auth';
 import {
   FaultConfigForm,
   InvariantConfigForm,
@@ -157,13 +159,21 @@ export function App() {
     setIsMeetingLive(true);
   };
 
-  // Multi-Cursor Real-Time Collaboration
-  const [currentReviewer] = useState(() => ({
+  // Multi-Cursor Real-Time Collaboration & Identity
+  const [currentReviewer, setCurrentReviewer] = useState<UserProfile>(() => ({
     userId: 'eng-alex-chen',
     name: 'Alex Chen',
     role: 'Staff SRE',
     avatar: 'AC',
+    email: 'alex.chen@meta.internal',
   }));
+
+  // Enterprise Authentication Gate State
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('chaosboard_auth') === 'true';
+  });
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [pendingScenarioId, setPendingScenarioId] = useState<string | null>(null);
   const { remoteReviewers, broadcastCursor } = useCollaborationPresence(
     currentReviewer,
     board.selectedNodeId,
@@ -286,6 +296,12 @@ export function App() {
   });
 
   const handleLaunchStudioFromLanding = (scenarioId?: string) => {
+    if (!isAuthenticated) {
+      setPendingScenarioId(scenarioId ?? null);
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     if (scenarioId) {
       const match = scenariosState.scenarios.find((s) => s.id === scenarioId);
       if (match) {
@@ -299,6 +315,33 @@ export function App() {
       }
     }
     setView('studio');
+  };
+
+  const handleAuthenticated = (user: UserProfile) => {
+    setIsAuthenticated(true);
+    localStorage.setItem('chaosboard_auth', 'true');
+    setCurrentReviewer(user);
+    if (pendingScenarioId) {
+      const match = scenariosState.scenarios.find((s) => s.id === pendingScenarioId);
+      if (match) {
+        scenariosState.selectScenario(match.id);
+        loadTopology(match.topology);
+        const fault = match.faults[0];
+        if (fault) {
+          experimentSession.updateFault(fault);
+        }
+        experimentSession.updateInvariants(match.invariants);
+        experimentSession.updateTrialConfig(match.trialConfig);
+      }
+      setPendingScenarioId(null);
+    }
+    setView('studio');
+  };
+
+  const handleSignOut = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('chaosboard_auth');
+    setView('landing');
   };
 
   const handleExportRfc = () => {
@@ -347,12 +390,27 @@ export function App() {
           theme={settings.theme}
           onToggleTheme={handleToggleTheme}
           onOpenSettings={() => setIsSettingsOpen(true)}
+          isAuthenticated={isAuthenticated}
+          onOpenAuth={() => setIsAuthModalOpen(true)}
         />
         <SettingsModal
           isOpen={isSettingsOpen}
           onClose={() => setIsSettingsOpen(false)}
           onSave={setSettings}
           currentSettings={settings}
+        />
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => {
+            setIsAuthModalOpen(false);
+            setPendingScenarioId(null);
+          }}
+          onAuthenticate={handleAuthenticated}
+          pendingScenarioName={
+            pendingScenarioId
+              ? (scenariosState.scenarios.find((s) => s.id === pendingScenarioId)?.name ?? null)
+              : null
+          }
         />
       </>
     );
@@ -699,7 +757,7 @@ export function App() {
           <UserProfileMenu
             user={currentReviewer}
             onOpenSettings={() => setIsSettingsOpen(true)}
-            onSignOut={() => setView('landing')}
+            onSignOut={handleSignOut}
           />
         </div>
       </header>
