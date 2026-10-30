@@ -7,6 +7,9 @@ const settingsSchema = z.strictObject({
   DATA_DIR: z.string().min(1).default('./data'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   TOXIPROXY_URL: z.url().default('http://127.0.0.1:8474'),
+  PARTNER_BASE_URL: z.string().default('http://127.0.0.1:8000/v1'),
+  PARTNER_API_KEY: z.string().default(''),
+  PARTNER_MODEL_ID: z.string().default('meta-models/muse-spark-open-1026'),
 });
 
 export interface Settings {
@@ -16,6 +19,9 @@ export interface Settings {
   readonly dataDir: string;
   readonly logLevel: 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'silent';
   readonly toxiproxyUrl: string;
+  readonly partnerBaseUrl: string;
+  readonly partnerApiKey: string;
+  readonly partnerModelId: string;
 }
 
 export class ConfigError extends Error {
@@ -58,5 +64,8 @@ export function loadSettings(env: Readonly<Record<string, string | undefined>>):
     dataDir: parsed.data.DATA_DIR,
     logLevel: parsed.data.LOG_LEVEL,
     toxiproxyUrl: parsed.data.TOXIPROXY_URL,
+    partnerBaseUrl: parsed.data.PARTNER_BASE_URL,
+    partnerApiKey: parsed.data.PARTNER_API_KEY,
+    partnerModelId: parsed.data.PARTNER_MODEL_ID,
   };
 }

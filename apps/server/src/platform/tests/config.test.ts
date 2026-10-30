@@ -11,6 +11,9 @@ describe('loadSettings', () => {
       dataDir: './data',
       logLevel: 'info',
       toxiproxyUrl: 'http://127.0.0.1:8474',
+      partnerBaseUrl: 'http://127.0.0.1:8000/v1',
+      partnerApiKey: '',
+      partnerModelId: 'meta-models/muse-spark-open-1026',
     });
   });
 
