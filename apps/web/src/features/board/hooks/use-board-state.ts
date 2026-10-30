@@ -34,6 +34,15 @@ const defaultEdgePolicy: EdgePolicy = {
   pool: { maxConnections: 50 },
 };
 
+export interface NodePresetConfig {
+  readonly label?: string;
+  readonly processingMs?: number;
+  readonly maxWorkers?: number;
+  readonly ttlMs?: number;
+  readonly consumeRateRps?: number;
+  readonly dedupeByKey?: boolean;
+}
+
 export function useBoardState(initialTopology: Topology | null, api: ApiClient) {
   const [board, setBoard] = useState<BoardState>(() => {
     if (initialTopology) {
@@ -176,7 +185,7 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
   );
 
   const addNode = useCallback(
-    (kind: NodeKind = 'service') => {
+    (kind: NodeKind = 'service', preset?: NodePresetConfig) => {
       setBoard((prev) => {
         let count = prev.nodes.length + 1;
         let newIdStr = `node-${String(count)}`;
@@ -186,7 +195,7 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         }
         const newId = nodeIdSchema.parse(newIdStr);
 
-        const kindLabel =
+        const defaultLabel =
           kind === 'queue_consumer'
             ? 'Queue Worker'
             : kind === 'ledger_sink'
@@ -197,9 +206,14 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
 
         const baseProps = {
           id: newId,
-          label: kindLabel,
-          processing: { distribution: 'constant' as const, ms: kind === 'cache' ? 2 : 15 },
-          concurrency: { maxWorkers: kind === 'ledger_sink' ? 5 : 10 },
+          label: preset?.label ?? defaultLabel,
+          processing: {
+            distribution: 'constant' as const,
+            ms: preset?.processingMs ?? (kind === 'cache' ? 2 : 15),
+          },
+          concurrency: {
+            maxWorkers: preset?.maxWorkers ?? (kind === 'ledger_sink' ? 5 : 10),
+          },
           queue: { mode: 'bounded' as const, maxDepth: 50 },
           ingressRateLimitRps: null,
           position: {
@@ -210,11 +224,15 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
 
         let newNode: BoardNode;
         if (kind === 'cache') {
-          newNode = { ...baseProps, kind: 'cache', ttlMs: 60000 };
+          newNode = { ...baseProps, kind: 'cache', ttlMs: preset?.ttlMs ?? 60000 };
         } else if (kind === 'queue_consumer') {
-          newNode = { ...baseProps, kind: 'queue_consumer', consumeRateRps: 50 };
+          newNode = {
+            ...baseProps,
+            kind: 'queue_consumer',
+            consumeRateRps: preset?.consumeRateRps ?? 50,
+          };
         } else if (kind === 'ledger_sink') {
-          newNode = { ...baseProps, kind: 'ledger_sink', dedupeByKey: true };
+          newNode = { ...baseProps, kind: 'ledger_sink', dedupeByKey: preset?.dedupeByKey ?? true };
         } else {
           newNode = { ...baseProps, kind: 'service' };
         }

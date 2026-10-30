@@ -13,6 +13,7 @@ import { Button } from '../components/ui/Button';
 import {
   AnalysisDropdown,
   BoardCanvas,
+  BoardToolbar,
   EdgeInspector,
   ImportDiagramModal,
   NodeInspector,
@@ -563,74 +564,26 @@ export function App() {
       <div className="studio-canvas-layout">
         {/* Spatial Canvas Container */}
         <main className="studio-canvas-main">
-          {/* Excalidraw-style Floating Tool Dock */}
-          <div className="studio-floating-dock">
-            <button
-              type="button"
-              className="dock-btn"
-              onClick={() => addNode('service')}
-              title="Add standard service node (Key: 1)"
-            >
-              + Service
-            </button>
-            <button
-              type="button"
-              className="dock-btn"
-              onClick={() => addNode('cache')}
-              title="Add in-memory cache (Key: 2)"
-            >
-              + Cache
-            </button>
-            <button
-              type="button"
-              className="dock-btn"
-              onClick={() => addNode('queue_consumer')}
-              title="Add queue worker (Key: 3)"
-            >
-              + Queue
-            </button>
-            <button
-              type="button"
-              className="dock-btn"
-              onClick={() => addNode('ledger_sink')}
-              title="Add database / ledger sink (Key: 4)"
-            >
-              + Sink
-            </button>
-            <div style={{ width: 1, height: 16, background: 'var(--color-border)' }} />
-            <button
-              type="button"
-              className="dock-btn"
-              disabled={!board.selectedNodeId}
-              onClick={() => {
-                if (board.selectedNodeId) duplicateNode(board.selectedNodeId);
-              }}
-              title="Duplicate selected node (Ctrl+D)"
-            >
-              Duplicate
-            </button>
-            <button
-              type="button"
-              className="dock-btn dock-btn-danger"
-              disabled={!board.selectedNodeId && !board.selectedEdgeId}
-              onClick={() => {
-                if (board.selectedNodeId) {
-                  removeNode(board.selectedNodeId);
-                  if (activeDrawer === 'inspect') setActiveDrawer('none');
-                } else if (board.selectedEdgeId) {
-                  removeEdge(board.selectedEdgeId);
-                  if (activeDrawer === 'inspect') setActiveDrawer('none');
-                }
-              }}
-              title="Delete selected element (Delete / Backspace)"
-            >
-              Delete
-            </button>
-            <div style={{ width: 1, height: 16, background: 'var(--color-border)' }} />
-            <span style={{ fontSize: 11, color: 'var(--color-text-dim)', padding: '0 4px' }}>
-              Nodes: {board.nodes.length} &bull; Links: {board.edges.length}
-            </span>
-          </div>
+          {/* Top Architecture Palette & Canvas Controls Toolbar */}
+          <BoardToolbar
+            nodeCount={board.nodes.length}
+            edgeCount={board.edges.length}
+            hasSelection={Boolean(board.selectedNodeId || board.selectedEdgeId)}
+            validationProblemCount={board.validationProblems.length}
+            onAddNode={addNode}
+            onDuplicate={() => {
+              if (board.selectedNodeId) duplicateNode(board.selectedNodeId);
+            }}
+            onDelete={() => {
+              if (board.selectedNodeId) {
+                removeNode(board.selectedNodeId);
+                if (activeDrawer === 'inspect') setActiveDrawer('none');
+              } else if (board.selectedEdgeId) {
+                removeEdge(board.selectedEdgeId);
+                if (activeDrawer === 'inspect') setActiveDrawer('none');
+              }
+            }}
+          />
 
           {/* Board Canvas */}
           <BoardCanvas
