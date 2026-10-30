@@ -147,6 +147,19 @@ Endpoints exposed on the worker process on separate control paths (bypassing con
 - `POST /control/reset`: resets counters and samples, returns `{ status: 'ok', resetAtMs }`
 - `POST /control/shutdown`: initiates graceful shutdown, returns `{ status: 'shutting_down' }`
 
+## Load generator contracts
+
+Contracts for `apps/loadgen`:
+- `LoadgenConfig`: configuration schema (`targetUrl`, `arrivalProcess`: `constant` or `poisson`, `arrivalRateRps`, `warmupDurationMs`, `measurementDurationMs`, `cooldownDurationMs`, `clientTimeoutMs`, `seed`, `requestIdPrefix`, `method`, `headers`, `body`).
+- `LoadgenRecord`: per-request record streamed as JSON Lines (`requestId`, `phase`: `warmup`/`measurement`/`cooldown`, `scheduledOffsetMs`, `actualSendOffsetMs`, `completedOffsetMs`, `durationMs` from scheduled time, `sendLagMs`, `statusClass`, `httpStatus`, `errorClass`).
+- `LoadgenSummary`: generator exit summary (`totalScheduled`, `totalSent`, `totalCompleted`, `totalTimeouts`, `totalErrors`, `actualDurationMs`, `sendLag` percentiles, `eventLoopDelay` summary).
+
+## Trial results and aggregation
+
+Contracts for trial metrics and multi-trial aggregation in `modules/measurement`:
+- `TrialResult`: single trial outcome (`trialIndex`, `seed`, `validity`: `{ valid: boolean, reason: string | null }`, `metrics`: `p99LatencyMs`, `p50LatencyMs`, `completionRate`, `retryAmplification` per edge, `workerSaturation` per node, `maxQueueDepth` per node, `duplicateWriteRate`, `breakerOpenFraction` per edge; `diagnostics`: `generatorLag`, `generatorEventLoopDelay`, `workerEventLoopDelays` per node, `totalScheduledRequests`, `totalCompletedRequests`).
+- `TrialAggregate`: multi-trial aggregation (`trialsCount`, `validTrialsCount`, `invalidTrialsCount`, `invalidReasons`, `metrics`: median, p25, p75, and IQR for every metric across valid trials). Percentiles are never averaged across trials; medians and IQRs are computed over per-trial values.
+
 ## HTTP endpoints implemented so far
 
 | Method and path | Purpose |

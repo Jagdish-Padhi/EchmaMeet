@@ -96,3 +96,18 @@ export type {
   WorkerShutdownResponse,
   WorkerStatus,
 } from './worker-control';
+export { loadgenConfigSchema } from './loadgen-config';
+export type { LoadgenConfig } from './loadgen-config';
+export { loadgenRecordSchema, loadgenStatusClassSchema, trialPhaseSchema } from './loadgen-record';
+export type { LoadgenRecord, LoadgenStatusClass, TrialPhase } from './loadgen-record';
+export { loadgenSummarySchema, percentileSummarySchema } from './loadgen-summary';
+export type { LoadgenSummary, PercentileSummary } from './loadgen-summary';
+export {
+  trialDiagnosticsSchema,
+  trialMetricsSchema,
+  trialResultSchema,
+  trialValiditySchema,
+} from './trial-result';
+export type { TrialDiagnostics, TrialMetrics, TrialResult, TrialValidity } from './trial-result';
+export { metricAggregateSchema, trialAggregateSchema } from './trial-aggregate';
+export type { MetricAggregate, TrialAggregate } from './trial-aggregate';
