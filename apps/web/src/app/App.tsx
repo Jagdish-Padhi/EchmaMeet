@@ -58,6 +58,7 @@ import {
 } from '../features/voice';
 import { ReportViewer } from '../features/reports';
 import { LandingPage } from '../features/landing/LandingPage';
+import { MeetingBar, SreYieldFloorModal, useMeetingSreWatcher } from '../features/meeting';
 import {
   loadSettingsFromStorage,
   saveSettingsToStorage,
@@ -116,6 +117,10 @@ export function App() {
     addEdge,
     removeEdge,
   } = useBoardState(null, api);
+
+  // Meeting Room SRE Watcher
+  const [isSreModalOpen, setIsSreModalOpen] = useState(false);
+  const sreWatcher = useMeetingSreWatcher(board);
 
   // Experiments state
   const experimentSession = useExperimentSession(api, null);
@@ -306,11 +311,16 @@ export function App() {
             <span className="studio-brand-name">ChaosBoard</span>
           </button>
 
-          {/* Architecture Review Room Session Badge */}
-          <div className="room-badge" title="Live Collaborative Architecture Review Room">
-            <span className="room-dot" />
-            <span>#rfc-checkout-v2</span>
-          </div>
+          {/* Architecture Review Room & SRE Watcher Bar */}
+          <MeetingBar
+            aiRaisedHand={sreWatcher.aiRaisedHand}
+            hazards={sreWatcher.hazards}
+            onYieldFloor={() => setIsSreModalOpen(true)}
+            onShareRoom={() => {
+              const url = window.location.href;
+              void navigator.clipboard.writeText(url);
+            }}
+          />
 
           <div className="studio-topbar-divider" />
 
@@ -549,7 +559,8 @@ export function App() {
               removeEdge(edgeId);
               if (activeDrawer === 'inspect') setActiveDrawer('none');
             }}
-            hazardEdgeId={experimentSession.fault.edgeId}
+            hazardEdgeId={sreWatcher.primaryHazard?.targetEdgeId ?? experimentSession.fault.edgeId}
+            hazardNodeId={sreWatcher.primaryHazard?.targetNodeId ?? null}
           />
         </main>
 
@@ -934,6 +945,47 @@ export function App() {
         onClose={() => setIsSettingsOpen(false)}
         onSave={setSettings}
         currentSettings={settings}
+      />
+
+      {/* SRE Yield Floor Modal */}
+      <SreYieldFloorModal
+        isOpen={isSreModalOpen}
+        hazards={sreWatcher.hazards}
+        onClose={() => setIsSreModalOpen(false)}
+        onApplyPatch={(edgeId, patch) => {
+          const matchEdge = board.edges.find((e) => e.id === edgeId);
+          if (matchEdge) {
+            updateEdgePolicy(edgeId, {
+              ...matchEdge.policy,
+              ...patch,
+              retry: {
+                ...matchEdge.policy.retry,
+                ...(patch.retry ?? {}),
+              },
+              breaker: {
+                ...matchEdge.policy.breaker,
+                ...(patch.breaker ?? {}),
+              },
+            });
+          }
+        }}
+        onRunProof={(targetEdgeId) => {
+          const matchEdge = board.edges.find((e) => e.id === targetEdgeId);
+          if (matchEdge) {
+            experimentSession.updateFault({
+              id: faultIdSchema.parse(`fault-proof-${String(Date.now())}`),
+              edgeId: targetEdgeId,
+              type: 'latency',
+              latencyMs: 300,
+              jitterMs: 50,
+              toxicity: 1,
+              direction: 'downstream',
+              startOffsetMs: 0,
+            });
+            setActiveDrawer('telemetry');
+            void experimentSession.startExperiment(currentTopology);
+          }
+        }}
       />
     </div>
   );

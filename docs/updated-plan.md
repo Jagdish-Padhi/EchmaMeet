@@ -154,3 +154,4 @@ Every phase must pass all strict repository gates:
 2. `pnpm test:integration`:
    - All 23 integration tests passing with real child processes, Toxiproxy, and SQLite storage.
 3. No synthetic numbers: Every metric displayed comes strictly from physical sandbox executions.
+
