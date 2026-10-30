@@ -1,0 +1,56 @@
+[
+  {
+    "scenarioId": "retry-storm",
+    "predictionIndex": 0,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-p99": true,
+      "inv-completion": false,
+      "inv-retry": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 1500,
+      "errorRate": 0.04
+    },
+    "predictedFailureMode": "Synchronous retry storm causing worker exhaustion downstream",
+    "rationale": "High downstream latency combined with immediate retries amplifies concurrency and exhausts downstream worker capacity.",
+    "timestamp": "2026-10-30T10:00:00.000Z"
+  },
+  {
+    "scenarioId": "retry-storm",
+    "predictionIndex": 1,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-p99": true,
+      "inv-completion": false,
+      "inv-retry": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 1600,
+      "errorRate": 0.05
+    },
+    "predictedFailureMode": "Retry amplification under latency pinning worker pools",
+    "rationale": "Repeated immediate retry attempts on checkout-to-inventory edge will drive amplification factor above the 1.5 threshold.",
+    "timestamp": "2026-10-30T10:01:00.000Z"
+  },
+  {
+    "scenarioId": "retry-storm",
+    "predictionIndex": 2,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-p99": true,
+      "inv-completion": false,
+      "inv-retry": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 1400,
+      "errorRate": 0.03
+    },
+    "predictedFailureMode": "Synchronous retry storm with queue buildup",
+    "rationale": "Latency toxic of 800ms with jitter causes requests to timeout and retry, multiplying queue arrival rate beyond capacity.",
+    "timestamp": "2026-10-30T10:02:00.000Z"
+  }
+]

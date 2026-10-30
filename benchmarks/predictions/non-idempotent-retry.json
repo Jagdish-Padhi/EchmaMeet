@@ -1,0 +1,50 @@
+[
+  {
+    "scenarioId": "non-idempotent-retry",
+    "predictionIndex": 0,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-duplicates": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 450,
+      "errorRate": 0.01
+    },
+    "predictedFailureMode": "Duplicate writes committed to downstream ledger due to uncoordinated retries",
+    "rationale": "Client timeout of 300ms fires before downstream 400ms latency completes, causing premature retry without idempotency key and resulting in duplicate ledger records.",
+    "timestamp": "2026-10-30T10:15:00.000Z"
+  },
+  {
+    "scenarioId": "non-idempotent-retry",
+    "predictionIndex": 1,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-duplicates": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 500,
+      "errorRate": 0.02
+    },
+    "predictedFailureMode": "Double ledger write from timeout shorter than processing latency",
+    "rationale": "Because dedupeByKey is false on the ledger, retried payments will be inserted twice whenever payment timeout is breached.",
+    "timestamp": "2026-10-30T10:16:00.000Z"
+  },
+  {
+    "scenarioId": "non-idempotent-retry",
+    "predictionIndex": 2,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-duplicates": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 420,
+      "errorRate": 0.0
+    },
+    "predictedFailureMode": "Non-idempotent retry duplicate write propagation",
+    "rationale": "Premature retries on the payments-to-ledger edge inject duplicate transactions violating the duplicate write threshold of 0.01.",
+    "timestamp": "2026-10-30T10:17:00.000Z"
+  }
+]

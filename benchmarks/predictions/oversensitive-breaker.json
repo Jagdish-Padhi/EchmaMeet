@@ -1,0 +1,53 @@
+[
+  {
+    "scenarioId": "oversensitive-breaker",
+    "predictionIndex": 0,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-completion": true,
+      "inv-breaker-open": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 250,
+      "errorRate": 0.35
+    },
+    "predictedFailureMode": "Premature circuit breaker trips converting transient errors into extended full outage",
+    "rationale": "A 10% failure threshold over a tiny 5-request window will trip on 15% reset rate, opening the breaker for 10 seconds and dropping subsequent traffic.",
+    "timestamp": "2026-10-30T10:20:00.000Z"
+  },
+  {
+    "scenarioId": "oversensitive-breaker",
+    "predictionIndex": 1,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-completion": true,
+      "inv-breaker-open": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 220,
+      "errorRate": 0.3
+    },
+    "predictedFailureMode": "False-positive circuit trip magnifying transient reset fault",
+    "rationale": "The circuit breaker is oversensitive to minor noise, converting transient 15% peer resets into prolonged open breaker state.",
+    "timestamp": "2026-10-30T10:21:00.000Z"
+  },
+  {
+    "scenarioId": "oversensitive-breaker",
+    "predictionIndex": 2,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-completion": true,
+      "inv-breaker-open": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 300,
+      "errorRate": 0.4
+    },
+    "predictedFailureMode": "Oversensitive circuit breaker failure",
+    "rationale": "Breaker open fraction will exceed the 0.20 limit because the cooldown period is significantly longer than error intervals.",
+    "timestamp": "2026-10-30T10:22:00.000Z"
+  }
+]

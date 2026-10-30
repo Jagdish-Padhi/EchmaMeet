@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-30T08:00:17.522Z",
+  "gitCommit": "test-commit",
+  "hostDescription": "test-environment",
+  "nodeVersion": "v22.14.0",
+  "results": [
+    {
+      "scenarioId": "retry-storm",
+      "designedFailureMode": "Synchronous retry storm causing worker exhaustion downstream",
+      "staticPredictions": [
+        {
+          "scenarioId": "retry-storm",
+          "predictionIndex": 0,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-p99": true,
+            "inv-completion": false,
+            "inv-retry": true
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 1500,
+            "errorRate": 0.04
+          },
+          "predictedFailureMode": "Synchronous retry storm causing worker exhaustion downstream",
+          "rationale": "High downstream latency combined with immediate retries amplifies concurrency and exhausts downstream worker capacity.",
+          "timestamp": "2026-10-30T10:00:00.000Z"
+        },
+        {
+          "scenarioId": "retry-storm",
+          "predictionIndex": 1,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-p99": true,
+            "inv-completion": false,
+            "inv-retry": true
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 1600,
+            "errorRate": 0.05
+          },
+          "predictedFailureMode": "Retry amplification under latency pinning worker pools",
+          "rationale": "Repeated immediate retry attempts on checkout-to-inventory edge will drive amplification factor above the 1.5 threshold.",
+          "timestamp": "2026-10-30T10:01:00.000Z"
+        },
+        {
+          "scenarioId": "retry-storm",
+          "predictionIndex": 2,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-p99": true,
+            "inv-completion": false,
+            "inv-retry": true
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 1400,
+            "errorRate": 0.03
+          },
+          "predictedFailureMode": "Synchronous retry storm with queue buildup",
+          "rationale": "Latency toxic of 800ms with jitter causes requests to timeout and retry, multiplying queue arrival rate beyond capacity.",
+          "timestamp": "2026-10-30T10:02:00.000Z"
+        }
+      ],
+      "empiricalRun": {
+        "runId": "run-12345678-abcd-1234-abcd-retry-st0000",
+        "verdicts": [
+          {
+            "invariantId": "inv-p99",
+            "status": "VIOLATED",
+            "reason": "Measured p99 exceeds threshold",
+            "evidence": {
+              "metric": "e2e_p99_ms",
+              "scope": {
+                "kind": "system"
+              },
+              "comparator": "lte",
+              "threshold": 500,
+              "baselineAggregate": {
+                "median": 100,
+                "p25": 90,
+                "p75": 110,
+                "iqr": 20
+              },
+              "faultedAggregate": {
+                "median": 1000,
+                "p25": 950,
+                "p75": 1050,
+                "iqr": 100
+              },
+              "baselineValues": [
+                100
+              ],
+              "faultedValues": [
+                1000
+              ]
+            }
+          },
+          {
+            "invariantId": "inv-completion",
+            "status": "PASS",
+            "reason": null,
+            "evidence": {
+              "metric": "completion_rate",
+              "scope": {
+                "kind": "system"
+              },
+              "comparator": "gte",
+              "threshold": 0.95,
+              "baselineAggregate": {
+                "median": 1,
+                "p25": 1,
+                "p75": 1,
+                "iqr": 0
+              },
+              "faultedAggregate": {
+                "median": 0.98,
+                "p25": 0.97,
+                "p75": 0.99,
+                "iqr": 0.02
+              },
+              "baselineValues": [
+                1
+              ],
+              "faultedValues": [
+                0.98
+              ]
+            }
+          }
+        ],
+        "overallStatus": "VIOLATED",
+        "p99LatencyMs": 1000,
+        "errorRate": 0.02
+      },
+      "repairComparisons": {
+        "ruleBased": {
+          "status": "repaired",
+          "iterationsCount": 2,
+          "patchCount": 2,
+          "totalTokens": {
+            "promptTokens": 400,
+            "completionTokens": 80
+          }
+        },
+        "model": {
+          "status": "repaired",
+          "iterationsCount": 2,
+          "patchCount": 2,
+          "totalTokens": {
+            "promptTokens": 400,
+            "completionTokens": 80
+          }
+        }
+      },
+      "agreement": {
+        "violationAccuracy": 1,
+        "p99Ratio": 1.5,
+        "errorRateDelta": 0.02,
+        "failureModeMatched": true
+      }
+    }
+  ],
+  "aggregateMetrics": {
+    "staticAccuracyPct": 100,
+    "modelRepairSuccessPct": 100,
+    "ruleBasedRepairSuccessPct": 100,
+    "unpredictedFailuresCount": 0
+  }
+}

@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "id": "availability-tradeoff",
+  "name": "Availability versus consistency",
+  "description": "A synchronous dependency taken fully down where writes cannot be deferred.",
+  "designedFailureMode": "Irreconcilable availability-consistency trade-off when critical write downstream is down",
+  "expectedOutcome": "TRADE_OFF",
+  "topology": {
+    "schemaVersion": 1,
+    "id": "availability-tradeoff",
+    "name": "Availability versus consistency",
+    "source": "scenario",
+    "entry": {
+      "nodeId": "gateway"
+    },
+    "nodes": [
+      {
+        "id": "gateway",
+        "label": "Gateway",
+        "kind": "service",
+        "processing": {
+          "distribution": "constant",
+          "ms": 20
+        },
+        "concurrency": {
+          "maxWorkers": 20
+        },
+        "queue": {
+          "mode": "bounded",
+          "maxDepth": 500
+        },
+        "ingressRateLimitRps": null
+      },
+      {
+        "id": "checkout",
+        "label": "Checkout",
+        "kind": "service",
+        "processing": {
+          "distribution": "constant",
+          "ms": 20
+        },
+        "concurrency": {
+          "maxWorkers": 20
+        },
+        "queue": {
+          "mode": "bounded",
+          "maxDepth": 500
+        },
+        "ingressRateLimitRps": null
+      },
+      {
+        "id": "payments",
+        "label": "Payments",
+        "kind": "service",
+        "processing": {
+          "distribution": "constant",
+          "ms": 20
+        },
+        "concurrency": {
+          "maxWorkers": 20
+        },
+        "queue": {
+          "mode": "bounded",
+          "maxDepth": 500
+        },
+        "ingressRateLimitRps": null
+      }
+    ],
+    "edges": [
+      {
+        "id": "gateway-to-checkout",
+        "source": "gateway",
+        "target": "checkout",
+        "mode": "sync_call",
+        "policy": {
+          "timeoutMs": 5000,
+          "retry": {
+            "maxAttempts": 1,
+            "backoffBaseMs": 0,
+            "backoffMultiplier": 1,
+            "maxBackoffMs": 0,
+            "jitter": "none"
+          },
+          "breaker": {
+            "enabled": false,
+            "failureThresholdPct": 50,
+            "windowRequests": 20,
+            "cooldownMs": 2000,
+            "halfOpenProbes": 2
+          },
+          "fallback": "fail_fast_503",
+          "idempotency": {
+            "sendKey": false
+          },
+          "pool": {
+            "maxConnections": 50
+          }
+        }
+      },
+      {
+        "id": "checkout-to-payments",
+        "source": "checkout",
+        "target": "payments",
+        "mode": "sync_call",
+        "policy": {
+          "timeoutMs": 5000,
+          "retry": {
+            "maxAttempts": 1,
+            "backoffBaseMs": 0,
+            "backoffMultiplier": 1,
+            "maxBackoffMs": 0,
+            "jitter": "none"
+          },
+          "breaker": {
+            "enabled": false,
+            "failureThresholdPct": 50,
+            "windowRequests": 20,
+            "cooldownMs": 2000,
+            "halfOpenProbes": 2
+          },
+          "fallback": "fail_fast_503",
+          "idempotency": {
+            "sendKey": false
+          },
+          "pool": {
+            "maxConnections": 50
+          }
+        }
+      }
+    ]
+  },
+  "faults": [
+    {
+      "id": "fault-down-payments",
+      "edgeId": "checkout-to-payments",
+      "type": "dependency_down",
+      "toxicity": 1.0,
+      "direction": "downstream",
+      "startOffsetMs": 0
+    }
+  ],
+  "invariants": [
+    {
+      "id": "inv-completion",
+      "metric": "completion_rate",
+      "scope": {
+        "kind": "system"
+      },
+      "comparator": "gte",
+      "threshold": 0.9
+    },
+    {
+      "id": "inv-p99",
+      "metric": "e2e_p99_ms",
+      "scope": {
+        "kind": "system"
+      },
+      "comparator": "lte",
+      "threshold": 500
+    }
+  ],
+  "trialConfig": {
+    "arrivalRateRps": 10,
+    "arrivalProcess": "constant",
+    "warmupMs": 500,
+    "measurementMs": 1500,
+    "cooldownMs": 100,
+    "clientTimeoutMs": 2000,
+    "seed": 60006,
+    "trials": 5
+  }
+}

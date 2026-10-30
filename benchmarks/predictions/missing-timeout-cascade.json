@@ -1,0 +1,53 @@
+[
+  {
+    "scenarioId": "missing-timeout-cascade",
+    "predictionIndex": 0,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-completion": true,
+      "inv-sat-gateway": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 5000,
+      "errorRate": 0.4
+    },
+    "predictedFailureMode": "Workers pinned by stalled downstream connection with failure cascading upstream",
+    "rationale": "With no timeout configured, 80% stalled connections on user-db edge block auth workers, cascading into gateway worker saturation.",
+    "timestamp": "2026-10-30T10:05:00.000Z"
+  },
+  {
+    "scenarioId": "missing-timeout-cascade",
+    "predictionIndex": 1,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-completion": true,
+      "inv-sat-gateway": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 4800,
+      "errorRate": 0.35
+    },
+    "predictedFailureMode": "Cascading thread starvation from unconstrained connection stall",
+    "rationale": "Unbounded wait times on auth-to-user-db exhaust gateway thread pool as incoming client requests accumulate.",
+    "timestamp": "2026-10-30T10:06:00.000Z"
+  },
+  {
+    "scenarioId": "missing-timeout-cascade",
+    "predictionIndex": 2,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-completion": true,
+      "inv-sat-gateway": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 5200,
+      "errorRate": 0.45
+    },
+    "predictedFailureMode": "Upstream saturation and timeout cascade",
+    "rationale": "Without explicit timeouts, blocked downstream sockets hold resources indefinitely until client-side timeouts expire.",
+    "timestamp": "2026-10-30T10:07:00.000Z"
+  }
+]
