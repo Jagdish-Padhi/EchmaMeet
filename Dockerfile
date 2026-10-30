@@ -39,3 +39,4 @@ COPY --from=base /app ./
 EXPOSE 3000
 
 CMD ["pnpm", "--filter", "@chaosboard/server", "run", "start"]
+
