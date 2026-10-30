@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { topologyIdSchema, type Topology } from '@chaosboard/contracts';
 import { createApiClient } from '../api/client';
+import { Alert } from '../components/ui/Alert';
+import { Card } from '../components/ui/Card';
 import { Tabs } from '../components/ui/Tabs';
 import {
   BoardCanvas,
@@ -33,6 +35,13 @@ import {
   useBenchmarks,
 } from '../features/benchmarks';
 import { ScenarioPicker, useScenarios } from '../features/scenarios';
+import {
+  GestureResultBanner,
+  ImageUploader,
+  RedStrokeCanvas,
+  useVisionFlow,
+  VisionDraftOverlay,
+} from '../features/vision';
 import { SystemStatus } from '../features/system-status';
 
 export function App() {
@@ -68,6 +77,12 @@ export function App() {
 
   // Benchmark suite results state
   const benchmarksState = useBenchmarks(api);
+
+  // Vision flow state
+  const visionFlow = useVisionFlow(api, (topology) => {
+    loadTopology(topology);
+    setActiveTab('board');
+  });
 
   const selectedNode = board.nodes.find((n) => n.id === board.selectedNodeId) ?? null;
   const selectedEdge = board.edges.find((e) => e.id === board.selectedEdgeId) ?? null;
@@ -110,6 +125,7 @@ export function App() {
         onChange={setActiveTab}
         tabs={[
           { id: 'board', label: 'Canvas & Chaos Experiment' },
+          { id: 'vision', label: 'Photo Ingestion & Red-Stroke' },
           { id: 'repair', label: 'Autonomous Repair' },
           { id: 'runs', label: 'Past Runs History', badge: runsHistory.runs.length },
           { id: 'benchmarks', label: 'Benchmark Results' },
@@ -233,6 +249,74 @@ export function App() {
               overallStatus={experimentSession.overallStatus}
               finalRecord={experimentSession.finalRecord}
             />
+          </div>
+        )}
+
+        {/* Tab 1.5: Photo Ingestion & Red-Stroke Gesture */}
+        {activeTab === 'vision' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {visionFlow.error && <Alert variant="error">{visionFlow.error}</Alert>}
+
+            {visionFlow.imagePreviewUrl && visionFlow.extraction ? (
+              <VisionDraftOverlay
+                previewUrl={visionFlow.imagePreviewUrl}
+                extraction={visionFlow.extraction}
+                onConfirm={(draft) => {
+                  void visionFlow.confirmDraft(draft);
+                }}
+                onCancel={visionFlow.reset}
+              />
+            ) : (
+              <Card title="Whiteboard / Sketch Photo Ingestion">
+                <ImageUploader
+                  onImageSelected={(file) => {
+                    void visionFlow.uploadImage(file);
+                  }}
+                  isExtracting={visionFlow.isExtracting}
+                />
+              </Card>
+            )}
+
+            <Card title="Interactive Red-Stroke Gesture">
+              <p style={{ margin: '0 0 12px 0', fontSize: 13, color: '#475569' }}>
+                Draw a red stroke cutting across an active topology link to target it for chaos
+                fault injection.
+              </p>
+              <RedStrokeCanvas
+                candidateEdges={currentTopology.edges.map((e, idx) => ({
+                  id: e.id,
+                  source: e.source,
+                  target: e.target,
+                  polyline: [
+                    [0.2 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
+                    [0.4 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
+                  ],
+                }))}
+                onDetect={(stroke) => {
+                  const candidates = currentTopology.edges.map((e, idx) => ({
+                    id: e.id,
+                    source: e.source,
+                    target: e.target,
+                    polyline: [
+                      [0.2 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
+                      [0.4 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
+                    ],
+                  }));
+                  void visionFlow.triggerGestureDetection(stroke, candidates);
+                }}
+                isDetecting={visionFlow.isDetectingGesture}
+              />
+
+              {visionFlow.gestureResult && (
+                <GestureResultBanner
+                  result={visionFlow.gestureResult}
+                  onApplyFault={(fault) => {
+                    experimentSession.updateFault(fault);
+                    setActiveTab('board');
+                  }}
+                />
+              )}
+            </Card>
           </div>
         )}
 

@@ -10,6 +10,9 @@ import {
   startExperimentResponseSchema,
   startRepairResponseSchema,
   validateTopologyResponseSchema,
+  visionExtractionSchema,
+  topologySchema,
+  redStrokeDetectionResultSchema,
   type BenchmarkSuiteSummary,
   type CancelExperimentResponse,
   type HealthResponse,
@@ -25,7 +28,11 @@ import {
   type StartRepairRequest,
   type StartRepairResponse,
   type TopologyDraft,
+  type Topology,
   type ValidateTopologyResponse,
+  type VisionExtraction,
+  type RedStrokeGestureRequest,
+  type RedStrokeDetectionResult,
 } from '@chaosboard/contracts';
 import { z, type ZodType } from 'zod';
 
@@ -92,6 +99,16 @@ export interface ApiClient {
   getRunEvents(id: RunId, signal?: AbortSignal): Promise<readonly RunEvent[]>;
   exportRun(id: RunId, signal?: AbortSignal): Promise<RunRecord>;
   getBenchmarkResults(signal?: AbortSignal): Promise<BenchmarkSuiteSummary>;
+  extractVisionDraft(
+    imageBase64: string,
+    mimeType?: string,
+    signal?: AbortSignal,
+  ): Promise<VisionExtraction>;
+  confirmVisionDraft(draft: TopologyDraft, signal?: AbortSignal): Promise<Topology>;
+  detectRedStrokeGesture(
+    request: RedStrokeGestureRequest,
+    signal?: AbortSignal,
+  ): Promise<RedStrokeDetectionResult>;
 }
 
 /**
@@ -259,5 +276,33 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
 
     getBenchmarkResults: (signal) =>
       request('/api/benchmarks/results', benchmarkSuiteSummarySchema, withSignal('GET', signal)),
+
+    extractVisionDraft: (imageBase64, mimeType, signal) =>
+      request(
+        '/api/vision/extract',
+        visionExtractionSchema,
+        withSignal(
+          'POST',
+          signal,
+          JSON.stringify({
+            imageBase64,
+            ...(mimeType ? { mimeType } : {}),
+          }),
+        ),
+      ),
+
+    confirmVisionDraft: (draft, signal) =>
+      request(
+        '/api/vision/confirm',
+        topologySchema,
+        withSignal('POST', signal, JSON.stringify({ draft })),
+      ),
+
+    detectRedStrokeGesture: (body, signal) =>
+      request(
+        '/api/vision/gesture',
+        redStrokeDetectionResultSchema,
+        withSignal('POST', signal, JSON.stringify(body)),
+      ),
   };
 }
