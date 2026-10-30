@@ -306,6 +306,12 @@ export function App() {
             <span className="studio-brand-name">ChaosBoard</span>
           </button>
 
+          {/* Architecture Review Room Session Badge */}
+          <div className="room-badge" title="Live Collaborative Architecture Review Room">
+            <span className="room-dot" />
+            <span>#rfc-checkout-v2</span>
+          </div>
+
           <div className="studio-topbar-divider" />
 
           {/* Quick Scenario Switcher */}
@@ -489,8 +495,37 @@ export function App() {
         <main className="studio-canvas-main">
           {/* Excalidraw-style Floating Tool Dock */}
           <div className="studio-floating-dock">
-            <button type="button" className="dock-btn" onClick={addNode}>
-              + Add Node
+            <button
+              type="button"
+              className="dock-btn"
+              onClick={() => addNode('service')}
+              title="Add standard service node"
+            >
+              + Service
+            </button>
+            <button
+              type="button"
+              className="dock-btn"
+              onClick={() => addNode('cache')}
+              title="Add in-memory cache"
+            >
+              + Cache
+            </button>
+            <button
+              type="button"
+              className="dock-btn"
+              onClick={() => addNode('queue_consumer')}
+              title="Add queue worker"
+            >
+              + Queue
+            </button>
+            <button
+              type="button"
+              className="dock-btn"
+              onClick={() => addNode('ledger_sink')}
+              title="Add database / ledger sink"
+            >
+              + Sink
             </button>
             <div style={{ width: 1, height: 16, background: 'var(--color-border)' }} />
             <span style={{ fontSize: 11, color: 'var(--color-text-dim)', padding: '0 4px' }}>
@@ -506,6 +541,15 @@ export function App() {
             onMoveNode={updateNodePosition}
             onAddNode={addNode}
             onAddEdge={addEdge}
+            onDeleteNode={(nodeId) => {
+              removeNode(nodeId);
+              if (activeDrawer === 'inspect') setActiveDrawer('none');
+            }}
+            onDeleteEdge={(edgeId) => {
+              removeEdge(edgeId);
+              if (activeDrawer === 'inspect') setActiveDrawer('none');
+            }}
+            hazardEdgeId={experimentSession.fault.edgeId}
           />
         </main>
 

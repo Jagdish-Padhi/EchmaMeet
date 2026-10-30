@@ -5,6 +5,7 @@ import {
   type EdgeId,
   type EdgePolicy,
   type NodeId,
+  type NodeKind,
   type Topology,
   type TopologyEdge,
   type TopologyNode,
@@ -146,33 +147,62 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
     [triggerValidation],
   );
 
-  const addNode = useCallback(() => {
-    setBoard((prev) => {
-      const newId = nodeIdSchema.parse(`node-${String(prev.nodes.length + 1)}`);
-      const newNode: BoardNode = {
-        id: newId,
-        label: `Service ${String(prev.nodes.length + 1)}`,
-        kind: 'service',
-        processing: { distribution: 'constant', ms: 15 },
-        concurrency: { maxWorkers: 10 },
-        queue: { mode: 'bounded', maxDepth: 50 },
-        ingressRateLimitRps: null,
-        position: {
-          x: 100 + (prev.nodes.length % 3) * 260,
-          y: 100 + Math.floor(prev.nodes.length / 3) * 180,
-        },
-      };
-      const next: BoardState = {
-        ...prev,
-        isDirty: true,
-        nodes: [...prev.nodes, newNode],
-        selectedNodeId: newId,
-        selectedEdgeId: null,
-      };
-      triggerValidation(next);
-      return next;
-    });
-  }, [triggerValidation]);
+  const addNode = useCallback(
+    (kind: NodeKind = 'service') => {
+      setBoard((prev) => {
+        let count = prev.nodes.length + 1;
+        let newIdStr = `node-${String(count)}`;
+        while (prev.nodes.some((n) => n.id === newIdStr)) {
+          count += 1;
+          newIdStr = `node-${String(count)}`;
+        }
+        const newId = nodeIdSchema.parse(newIdStr);
+
+        const kindLabel =
+          kind === 'queue_consumer'
+            ? 'Queue Worker'
+            : kind === 'ledger_sink'
+              ? 'Ledger Sink'
+              : kind === 'cache'
+                ? 'Cache Store'
+                : `Service ${String(count)}`;
+
+        const baseProps = {
+          id: newId,
+          label: kindLabel,
+          processing: { distribution: 'constant' as const, ms: kind === 'cache' ? 2 : 15 },
+          concurrency: { maxWorkers: kind === 'ledger_sink' ? 5 : 10 },
+          queue: { mode: 'bounded' as const, maxDepth: 50 },
+          ingressRateLimitRps: null,
+          position: {
+            x: 120 + (prev.nodes.length % 3) * 260,
+            y: 120 + Math.floor(prev.nodes.length / 3) * 180,
+          },
+        };
+
+        let newNode: BoardNode;
+        if (kind === 'cache') {
+          newNode = { ...baseProps, kind: 'cache', ttlMs: 60000 };
+        } else if (kind === 'queue_consumer') {
+          newNode = { ...baseProps, kind: 'queue_consumer', consumeRateRps: 50 };
+        } else if (kind === 'ledger_sink') {
+          newNode = { ...baseProps, kind: 'ledger_sink', dedupeByKey: true };
+        } else {
+          newNode = { ...baseProps, kind: 'service' };
+        }
+        const next: BoardState = {
+          ...prev,
+          isDirty: true,
+          nodes: [...prev.nodes, newNode],
+          selectedNodeId: newId,
+          selectedEdgeId: null,
+        };
+        triggerValidation(next);
+        return next;
+      });
+    },
+    [triggerValidation],
+  );
 
   const removeNode = useCallback(
     (nodeId: NodeId) => {

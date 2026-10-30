@@ -1394,3 +1394,173 @@ body {
     transform: scale(0.9);
   }
 }
+
+/* ============================================================================
+   4. EXCALIDRAW-GRADE FLUID CANVAS CONTROLS & PORT HANDLES
+   ============================================================================ */
+.canvas-panning {
+  cursor: grab !important;
+}
+
+.canvas-panning:active {
+  cursor: grabbing !important;
+}
+
+/* Canvas Floating Zoom Dock */
+.canvas-zoom-dock {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background: var(--color-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-md);
+  user-select: none;
+}
+
+.zoom-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-full);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+}
+
+.zoom-btn:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.zoom-label {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--color-text);
+  padding: 0 4px;
+  min-width: 36px;
+  text-align: center;
+}
+
+.zoom-btn-fit {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.zoom-btn-fit:hover {
+  color: var(--color-accent);
+  background: rgba(56, 189, 248, 0.12);
+}
+
+/* Interactive Node Connector Ports */
+.node-port-handle {
+  cursor: crosshair;
+}
+
+.port-dot-handle {
+  fill: var(--color-accent);
+  stroke: var(--color-bg);
+  stroke-width: 2;
+  transition:
+    transform 0.12s ease,
+    fill 0.12s ease;
+}
+
+.node-port-handle:hover .port-dot-handle {
+  transform: scale(1.4);
+  fill: #38bdf8;
+  filter: drop-shadow(0 0 6px #38bdf8);
+}
+
+.port-dot-target {
+  fill: #64748b;
+  stroke: var(--color-bg);
+  stroke-width: 1.5;
+  transition: all 0.12s ease;
+}
+
+.canvas-node:hover .port-dot-target {
+  fill: var(--color-accent);
+}
+
+/* Rubberband Dragged Wire */
+.rubberband-wire {
+  stroke: var(--color-accent);
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6));
+  pointer-events: none;
+}
+
+/* Radar Hazard Pulses */
+@keyframes hazardPulse {
+  0% {
+    stroke-opacity: 0.9;
+    stroke-width: 2;
+  }
+  50% {
+    stroke-opacity: 0.3;
+    stroke-width: 6;
+  }
+  100% {
+    stroke-opacity: 0.9;
+    stroke-width: 2;
+  }
+}
+
+.hazard-pulse-ring {
+  animation: hazardPulse 1.8s ease-in-out infinite;
+}
+
+.edge-hazard-pulse {
+  animation: hazardPulse 1.5s ease-in-out infinite;
+}
+
+.edge-tag-hazard {
+  stroke: #f59e0b !important;
+  stroke-width: 1.5px !important;
+}
+
+/* Meeting Room Header Badges */
+.room-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: #34d399;
+}
+
+.room-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}

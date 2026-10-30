@@ -6,6 +6,7 @@ export interface EdgeLinkProps {
   readonly sourceNode: BoardNode | undefined;
   readonly targetNode: BoardNode | undefined;
   readonly isSelected: boolean;
+  readonly isHazard?: boolean;
   readonly problems: readonly TopologyProblem[];
   readonly onSelect: (id: EdgeId) => void;
 }
@@ -15,6 +16,7 @@ export function EdgeLink({
   sourceNode,
   targetNode,
   isSelected,
+  isHazard,
   problems,
   onSelect,
 }: EdgeLinkProps) {
@@ -47,7 +49,7 @@ export function EdgeLink({
     <g
       className={`canvas-edge ${isSelected ? 'canvas-edge-selected' : ''} ${
         hasProblems ? 'canvas-edge-error' : ''
-      }`}
+      } ${isHazard ? 'canvas-edge-hazard' : ''}`}
       onClick={(e) => {
         e.stopPropagation();
         onSelect(edge.id);
@@ -59,6 +61,18 @@ export function EdgeLink({
       {/* Invisible wider stroke for easy clicking */}
       <path d={pathData} className="edge-hitbox" />
 
+      {/* Hazard Pulse Aura if flagged */}
+      {isHazard && (
+        <path
+          d={pathData}
+          fill="none"
+          stroke="#f59e0b"
+          strokeWidth={6}
+          strokeDasharray="8 4"
+          className="edge-hazard-pulse"
+        />
+      )}
+
       {/* Visible line */}
       <path
         d={pathData}
@@ -68,7 +82,12 @@ export function EdgeLink({
 
       {/* Edge tag badge */}
       <g transform={`translate(${String(midX - 58)}, ${String(midY - 11)})`}>
-        <rect width={116} height={22} rx={11} className="edge-tag-bg" />
+        <rect
+          width={116}
+          height={22}
+          rx={11}
+          className={`edge-tag-bg ${isHazard ? 'edge-tag-hazard' : ''}`}
+        />
         <text x={58} y={15} className="edge-tag-text" textAnchor="middle">
           {policySummary}
         </text>
