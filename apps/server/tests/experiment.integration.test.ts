@@ -88,7 +88,7 @@ describe('Experiment orchestration and storage integration', () => {
     const trialConfig: TrialConfig = {
       arrivalRateRps: 10,
       arrivalProcess: 'constant',
-      warmupMs: 400,
+      warmupMs: 500,
       measurementMs: 1000,
       cooldownMs: 100,
       clientTimeoutMs: 2000,
