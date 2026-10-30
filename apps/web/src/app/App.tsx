@@ -42,7 +42,15 @@ import {
   useVisionFlow,
   VisionDraftOverlay,
 } from '../features/vision';
+import {
+  ParsedCommandCard,
+  PushToTalkButton,
+  useVoiceSession,
+  VoiceQuickCommands,
+  VoiceTranscriptStream,
+} from '../features/voice';
 import { SystemStatus } from '../features/system-status';
+import { edgeIdSchema, faultIdSchema } from '@chaosboard/contracts';
 
 export function App() {
   const api = useMemo(() => createApiClient(), []);
@@ -105,6 +113,79 @@ export function App() {
 
   const canStartExperiment = board.validationProblems.length === 0 && board.nodes.length > 0;
 
+  // Voice session state
+  const voiceSession = useVoiceSession(api, currentTopology, async (cmd) => {
+    if (cmd.command === 'inject_fault') {
+      const match = currentTopology.edges.find(
+        (e) => e.source === cmd.source && e.target === cmd.target,
+      );
+      if (match) {
+        const id = faultIdSchema.parse(`fault-${match.id}`);
+        const edgeId = edgeIdSchema.parse(match.id);
+        if (cmd.faultType === 'latency') {
+          experimentSession.updateFault({
+            id,
+            edgeId,
+            type: 'latency',
+            latencyMs: cmd.parameters?.latencyMs ?? 300,
+            jitterMs: cmd.parameters?.jitterMs ?? 50,
+            toxicity: cmd.parameters?.toxicity ?? 1,
+            direction: 'downstream',
+            startOffsetMs: 0,
+          });
+        } else if (cmd.faultType === 'stall') {
+          experimentSession.updateFault({
+            id,
+            edgeId,
+            type: 'stall',
+            holdMs: cmd.parameters?.holdMs ?? 500,
+            toxicity: cmd.parameters?.toxicity ?? 1,
+            direction: 'downstream',
+            startOffsetMs: 0,
+          });
+        } else if (cmd.faultType === 'connection_reset') {
+          experimentSession.updateFault({
+            id,
+            edgeId,
+            type: 'connection_reset',
+            afterMs: cmd.parameters?.resetAfterMs ?? 100,
+            toxicity: cmd.parameters?.toxicity ?? 1,
+            direction: 'downstream',
+            startOffsetMs: 0,
+          });
+        } else {
+          experimentSession.updateFault({
+            id,
+            edgeId,
+            type: 'dependency_down',
+            toxicity: 1,
+            direction: 'downstream',
+            startOffsetMs: 0,
+          });
+        }
+        setActiveTab('board');
+      }
+    } else if (cmd.command === 'run_experiment') {
+      setActiveTab('board');
+      void experimentSession.startExperiment(currentTopology);
+    } else if (cmd.command === 'start_repair') {
+      setActiveTab('repair');
+      void repairSession.startRepair(
+        currentTopology,
+        experimentSession.fault,
+        experimentSession.invariants,
+        experimentSession.trialConfig,
+      );
+    } else if (cmd.command === 'cancel') {
+      void experimentSession.cancelExperiment();
+      void repairSession.cancelRepair();
+    } else if (cmd.command === 'load_scenario') {
+      const scenario = await api.getScenario(cmd.scenarioId);
+      loadTopology(scenario.topology);
+      setActiveTab('board');
+    }
+  });
+
   return (
     <div className="app-layout">
       {/* Top Header */}
@@ -126,6 +207,7 @@ export function App() {
         tabs={[
           { id: 'board', label: 'Canvas & Chaos Experiment' },
           { id: 'vision', label: 'Photo Ingestion & Red-Stroke' },
+          { id: 'voice', label: 'Voice Control' },
           { id: 'repair', label: 'Autonomous Repair' },
           { id: 'runs', label: 'Past Runs History', badge: runsHistory.runs.length },
           { id: 'benchmarks', label: 'Benchmark Results' },
@@ -317,6 +399,62 @@ export function App() {
                 />
               )}
             </Card>
+          </div>
+        )}
+
+        {/* Tab 1.6: Voice Control & Push-To-Talk */}
+        {activeTab === 'voice' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {voiceSession.error && <Alert variant="error">{voiceSession.error}</Alert>}
+
+            <Card title="Push-to-Talk Spoken Command Bridge">
+              <PushToTalkButton
+                isRecording={voiceSession.isRecording}
+                isProcessing={voiceSession.isProcessing}
+                onStartRecording={() => {
+                  void voiceSession.startRecording();
+                }}
+                onStopRecording={() => {
+                  voiceSession.stopRecording();
+                }}
+              />
+
+              <div style={{ marginTop: 16 }}>
+                <VoiceTranscriptStream
+                  partialTranscript={voiceSession.partialTranscript}
+                  finalTranscript={voiceSession.finalTranscript}
+                  isRecording={voiceSession.isRecording}
+                  isProcessing={voiceSession.isProcessing}
+                  timings={voiceSession.timings}
+                />
+              </div>
+
+              <VoiceQuickCommands
+                onSelectPhrase={(phrase) => {
+                  void voiceSession.submitTranscript(phrase);
+                }}
+                isProcessing={voiceSession.isProcessing}
+              />
+            </Card>
+
+            <ParsedCommandCard
+              result={voiceSession.parseResult}
+              autoConfirm={voiceSession.autoConfirm}
+              onToggleAutoConfirm={voiceSession.toggleAutoConfirm}
+              onConfirmAndExecute={() => {
+                void voiceSession.confirmAndExecute();
+              }}
+              onClear={voiceSession.clearSession}
+              onSelectCandidate={(cand) => {
+                // if user selects an ambiguous candidate edge
+                const match = currentTopology.edges.find((e) => e.id === cand);
+                if (match) {
+                  void voiceSession.submitTranscript(
+                    `inject latency 300ms from ${match.source} to ${match.target}`,
+                  );
+                }
+              }}
+            />
           </div>
         )}
 

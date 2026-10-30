@@ -13,6 +13,7 @@ import {
   visionExtractionSchema,
   topologySchema,
   redStrokeDetectionResultSchema,
+  voiceIntentParseResultSchema,
   type BenchmarkSuiteSummary,
   type CancelExperimentResponse,
   type HealthResponse,
@@ -33,6 +34,7 @@ import {
   type VisionExtraction,
   type RedStrokeGestureRequest,
   type RedStrokeDetectionResult,
+  type VoiceIntentParseResult,
 } from '@chaosboard/contracts';
 import { z, type ZodType } from 'zod';
 
@@ -109,6 +111,16 @@ export interface ApiClient {
     request: RedStrokeGestureRequest,
     signal?: AbortSignal,
   ): Promise<RedStrokeDetectionResult>;
+  parseVoiceCommand(
+    request: {
+      transcript?: string | undefined;
+      audioBase64?: string | undefined;
+      audioDurationMs?: number | undefined;
+      nodes: readonly { id: string; label: string }[];
+      edges: readonly { id: string; source: string; target: string }[];
+    },
+    signal?: AbortSignal,
+  ): Promise<VoiceIntentParseResult>;
 }
 
 /**
@@ -302,6 +314,13 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
       request(
         '/api/vision/gesture',
         redStrokeDetectionResultSchema,
+        withSignal('POST', signal, JSON.stringify(body)),
+      ),
+
+    parseVoiceCommand: (body, signal) =>
+      request(
+        '/api/voice/parse',
+        voiceIntentParseResultSchema,
         withSignal('POST', signal, JSON.stringify(body)),
       ),
   };
