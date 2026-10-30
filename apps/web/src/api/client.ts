@@ -88,7 +88,10 @@ const cancelRepairResponseSchema = z.object({
 
 export interface ApiClient {
   getHealth(signal?: AbortSignal): Promise<HealthResponse>;
-  validateTopology(draft: TopologyDraft, signal?: AbortSignal): Promise<ValidateTopologyResponse>;
+  validateTopology(
+    topology: Topology | TopologyDraft,
+    signal?: AbortSignal,
+  ): Promise<ValidateTopologyResponse>;
   listScenarios(signal?: AbortSignal): Promise<readonly ScenarioSpec[]>;
   getScenario(id: ScenarioId, signal?: AbortSignal): Promise<ScenarioSpec>;
   startExperiment(
@@ -236,11 +239,11 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   return {
     getHealth: (signal) => request('/api/health', healthResponseSchema, withSignal('GET', signal)),
 
-    validateTopology: (draft, signal) =>
+    validateTopology: (topologyOrDraft, signal) =>
       request(
         '/api/topologies/validate',
         validateTopologyResponseSchema,
-        withSignal('POST', signal, JSON.stringify(draft)),
+        withSignal('POST', signal, JSON.stringify(topologyOrDraft)),
       ),
 
     listScenarios: (signal) =>

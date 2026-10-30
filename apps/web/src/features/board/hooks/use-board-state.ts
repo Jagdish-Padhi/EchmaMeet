@@ -11,7 +11,7 @@ import {
   type TopologyNode,
 } from '@chaosboard/contracts';
 import type { ApiClient } from '../../../api/client';
-import { fromTopology, toTopologyDraft, type BoardNode, type BoardState } from '../types';
+import { fromTopology, toTopology, type BoardNode, type BoardState } from '../types';
 
 const defaultEdgePolicy: EdgePolicy = {
   timeoutMs: 1000,
@@ -74,9 +74,9 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
       }
       validateTimeoutRef.current = setTimeout(() => {
         setBoard((prev) => ({ ...prev, isValidating: true }));
-        const draft = toTopologyDraft(currentBoard);
+        const topology = toTopology(currentBoard);
         api
-          .validateTopology(draft)
+          .validateTopology(topology)
           .then((result) => {
             setBoard((prev) => ({
               ...prev,

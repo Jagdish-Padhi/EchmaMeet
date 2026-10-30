@@ -1,11 +1,13 @@
-import type {
-  EdgeId,
-  NodeId,
-  Topology,
-  TopologyDraft,
-  TopologyEdge,
-  TopologyNode,
-  TopologyProblem,
+import {
+  topologyIdSchema,
+  type EdgeId,
+  type NodeId,
+  type Topology,
+  type TopologyDraft,
+  type TopologyEdge,
+  type TopologyId,
+  type TopologyNode,
+  type TopologyProblem,
 } from '@chaosboard/contracts';
 
 export interface CanvasPosition {
@@ -28,6 +30,34 @@ export interface BoardState {
   readonly validationProblems: readonly TopologyProblem[];
   readonly isValidating: boolean;
   readonly isDirty: boolean;
+}
+
+export function toTopology(state: BoardState): Topology {
+  const fallbackId = 'canvas-topology' as TopologyId;
+  const topologyId =
+    state.id && topologyIdSchema.safeParse(state.id).success
+      ? (state.id as TopologyId)
+      : fallbackId;
+
+  const entryNodeId =
+    state.entryNodeId || (state.nodes[0]?.id ? state.nodes[0].id : ('entry' as NodeId));
+
+  return {
+    schemaVersion: 1,
+    id: topologyId,
+    name: state.name || 'Canvas Architecture',
+    source: 'canvas',
+    entry: { nodeId: entryNodeId },
+    nodes: state.nodes.map((n) => {
+      const nodeProps = { ...n };
+      delete (nodeProps as { position?: unknown }).position;
+      return {
+        ...nodeProps,
+        ingressRateLimitRps: nodeProps.ingressRateLimitRps ?? null,
+      };
+    }),
+    edges: [...state.edges],
+  };
 }
 
 export function toTopologyDraft(state: BoardState): TopologyDraft {

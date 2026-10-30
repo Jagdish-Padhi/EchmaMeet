@@ -7,6 +7,7 @@ export interface NodeCardProps {
   readonly isSelected: boolean;
   readonly isEntry: boolean;
   readonly isHazard?: boolean;
+  readonly isConnecting?: boolean;
   readonly problems: readonly TopologyProblem[];
   readonly onSelect: (id: NodeId) => void;
   readonly onDragStart: (id: NodeId, e: ReactMouseEvent<SVGGElement>) => void;
@@ -19,6 +20,7 @@ export function NodeCard({
   isSelected,
   isEntry,
   isHazard,
+  isConnecting,
   problems,
   onSelect,
   onDragStart,
@@ -98,21 +100,38 @@ export function NodeCard({
     node.processing.distribution === 'constant'
       ? `${String(node.processing.ms)}ms`
       : `${String(node.processing.medianMs)}ms`;
-  const specSummary = `${String(node.concurrency.maxWorkers)}w · ${latencyText} · ${node.queue.mode}`;
+  const dedupeSuffix = node.kind === 'ledger_sink' && node.dedupeByKey ? ' · dedupe:true' : '';
+  const specSummary = `${String(node.concurrency.maxWorkers)}w · ${latencyText} · ${node.queue.mode}${dedupeSuffix}`;
+
+  const isSink = node.kind === 'ledger_sink';
 
   return (
     <g
       className={`canvas-node ${isSelected ? 'canvas-node-selected' : ''} ${
         hasProblems ? 'canvas-node-error' : ''
-      } ${isHazard ? 'canvas-node-hazard' : ''}`}
+      } ${isHazard ? 'canvas-node-hazard' : ''} ${isEntry ? 'canvas-node-entry' : ''} ${
+        isSink ? 'canvas-node-sink' : ''
+      }`}
+      style={{ outline: 'none' }}
       transform={`translate(${String(node.position.x)}, ${String(node.position.y)})`}
       onClick={(e) => {
         e.stopPropagation();
-        onDropConnect?.(node.id);
-        onSelect(node.id);
+        if (isConnecting) {
+          onDropConnect?.(node.id);
+        } else {
+          onSelect(node.id);
+        }
       }}
-      onMouseDown={(e) => onDragStart(node.id, e)}
-      onMouseUp={() => onDropConnect?.(node.id)}
+      onMouseDown={(e) => {
+        if (!isConnecting) {
+          onDragStart(node.id, e);
+        }
+      }}
+      onMouseUp={() => {
+        if (isConnecting) {
+          onDropConnect?.(node.id);
+        }
+      }}
       aria-label={`Node ${node.label} (${node.kind})`}
     >
       {/* Main Sleek Card Body */}

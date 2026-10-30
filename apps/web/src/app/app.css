@@ -1209,22 +1209,37 @@ body {
 }
 
 .canvas-node:hover .node-box {
-  stroke: rgba(255, 255, 255, 0.16);
+  stroke: rgba(255, 255, 255, 0.28);
+}
+
+.canvas-node-entry .node-box {
+  stroke: #0082fb;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 8px rgba(0, 130, 251, 0.35));
+}
+
+.canvas-node-sink .node-box {
+  stroke: #10b981;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.35));
+}
+
+.canvas-node-hazard .node-box {
+  stroke: #f59e0b;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.5));
 }
 
 .canvas-node-selected .node-box {
-  stroke: var(--color-accent);
-  stroke-width: 1.5;
+  stroke: var(--color-accent) !important;
+  stroke-width: 2 !important;
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.55)) !important;
 }
 
 .canvas-node-error .node-box {
   stroke: var(--color-danger);
   stroke-width: 1.5;
-}
-
-.canvas-node-hazard .node-box {
-  stroke: var(--color-warning);
-  stroke-width: 1.5;
+  filter: drop-shadow(0 0 8px rgba(244, 63, 94, 0.4));
 }
 
 .node-title {

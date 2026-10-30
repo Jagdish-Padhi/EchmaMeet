@@ -47,4 +47,23 @@ describe('validateTopologyInput', () => {
     const outcome = validateTopologyInput(bad);
     expect(outcome.valid).toBe(false);
   });
+
+  it('accepts and normalizes a valid TopologyDraft', () => {
+    const draft = {
+      name: 'Draft Canvas',
+      source: 'canvas' as const,
+      entryRef: 'gw',
+      nodes: [
+        { ref: 'gw', label: 'Gateway', kind: 'service' as const },
+        { ref: 'srv', label: 'Service', kind: 'service' as const },
+      ],
+      edges: [{ sourceRef: 'gw', targetRef: 'srv' }],
+    };
+    const outcome = validateTopologyInput(draft);
+    expect(outcome.valid).toBe(true);
+    if (outcome.valid) {
+      expect(outcome.topology.entry.nodeId).toBe('gateway');
+      expect(outcome.topology.nodes).toHaveLength(2);
+    }
+  });
 });

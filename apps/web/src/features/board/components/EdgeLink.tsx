@@ -39,6 +39,7 @@ export function EdgeLink({
       className={`canvas-edge ${isSelected ? 'canvas-edge-selected' : ''} ${
         hasProblems ? 'canvas-edge-error' : ''
       } ${isHazard ? 'canvas-edge-hazard' : ''}`}
+      style={{ outline: 'none' }}
       onClick={(e) => {
         e.stopPropagation();
         onSelect(edge.id);
@@ -46,7 +47,7 @@ export function EdgeLink({
       aria-label={`Edge from ${edge.source} to ${edge.target}`}
     >
       {/* Invisible wider stroke for easy clicking */}
-      <path d={pathData} className="edge-hitbox" />
+      <path d={pathData} className="edge-hitbox" style={{ outline: 'none' }} />
 
       {/* Hazard Pulse Aura if flagged by SRE agent */}
       {isHazard && (
@@ -57,6 +58,7 @@ export function EdgeLink({
           strokeWidth={5}
           strokeDasharray="6 4"
           className="edge-hazard-pulse"
+          style={{ outline: 'none' }}
         />
       )}
 
@@ -64,6 +66,7 @@ export function EdgeLink({
       <path
         d={pathData}
         className="edge-path"
+        style={{ outline: 'none' }}
         markerEnd={isSelected ? 'url(#arrow-selected)' : 'url(#arrow)'}
       />
 
@@ -80,12 +83,32 @@ export function EdgeLink({
         />
       </circle>
 
+      {/* Excalidraw-Grade Subtle Bend Handle When Selected */}
+      {isSelected && (
+        <circle
+          cx={midX}
+          cy={midY}
+          r={4}
+          fill="var(--color-accent)"
+          stroke="#0b1120"
+          strokeWidth={1.5}
+          className="edge-bend-handle"
+          style={{ outline: 'none' }}
+        >
+          <title>Stepped bend anchor</title>
+        </circle>
+      )}
+
       {/* Minimal Policy Capsule Tag */}
-      <g transform={`translate(${String(midX - 44)}, ${String(midY - 10)})`}>
+      <g
+        transform={`translate(${String(midX - 44)}, ${String(midY - 10)})`}
+        style={{ outline: 'none' }}
+      >
         <rect
           width={88}
           height={20}
           rx={10}
+          style={{ outline: 'none' }}
           className={`edge-tag-bg ${isHazard ? 'edge-tag-hazard' : ''}`}
         />
         <text x={44} y={13.5} className="edge-tag-text" textAnchor="middle">

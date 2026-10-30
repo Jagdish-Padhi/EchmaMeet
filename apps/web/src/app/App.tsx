@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   edgeIdSchema,
   faultIdSchema,
-  topologyIdSchema,
   type EdgeId,
   type NodeId,
   type RunId,
@@ -17,6 +16,7 @@ import {
   ImportDiagramModal,
   NodeInspector,
   ValidationBanner,
+  toTopology,
   useBoardState,
 } from '../features/board';
 import {
@@ -164,21 +164,7 @@ export function App() {
     }
   };
 
-  const currentTopology: Topology = useMemo(() => {
-    return {
-      schemaVersion: 1,
-      id: topologyIdSchema.parse(board.id),
-      name: board.name,
-      source: 'canvas',
-      entry: { nodeId: board.entryNodeId },
-      nodes: board.nodes.map((n) => {
-        const nodeProps = { ...n };
-        delete (nodeProps as { position?: unknown }).position;
-        return nodeProps;
-      }),
-      edges: [...board.edges],
-    };
-  }, [board]);
+  const currentTopology: Topology = useMemo(() => toTopology(board), [board]);
 
   const canStartExperiment = board.validationProblems.length === 0 && board.nodes.length > 0;
 

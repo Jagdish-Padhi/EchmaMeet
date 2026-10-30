@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent, type WheelEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent, type WheelEvent } from 'react';
 import type { EdgeId, NodeId, NodeKind } from '@chaosboard/contracts';
 import type { BoardNode, BoardState } from '../types';
 import { EdgeLink } from './EdgeLink';
@@ -134,14 +134,17 @@ export function BoardCanvas({
   ]);
 
   // Convert screen coordinates to canvas space (accounting for pan & zoom)
-  const screenToCanvasCoords = (clientX: number, clientY: number): { x: number; y: number } => {
-    if (!svgRef.current) return { x: clientX, y: clientY };
-    const rect = svgRef.current.getBoundingClientRect();
-    return {
-      x: (clientX - rect.left - pan.x) / zoom,
-      y: (clientY - rect.top - pan.y) / zoom,
-    };
-  };
+  const screenToCanvasCoords = useCallback(
+    (clientX: number, clientY: number): { x: number; y: number } => {
+      if (!svgRef.current) return { x: clientX, y: clientY };
+      const rect = svgRef.current.getBoundingClientRect();
+      return {
+        x: (clientX - rect.left - pan.x) / zoom,
+        y: (clientY - rect.top - pan.y) / zoom,
+      };
+    },
+    [pan.x, pan.y, zoom],
+  );
 
   // Node Drag Start
   const handleDragStart = (id: NodeId, e: MouseEvent<SVGGElement>) => {
@@ -228,6 +231,58 @@ export function BoardCanvas({
       onMoveNode(id, Math.round(startX + dx), Math.round(startY + dy));
     }
   };
+
+  // Global Window Listeners for Seamless Sticky Dragging & Panning
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: globalThis.MouseEvent) => {
+      // 1. Panning
+      if (isPanningRef.current) {
+        const dx = e.clientX - panStartRef.current.x;
+        const dy = e.clientY - panStartRef.current.y;
+        setPan({ x: panStartRef.current.panX + dx, y: panStartRef.current.panY + dy });
+        return;
+      }
+
+      // 2. Wire Connection Dragging / Moving
+      if (connectingSource) {
+        setConnectingCursor(screenToCanvasCoords(e.clientX, e.clientY));
+        if (connectStartPosRef.current) {
+          const dX = Math.abs(e.clientX - connectStartPosRef.current.clientX);
+          const dY = Math.abs(e.clientY - connectStartPosRef.current.clientY);
+          if (dX > 6 || dY > 6) {
+            hasMovedWireRef.current = true;
+          }
+        }
+        return;
+      }
+
+      // 3. Node Dragging - seamlessly glued to cursor with zero lag
+      if (draggingNodeRef.current) {
+        const { id, startX, startY, clientX, clientY } = draggingNodeRef.current;
+        const dx = (e.clientX - clientX) / zoom;
+        const dy = (e.clientY - clientY) / zoom;
+        onMoveNode(id, Math.round(startX + dx), Math.round(startY + dy));
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      isPanningRef.current = false;
+      draggingNodeRef.current = null;
+      if (connectingSource && hasMovedWireRef.current) {
+        setConnectingSource(null);
+        setConnectingCursor(null);
+        connectStartPosRef.current = null;
+        hasMovedWireRef.current = false;
+      }
+    };
+
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [connectingSource, onMoveNode, pan.x, pan.y, screenToCanvasCoords, zoom]);
 
   // Canvas Mouse Up
   const handleMouseUp = () => {
@@ -388,6 +443,7 @@ export function BoardCanvas({
               isSelected={board.selectedNodeId === node.id}
               isEntry={board.entryNodeId === node.id}
               isHazard={hazardNodeId === node.id}
+              isConnecting={connectingSource !== null}
               problems={board.validationProblems}
               onSelect={onSelectNode}
               onDragStart={handleDragStart}
