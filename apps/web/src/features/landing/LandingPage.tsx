@@ -45,14 +45,13 @@ export function LandingPage({
             </div>
             <div className="brand-title-wrap">
               <span className="landing-title">Resilio</span>
-              <span className="platform-tag">Enterprise SRE</span>
             </div>
           </div>
 
           <nav className="landing-nav-links" aria-label="Landing page navigation">
             <a href="#overview">Overview</a>
             <a href="#canvas">Interactive Review</a>
-            <a href="#pillars">Architecture</a>
+            <a href="#pillars">Capabilities</a>
             <a href="#scenarios">Scenarios</a>
           </nav>
 
@@ -125,21 +124,15 @@ export function LandingPage({
       {/* Hero Section with Deep Glow */}
       <section id="overview" className="landing-hero">
         <div className="hero-content">
-          <div className="hero-pill-tag">
-            <span className="hero-pill-dot" />
-            <span>Autonomous Resilience Engineering &amp; SRE Review</span>
-          </div>
-
           <h1 className="hero-headline">
-            Distributed Systems Resilience.
+            Distributed Systems Architecture.
             <br />
-            <span className="hero-headline-gradient">Engineered at Design-Time.</span>
+            <span className="hero-headline-gradient">Verified with Real Chaos.</span>
           </h1>
 
           <p className="hero-subhead">
-            Resilio transforms architecture review into an empirical sandbox. Draw or import
-            distributed topologies, inject real physical TCP chaos, and let Meta AI autonomous
-            agents synthesize Pareto-optimal policies before you deploy.
+            Draw or import microservice topologies, simulate physical network failures, and let Meta
+            AI agents prove resilience before deployment.
           </p>
 
           <div className="hero-actions">
@@ -148,7 +141,7 @@ export function LandingPage({
               className="btn btn-primary btn-hero"
               onClick={() => onLaunchStudio()}
             >
-              Enter Review Room &rarr;
+              Launch Studio &rarr;
             </button>
 
             <button
@@ -156,7 +149,7 @@ export function LandingPage({
               className="btn btn-secondary btn-hero"
               onClick={() => onLaunchStudio(scenarios[0]?.id ?? 'retry-storm')}
             >
-              Simulate Retry Storm (Live)
+              Simulate Retry Storm
             </button>
           </div>
 
@@ -395,33 +388,23 @@ export function LandingPage({
                 </g>
               </svg>
 
-              {/* Floating SRE AI Reviewer Callout */}
+              {/* Floating SRE AI Detection Chip */}
               <div className="preview-ai-card">
-                <div className="ai-card-badge">
-                  <span>[Meta AI Raised Hand]</span>
-                  <span className="badge-critical">Critical Anti-Pattern</span>
+                <div className="ai-card-header">
+                  <span className="ai-indicator-dot" />
+                  <span className="ai-card-title">Meta AI SRE &bull; Retry Storm Risk</span>
                 </div>
-                <div className="ai-card-title">Cascading Retry Storm Vulnerability</div>
                 <div className="ai-card-desc">
-                  Immediate 3x retries on link [gateway -&gt; auth-service] without full jitter or
-                  circuit breaker will exhaust upstream worker queues under latency blips.
+                  Link gateway &rarr; auth lacks backoff jitter. Cascading queue exhaustion
+                  detected.
                 </div>
-                <div className="ai-card-actions">
-                  <button
-                    type="button"
-                    className="btn-ai-action"
-                    onClick={() => onLaunchStudio('retry-storm')}
-                  >
-                    Run Sandbox Proof
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-ai-patch"
-                    onClick={() => onLaunchStudio('retry-storm')}
-                  >
-                    Apply SRE Patch
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className="btn-ai-action"
+                  onClick={() => onLaunchStudio('retry-storm')}
+                >
+                  Test in Sandbox &rarr;
+                </button>
               </div>
 
               {/* Live Telemetry HUD */}
@@ -435,7 +418,7 @@ export function LandingPage({
                   <span className="hud-value green">0.0%</span>
                 </span>
                 <span className="hud-metric">
-                  <span className="hud-label">LoadGen</span>
+                  <span className="hud-label">Throughput</span>
                   <span className="hud-value">420 RPS</span>
                 </span>
               </div>
@@ -444,14 +427,13 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* Core Engineering Pillars */}
+      {/* Core Capabilities */}
       <section id="pillars" className="landing-section">
         <div className="section-header">
-          <span className="section-eyebrow">Production-Grade Architecture</span>
-          <h2 className="section-title">Built for Engineering Rigor, Not Synthetic Mocks</h2>
+          <h2 className="section-title">Built for Systems Engineers</h2>
           <p className="section-desc">
-            Traditional design tools draw dumb boxes. Resilio compiles your diagram into raw TCP
-            sockets, runs physical failure injection, and verifies mathematical invariants.
+            Compile architecture designs into real TCP sockets, inject physical chaos, and verify
+            mathematical bounds.
           </p>
         </div>
 
@@ -471,13 +453,11 @@ export function LandingPage({
                 <line x1="9" y1="21" x2="9" y2="9" />
               </svg>
             </div>
-            <h3 className="pillar-title">Spatial Architecture Canvas</h3>
+            <h3 className="pillar-title">Spatial System Canvas</h3>
             <p className="pillar-desc">
-              Compose services, bounded queues, and database sinks on an Excalidraw-grade canvas
-              with drag-to-connect Bézier wires, keyboard hotkeys, and automated topological
-              validation.
+              Compose services, bounded queues, and database sinks with drag-to-connect orthogonal
+              wires, hotkey duplication, and live DAG validation.
             </p>
-            <div className="pillar-tag">DAG Layout &bull; Monotonic IDs &bull; Sub-ms Pan/Zoom</div>
           </div>
 
           <div className="pillar-card">
@@ -493,14 +473,11 @@ export function LandingPage({
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
               </svg>
             </div>
-            <h3 className="pillar-title">Physical Toxiproxy Chaos</h3>
+            <h3 className="pillar-title">Physical Network Chaos</h3>
             <p className="pillar-desc">
-              Zero simulated delays. Latency spikes, TCP connection resets, jitter, and bandwidth
-              throttling execute over raw OS sockets via Shopify&apos;s Toxiproxy daemon.
+              Zero synthetic mocks. Real TCP latency spikes, packet drops, and socket resets
+              executed directly via Toxiproxy daemons.
             </p>
-            <div className="pillar-tag">
-              Raw TCP Proxies &bull; Rate Limiters &bull; Invariant Bounds
-            </div>
           </div>
 
           <div className="pillar-card">
@@ -516,26 +493,21 @@ export function LandingPage({
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
               </svg>
             </div>
-            <h3 className="pillar-title">Autonomous Meta AI SRE Agent</h3>
+            <h3 className="pillar-title">Autonomous Meta AI SRE</h3>
             <p className="pillar-desc">
-              Meta Muse Wonder and Muse Spark analyze failure cascades, raise a hand in your review
-              meeting, and synthesize circuit-breaker and backoff patches with proof in sandbox.
+              Meta Muse Wonder agents monitor review discussions in real time, spot cascading retry
+              loops, and synthesize mathematically proven circuit-breaker patches.
             </p>
-            <div className="pillar-tag">
-              Muse Wonder &bull; ReAct Agent Loop &bull; Pareto Optimality
-            </div>
           </div>
         </div>
       </section>
 
-      {/* Production Outage Scenarios */}
+      {/* Real Outage Scenarios */}
       <section id="scenarios" className="landing-section">
         <div className="section-header">
-          <span className="section-eyebrow">Real Outage Patterns</span>
-          <h2 className="section-title">Tested Against Distributed Antipatterns</h2>
+          <h2 className="section-title">Battle-Tested Failure Modes</h2>
           <p className="section-desc">
-            Pre-configured failure scenarios representing the top 3 causes of multi-region cascading
-            outages in hyperscale services.
+            Simulate cascading outages inspired by real hyperscale production incidents.
           </p>
         </div>
 
@@ -556,7 +528,7 @@ export function LandingPage({
                   className="btn btn-secondary btn-sm"
                   onClick={() => onLaunchStudio(sc.id)}
                 >
-                  Load Architecture &rarr;
+                  Load Scenario &rarr;
                 </button>
               </div>
             </div>
@@ -564,21 +536,13 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* Modern High-Tech Footer */}
+      {/* Clean Engineering Footer */}
       <footer className="landing-footer">
         <div className="landing-footer-inner">
-          <div className="footer-brand">
-            <span className="footer-title">Resilio</span>
-            <span className="footer-tagline">
-              Autonomous Systems Architecture &amp; Physical Fault Validation
-            </span>
-          </div>
-
-          <div className="footer-meta">
-            <span className="footer-copy">
-              &copy; 2026 Resilio Systems Inc. Enterprise SRE &amp; Resilience Platform.
-            </span>
-          </div>
+          <span className="footer-title">Resilio</span>
+          <span className="footer-copy">
+            &copy; 2026 Resilio Systems. Distributed resilience verification sandbox.
+          </span>
         </div>
       </footer>
     </div>
