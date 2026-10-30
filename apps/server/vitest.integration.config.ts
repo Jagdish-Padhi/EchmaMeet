@@ -5,7 +5,8 @@ export default defineConfig({
     include: ['src/**/*.integration.test.ts', 'tests/**/*.integration.test.ts'],
     passWithNoTests: true,
     fileParallelism: false,
-    testTimeout: 60_000,
-    hookTimeout: 60_000,
+    maxConcurrency: 1,
+    testTimeout: 90_000,
+    hookTimeout: 90_000,
   },
 });

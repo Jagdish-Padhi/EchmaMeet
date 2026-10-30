@@ -14,6 +14,8 @@ import {
   VisionService,
 } from './modules/vision';
 import { registerVoiceRoutes, VoiceService } from './modules/voice';
+import { registerReportingRoutes, ReportingService } from './modules/reporting';
+import type { RunId } from '@chaosboard/contracts';
 import type { SqlDatabase } from './platform/db';
 import { registerHealthRoute } from './platform/health';
 import { registerProblemHandlers } from './platform/http-kit';
@@ -97,6 +99,11 @@ export function buildApp({
 
   const voiceService = new VoiceService({});
   registerVoiceRoutes(app, voiceService);
+
+  const reportingService = new ReportingService({
+    getRunRecord: (runId) => Promise.resolve(runsService.getRun(runId as RunId) ?? null),
+  });
+  registerReportingRoutes(app, reportingService);
 
   return app;
 }
