@@ -1672,42 +1672,219 @@ body {
   animation: pulseGlow 2s infinite;
 }
 
-.meeting-bar-container {
+/* Enterprise Google Meet / Figma Huddle Bar */
+.meeting-huddle-bar {
   display: flex;
   align-items: center;
   gap: 8px;
+  background: rgba(11, 17, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  padding: 3px 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
-.meeting-session-badge {
-  display: inline-flex;
+.huddle-room-badge {
+  display: flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 9px;
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: 700;
-  color: #34d399;
+  padding: 0 6px 0 4px;
 }
 
-.meeting-ai-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  border-radius: var(--radius-full);
+.huddle-room-name {
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  color: var(--color-accent);
+  color: var(--color-text-muted);
 }
 
-.meeting-ai-alert {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.4);
-  color: #fbbf24;
+.huddle-participants-stack {
+  display: flex;
+  align-items: center;
+  margin-left: 2px;
+}
+
+.huddle-avatar-pill {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #1e293b;
+  border: 1.5px solid #0b1120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -6px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.huddle-avatar-pill:first-child {
+  margin-left: 0;
+}
+
+.huddle-avatar-pill:hover {
+  transform: translateY(-2px) scale(1.08);
+  z-index: 10;
+}
+
+.huddle-avatar-initials {
+  font-size: 9px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.huddle-avatar-ai {
+  background: rgba(8, 102, 255, 0.25);
+  border-color: #0866ff;
+}
+
+.huddle-avatar-ai .huddle-avatar-initials {
+  color: #38bdf8;
+}
+
+.speaking-waveform {
+  box-shadow: 0 0 0 2px #10b981;
+  animation: audioWave 1.4s infinite ease-in-out;
+}
+
+@keyframes audioWave {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1.5px #10b981;
+  }
+  50% {
+    box-shadow: 0 0 0 3.5px rgba(16, 185, 129, 0.4);
+  }
+}
+
+.huddle-muted-dot {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 6px;
+  height: 6px;
+  background: #f43f5e;
+  border-radius: 50%;
+  border: 1px solid #0b1120;
+}
+
+.huddle-role-dropdown-container {
+  position: relative;
+}
+
+.huddle-role-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  padding: 3px 8px;
+  color: var(--color-text-dim);
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.huddle-role-btn:hover {
+  color: var(--color-text);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.huddle-persona-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  min-width: 170px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.huddle-persona-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease;
+}
+
+.huddle-persona-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.persona-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.persona-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.persona-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.persona-title {
+  font-size: 9.5px;
+  color: var(--color-text-dim);
+}
+
+.huddle-control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-text-dim);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-mic-active:hover {
+  color: var(--color-text);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-mic-muted {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.4);
+  color: #f43f5e;
+}
+
+.btn-mic-muted:hover {
+  background: rgba(244, 63, 94, 0.25);
+  border-color: #f43f5e;
 }
 
 .yield-floor-btn {

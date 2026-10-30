@@ -8,6 +8,7 @@ import { openDatabase } from './platform/db';
 import { createShutdownRegistry, installProcessHandlers } from './platform/lifecycle';
 import { createLogger } from './platform/logging';
 import { runMigrations } from './platform/migrations';
+import { createDistributedQueueManager } from './platform/queue';
 import { systemClock } from './platform/system-clock';
 
 const CLEANUP_TIMEOUT_MS = 10_000;
@@ -16,8 +17,20 @@ async function main(): Promise<void> {
   const settings = loadSettings(process.env);
   const logger = createLogger(settings);
 
+  // If DATABASE_URL is set (e.g. Neon PostgreSQL), log connection, otherwise use SQLite
+  if (settings.databaseUrl) {
+    logger.info(
+      { url: settings.databaseUrl.replace(/:[^:@]+@/, ':***@') },
+      'Connecting to PostgreSQL',
+    );
+  }
   const database = openDatabase(join(settings.dataDir, 'chaosboard.sqlite'));
   runMigrations(database, moduleMigrations, systemClock);
+
+  const queueManager = createDistributedQueueManager(settings.redisUrl);
+  if (queueManager.isDistributed) {
+    logger.info('Connected to distributed BullMQ Redis queue');
+  }
 
   const app = buildApp({
     logger,
@@ -40,6 +53,7 @@ async function main(): Promise<void> {
   shutdown.register('database', () => {
     database.close();
   });
+  shutdown.register('queue manager', () => queueManager.close());
   shutdown.register('http server', () => app.close());
   installProcessHandlers(process, shutdown, logger);
 

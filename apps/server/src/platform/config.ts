@@ -6,6 +6,8 @@ const settingsSchema = z.strictObject({
   SERVER_PORT: z.coerce.number().int().min(1).max(65_535).default(8787),
   DATA_DIR: z.string().min(1).default('./data'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  DATABASE_URL: z.string().optional().default(''),
+  REDIS_URL: z.string().optional().default(''),
   TOXIPROXY_URL: z.url().default('http://127.0.0.1:8474'),
   PARTNER_BASE_URL: z.string().default('http://127.0.0.1:8000/v1'),
   PARTNER_API_KEY: z.string().default(''),
@@ -18,6 +20,8 @@ export interface Settings {
   readonly port: number;
   readonly dataDir: string;
   readonly logLevel: 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'silent';
+  readonly databaseUrl: string;
+  readonly redisUrl: string;
   readonly toxiproxyUrl: string;
   readonly partnerBaseUrl: string;
   readonly partnerApiKey: string;
@@ -63,6 +67,8 @@ export function loadSettings(env: Readonly<Record<string, string | undefined>>):
     port: parsed.data.SERVER_PORT,
     dataDir: parsed.data.DATA_DIR,
     logLevel: parsed.data.LOG_LEVEL,
+    databaseUrl: parsed.data.DATABASE_URL,
+    redisUrl: parsed.data.REDIS_URL,
     toxiproxyUrl: parsed.data.TOXIPROXY_URL,
     partnerBaseUrl: parsed.data.PARTNER_BASE_URL,
     partnerApiKey: parsed.data.PARTNER_API_KEY,
