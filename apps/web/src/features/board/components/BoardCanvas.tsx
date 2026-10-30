@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type MouseEvent, type WheelEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import type { EdgeId, NodeId, NodeKind } from '@chaosboard/contracts';
 import type { BoardNode, BoardState } from '../types';
 import { EdgeLink } from './EdgeLink';
@@ -43,6 +43,7 @@ export function BoardCanvas({
   hazardEdgeId,
   hazardNodeId,
 }: BoardCanvasProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   // Pan & Zoom State (Excalidraw / Breakscale grade)
@@ -314,24 +315,47 @@ export function BoardCanvas({
     }
   };
 
-  // Mouse Wheel Zoom: Zoom smoothly toward cursor position
-  const handleWheel = (e: WheelEvent<SVGSVGElement>) => {
-    e.preventDefault();
-    if (!svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+  // Native non-passive Wheel Listener for Excalidraw-Grade Butter-Smooth Pan & Zoom
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-    const zoomDelta = e.deltaY < 0 ? 1.08 : 0.92;
-    const nextZoom = Math.min(2.5, Math.max(0.35, zoom * zoomDelta));
+    const handleNativeWheel = (e: globalThis.WheelEvent) => {
+      // Strictly prevent browser viewport rubber-banding / elastic bounce
+      e.preventDefault();
 
-    // Pivot pan around mouse cursor
-    const nextPanX = mouseX - (mouseX - pan.x) * (nextZoom / zoom);
-    const nextPanY = mouseY - (mouseY - pan.y) * (nextZoom / zoom);
+      if (!svgRef.current) return;
 
-    setZoom(nextZoom);
-    setPan({ x: nextPanX, y: nextPanY });
-  };
+      // 1. Zoom (Pinch gesture or Ctrl/Cmd + Wheel)
+      if (e.ctrlKey || e.metaKey) {
+        const rect = svgRef.current.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // Smooth continuous exponential zoom factor
+        const zoomFactor = Math.exp(-e.deltaY * 0.0035);
+        setZoom((prevZoom) => {
+          const nextZoom = Math.min(3.0, Math.max(0.25, prevZoom * zoomFactor));
+          setPan((prevPan) => ({
+            x: mouseX - (mouseX - prevPan.x) * (nextZoom / prevZoom),
+            y: mouseY - (mouseY - prevPan.y) * (nextZoom / prevZoom),
+          }));
+          return nextZoom;
+        });
+      } else {
+        // 2. Pan (Two-finger swipe on trackpad or regular wheel scroll)
+        setPan((prev) => ({
+          x: prev.x - e.deltaX,
+          y: prev.y - e.deltaY,
+        }));
+      }
+    };
+
+    container.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, []);
 
   const handleResetZoom = () => {
     setZoom(1);
@@ -342,13 +366,13 @@ export function BoardCanvas({
   const sourceConnectingNode = connectingSource ? nodeMap.get(connectingSource) : null;
 
   return (
-    <div className="board-canvas-container">
+    <div className="board-canvas-container" ref={containerRef}>
       {/* Floating Excalidraw-Grade Zoom Controls */}
       <div className="canvas-zoom-dock" role="toolbar" aria-label="Canvas zoom controls">
         <button
           type="button"
           className="zoom-btn"
-          onClick={() => setZoom((z) => Math.max(0.35, z - 0.15))}
+          onClick={() => setZoom((z) => Math.max(0.25, z - 0.15))}
           title="Zoom out"
           aria-label="Zoom out"
         >
@@ -358,7 +382,7 @@ export function BoardCanvas({
         <button
           type="button"
           className="zoom-btn"
-          onClick={() => setZoom((z) => Math.min(2.5, z + 0.15))}
+          onClick={() => setZoom((z) => Math.min(3.0, z + 0.15))}
           title="Zoom in"
           aria-label="Zoom in"
         >
@@ -380,10 +404,15 @@ export function BoardCanvas({
         onMouseDown={handleCanvasMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onWheel={handleWheel}
       >
         <defs>
-          <pattern id="canvas-grid" width="28" height="28" patternUnits="userSpaceOnUse">
+          <pattern
+            id="canvas-grid"
+            width="28"
+            height="28"
+            patternUnits="userSpaceOnUse"
+            patternTransform={`translate(${String(pan.x)}, ${String(pan.y)}) scale(${String(zoom)})`}
+          >
             <circle cx="2" cy="2" r="1" fill="var(--canvas-dot)" />
           </pattern>
           {/* Sleek Excalidraw / Breakscale Sharp Arrowhead */}

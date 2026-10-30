@@ -4,6 +4,7 @@ export type { RemoteCursor } from './components/BoardCanvas';
 export { BoardToolbar } from './components/BoardToolbar';
 export { EdgeInspector } from './components/EdgeInspector';
 export { ImportDiagramModal } from './components/ImportDiagramModal';
+export { ImportDropdown } from './components/ImportDropdown';
 export { NodeInspector } from './components/NodeInspector';
 export { ValidationBanner } from './components/ValidationBanner';
 export { useBoardState } from './hooks/use-board-state';

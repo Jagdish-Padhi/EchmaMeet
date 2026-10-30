@@ -38,26 +38,20 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
   const getLabel = () => {
     switch (activeTab) {
       case 'chaos':
-        return 'Faults';
+        return 'Chaos Faults';
       case 'telemetry':
         return 'Telemetry';
       case 'repair':
         return 'AI Repair';
-      case 'inspect':
-        return 'Inspector';
-      case 'vision':
-        return 'Vision';
-      case 'voice':
-        return 'Voice';
       case 'benchmarks':
-        return 'Benchmarks';
-      case 'runs':
-        return 'History';
+      case 'inspect':
       case 'reports':
-        return 'Reports';
+      case 'runs':
+      case 'vision':
+      case 'voice':
       case 'none':
       default:
-        return 'Analysis';
+        return 'Telemetry';
     }
   };
 
@@ -176,111 +170,6 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
             <div className="menu-item-content">
               <div className="menu-item-title">Autonomous AI Repair</div>
               <div className="menu-item-subtitle">Automated resilience patch exploration</div>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            className={`meetings-menu-item ${activeTab === 'inspect' ? 'active-item' : ''}`}
-            role="menuitem"
-            onClick={() => handleToggle('inspect')}
-          >
-            <div className="menu-item-icon">
-              <svg
-                viewBox="0 0 24 24"
-                width="15"
-                height="15"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </div>
-            <div className="menu-item-content">
-              <div className="menu-item-title">Policy Inspector</div>
-              <div className="menu-item-subtitle">Inspect selected node &amp; link policies</div>
-            </div>
-          </button>
-
-          <div className="menu-divider" />
-
-          <button
-            type="button"
-            className={`meetings-menu-item ${activeTab === 'vision' ? 'active-item' : ''}`}
-            role="menuitem"
-            onClick={() => handleToggle('vision')}
-          >
-            <div className="menu-item-icon">
-              <svg
-                viewBox="0 0 24 24"
-                width="15"
-                height="15"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-            </div>
-            <div className="menu-item-content">
-              <div className="menu-item-title">Whiteboard Vision</div>
-              <div className="menu-item-subtitle">Convert camera diagram to topology</div>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            className={`meetings-menu-item ${activeTab === 'voice' ? 'active-item' : ''}`}
-            role="menuitem"
-            onClick={() => handleToggle('voice')}
-          >
-            <div className="menu-item-icon">
-              <svg
-                viewBox="0 0 24 24"
-                width="15"
-                height="15"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="23" />
-                <line x1="8" y1="23" x2="16" y2="23" />
-              </svg>
-            </div>
-            <div className="menu-item-content">
-              <div className="menu-item-title">Spoken Push-to-Talk</div>
-              <div className="menu-item-subtitle">Execute architecture voice commands</div>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            className={`meetings-menu-item ${activeTab === 'benchmarks' ? 'active-item' : ''}`}
-            role="menuitem"
-            onClick={() => handleToggle('benchmarks')}
-          >
-            <div className="menu-item-icon">
-              <svg
-                viewBox="0 0 24 24"
-                width="15"
-                height="15"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <line x1="18" y1="20" x2="18" y2="10" />
-                <line x1="12" y1="20" x2="12" y2="4" />
-                <line x1="6" y1="20" x2="6" y2="14" />
-              </svg>
-            </div>
-            <div className="menu-item-content">
-              <div className="menu-item-title">Benchmark Suite</div>
-              <div className="menu-item-subtitle">Validate against standard scenarios</div>
             </div>
           </button>
         </div>
