@@ -9,6 +9,7 @@ import * as sandboxModule from '../sandbox';
 import * as measurementModule from '../measurement';
 
 export { ExperimentLock, EventBroadcaster, ExperimentOrchestrator, registerExperimentRoutes };
+export type { EventBroadcasterPort, ExperimentOrchestratorPort } from './application/ports';
 
 export interface CreateExperimentOrchestratorDependencies {
   runs: RunsService;

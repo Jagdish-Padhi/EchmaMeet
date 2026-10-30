@@ -22,6 +22,7 @@ export interface ExperimentOrchestratorPort {
   start(request: StartExperimentRequest): Promise<RunId>;
   cancel(runId: RunId): Promise<void>;
   subscribe(runId: RunId, listener: (event: RunEvent) => void): () => void;
+  isBusy(): boolean;
 }
 
 export interface EventBroadcasterPort {

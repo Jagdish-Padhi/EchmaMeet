@@ -17,7 +17,14 @@ async function main(): Promise<void> {
   const database = openDatabase(join(settings.dataDir, 'chaosboard.sqlite'));
   runMigrations(database, moduleMigrations, systemClock);
 
-  const app = buildApp({ logger, database, toxiproxyUrl: settings.toxiproxyUrl });
+  const app = buildApp({
+    logger,
+    database,
+    toxiproxyUrl: settings.toxiproxyUrl,
+    partnerBaseUrl: settings.partnerBaseUrl,
+    partnerApiKey: settings.partnerApiKey,
+    partnerModelId: settings.partnerModelId,
+  });
 
   const shutdown = createShutdownRegistry({ logger, cleanupTimeoutMs: CLEANUP_TIMEOUT_MS });
   shutdown.register('database', () => {

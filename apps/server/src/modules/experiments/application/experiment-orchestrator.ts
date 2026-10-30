@@ -125,6 +125,10 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
     return this.broadcaster.subscribe(runId, listener);
   }
 
+  isBusy(): boolean {
+    return this.lock.isLocked();
+  }
+
   private async executeExperiment(
     runId: RunId,
     request: StartExperimentRequest,

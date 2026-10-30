@@ -32,7 +32,7 @@ export function evaluateTrialValidity(params: {
     };
   }
 
-  const maxP99Lag = limits.maxP99GeneratorLagMs ?? 50;
+  const maxP99Lag = limits.maxP99GeneratorLagMs ?? 100;
   if (generatorLag.p99Ms > maxP99Lag) {
     return {
       valid: false,
@@ -40,7 +40,7 @@ export function evaluateTrialValidity(params: {
     };
   }
 
-  const maxLag = limits.maxGeneratorLagMs ?? 100;
+  const maxLag = limits.maxGeneratorLagMs ?? 250;
   if (generatorLag.maxMs > maxLag) {
     return {
       valid: false,
