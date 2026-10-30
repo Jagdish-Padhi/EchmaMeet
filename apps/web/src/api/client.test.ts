@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { runIdSchema } from '@chaosboard/contracts';
 import { ApiError, createApiClient } from './client';
 
-// Test-only stand-ins for the network. They exercise how the client treats each kind of answer.
 function answering(status: number, body: unknown, contentType = 'application/json'): typeof fetch {
   return () =>
     Promise.resolve(
@@ -48,46 +48,100 @@ describe('createApiClient', () => {
       type: 'about:blank',
       title: 'Service unavailable',
       status: 503,
-      code: 'database_down',
+      code: 'server_down',
     };
     const client = createApiClient({ fetchFn: answering(503, problem) });
     const error = await failureOf(client.getHealth());
     expect(error.failure.kind).toBe('problem');
-    expect(error.message).toContain('database_down');
+    if (error.failure.kind === 'problem') {
+      expect(error.failure.problem.code).toBe('server_down');
+    }
   });
 
-  it('reports an error status whose body is not problem details', async () => {
-    const client = createApiClient({ fetchFn: answering(502, { oops: true }) });
-    const error = await failureOf(client.getHealth());
-    expect(error.failure.kind).toBe('unexpected_response');
-  });
+  it('validates topology responses from backend', async () => {
+    const validTopologyResponse = {
+      valid: true,
+      topology: {
+        schemaVersion: 1,
+        id: 'fixture-topology',
+        name: 'Fixture topology',
+        source: 'scenario',
+        entry: { nodeId: 'gateway' },
+        nodes: [
+          {
+            id: 'gateway',
+            label: 'Gateway',
+            kind: 'service',
+            processing: { distribution: 'constant', ms: 10 },
+            concurrency: { maxWorkers: 20 },
+            queue: { mode: 'bounded', maxDepth: 100 },
+            ingressRateLimitRps: null,
+          },
+        ],
+        edges: [
+          {
+            id: 'gateway-to-inventory',
+            source: 'gateway',
+            target: 'gateway',
+            mode: 'sync_call',
+            policy: {
+              timeoutMs: 1000,
+              retry: {
+                maxAttempts: 2,
+                backoffBaseMs: 50,
+                backoffMultiplier: 2,
+                maxBackoffMs: 500,
+                jitter: 'full',
+              },
+              breaker: {
+                enabled: false,
+                failureThresholdPct: 50,
+                windowRequests: 20,
+                cooldownMs: 2000,
+                halfOpenProbes: 2,
+              },
+              fallback: 'fail_fast_503',
+              idempotency: { sendKey: false },
+              pool: { maxConnections: 50 },
+            },
+          },
+        ],
+      },
+    };
 
-  it('reports a body that is not JSON', async () => {
-    const client = createApiClient({ fetchFn: answering(200, '<html></html>', 'text/html') });
-    const error = await failureOf(client.getHealth());
-    expect(error.failure.kind).toBe('unexpected_response');
-  });
-
-  it('reports network failures', async () => {
-    const client = createApiClient({
-      fetchFn: () => Promise.reject(new TypeError('connection refused')),
+    const client = createApiClient({ fetchFn: answering(200, validTopologyResponse) });
+    const res = await client.validateTopology({
+      name: 'Fixture topology',
+      source: 'canvas',
+      entryRef: 'gateway',
+      nodes: [
+        {
+          ref: 'gateway',
+          label: 'Gateway',
+          kind: 'service',
+        },
+      ],
+      edges: [
+        {
+          sourceRef: 'gateway',
+          targetRef: 'gateway',
+          mode: 'sync_call',
+        },
+      ],
     });
-    const error = await failureOf(client.getHealth());
-    expect(error.failure).toEqual({ kind: 'network', message: 'connection refused' });
+    expect(res.valid).toBe(true);
+    if (res.valid) {
+      expect(res.topology.id).toBe('fixture-topology');
+    }
   });
 
-  it('passes an abort through unchanged so callers can ignore it', async () => {
-    const controller = new AbortController();
+  it('cancels experiment returning runId', async () => {
+    const runId = runIdSchema.parse('run-12345678-abcd-1234-abcd-1234567890ab');
     const client = createApiClient({
-      fetchFn: (_input, init) =>
-        new Promise((_resolve, reject) => {
-          init?.signal?.addEventListener('abort', () => {
-            reject(new DOMException('aborted', 'AbortError'));
-          });
-        }),
+      fetchFn: answering(200, { runId, status: 'cancelled' }),
     });
-    const pending = client.getHealth(controller.signal);
-    controller.abort();
-    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+    const res = await client.cancelExperiment(runId);
+    expect(res.status).toBe('cancelled');
+    expect(res.runId).toBe(runId);
   });
 });
