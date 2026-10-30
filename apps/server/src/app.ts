@@ -1,5 +1,5 @@
 import Fastify, { type FastifyBaseLogger, type FastifyInstance } from 'fastify';
-import { registerTopologyRoutes } from './modules/topology';
+import { registerTopologyRoutes, normalizeTopologyDraft } from './modules/topology';
 import { createRunsService, registerRunsRoutes } from './modules/runs';
 import { createChaosService } from './modules/chaos';
 import { createMeasurementService } from './modules/measurement';
@@ -7,6 +7,12 @@ import { createExperimentOrchestrator, registerExperimentRoutes } from './module
 import { OpenAiCompatibleAdapter, type StructuredModelPort } from './modules/meta-ai';
 import { createRepairOrchestrator, registerRepairRoutes } from './modules/repair';
 import { createBenchmarkModule } from './modules/benchmarks';
+import {
+  decodePngRgba,
+  inspectImageHeader,
+  registerVisionRoutes,
+  VisionService,
+} from './modules/vision';
 import type { SqlDatabase } from './platform/db';
 import { registerHealthRoute } from './platform/health';
 import { registerProblemHandlers } from './platform/http-kit';
@@ -78,6 +84,15 @@ export function buildApp({
     repairOrchestrator,
   });
   benchmarks.registerRoutes(app);
+
+  const visionService = new VisionService({
+    imageDecoder: {
+      inspectHeader: inspectImageHeader,
+      decodePixels: decodePngRgba,
+    },
+    normalizeTopologyDraft,
+  });
+  registerVisionRoutes(app, visionService);
 
   return app;
 }
