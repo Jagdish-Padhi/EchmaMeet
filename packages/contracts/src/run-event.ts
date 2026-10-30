@@ -11,6 +11,18 @@ export const runEventTypeSchema = z.enum([
   'experiment_finished',
   'experiment_failed',
   'experiment_cancelled',
+  // Repair session events (section 6.10)
+  'repair_started',
+  'repair_iteration_started',
+  'patch_proposed',
+  'patch_rejected',
+  'patch_applied',
+  'iteration_measured',
+  'patch_accepted',
+  'patch_rolled_back',
+  'repair_finished',
+  'repair_failed',
+  'repair_cancelled',
 ]);
 export type RunEventType = z.infer<typeof runEventTypeSchema>;
 
