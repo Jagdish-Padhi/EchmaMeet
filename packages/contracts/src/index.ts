@@ -233,3 +233,9 @@ export type {
   VoiceServerMessage,
   VoiceTimings,
 } from './voice-command';
+export {
+  blueprintCardSchema,
+  repairTimelineEntrySchema,
+  reportExportSchema,
+} from './report-export';
+export type { BlueprintCard, RepairTimelineEntry, ReportExport } from './report-export';
