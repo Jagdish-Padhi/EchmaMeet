@@ -1,0 +1,9 @@
+packages:
+  - packages/*
+  - apps/*
+  - scripts
+
+# esbuild's install script only verifies its prebuilt binary, which ships as an optional
+# dependency, so skipping the script is safe. Recorded in docs/DECISIONS.md.
+allowBuilds:
+  esbuild: false

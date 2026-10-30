@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+data/
+.env
+.env.local
+.smoke-output/
+*.log
+.DS_Store
