@@ -5,7 +5,7 @@ export interface UserProfile {
   readonly name: string;
   readonly role: string;
   readonly avatar: string;
-  readonly email?: string;
+  readonly email?: string | undefined;
 }
 
 export interface UserProfileMenuProps {

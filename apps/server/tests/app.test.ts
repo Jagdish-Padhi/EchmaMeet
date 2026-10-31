@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app';
 import { IN_MEMORY, openDatabase, type SqlDatabase } from '../src/platform/db';
 import { createLogger } from '../src/platform/logging';
+import { DEMO_AUTH_TOKEN } from '../src/platform/auth';
 
 const logger = createLogger({ logLevel: 'silent', nodeEnv: 'test' });
 
@@ -51,18 +52,38 @@ describe('application', () => {
     expect(body.checks.database).toBe('failed');
   });
 
-  it('answers unknown routes with problem details', async () => {
-    const response = await start().inject({ method: 'GET', url: '/api/nothing-here' });
+  it('rejects unauthenticated requests to protected API routes with 401', async () => {
+    const response = await start().inject({
+      method: 'POST',
+      url: '/api/topologies/validate',
+      payload: {},
+    });
+    expect(response.statusCode).toBe(401);
+    expect(response.json()).toEqual(
+      expect.objectContaining({
+        statusCode: 401,
+        error: 'Unauthorized',
+      }),
+    );
+  });
+
+  it('answers unknown routes with problem details when authenticated', async () => {
+    const response = await start().inject({
+      method: 'GET',
+      url: '/api/nothing-here',
+      headers: { authorization: `Bearer ${DEMO_AUTH_TOKEN}` },
+    });
     expect(response.statusCode).toBe(404);
     expect(response.headers['content-type']).toContain('application/problem+json');
     const problem = problemDetailsSchema.parse(response.json());
     expect(problem.code).toBe('route_not_found');
   });
 
-  it('mounts the topology validation route', async () => {
+  it('mounts the topology validation route when authenticated', async () => {
     const response = await start().inject({
       method: 'POST',
       url: '/api/topologies/validate',
+      headers: { authorization: `Bearer ${DEMO_AUTH_TOKEN}` },
       payload: {},
     });
     expect(response.statusCode).toBe(200);
@@ -73,11 +94,46 @@ describe('application', () => {
     const response = await start().inject({
       method: 'POST',
       url: '/api/topologies/validate',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        authorization: `Bearer ${DEMO_AUTH_TOKEN}`,
+        'content-type': 'application/json',
+      },
       payload: '{ broken',
     });
     expect(response.statusCode).toBe(400);
     const problem = problemDetailsSchema.parse(response.json());
     expect(problem.status).toBe(400);
+  });
+
+  it('authenticates login and returns session token', async () => {
+    const response = await start().inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: {
+        email: 'alex.chen@meta.internal',
+        password: 'chaosboard123',
+      },
+    });
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body.token).toBeTruthy();
+    expect(body.user.email).toBe('alex.chen@meta.internal');
+  });
+
+  it('registers a new user and grants session token', async () => {
+    const response = await start().inject({
+      method: 'POST',
+      url: '/api/auth/register',
+      payload: {
+        email: 'jane.doe@meta.internal',
+        password: 'securepassword123',
+        name: 'Jane Doe',
+        role: 'Senior SRE',
+      },
+    });
+    expect(response.statusCode).toBe(201);
+    const body = response.json();
+    expect(body.token).toBeTruthy();
+    expect(body.user.name).toBe('Jane Doe');
   });
 });

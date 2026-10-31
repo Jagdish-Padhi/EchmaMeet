@@ -144,4 +144,42 @@ describe('createApiClient', () => {
     expect(res.status).toBe('cancelled');
     expect(res.runId).toBe(runId);
   });
+
+  it('performs login and parses user session response', async () => {
+    const mockAuthResponse = {
+      token: 'cb_test_session_token_123',
+      user: {
+        userId: 'eng-alex-chen',
+        name: 'Alex Chen',
+        role: 'Staff SRE',
+        avatar: 'AC',
+        email: 'alex.chen@meta.internal',
+      },
+    };
+    const client = createApiClient({
+      fetchFn: answering(200, mockAuthResponse),
+    });
+    const res = await client.login({
+      email: 'alex.chen@meta.internal',
+      password: 'chaosboard123',
+    });
+    expect(res.token).toBe('cb_test_session_token_123');
+    expect(res.user.name).toBe('Alex Chen');
+  });
+
+  it('fetches current authenticated user session', async () => {
+    const client = createApiClient({
+      fetchFn: answering(200, {
+        user: {
+          userId: 'eng-alex-chen',
+          name: 'Alex Chen',
+          role: 'Staff SRE',
+          avatar: 'AC',
+          email: 'alex.chen@meta.internal',
+        },
+      }),
+    });
+    const res = await client.getCurrentUser();
+    expect(res.user.email).toBe('alex.chen@meta.internal');
+  });
 });

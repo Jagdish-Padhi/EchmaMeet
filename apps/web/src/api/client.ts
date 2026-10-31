@@ -81,6 +81,40 @@ export interface CancelRepairResponse {
   readonly status: string;
 }
 
+export interface UserSessionProfile {
+  readonly userId: string;
+  readonly name: string;
+  readonly role: string;
+  readonly avatar: string;
+  readonly email?: string | undefined;
+}
+
+export interface AuthSessionResponse {
+  readonly token: string;
+  readonly user: UserSessionProfile;
+}
+
+const userSessionProfileSchema = z.object({
+  userId: z.string(),
+  name: z.string(),
+  role: z.string(),
+  avatar: z.string(),
+  email: z.string().optional(),
+});
+
+const authSessionResponseSchema = z.object({
+  token: z.string(),
+  user: userSessionProfileSchema,
+});
+
+const currentUserResponseSchema = z.object({
+  user: userSessionProfileSchema,
+});
+
+const logoutResponseSchema = z.object({
+  success: z.boolean(),
+});
+
 const cancelRepairResponseSchema = z.object({
   repairId: z.string() as unknown as z.ZodType<RunId>,
   status: z.string(),
@@ -88,6 +122,33 @@ const cancelRepairResponseSchema = z.object({
 
 export interface ApiClient {
   getHealth(signal?: AbortSignal): Promise<HealthResponse>;
+  login(
+    payload: { email: string; password: string },
+    signal?: AbortSignal,
+  ): Promise<AuthSessionResponse>;
+  register(
+    payload: {
+      email: string;
+      password: string;
+      name?: string | undefined;
+      role?: string | undefined;
+    },
+    signal?: AbortSignal,
+  ): Promise<AuthSessionResponse>;
+  sso(
+    payload: {
+      provider: 'google' | 'github' | 'meta';
+      profile: {
+        email: string;
+        name: string;
+        role?: string | undefined;
+        avatar?: string | undefined;
+      };
+    },
+    signal?: AbortSignal,
+  ): Promise<AuthSessionResponse>;
+  getCurrentUser(signal?: AbortSignal): Promise<{ user: UserSessionProfile }>;
+  logout(signal?: AbortSignal): Promise<{ success: boolean }>;
   validateTopology(
     topology: Topology | TopologyDraft,
     signal?: AbortSignal,
@@ -145,8 +206,10 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   async function request<T>(path: string, schema: ZodType<T>, init: RequestInit = {}): Promise<T> {
     let response: Response;
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('chaosboard_token') : null;
       const headers: Record<string, string> = {
         ...(init.body !== undefined ? { 'content-type': 'application/json' } : {}),
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
         ...((init.headers as Record<string, string> | undefined) ?? {}),
       };
 
@@ -164,6 +227,12 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
         kind: 'network',
         message: error instanceof Error ? error.message : 'unknown network error',
       });
+    }
+
+    if (response.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('chaosboard_token');
+      localStorage.removeItem('chaosboard_auth');
+      window.dispatchEvent(new Event('chaosboard:unauthorized'));
     }
 
     let body: unknown;
@@ -203,7 +272,13 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   async function requestText(path: string, init: RequestInit = {}): Promise<string> {
     let response: Response;
     try {
-      response = await fetchFn(`${baseUrl}${path}`, init);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('chaosboard_token') : null;
+      const headers: Record<string, string> = {
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+        ...((init.headers as Record<string, string> | undefined) ?? {}),
+      };
+
+      response = await fetchFn(`${baseUrl}${path}`, { ...init, headers });
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
         throw error;
@@ -238,6 +313,21 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
 
   return {
     getHealth: (signal) => request('/api/health', healthResponseSchema, withSignal('GET', signal)),
+
+    login: (payload, signal) =>
+      request('/api/auth/login', authSessionResponseSchema, withSignal('POST', signal, JSON.stringify(payload))),
+
+    register: (payload, signal) =>
+      request('/api/auth/register', authSessionResponseSchema, withSignal('POST', signal, JSON.stringify(payload))),
+
+    sso: (payload, signal) =>
+      request('/api/auth/sso', authSessionResponseSchema, withSignal('POST', signal, JSON.stringify(payload))),
+
+    getCurrentUser: (signal) =>
+      request('/api/auth/me', currentUserResponseSchema, withSignal('GET', signal)),
+
+    logout: (signal) =>
+      request('/api/auth/logout', logoutResponseSchema, withSignal('POST', signal)),
 
     validateTopology: (topologyOrDraft, signal) =>
       request(

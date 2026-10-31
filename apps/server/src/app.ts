@@ -18,6 +18,7 @@ import { registerReportingRoutes, ReportingService } from './modules/reporting';
 import type { RunId } from '@chaosboard/contracts';
 import type { SqlDatabase } from './platform/db';
 import { registerHealthRoute } from './platform/health';
+import { installAuthGuard, registerAuthRoutes } from './platform/auth';
 import { registerProblemHandlers } from './platform/http-kit';
 import type { Logger } from './platform/logging';
 
@@ -49,6 +50,8 @@ export function buildApp({
   registerProblemHandlers(app);
 
   registerHealthRoute(app, database);
+  registerAuthRoutes(app, database);
+  installAuthGuard(app, database);
   registerTopologyRoutes(app);
 
   const runsService = createRunsService(database);

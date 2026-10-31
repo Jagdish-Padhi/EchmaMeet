@@ -1,5 +1,6 @@
 import { useState, type SyntheticEvent } from 'react';
 import type { UserProfile } from '../board';
+import type { ApiClient } from '../../api/client';
 
 export interface AuthPageProps {
   readonly onAuthenticate: (user: UserProfile) => void;
@@ -8,6 +9,7 @@ export interface AuthPageProps {
   readonly onToggleTheme: () => void;
   readonly initialMode?: 'login' | 'signup';
   readonly pendingScenarioName?: string | null;
+  readonly api?: ApiClient;
 }
 
 const DEFAULT_STAFF_USER: UserProfile = {
@@ -33,6 +35,7 @@ export function AuthPage({
   onToggleTheme,
   initialMode = 'login',
   pendingScenarioName,
+  api,
 }: AuthPageProps) {
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [fullName, setFullName] = useState('Alex Chen');
@@ -43,7 +46,7 @@ export function AuthPage({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     if (!email.trim()) {
@@ -52,52 +55,113 @@ export function AuthPage({
     }
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      const initials =
-        fullName
-          .split(' ')
-          .map((p) => p[0])
-          .join('')
-          .toUpperCase()
-          .slice(0, 2) || 'SRE';
+    try {
+      if (api) {
+        if (isLogin) {
+          const res = await api.login({ email: email.trim(), password });
+          localStorage.setItem('chaosboard_token', res.token);
+          onAuthenticate(res.user);
+        } else {
+          const res = await api.register({
+            email: email.trim(),
+            password,
+            name: fullName.trim() || undefined,
+            role: role.trim() || undefined,
+          });
+          localStorage.setItem('chaosboard_token', res.token);
+          onAuthenticate(res.user);
+        }
+      } else {
+        const initials =
+          fullName
+            .split(' ')
+            .map((p) => p[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2) || 'SRE';
 
-      const user: UserProfile = {
-        userId: email.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase(),
-        name: isLogin
-          ? email.includes('alex')
-            ? 'Alex Chen'
-            : fullName || 'SRE Engineer'
-          : fullName,
-        role: isLogin ? 'Staff SRE' : role || 'Site Reliability Engineer',
-        avatar: initials,
-        email: email.trim(),
-      };
-      onAuthenticate(user);
-    }, 400);
+        const user: UserProfile = {
+          userId: email.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase(),
+          name: isLogin
+            ? email.includes('alex')
+              ? 'Alex Chen'
+              : fullName || 'SRE Engineer'
+            : fullName,
+          role: isLogin ? 'Staff SRE' : role || 'Site Reliability Engineer',
+          avatar: initials,
+          email: email.trim(),
+        };
+        onAuthenticate(user);
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Authentication failed. Please verify credentials.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleQuickLogin = (user: UserProfile) => {
+  const handleQuickLogin = async (user: UserProfile) => {
     setLoading(true);
-    setTimeout(() => {
+    setError(null);
+    try {
+      if (api) {
+        const res = await api.login({
+          email: user.email ?? `${user.userId}@meta.internal`,
+          password: 'chaosboard123',
+        });
+        localStorage.setItem('chaosboard_token', res.token);
+        onAuthenticate(res.user);
+      } else {
+        onAuthenticate(user);
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Quick login failed.');
+      }
+    } finally {
       setLoading(false);
-      onAuthenticate(user);
-    }, 250);
+    }
   };
 
-  const handleSsoLogin = (provider: 'google' | 'github') => {
+  const handleSsoLogin = async (provider: 'google' | 'github') => {
     setLoading(true);
-    setTimeout(() => {
+    setError(null);
+    try {
+      if (api) {
+        const profile = {
+          email: provider === 'github' ? 'eng@github.sso' : 'alex.chen@google.sso',
+          name: provider === 'github' ? 'Staff Engineer (GitHub)' : 'Alex Chen (Google SSO)',
+          role: 'Distributed Systems Architect',
+          avatar: provider === 'github' ? 'GH' : 'AC',
+        };
+        const res = await api.sso({ provider, profile });
+        localStorage.setItem('chaosboard_token', res.token);
+        onAuthenticate(res.user);
+      } else {
+        const user: UserProfile = {
+          userId: `sso-${provider}-eng`,
+          name: provider === 'github' ? 'Staff Engineer (GitHub)' : 'Alex Chen (Google SSO)',
+          role: 'Distributed Systems Architect',
+          avatar: provider === 'github' ? 'GH' : 'AC',
+          email: provider === 'github' ? 'eng@github.sso' : 'alex.chen@google.sso',
+        };
+        onAuthenticate(user);
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(`${provider} SSO failed. Please try again.`);
+      }
+    } finally {
       setLoading(false);
-      const user: UserProfile = {
-        userId: `sso-${provider}-eng`,
-        name: provider === 'github' ? 'Staff Engineer (GitHub)' : 'Alex Chen (Google SSO)',
-        role: 'Distributed Systems Architect',
-        avatar: provider === 'github' ? 'GH' : 'AC',
-        email: provider === 'github' ? 'eng@github.sso' : 'alex.chen@google.sso',
-      };
-      onAuthenticate(user);
-    }, 350);
+    }
   };
 
   return (

@@ -352,10 +352,39 @@ export function App() {
   };
 
   const handleSignOut = () => {
+    void api.logout().catch(() => {});
     setIsAuthenticated(false);
     localStorage.removeItem('chaosboard_auth');
+    localStorage.removeItem('chaosboard_token');
     setView('landing');
   };
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setIsAuthenticated(false);
+      setView('landing');
+    };
+    window.addEventListener('chaosboard:unauthorized', handleUnauthorized);
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('chaosboard_token') : null;
+    if (token) {
+      api
+        .getCurrentUser()
+        .then((res) => {
+          setCurrentReviewer(res.user);
+          setIsAuthenticated(true);
+        })
+        .catch(() => {
+          setIsAuthenticated(false);
+          localStorage.removeItem('chaosboard_auth');
+          localStorage.removeItem('chaosboard_token');
+        });
+    }
+
+    return () => {
+      window.removeEventListener('chaosboard:unauthorized', handleUnauthorized);
+    };
+  }, [api]);
 
   const handleExportRfc = () => {
     const rfcMarkdown = [
@@ -420,6 +449,7 @@ export function App() {
   if (view === 'auth') {
     return (
       <AuthPage
+        api={api}
         onAuthenticate={handleAuthenticated}
         onBackToHome={() => {
           setView('landing');
