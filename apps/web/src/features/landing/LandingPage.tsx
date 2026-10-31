@@ -7,7 +7,7 @@ export interface LandingPageProps {
   readonly onToggleTheme: () => void;
   readonly onOpenSettings: () => void;
   readonly isAuthenticated?: boolean;
-  readonly onOpenAuth?: () => void;
+  readonly onOpenAuth?: (mode?: 'login' | 'signup') => void;
 }
 
 export function LandingPage({
@@ -118,21 +118,28 @@ export function LandingPage({
               </svg>
             </button>
 
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => {
-                if (isAuthenticated) {
-                  onLaunchStudio();
-                } else if (onOpenAuth) {
-                  onOpenAuth();
-                } else {
-                  onLaunchStudio();
-                }
-              }}
-            >
-              {isAuthenticated ? 'Enter Studio \u2192' : 'Sign In / Launch \u2192'}
-            </button>
+            {isAuthenticated ? (
+              <button type="button" className="btn btn-primary" onClick={() => onLaunchStudio()}>
+                Enter Studio &rarr;
+              </button>
+            ) : (
+              <div className="landing-auth-btn-group">
+                <button
+                  type="button"
+                  className="landing-login-btn"
+                  onClick={() => (onOpenAuth ? onOpenAuth('login') : onLaunchStudio())}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => (onOpenAuth ? onOpenAuth('signup') : onLaunchStudio())}
+                >
+                  Sign Up &rarr;
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>

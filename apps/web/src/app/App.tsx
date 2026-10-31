@@ -23,7 +23,7 @@ import {
   useBoardState,
   type UserProfile,
 } from '../features/board';
-import { AuthModal } from '../features/auth';
+import { AuthPage } from '../features/auth';
 import {
   FaultConfigForm,
   InvariantConfigForm,
@@ -98,7 +98,14 @@ export function App() {
   const api = useMemo(() => createApiClient(), []);
 
   // View & Theme State
-  const [view, setView] = useState<'landing' | 'studio'>('studio');
+  const [view, setView] = useState<'landing' | 'studio' | 'auth'>(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.toLowerCase();
+      if (hash.startsWith('#/auth') || hash === '#auth') return 'auth';
+      if (hash.startsWith('#/studio') || hash === '#studio') return 'studio';
+    }
+    return 'landing';
+  });
   const [settings, setSettings] = useState<AppSettings>(loadSettingsFromStorage);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeDrawer, setActiveDrawer] = useState<StudioDrawerTab>('none');
@@ -172,7 +179,7 @@ export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('chaosboard_auth') === 'true';
   });
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [pendingScenarioId, setPendingScenarioId] = useState<string | null>(null);
   const { remoteReviewers, broadcastCursor } = useCollaborationPresence(
     currentReviewer,
@@ -298,7 +305,8 @@ export function App() {
   const handleLaunchStudioFromLanding = (scenarioId?: string) => {
     if (!isAuthenticated) {
       setPendingScenarioId(scenarioId ?? null);
-      setIsAuthModalOpen(true);
+      setAuthMode('login');
+      setView('auth');
       return;
     }
 
@@ -315,6 +323,11 @@ export function App() {
       }
     }
     setView('studio');
+  };
+
+  const handleOpenAuthFromLanding = (mode: 'login' | 'signup' = 'login') => {
+    setAuthMode(mode);
+    setView('auth');
   };
 
   const handleAuthenticated = (user: UserProfile) => {
@@ -391,7 +404,7 @@ export function App() {
           onToggleTheme={handleToggleTheme}
           onOpenSettings={() => setIsSettingsOpen(true)}
           isAuthenticated={isAuthenticated}
-          onOpenAuth={() => setIsAuthModalOpen(true)}
+          onOpenAuth={handleOpenAuthFromLanding}
         />
         <SettingsModal
           isOpen={isSettingsOpen}
@@ -399,20 +412,28 @@ export function App() {
           onSave={setSettings}
           currentSettings={settings}
         />
-        <AuthModal
-          isOpen={isAuthModalOpen}
-          onClose={() => {
-            setIsAuthModalOpen(false);
-            setPendingScenarioId(null);
-          }}
-          onAuthenticate={handleAuthenticated}
-          pendingScenarioName={
-            pendingScenarioId
-              ? (scenariosState.scenarios.find((s) => s.id === pendingScenarioId)?.name ?? null)
-              : null
-          }
-        />
       </>
+    );
+  }
+
+  // 2. Dedicated Auth Page View (HackDekh 2-Part Architecture)
+  if (view === 'auth') {
+    return (
+      <AuthPage
+        onAuthenticate={handleAuthenticated}
+        onBackToHome={() => {
+          setView('landing');
+          setPendingScenarioId(null);
+        }}
+        theme={settings.theme}
+        onToggleTheme={handleToggleTheme}
+        initialMode={authMode}
+        pendingScenarioName={
+          pendingScenarioId
+            ? (scenariosState.scenarios.find((s) => s.id === pendingScenarioId)?.name ?? null)
+            : null
+        }
+      />
     );
   }
 

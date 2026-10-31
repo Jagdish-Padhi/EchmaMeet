@@ -1,2 +1,2 @@
-export { AuthModal } from './AuthModal';
-export type { AuthModalProps } from './AuthModal';
+export { AuthPage, type AuthPageProps } from './AuthPage';
+export { AuthModal, type AuthModalProps } from './AuthModal';
