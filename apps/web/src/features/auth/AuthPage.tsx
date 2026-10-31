@@ -1,6 +1,6 @@
 import { useEffect, useState, type SyntheticEvent } from 'react';
 import type { UserProfile } from '../board';
-import type { ApiClient, AuthConfigResponse } from '../../api/client';
+import { ApiError, type ApiClient, type AuthConfigResponse } from '../../api/client';
 import { isFirebaseConfigured, signInWithGoogleFirebase } from './firebase';
 
 export interface AuthPageProps {
@@ -96,8 +96,12 @@ export function AuthPage({
     e.preventDefault();
     setError(null);
     setIsOfflineServer(false);
-    if (!email.trim()) {
+    if (!email.trim() || !email.includes('@')) {
       setError('Please provide a valid corporate email address.');
+      return;
+    }
+    if (!password || password.length < 4) {
+      setError('Password must be at least 4 characters.');
       return;
     }
     setLoading(true);
@@ -121,7 +125,9 @@ export function AuthPage({
         handleContinueOffline();
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
+      if (err instanceof ApiError && err.failure.kind === 'problem' && err.failure.problem.detail) {
+        setError(err.failure.problem.detail);
+      } else if (err instanceof Error) {
         const msg = err.message;
         setError(msg);
         if (

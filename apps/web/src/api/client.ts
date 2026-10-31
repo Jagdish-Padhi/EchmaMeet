@@ -297,6 +297,37 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
       if (problem.success) {
         throw new ApiError({ kind: 'problem', problem: problem.data });
       }
+
+      // Friendly fallback: if server returned standard error object with message/detail
+      const fallbackDetail =
+        typeof body === 'object' && body !== null
+          ? typeof (body as Record<string, unknown>)['detail'] === 'string'
+            ? (body as Record<string, string>)['detail']
+            : typeof (body as Record<string, unknown>)['message'] === 'string'
+              ? (body as Record<string, string>)['message']
+              : undefined
+          : undefined;
+
+      if (fallbackDetail) {
+        throw new ApiError({
+          kind: 'problem',
+          problem: {
+            type: 'about:blank',
+            title:
+              response.status === 400
+                ? 'Bad Request'
+                : response.status === 401
+                  ? 'Unauthorized'
+                  : response.status === 409
+                    ? 'Conflict'
+                    : 'Error',
+            status: response.status,
+            detail: fallbackDetail,
+            code: 'error',
+          },
+        });
+      }
+
       throw new ApiError({
         kind: 'unexpected_response',
         status: response.status,

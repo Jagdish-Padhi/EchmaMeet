@@ -213,16 +213,51 @@ export function seedDefaultUsersAndSessions(db: SqlDatabase): void {
   }
 }
 
+function sendAuthProblem(
+  reply: FastifyReply,
+  status: number,
+  code: string,
+  detail: string,
+): FastifyReply {
+  return reply
+    .status(status)
+    .header('content-type', 'application/problem+json')
+    .send({
+      type: 'about:blank',
+      title:
+        status === 400
+          ? 'Bad Request'
+          : status === 401
+            ? 'Unauthorized'
+            : status === 409
+              ? 'Conflict'
+              : 'Error',
+      status,
+      detail,
+      code,
+      statusCode: status,
+      error:
+        status === 400
+          ? 'Bad Request'
+          : status === 401
+            ? 'Unauthorized'
+            : status === 409
+              ? 'Conflict'
+              : 'Error',
+      message: detail,
+    });
+}
+
 const registerSchema = z.object({
-  email: z.email(),
-  password: z.string().min(6),
+  email: z.string().min(3),
+  password: z.string().min(4),
   name: z.string().optional(),
   role: z.string().optional(),
 });
 
 const loginSchema = z.object({
-  email: z.email(),
-  password: z.string(),
+  email: z.string().min(3),
+  password: z.string().min(1),
 });
 
 const googleAuthSchema = z.object({
@@ -287,22 +322,24 @@ export function registerAuthRoutes(
   app.post('/api/auth/register', async (request: FastifyRequest, reply: FastifyReply) => {
     const parse = registerSchema.safeParse(request.body);
     if (!parse.success) {
-      return reply.status(400).send({
-        statusCode: 400,
-        error: 'Bad Request',
-        message: 'Invalid registration fields. Password must be at least 6 characters.',
-      });
+      return sendAuthProblem(
+        reply,
+        400,
+        'invalid_fields',
+        'Invalid registration fields. Password must be at least 4 characters.',
+      );
     }
 
     const { email, password, name, role } = parse.data;
     const cleanEmail = email.toLowerCase().trim();
     const existing = db.get('SELECT id FROM users WHERE email = ?', [cleanEmail]);
     if (existing) {
-      return reply.status(409).send({
-        statusCode: 409,
-        error: 'Conflict',
-        message: 'An account with this email address already exists.',
-      });
+      return sendAuthProblem(
+        reply,
+        409,
+        'already_exists',
+        'An account with this email address already exists.',
+      );
     }
 
     const userId = `usr_${randomBytes(12).toString('hex')}`;
@@ -347,22 +384,24 @@ export function registerAuthRoutes(
   app.post('/api/auth/login', async (request: FastifyRequest, reply: FastifyReply) => {
     const parse = loginSchema.safeParse(request.body);
     if (!parse.success) {
-      return reply.status(400).send({
-        statusCode: 400,
-        error: 'Bad Request',
-        message: 'Please provide both email and password.',
-      });
+      return sendAuthProblem(
+        reply,
+        400,
+        'invalid_fields',
+        'Please provide both email and password.',
+      );
     }
 
     const { email, password } = parse.data;
     const cleanEmail = email.toLowerCase().trim();
     const userRow = db.get('SELECT * FROM users WHERE email = ?', [cleanEmail]);
     if (!userRow || typeof userRow['password_hash'] !== 'string') {
-      return reply.status(401).send({
-        statusCode: 401,
-        error: 'Unauthorized',
-        message: 'Invalid credentials. Please verify your email and password.',
-      });
+      return sendAuthProblem(
+        reply,
+        401,
+        'invalid_credentials',
+        'Invalid credentials. Please verify your email and password.',
+      );
     }
 
     const valid = verifyPassword(password, userRow['password_hash']);
@@ -371,11 +410,12 @@ export function registerAuthRoutes(
       (password === 'chaosboard123' || password === '••••••••••••');
 
     if (!valid && !isDemo) {
-      return reply.status(401).send({
-        statusCode: 401,
-        error: 'Unauthorized',
-        message: 'Invalid credentials. Please verify your email and password.',
-      });
+      return sendAuthProblem(
+        reply,
+        401,
+        'invalid_credentials',
+        'Invalid credentials. Please verify your email and password.',
+      );
     }
 
     const user: UserSessionProfile = {
