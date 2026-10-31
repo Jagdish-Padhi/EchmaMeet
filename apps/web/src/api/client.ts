@@ -315,13 +315,25 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
     getHealth: (signal) => request('/api/health', healthResponseSchema, withSignal('GET', signal)),
 
     login: (payload, signal) =>
-      request('/api/auth/login', authSessionResponseSchema, withSignal('POST', signal, JSON.stringify(payload))),
+      request(
+        '/api/auth/login',
+        authSessionResponseSchema,
+        withSignal('POST', signal, JSON.stringify(payload)),
+      ),
 
     register: (payload, signal) =>
-      request('/api/auth/register', authSessionResponseSchema, withSignal('POST', signal, JSON.stringify(payload))),
+      request(
+        '/api/auth/register',
+        authSessionResponseSchema,
+        withSignal('POST', signal, JSON.stringify(payload)),
+      ),
 
     sso: (payload, signal) =>
-      request('/api/auth/sso', authSessionResponseSchema, withSignal('POST', signal, JSON.stringify(payload))),
+      request(
+        '/api/auth/sso',
+        authSessionResponseSchema,
+        withSignal('POST', signal, JSON.stringify(payload)),
+      ),
 
     getCurrentUser: (signal) =>
       request('/api/auth/me', currentUserResponseSchema, withSignal('GET', signal)),

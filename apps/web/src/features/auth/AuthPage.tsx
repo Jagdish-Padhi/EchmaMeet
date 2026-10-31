@@ -384,7 +384,12 @@ export function AuthPage({
             )}
 
             {/* Interactive Form */}
-            <form onSubmit={handleSubmit} className="auth-fields-form">
+            <form
+              onSubmit={(e) => {
+                void handleSubmit(e);
+              }}
+              className="auth-fields-form"
+            >
               {!isLogin && (
                 <>
                   <div className="auth-field-group">
@@ -525,7 +530,9 @@ export function AuthPage({
             <div className="auth-social-row">
               <button
                 type="button"
-                onClick={() => handleSsoLogin('google')}
+                onClick={() => {
+                  void handleSsoLogin('google');
+                }}
                 disabled={loading}
                 className="auth-social-button"
               >
@@ -552,7 +559,9 @@ export function AuthPage({
 
               <button
                 type="button"
-                onClick={() => handleSsoLogin('github')}
+                onClick={() => {
+                  void handleSsoLogin('github');
+                }}
                 disabled={loading}
                 className="auth-social-button"
               >
@@ -573,7 +582,9 @@ export function AuthPage({
               <div className="auth-fast-pass-grid">
                 <button
                   type="button"
-                  onClick={() => handleQuickLogin(DEFAULT_STAFF_USER)}
+                  onClick={() => {
+                    void handleQuickLogin(DEFAULT_STAFF_USER);
+                  }}
                   disabled={loading}
                   className="auth-fast-pass-btn"
                 >
@@ -586,7 +597,9 @@ export function AuthPage({
 
                 <button
                   type="button"
-                  onClick={() => handleQuickLogin(DEMO_GUEST_USER)}
+                  onClick={() => {
+                    void handleQuickLogin(DEMO_GUEST_USER);
+                  }}
                   disabled={loading}
                   className="auth-fast-pass-btn"
                 >

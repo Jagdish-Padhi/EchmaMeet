@@ -115,7 +115,7 @@ describe('application', () => {
       },
     });
     expect(response.statusCode).toBe(200);
-    const body = response.json();
+    const body = response.json<{ token: string; user: { email: string; name: string } }>();
     expect(body.token).toBeTruthy();
     expect(body.user.email).toBe('alex.chen@meta.internal');
   });
@@ -132,7 +132,7 @@ describe('application', () => {
       },
     });
     expect(response.statusCode).toBe(201);
-    const body = response.json();
+    const body = response.json<{ token: string; user: { email: string; name: string } }>();
     expect(body.token).toBeTruthy();
     expect(body.user.name).toBe('Jane Doe');
   });

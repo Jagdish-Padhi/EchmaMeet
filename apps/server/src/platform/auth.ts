@@ -130,21 +130,21 @@ export function seedDefaultUsersAndSessions(db: SqlDatabase): void {
 }
 
 const registerSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z.string().min(6),
   name: z.string().optional(),
   role: z.string().optional(),
 });
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z.string(),
 });
 
 const ssoSchema = z.object({
   provider: z.enum(['google', 'github', 'meta']),
   profile: z.object({
-    email: z.string().email(),
+    email: z.email(),
     name: z.string(),
     role: z.string().optional(),
     avatar: z.string().optional(),
@@ -177,12 +177,13 @@ export function registerAuthRoutes(app: FastifyInstance, db: SqlDatabase): void 
 
     const userId = `usr_${randomBytes(12).toString('hex')}`;
     const displayName = name?.trim() || email.split('@')[0] || 'SRE Reviewer';
-    const initials = displayName
-      .split(' ')
-      .map((p) => p[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) || 'US';
+    const initials =
+      displayName
+        .split(' ')
+        .map((p) => p[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2) || 'US';
     const userRole = role?.trim() || 'Site Reliability Engineer';
     const now = new Date().toISOString();
     const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
@@ -190,7 +191,15 @@ export function registerAuthRoutes(app: FastifyInstance, db: SqlDatabase): void 
     db.run(
       `INSERT INTO users (id, email, password_hash, name, role, avatar, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [userId, email.toLowerCase().trim(), hashPassword(password), displayName, userRole, initials, now],
+      [
+        userId,
+        email.toLowerCase().trim(),
+        hashPassword(password),
+        displayName,
+        userRole,
+        initials,
+        now,
+      ],
     );
 
     const token = `cb_${randomBytes(24).toString('hex')}`;
@@ -235,7 +244,8 @@ export function registerAuthRoutes(app: FastifyInstance, db: SqlDatabase): void 
     const valid = verifyPassword(password, userRow['password_hash']);
     // Allow demo convenience fallback for pre-seeded users
     const isDemo =
-      email.includes('@meta.internal') && (password === 'chaosboard123' || password === '••••••••••••');
+      email.includes('@meta.internal') &&
+      (password === 'chaosboard123' || password === '••••••••••••');
 
     if (!valid && !isDemo) {
       return reply.status(401).send({
@@ -286,13 +296,15 @@ export function registerAuthRoutes(app: FastifyInstance, db: SqlDatabase): void 
 
     if (!userRow) {
       const userId = `sso_${randomBytes(12).toString('hex')}`;
-      const initials = profile.avatar ||
+      const initials =
+        profile.avatar ||
         profile.name
           .split(' ')
           .map((p) => p[0])
           .join('')
           .toUpperCase()
-          .slice(0, 2) || 'SSO';
+          .slice(0, 2) ||
+        'SSO';
 
       db.run(
         `INSERT INTO users (id, email, password_hash, name, role, avatar, created_at)
@@ -392,11 +404,7 @@ export function installAuthGuard(app: FastifyInstance, db: SqlDatabase): void {
     const url = request.url;
 
     // Public exemptions
-    if (
-      !url.startsWith('/api/') ||
-      url.startsWith('/api/health') ||
-      url.startsWith('/api/auth/')
-    ) {
+    if (!url.startsWith('/api/') || url.startsWith('/api/health') || url.startsWith('/api/auth/')) {
       return;
     }
 
