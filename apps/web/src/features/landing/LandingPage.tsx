@@ -24,7 +24,7 @@ const FAQ_ITEMS: readonly FaqItem[] = [
   {
     question: 'How does the AI SRE agent participate in the meeting?',
     answer:
-      'The Meta AI SRE agent acts like a principal reliability engineer sitting in your meeting room. It listens to the discussion context, continuously analyzes live telemetry and dependency graphs in the background, warns the team when someone proposes a risky retry or timeout policy, and drops mathematically verified circuit-breaker fixes directly onto the canvas.',
+      'The autonomous AI SRE agent acts like a principal reliability engineer sitting in your meeting room. It listens to the discussion context, continuously analyzes live telemetry and dependency graphs in the background, warns the team when someone proposes a risky retry or timeout policy, and drops mathematically verified circuit-breaker fixes directly onto the canvas.',
   },
   {
     question: 'Do we need Docker or heavy local infrastructure?',
@@ -375,18 +375,18 @@ const HeroBackdrop = memo(function HeroBackdrop() {
         </g>
 
         {/* === RIGHT FLANK NODES (x=1180..1400, clean of center & top navbar) === */}
-        {/* Block 7: Meta AI SRE Node (Top-Right) */}
+        {/* Block 7: Autonomous SRE Node (Top-Right) */}
         <g transform="translate(1180, 130)">
           <rect
             width="220"
             height="85"
             rx="10"
             fill="rgba(14, 18, 28, 0.75)"
-            stroke="rgba(8, 102, 255, 0.35)"
+            stroke="rgba(56, 189, 248, 0.25)"
             strokeWidth="1.2"
           />
           <text x="18" y="28" fill="#f8fafc" fontSize="12.5" fontWeight="700">
-            Meta AI SRE in Call
+            Autonomous SRE in Call
           </text>
           <text
             x="18"
@@ -764,7 +764,7 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* SECTION 2: The Meta AI SRE in the Meeting */}
+      {/* SECTION 2: The Autonomous AI SRE in the Meeting */}
       <section id="ai-copilot" className="landing-section">
         <div className="section-header">
           <span className="section-eyebrow">AUTONOMOUS MEETING PARTICIPANT</span>
@@ -951,7 +951,7 @@ export function LandingPage({
               call.
             </p>
             <div className="step-tags">
-              <span>Meta AI SRE Patches</span>
+              <span>Autonomous SRE Patches</span>
               <span>Terraform (.tf)</span>
               <span>Envoy YAML</span>
             </div>
@@ -1039,7 +1039,7 @@ export function LandingPage({
             </div>
             <p className="bento-desc">
               Give every development squad access to principal reliability engineering expertise
-              with Meta AI actively participating in design reviews.
+              with an autonomous AI SRE actively participating in design reviews.
             </p>
           </div>
 
@@ -1193,7 +1193,7 @@ export function LandingPage({
                   <span>&#10003;</span> Live review rooms with push-to-talk team voice
                 </li>
                 <li>
-                  <span>&#10003;</span> Meta AI SRE active meeting participant &amp; fix suggestions
+                  <span>&#10003;</span> Autonomous AI SRE active meeting participant &amp; fix suggestions
                 </li>
                 <li>
                   <span>&#10003;</span> Production Terraform &amp; Envoy IaC export

@@ -1,6 +1,7 @@
 import { useEffect, useState, type SyntheticEvent } from 'react';
 import type { UserProfile } from '../board';
 import type { ApiClient, AuthConfigResponse } from '../../api/client';
+import { isFirebaseConfigured, signInWithGoogleFirebase } from './firebase';
 
 export interface AuthPageProps {
   readonly onAuthenticate: (user: UserProfile) => void;
@@ -145,6 +146,22 @@ export function AuthPage({
     setIsOfflineServer(false);
     try {
       if (api) {
+        // If Google and Firebase is configured, sign in with real Firebase Google popup
+        if (provider === 'google' && isFirebaseConfigured) {
+          const firebaseUser = await signInWithGoogleFirebase();
+          const res = await api.googleAuth({
+            idToken: firebaseUser.idToken,
+            profile: {
+              email: firebaseUser.email,
+              name: firebaseUser.name,
+              avatar: firebaseUser.photoUrl,
+            },
+          });
+          localStorage.setItem('chaosboard_token', res.token);
+          onAuthenticate(res.user);
+          return;
+        }
+
         // If real GitHub OAuth client ID is configured and user clicks GitHub
         if (provider === 'github' && authConfig?.githubClientId) {
           const redirectUri = window.location.origin + window.location.pathname;

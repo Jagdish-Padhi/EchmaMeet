@@ -7,3 +7,4 @@ data/
 .smoke-output/
 *.log
 .DS_Store
+.neon
