@@ -1211,11 +1211,15 @@ body {
    On hover: each side's border spreads outwards from the center to ends.
    On leave: smoothly collapses back towards the center of each edge.
    ============================================================================ */
+/* ============================================================================
+   Sleek Enterprise Interactive Card Borders & Radius
+   Razor-thin 1.2px hairline border animation spreading outwards from center.
+   Subtle, balanced ambient luminance matching enterprise design standards.
+   ============================================================================ */
 :root {
-  --card-border-glow: #00f0ff;
-  --card-neon-glow: rgba(0, 240, 255, 0.85);
-  --card-neon-blur: rgba(0, 210, 255, 0.45);
-  --card-neon-spread: rgba(0, 240, 255, 0.16);
+  --card-border-glow: #38bdf8;
+  --card-glow-subtle: rgba(56, 189, 248, 0.45);
+  --card-ambient-shadow: rgba(56, 189, 248, 0.08);
 }
 
 .step-card,
@@ -1231,7 +1235,7 @@ body {
     transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
     background-color 0.25s ease,
     border-color 0.25s ease,
-    box-shadow 0.35s ease;
+    box-shadow 0.3s ease;
 }
 
 .step-card:hover,
@@ -1239,11 +1243,10 @@ body {
 .bento-card:hover,
 .pricing-card:hover,
 .faq-item:hover {
-  border-color: rgba(0, 240, 255, 0.25);
+  border-color: rgba(56, 189, 248, 0.25);
   box-shadow:
-    0 10px 32px rgba(0, 0, 0, 0.55),
-    0 0 24px var(--card-neon-spread, rgba(0, 240, 255, 0.16)),
-    inset 0 0 16px rgba(0, 240, 255, 0.03);
+    0 12px 32px rgba(0, 0, 0, 0.45),
+    0 0 16px var(--card-ambient-shadow, rgba(56, 189, 248, 0.08));
 }
 
 /* 4 Independent Animated Sides:
@@ -1252,7 +1255,7 @@ body {
    left: center -> top and bottom
    right: center -> top and bottom
    Automatic reverse animation on mouse leave via background-size collapsing to 0.
-   Curved corners (10px) left completely blank (calc(100% - 20px)).
+   Sleek 1.2px hairline with seamless corner blending.
 */
 .step-card::before,
 .comparison-card::before,
@@ -1261,15 +1264,15 @@ body {
 .faq-item::before {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: -1px;
   border-radius: inherit;
   pointer-events: none;
   z-index: 2;
   background-image:
-    linear-gradient(to right, var(--card-border-glow, #00f0ff), var(--card-border-glow, #00f0ff)),
-    linear-gradient(to right, var(--card-border-glow, #00f0ff), var(--card-border-glow, #00f0ff)),
-    linear-gradient(to bottom, var(--card-border-glow, #00f0ff), var(--card-border-glow, #00f0ff)),
-    linear-gradient(to bottom, var(--card-border-glow, #00f0ff), var(--card-border-glow, #00f0ff));
+    linear-gradient(to right, var(--card-border-glow, #38bdf8), var(--card-border-glow, #38bdf8)),
+    linear-gradient(to right, var(--card-border-glow, #38bdf8), var(--card-border-glow, #38bdf8)),
+    linear-gradient(to bottom, var(--card-border-glow, #38bdf8), var(--card-border-glow, #38bdf8)),
+    linear-gradient(to bottom, var(--card-border-glow, #38bdf8), var(--card-border-glow, #38bdf8));
   background-position:
     center top,
     center bottom,
@@ -1277,13 +1280,12 @@ body {
     right center;
   background-repeat: no-repeat;
   background-size:
-    0% 2px,
-    0% 2px,
-    2px 0%,
-    2px 0%;
-  filter: drop-shadow(0 0 4px var(--card-neon-glow, rgba(0, 240, 255, 0.85)))
-    drop-shadow(0 0 10px var(--card-neon-blur, rgba(0, 210, 255, 0.45)));
-  transition: background-size 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+    0% 1.2px,
+    0% 1.2px,
+    1.2px 0%,
+    1.2px 0%;
+  filter: drop-shadow(0 0 2px var(--card-glow-subtle, rgba(56, 189, 248, 0.45)));
+  transition: background-size 0.38s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .step-card:hover::before,
@@ -1292,39 +1294,35 @@ body {
 .pricing-card:hover::before,
 .faq-item:hover::before {
   background-size:
-    calc(100% - 20px) 2px,
-    calc(100% - 20px) 2px,
-    2px calc(100% - 20px),
-    2px calc(100% - 20px);
+    calc(100% - 6px) 1.2px,
+    calc(100% - 6px) 1.2px,
+    1.2px calc(100% - 6px),
+    1.2px calc(100% - 6px);
 }
 
 /* Card-specific accent glow colors */
 .comparison-card.legacy {
   --card-border-glow: #f87171;
-  --card-neon-glow: rgba(248, 113, 113, 0.85);
-  --card-neon-blur: rgba(239, 68, 68, 0.45);
-  --card-neon-spread: rgba(239, 68, 68, 0.16);
+  --card-glow-subtle: rgba(248, 113, 113, 0.45);
+  --card-ambient-shadow: rgba(239, 68, 68, 0.08);
 }
 
 .comparison-card.active-resilio {
-  --card-border-glow: #00f0ff;
-  --card-neon-glow: rgba(0, 240, 255, 0.85);
-  --card-neon-blur: rgba(0, 210, 255, 0.45);
-  --card-neon-spread: rgba(0, 240, 255, 0.18);
+  --card-border-glow: #38bdf8;
+  --card-glow-subtle: rgba(56, 189, 248, 0.5);
+  --card-ambient-shadow: rgba(56, 189, 248, 0.1);
 }
 
 .pricing-card.featured-pro {
-  --card-border-glow: #00d2ff;
-  --card-neon-glow: rgba(0, 210, 255, 0.85);
-  --card-neon-blur: rgba(0, 180, 255, 0.45);
-  --card-neon-spread: rgba(0, 210, 255, 0.22);
+  --card-border-glow: #38bdf8;
+  --card-glow-subtle: rgba(56, 189, 248, 0.55);
+  --card-ambient-shadow: rgba(56, 189, 248, 0.12);
 }
 
 .faq-item.open {
-  --card-border-glow: #00f0ff;
-  --card-neon-glow: rgba(0, 240, 255, 0.85);
-  --card-neon-blur: rgba(0, 210, 255, 0.45);
-  --card-neon-spread: rgba(0, 240, 255, 0.16);
+  --card-border-glow: #38bdf8;
+  --card-glow-subtle: rgba(56, 189, 248, 0.45);
+  --card-ambient-shadow: rgba(56, 189, 248, 0.08);
 }
 
 /* Wide, Clean & Consistent FAQ Accordion */
@@ -1664,9 +1662,8 @@ body {
 /* Light Mode: Landing Cards, Bentos, and Modals */
 [data-theme='light'] {
   --card-border-glow: #0284c7;
-  --card-neon-glow: rgba(2, 132, 199, 0.45);
-  --card-neon-blur: rgba(2, 132, 199, 0.2);
-  --card-neon-spread: rgba(2, 132, 199, 0.12);
+  --card-glow-subtle: rgba(2, 132, 199, 0.35);
+  --card-ambient-shadow: rgba(2, 132, 199, 0.08);
 }
 
 [data-theme='light'] .comparison-card {
@@ -1833,9 +1830,8 @@ body {
 /* Light Mode: Landing Cards, Bentos, and Modals */
 [data-theme='light'] {
   --card-border-glow: #0284c7;
-  --card-neon-glow: rgba(2, 132, 199, 0.45);
-  --card-neon-blur: rgba(2, 132, 199, 0.2);
-  --card-neon-spread: rgba(2, 132, 199, 0.12);
+  --card-glow-subtle: rgba(2, 132, 199, 0.35);
+  --card-ambient-shadow: rgba(2, 132, 199, 0.08);
 }
 
 [data-theme='light'] .comparison-card {
