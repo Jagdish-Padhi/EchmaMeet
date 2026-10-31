@@ -57,6 +57,7 @@ export default tseslint.config(
       'ml/**',
       'data/**',
       'docs/**',
+      'neon.ts',
       'pnpm-lock.yaml',
     ],
   },

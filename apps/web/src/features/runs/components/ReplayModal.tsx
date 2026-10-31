@@ -11,8 +11,33 @@ export interface ReplayModalProps {
 
 export function ReplayModal({ runId, events, onClose }: ReplayModalProps) {
   const [step, setStep] = useState(0);
+  const [showRawDetails, setShowRawDetails] = useState(false);
 
   const currentEvent = events[step];
+
+  const renderPayloadSummary = (payload: unknown) => {
+    if (!payload || typeof payload !== 'object') {
+      return <div className="replay-empty-val">{String(payload ?? 'None')}</div>;
+    }
+
+    const entries = Object.entries(payload as Record<string, unknown>);
+    if (entries.length === 0) {
+      return <div className="replay-empty-val">No payload parameters attached.</div>;
+    }
+
+    return (
+      <div className="replay-fields-grid">
+        {entries.map(([key, val]) => (
+          <div key={key} className="replay-field-row">
+            <span className="replay-field-key">{key}:</span>
+            <span className="replay-field-value cell-mono">
+              {typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val)}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <Modal
@@ -47,13 +72,30 @@ export function ReplayModal({ runId, events, onClose }: ReplayModalProps) {
         {currentEvent ? (
           <div className="replay-event-card">
             <div className="replay-event-header">
-              <span className="event-seq cell-mono">Seq #{String(currentEvent.sequence)}</span>
+              <span className="event-seq cell-mono">Step #{String(currentEvent.sequence)}</span>
               <span className="event-type">{currentEvent.type}</span>
               <span className="event-time cell-mono">+{String(currentEvent.timestampMs)}ms</span>
             </div>
-            <pre className="replay-payload cell-mono">
-              {JSON.stringify(currentEvent.payload, null, 2)}
-            </pre>
+
+            <div className="replay-structured-body">
+              <div className="replay-section-title">Execution Event Data</div>
+              {renderPayloadSummary(currentEvent.payload)}
+            </div>
+
+            <div className="replay-raw-toggle-wrap">
+              <button
+                type="button"
+                className="btn-replay-toggle"
+                onClick={() => setShowRawDetails((prev) => !prev)}
+              >
+                {showRawDetails ? 'Hide Technical JSON' : 'Show Technical JSON'}
+              </button>
+              {showRawDetails && (
+                <pre className="replay-payload cell-mono">
+                  {JSON.stringify(currentEvent.payload, null, 2)}
+                </pre>
+              )}
+            </div>
           </div>
         ) : (
           <p className="state-message">No events recorded for this run.</p>

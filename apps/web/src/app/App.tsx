@@ -19,11 +19,14 @@ import {
   NodeInspector,
   UserProfileMenu,
   ValidationBanner,
+  resolveNodeNumber,
   toTopology,
   useBoardState,
+  type DrawTool,
   type UserProfile,
 } from '../features/board';
 import { AuthPage } from '../features/auth';
+import { useToast } from '../features/toast';
 import {
   FaultConfigForm,
   InvariantConfigForm,
@@ -65,7 +68,6 @@ import {
 import { ReportViewer } from '../features/reports';
 import { LandingPage } from '../features/landing/LandingPage';
 import {
-  CanvasSreCallout,
   CreateMeetingModal,
   FloatingMeetingPiP,
   JoinMeetingModal,
@@ -78,9 +80,9 @@ import { ExportDropdown, IacExportModal } from '../features/repair';
 import {
   loadSettingsFromStorage,
   saveSettingsToStorage,
-  SettingsModal,
+  SettingsPage,
   type AppSettings,
-} from '../features/settings/SettingsModal';
+} from '../features/settings';
 
 type StudioDrawerTab =
   | 'none'
@@ -96,20 +98,46 @@ type StudioDrawerTab =
 
 export function App() {
   const api = useMemo(() => createApiClient(), []);
+  const toast = useToast();
+
+  // Enterprise Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('chaosboard_auth') === 'true';
+    }
+    return false;
+  });
 
   // View & Theme State
-  const [view, setView] = useState<'landing' | 'studio' | 'auth'>(() => {
+  const [view, setView] = useState<'landing' | 'studio' | 'auth' | 'settings'>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.toLowerCase();
       if (hash.startsWith('#/auth') || hash === '#auth') return 'auth';
+      if (hash.startsWith('#/settings') || hash === '#settings') return 'settings';
       if (hash.startsWith('#/studio') || hash === '#studio') return 'studio';
+
+      // If already authenticated, directly show the architecture canvas
+      if (localStorage.getItem('chaosboard_auth') === 'true') {
+        return 'studio';
+      }
     }
     return 'landing';
   });
+  const [previousView, setPreviousView] = useState<'landing' | 'studio'>('studio');
   const [settings, setSettings] = useState<AppSettings>(loadSettingsFromStorage);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeDrawer, setActiveDrawer] = useState<StudioDrawerTab>('none');
   const [selectedReportRunId, setSelectedReportRunId] = useState<RunId | null>(null);
+
+  // Canvas Drawing & Selection Tool Mode
+  const [activeTool, setActiveTool] = useState<DrawTool>('select');
+  const [penColor, setPenColor] = useState<string>('#38bdf8');
+  const [penWidth, setPenWidth] = useState<number>(3);
+  const [isMorePrimitivesOpen, setIsMorePrimitivesOpen] = useState(false);
+
+  const handleOpenSettings = () => {
+    setPreviousView(view === 'landing' ? 'landing' : 'studio');
+    setView('settings');
+  };
 
   // Sync theme with HTML data-theme attribute
   useEffect(() => {
@@ -132,15 +160,26 @@ export function App() {
     loadTopology,
     importDiagram,
     updateNodePosition,
+    moveSelectedNodes,
     selectNode,
+    selectNodes,
     selectEdge,
+    setEntryNode,
     updateNode,
     updateEdgePolicy,
     addNode,
     duplicateNode,
+    duplicateSelected,
     removeNode,
+    deleteSelected,
+    alignSelected,
     addEdge,
     removeEdge,
+    updateEdgeControlPoint,
+    addStroke,
+    undoStroke,
+    clearStrokes,
+    deleteStroke,
   } = useBoardState(null, api);
 
   // Live Review Collaboration Room state
@@ -175,10 +214,6 @@ export function App() {
     email: 'alex.chen@meta.internal',
   }));
 
-  // Enterprise Authentication Gate State
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('chaosboard_auth') === 'true';
-  });
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [pendingScenarioId, setPendingScenarioId] = useState<string | null>(null);
   const { remoteReviewers, broadcastCursor } = useCollaborationPresence(
@@ -334,6 +369,7 @@ export function App() {
     setIsAuthenticated(true);
     localStorage.setItem('chaosboard_auth', 'true');
     setCurrentReviewer(user);
+    toast.success(`Welcome, ${user.name}!`, 'Authenticated');
     if (pendingScenarioId) {
       const match = scenariosState.scenarios.find((s) => s.id === pendingScenarioId);
       if (match) {
@@ -356,13 +392,20 @@ export function App() {
     setIsAuthenticated(false);
     localStorage.removeItem('chaosboard_auth');
     localStorage.removeItem('chaosboard_token');
+    toast.info('You have been logged out.', 'Logged Out');
     setView('landing');
   };
 
   useEffect(() => {
     const handleUnauthorized = () => {
       setIsAuthenticated(false);
-      setView('landing');
+      setView((prev) => {
+        if (prev === 'studio') {
+          toast.warning('Your session has expired. Please sign in to continue.', 'Session Notice');
+          return 'landing';
+        }
+        return prev;
+      });
     };
     window.addEventListener('chaosboard:unauthorized', handleUnauthorized);
 
@@ -384,7 +427,7 @@ export function App() {
     return () => {
       window.removeEventListener('chaosboard:unauthorized', handleUnauthorized);
     };
-  }, [api]);
+  }, [api, toast]);
 
   const handleExportRfc = () => {
     const rfcMarkdown = [
@@ -422,8 +465,8 @@ export function App() {
     alert('Resilience RFC copied to clipboard (Markdown ADR format)!');
   };
 
-  // 1. Landing Page View
-  if (view === 'landing') {
+  // 1. Landing Page View (Only shown if user is NOT authenticated)
+  if (view === 'landing' && !isAuthenticated) {
     return (
       <LandingPage
         onLaunchStudio={handleLaunchStudioFromLanding}
@@ -458,77 +501,87 @@ export function App() {
     );
   }
 
+  // 3. Dedicated Full-Page Settings View (GitHub-Style 3-Zone Architecture)
+  if (view === 'settings') {
+    return (
+      <SettingsPage
+        currentSettings={settings}
+        onSave={(updated) => {
+          setSettings(updated);
+          saveSettingsToStorage(updated);
+          if (updated.theme !== settings.theme) {
+            document.documentElement.setAttribute('data-theme', updated.theme);
+          }
+        }}
+        onBack={() => setView(previousView)}
+        currentUser={currentReviewer}
+        onUpdateUser={(updatedUser) => setCurrentReviewer(updatedUser)}
+        theme={settings.theme}
+        onToggleTheme={handleToggleTheme}
+      />
+    );
+  }
+
   // 2. Studio Workspace View
   return (
     <div className="studio-root">
-      {/* Minimalist Topbar */}
+      {/* Minimalist Studio Topbar (Single-Row Industry Grade Layout) */}
       <header className="studio-topbar">
-        {/* Left: 2-Row Compact Distributed Architecture Palette Strip */}
-        <div className="navbar-palette-strip" role="toolbar" aria-label="Distributed primitives">
-          {/* Row 1: Compute & Gateways */}
-          <div className="navbar-palette-row">
-            <button
-              type="button"
-              className="navbar-palette-btn"
-              onClick={() =>
-                addNode('service', { label: 'API Gateway', processingMs: 5, maxWorkers: 20 })
-              }
-              title="Add ingress API Gateway (Envoy/Kong)"
+        {/* Left: Brand Logo (Minimalist Icon Only) */}
+        <div className="navbar-brand-section">
+          <button
+            type="button"
+            className="navbar-brand-btn"
+            onClick={() => setView('landing')}
+            title="ChaosBoard Distributed Architecture Studio"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
             >
-              <span className="palette-dot blue" />
-              <span>+ Gateway</span>
-            </button>
+              <circle cx="12" cy="12" r="3" fill="#0082fb" />
+              <path d="M12 2v7m0 6v7M2 12h7m6 0h7" stroke="#0082fb" />
+              <circle cx="12" cy="2" r="1.5" fill="#38bdf8" />
+              <circle cx="12" cy="22" r="1.5" fill="#38bdf8" />
+              <circle cx="2" cy="12" r="1.5" fill="#38bdf8" />
+              <circle cx="22" cy="12" r="1.5" fill="#38bdf8" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Center: Clean Architecture Primitives Shelf */}
+        <div className="navbar-center-shelf" role="toolbar" aria-label="Architecture Primitives">
+          {/* Architecture Components 1-Click Primitives */}
+          <div className="navbar-primitives-group">
             <button
               type="button"
-              className="navbar-palette-btn"
+              className="navbar-prim-btn"
               onClick={() =>
                 addNode('service', { label: 'Microservice', processingMs: 15, maxWorkers: 15 })
               }
-              title="Add standard Microservice (Key: 1)"
+              title="Add Stateless Microservice (Key: 1)"
             >
               <span className="palette-dot blue" />
               <span>+ Service</span>
             </button>
             <button
               type="button"
-              className="navbar-palette-btn"
+              className="navbar-prim-btn"
               onClick={() =>
-                addNode('service', { label: 'Auth Service', processingMs: 10, maxWorkers: 10 })
+                addNode('service', { label: 'API Gateway', processingMs: 5, maxWorkers: 20 })
               }
-              title="Add Auth / Identity token validator"
+              title="Add Ingress API Gateway"
             >
               <span className="palette-dot blue" />
-              <span>+ Auth</span>
+              <span>+ Gateway</span>
             </button>
             <button
               type="button"
-              className="navbar-palette-btn"
-              onClick={() =>
-                addNode('service', { label: 'Postgres DB', processingMs: 35, maxWorkers: 5 })
-              }
-              title="Add stateful database store"
-            >
-              <span className="palette-dot blue" />
-              <span>+ Database</span>
-            </button>
-            <button
-              type="button"
-              className="navbar-palette-btn"
-              onClick={() =>
-                addNode('service', { label: 'External API', processingMs: 85, maxWorkers: 5 })
-              }
-              title="Add third-party external API (Stripe, Twilio)"
-            >
-              <span className="palette-dot amber" />
-              <span>+ 3rd-Party</span>
-            </button>
-          </div>
-
-          {/* Row 2: Caching, Queues, Storage & Canvas Actions */}
-          <div className="navbar-palette-row">
-            <button
-              type="button"
-              className="navbar-palette-btn"
+              className="navbar-prim-btn"
               onClick={() =>
                 addNode('cache', {
                   label: 'Redis Cache',
@@ -537,49 +590,14 @@ export function App() {
                   ttlMs: 60000,
                 })
               }
-              title="Add in-memory Redis cache (Key: 2)"
+              title="Add Redis In-Memory Cache (Key: 2)"
             >
               <span className="palette-dot yellow" />
-              <span>+ Redis</span>
+              <span>+ Cache</span>
             </button>
             <button
               type="button"
-              className="navbar-palette-btn"
-              onClick={() =>
-                addNode('cache', {
-                  label: 'CDN Edge',
-                  processingMs: 1,
-                  maxWorkers: 50,
-                  ttlMs: 300000,
-                })
-              }
-              title="Add Cloudflare/Fastly CDN Edge Cache"
-            >
-              <span className="palette-dot yellow" />
-              <span>+ CDN</span>
-            </button>
-
-            <div className="navbar-palette-divider" />
-
-            <button
-              type="button"
-              className="navbar-palette-btn"
-              onClick={() =>
-                addNode('queue_consumer', {
-                  label: 'Queue Worker',
-                  processingMs: 25,
-                  maxWorkers: 15,
-                  consumeRateRps: 50,
-                })
-              }
-              title="Add BullMQ / SQS queue worker (Key: 3)"
-            >
-              <span className="palette-dot cyan" />
-              <span>+ Queue</span>
-            </button>
-            <button
-              type="button"
-              className="navbar-palette-btn"
+              className="navbar-prim-btn"
               onClick={() =>
                 addNode('queue_consumer', {
                   label: 'Kafka Stream',
@@ -588,58 +606,138 @@ export function App() {
                   consumeRateRps: 100,
                 })
               }
-              title="Add high-throughput Kafka streaming consumer"
+              title="Add Kafka / Queue Consumer (Key: 3)"
             >
               <span className="palette-dot cyan" />
-              <span>+ Kafka</span>
+              <span>+ Queue</span>
             </button>
-
-            <div className="navbar-palette-divider" />
-
             <button
               type="button"
-              className="navbar-palette-btn"
+              className="navbar-prim-btn"
               onClick={() =>
-                addNode('ledger_sink', {
-                  label: 'Financial Ledger',
-                  processingMs: 50,
-                  maxWorkers: 5,
-                  dedupeByKey: true,
-                })
+                addNode('service', { label: 'Postgres DB', processingMs: 35, maxWorkers: 5 })
               }
-              title="Add idempotent ledger deduplication sink (Key: 4)"
+              title="Add Stateful Database Store"
             >
-              <span className="palette-dot green" />
-              <span>+ Ledger</span>
-            </button>
-            <button
-              type="button"
-              className="navbar-palette-btn"
-              onClick={() =>
-                addNode('ledger_sink', {
-                  label: 'Object Store',
-                  processingMs: 35,
-                  maxWorkers: 10,
-                  dedupeByKey: false,
-                })
-              }
-              title="Add S3 / GCS object storage sink"
-            >
-              <span className="palette-dot green" />
-              <span>+ S3</span>
+              <span className="palette-dot blue" />
+              <span>+ DB</span>
             </button>
 
-            <div className="navbar-palette-divider" />
+            {/* Specialized Presets Popover Dropdown */}
+            <div className="navbar-dropdown-relative">
+              <button
+                type="button"
+                className={`navbar-prim-btn more ${isMorePrimitivesOpen ? 'active' : ''}`}
+                onClick={() => setIsMorePrimitivesOpen((v) => !v)}
+                title="More architecture components"
+              >
+                <span>+ More</span>
+                <svg viewBox="0 0 24 24" width="9" height="9" fill="currentColor">
+                  <path d="M7 10l5 5 5-5z" />
+                </svg>
+              </button>
 
-            {/* Quick Canvas Actions: Duplicate & Delete */}
+              {isMorePrimitivesOpen && (
+                <div
+                  className="navbar-more-menu"
+                  onMouseLeave={() => setIsMorePrimitivesOpen(false)}
+                >
+                  <button
+                    type="button"
+                    className="navbar-more-item"
+                    onClick={() => {
+                      addNode('service', {
+                        label: 'Auth Service',
+                        processingMs: 10,
+                        maxWorkers: 10,
+                      });
+                      setIsMorePrimitivesOpen(false);
+                    }}
+                  >
+                    <span className="palette-dot blue" />
+                    <span>Auth Service (OAuth/JWT)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="navbar-more-item"
+                    onClick={() => {
+                      addNode('service', {
+                        label: 'External API',
+                        processingMs: 85,
+                        maxWorkers: 5,
+                      });
+                      setIsMorePrimitivesOpen(false);
+                    }}
+                  >
+                    <span className="palette-dot amber" />
+                    <span>3rd-Party External API</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="navbar-more-item"
+                    onClick={() => {
+                      addNode('cache', {
+                        label: 'CDN Edge',
+                        processingMs: 1,
+                        maxWorkers: 50,
+                        ttlMs: 300000,
+                      });
+                      setIsMorePrimitivesOpen(false);
+                    }}
+                  >
+                    <span className="palette-dot yellow" />
+                    <span>CDN Edge (Cloudflare/Fastly)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="navbar-more-item"
+                    onClick={() => {
+                      addNode('ledger_sink', {
+                        label: 'Financial Ledger',
+                        processingMs: 50,
+                        maxWorkers: 5,
+                        dedupeByKey: true,
+                      });
+                      setIsMorePrimitivesOpen(false);
+                    }}
+                  >
+                    <span className="palette-dot green" />
+                    <span>Ledger Sink (Idempotent: Key 4)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="navbar-more-item"
+                    onClick={() => {
+                      addNode('ledger_sink', {
+                        label: 'Object Store',
+                        processingMs: 35,
+                        maxWorkers: 10,
+                        dedupeByKey: false,
+                      });
+                      setIsMorePrimitivesOpen(false);
+                    }}
+                  >
+                    <span className="palette-dot green" />
+                    <span>S3 / Object Store Sink</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="navbar-shelf-divider" />
+
+          {/* Quick Element Duplicate & Delete Actions */}
+          <div className="navbar-actions-group">
             <button
               type="button"
-              className="navbar-palette-tool"
-              disabled={!board.selectedNodeId}
-              onClick={() => {
-                if (board.selectedNodeId) duplicateNode(board.selectedNodeId);
-              }}
-              title="Duplicate selected node (Ctrl+D)"
+              className="navbar-action-btn"
+              disabled={
+                !board.selectedNodeId &&
+                (!board.selectedNodeIds || board.selectedNodeIds.length === 0)
+              }
+              onClick={duplicateSelected}
+              title="Duplicate selected element(s) (Cmd+D)"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -654,20 +752,20 @@ export function App() {
               </svg>
               <span>Duplicate</span>
             </button>
+
             <button
               type="button"
-              className="navbar-palette-tool danger"
-              disabled={!board.selectedNodeId && !board.selectedEdgeId}
+              className="navbar-action-btn danger"
+              disabled={
+                !board.selectedNodeId &&
+                (!board.selectedNodeIds || board.selectedNodeIds.length === 0) &&
+                !board.selectedEdgeId
+              }
               onClick={() => {
-                if (board.selectedNodeId) {
-                  removeNode(board.selectedNodeId);
-                  if (activeDrawer === 'inspect') setActiveDrawer('none');
-                } else if (board.selectedEdgeId) {
-                  removeEdge(board.selectedEdgeId);
-                  if (activeDrawer === 'inspect') setActiveDrawer('none');
-                }
+                deleteSelected();
+                if (activeDrawer === 'inspect') setActiveDrawer('none');
               }}
-              title="Delete selected element (Del / Backspace)"
+              title="Delete selected element(s) (Del / Backspace)"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -682,10 +780,6 @@ export function App() {
               </svg>
               <span>Delete</span>
             </button>
-
-            <span className="navbar-stats-chip">
-              {board.nodes.length}N &bull; {board.edges.length}L
-            </span>
           </div>
         </div>
 
@@ -697,11 +791,18 @@ export function App() {
             roomCode={meetingRoomCode}
             onOpenCreate={() => setIsCreateMeetingOpen(true)}
             onOpenJoin={() => setIsJoinMeetingOpen(true)}
-            onLeaveMeeting={() => setIsMeetingLive(false)}
+            onLeaveMeeting={() => {
+              setIsMeetingLive(false);
+              toast.info('You have left the meeting.', 'Session Ended');
+            }}
             onShareRoom={() => {
               const url = window.location.href;
               void navigator.clipboard.writeText(url);
+              toast.success('Meeting link copied to clipboard!', 'Share Meeting');
             }}
+            currentUser={currentReviewer}
+            remoteReviewers={remoteReviewers}
+            onFocusMeeting={() => setIsMeetingLive(true)}
           />
 
           {/* Primary Quick Run Action */}
@@ -710,23 +811,40 @@ export function App() {
               variant="danger"
               size="sm"
               onClick={() => {
+                toast.info('Stopping simulation...', 'Simulation');
                 void experimentSession.cancelExperiment();
               }}
+              title="Halt active resilience simulation"
             >
-              Cancel Run
+              Cancel Simulation
             </Button>
           ) : (
             <Button
               variant="primary"
               size="sm"
-              disabled={!canStartExperiment}
+              className={!canStartExperiment ? 'btn-simulation-blocked' : ''}
               onClick={() => {
                 setActiveDrawer('telemetry');
+                if (!canStartExperiment) {
+                  toast.warning(
+                    board.nodes.length === 0
+                      ? 'Add at least one service to canvas first.'
+                      : `Architecture has ${String(board.validationProblems.length)} issue(s). Check the panel to resolve them.`,
+                    'Cannot Simulate',
+                  );
+                  return;
+                }
                 void experimentSession.startExperiment(currentTopology);
               }}
-              title="Run physical 5s sandbox resilience trial"
+              title={
+                !canStartExperiment
+                  ? board.nodes.length === 0
+                    ? 'Add at least one service to canvas to simulate'
+                    : `Cannot simulate: ${String(board.validationProblems.length)} architecture issue(s) detected`
+                  : 'Run real-time resilience simulation (5s)'
+              }
             >
-              Sandbox Proof
+              Run Simulation
             </Button>
           )}
 
@@ -798,7 +916,7 @@ export function App() {
           {/* Authenticated Staff User Profile Avatar with Hover Menu (Settings & Logout) */}
           <UserProfileMenu
             user={currentReviewer}
-            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenSettings={handleOpenSettings}
             onSignOut={handleSignOut}
           />
         </div>
@@ -808,52 +926,52 @@ export function App() {
       <div className="studio-canvas-layout">
         {/* Spatial Canvas Container */}
         <main className="studio-canvas-main">
-          {/* Board Canvas */}
+          {/* Board Canvas with Excalidraw-Grade Pen & Marquee Crop Tools */}
           <BoardCanvas
             board={board}
+            activeTool={activeTool}
+            onSelectTool={setActiveTool}
+            penColor={penColor}
+            onSelectPenColor={setPenColor}
+            penWidth={penWidth}
+            onSelectPenWidth={setPenWidth}
             onSelectNode={handleSelectNode}
+            onSelectNodes={(ids) => {
+              selectNodes(ids);
+              if (ids.length === 1 && ids[0]) {
+                selectNode(ids[0]);
+                setActiveDrawer('inspect');
+              }
+            }}
             onSelectEdge={handleSelectEdge}
             onMoveNode={updateNodePosition}
+            onMoveSelectedNodes={moveSelectedNodes}
             onAddNode={addNode}
             onAddEdge={addEdge}
             onDuplicateNode={duplicateNode}
+            onDuplicateSelected={duplicateSelected}
             remoteCursors={remoteReviewers}
             onCursorMove={broadcastCursor}
             onDeleteNode={(nodeId) => {
               removeNode(nodeId);
               if (activeDrawer === 'inspect') setActiveDrawer('none');
             }}
+            onDeleteSelected={() => {
+              deleteSelected();
+              if (activeDrawer === 'inspect') setActiveDrawer('none');
+            }}
             onDeleteEdge={(edgeId) => {
               removeEdge(edgeId);
               if (activeDrawer === 'inspect') setActiveDrawer('none');
             }}
+            onAlignSelected={alignSelected}
+            onAddStroke={addStroke}
+            onUndoStroke={undoStroke}
+            onClearStrokes={clearStrokes}
+            onDeleteStroke={deleteStroke}
+            onUpdateEdgeControlPoint={updateEdgeControlPoint}
             hazardEdgeId={isMeetingLive ? (sreWatcher.primaryHazard?.targetEdgeId ?? null) : null}
             hazardNodeId={isMeetingLive ? (sreWatcher.primaryHazard?.targetNodeId ?? null) : null}
-          />
-
-          {/* SRE Risk Callout Card (Meta AI SRE in-canvas proactive alert) */}
-          <CanvasSreCallout
-            hazard={sreWatcher.primaryHazard}
-            onOpenDetails={() => setIsSreModalOpen(true)}
-            onTestInSandbox={() => {
-              if (sreWatcher.primaryHazard) {
-                const targetEdgeId = sreWatcher.primaryHazard.targetEdgeId;
-                if (targetEdgeId) {
-                  experimentSession.updateFault({
-                    id: faultIdSchema.parse(`fault-proof-${String(Date.now())}`),
-                    edgeId: targetEdgeId,
-                    type: 'latency',
-                    latencyMs: 300,
-                    jitterMs: 50,
-                    toxicity: 1,
-                    direction: 'downstream',
-                    startOffsetMs: 0,
-                  });
-                }
-                setActiveDrawer('telemetry');
-                void experimentSession.startExperiment(currentTopology);
-              }
-            }}
           />
 
           {/* Google Meet-Style Floating Picture-in-Picture Mini-Window (Bottom-Right) */}
@@ -863,6 +981,9 @@ export function App() {
             aiRaisedHand={sreWatcher.aiRaisedHand}
             onOpenSreFinding={() => setIsSreModalOpen(true)}
             onLeaveMeeting={() => setIsMeetingLive(false)}
+            currentUser={currentReviewer}
+            remoteReviewers={remoteReviewers}
+            hazardsCount={sreWatcher.hazards.length}
           />
         </main>
 
@@ -870,16 +991,37 @@ export function App() {
         {activeDrawer !== 'none' && (
           <aside className="studio-side-drawer" aria-label="Control and inspection panel">
             <div className="studio-drawer-header">
-              <div className="studio-drawer-title">
-                {activeDrawer === 'inspect' && 'Inspector'}
-                {activeDrawer === 'chaos' && 'Chaos Fault & Invariants'}
-                {activeDrawer === 'telemetry' && 'Live Telemetry & Verdicts'}
-                {activeDrawer === 'repair' && 'Autonomous AI Repair'}
-                {activeDrawer === 'voice' && 'Spoken Push-to-Talk'}
-                {activeDrawer === 'vision' && 'Whiteboard Vision'}
-                {activeDrawer === 'reports' && 'Export & Blueprint Card'}
-                {activeDrawer === 'benchmarks' && 'Benchmark Suite'}
-                {activeDrawer === 'runs' && 'Execution History'}
+              <div className="studio-drawer-title-group">
+                <div className="studio-drawer-title">
+                  {activeDrawer === 'inspect' &&
+                    (selectedNode
+                      ? 'Node Inspector'
+                      : selectedEdge
+                        ? 'Edge Inspector'
+                        : 'Inspector')}
+                  {activeDrawer === 'chaos' && 'Chaos Fault & Invariants'}
+                  {activeDrawer === 'telemetry' && 'Live Telemetry & Verdicts'}
+                  {activeDrawer === 'repair' && 'Autonomous AI Repair'}
+                  {activeDrawer === 'voice' && 'Spoken Push-to-Talk'}
+                  {activeDrawer === 'vision' && 'Whiteboard Vision'}
+                  {activeDrawer === 'reports' && 'Export & Blueprint Card'}
+                  {activeDrawer === 'benchmarks' && 'Benchmark Suite'}
+                  {activeDrawer === 'runs' && 'Execution History'}
+                </div>
+                {activeDrawer === 'inspect' && selectedNode && (
+                  <button
+                    type="button"
+                    className={`inspector-entry-btn ${board.entryNodeId === selectedNode.id ? 'active' : ''}`}
+                    onClick={() => setEntryNode(selectedNode.id)}
+                    title={
+                      board.entryNodeId === selectedNode.id
+                        ? 'Current traffic entry point'
+                        : 'Designate as traffic entry point'
+                    }
+                  >
+                    {board.entryNodeId === selectedNode.id ? 'Ingress Entry' : 'Set as Ingress'}
+                  </button>
+                )}
               </div>
 
               <button
@@ -902,6 +1044,8 @@ export function App() {
               <ValidationBanner
                 problems={board.validationProblems}
                 isValidating={board.isValidating}
+                nodes={board.nodes}
+                onSelectNode={handleSelectNode}
               />
 
               {/* 1. Inspector Tab */}
@@ -911,16 +1055,13 @@ export function App() {
                     <NodeInspector
                       node={selectedNode}
                       onUpdate={(patch) => updateNode(selectedNode.id, patch)}
-                      onDelete={() => {
-                        removeNode(selectedNode.id);
-                        setActiveDrawer('none');
-                      }}
-                      onClose={() => selectNode(null)}
                     />
                   )}
                   {selectedEdge && (
                     <EdgeInspector
                       edge={selectedEdge}
+                      hasCustomRoute={Boolean(board.edgeControlPoints?.[selectedEdge.id])}
+                      onResetRoute={() => updateEdgeControlPoint(selectedEdge.id, null)}
                       onUpdatePolicy={(p) => updateEdgePolicy(selectedEdge.id, p)}
                       onDelete={() => {
                         removeEdge(selectedEdge.id);
@@ -973,6 +1114,68 @@ export function App() {
               {/* 3. Telemetry & Verdicts Tab */}
               {activeDrawer === 'telemetry' && (
                 <>
+                  {/* Architecture Compatibility Diagnostics */}
+                  {board.validationProblems.length > 0 && (
+                    <div className="telemetry-compatibility-warning">
+                      <div className="compatibility-warning-header">
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="16"
+                          height="16"
+                          fill="none"
+                          stroke="#f59e0b"
+                          strokeWidth="2"
+                        >
+                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                          <line x1="12" y1="9" x2="12" y2="13" />
+                          <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                        <span className="compatibility-warning-title">
+                          Architecture Incompatibilities ({String(board.validationProblems.length)})
+                        </span>
+                      </div>
+                      <p className="compatibility-warning-text">
+                        The simulation cannot run until the topology issues below are resolved:
+                      </p>
+                      <ul className="compatibility-issues-list">
+                        {board.validationProblems.map((prob, i) => {
+                          const nodeNum = prob.nodeId
+                            ? resolveNodeNumber(prob.nodeId, board.nodes)
+                            : null;
+                          return (
+                            <li key={i} className="compatibility-issue-item">
+                              <span className="issue-bullet">•</span>
+                              <span className="compatibility-issue-message">{prob.message}</span>
+                              {prob.nodeId && nodeNum !== null && (
+                                <button
+                                  type="button"
+                                  className="validation-target-chip"
+                                  onClick={() => handleSelectNode(prob.nodeId as NodeId)}
+                                  title={`Focus Node #${String(nodeNum)} on canvas`}
+                                >
+                                  <span className="target-chip-type">Node</span>
+                                  <span className="target-chip-id">{nodeNum}</span>
+                                </button>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      {!board.entryNodeId && board.nodes.length > 0 && (
+                        <button
+                          type="button"
+                          className="btn-compatibility-fix"
+                          onClick={() => {
+                            const firstNode = board.nodes[0];
+                            if (firstNode) setEntryNode(firstNode.id);
+                          }}
+                        >
+                          Designate &ldquo;{board.nodes[0]?.label}&rdquo; as Ingress Entry
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   <TrialProgressCard
                     status={experimentSession.status}
                     currentTrial={experimentSession.currentTrialIndex}
@@ -1214,6 +1417,7 @@ export function App() {
                   <RunHistoryTable
                     runs={runsHistory.runs}
                     isLoading={runsHistory.isLoading}
+                    error={runsHistory.error}
                     onRefresh={runsHistory.refreshRuns}
                     onView={runsHistory.viewRun}
                     onReplay={runsHistory.startReplay}
@@ -1240,14 +1444,6 @@ export function App() {
           </aside>
         )}
       </div>
-
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        onSave={setSettings}
-        currentSettings={settings}
-      />
 
       {/* Import Architecture Diagram Modal */}
       <ImportDiagramModal

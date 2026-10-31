@@ -6,6 +6,7 @@ import { StatusPill } from '../../../components/ui/StatusPill';
 export interface RunHistoryTableProps {
   readonly runs: readonly RunRecord[];
   readonly isLoading: boolean;
+  readonly error?: string | null;
   readonly onRefresh: () => void;
   readonly onView: (id: RunId) => void;
   readonly onReplay: (id: RunId) => void;
@@ -15,6 +16,7 @@ export interface RunHistoryTableProps {
 export function RunHistoryTable({
   runs,
   isLoading,
+  error,
   onRefresh,
   onView,
   onReplay,
@@ -30,7 +32,17 @@ export function RunHistoryTable({
       }
       className="runs-table-card"
     >
-      {runs.length === 0 ? (
+      {error ? (
+        <div className="table-error-banner" style={{ padding: '16px', color: '#f87171' }}>
+          <p style={{ fontWeight: 600, marginBottom: 4 }}>Server Connection Issue</p>
+          <p style={{ fontSize: '13px', color: 'var(--color-text-dim)', marginBottom: 12 }}>
+            Could not fetch run history from server. Ensure your backend service is running.
+          </p>
+          <Button variant="secondary" size="sm" onClick={onRefresh}>
+            Retry Connection
+          </Button>
+        </div>
+      ) : runs.length === 0 ? (
         <p className="state-message">
           {isLoading ? 'Loading run history...' : 'No past runs found in database.'}
         </p>

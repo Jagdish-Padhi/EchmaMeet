@@ -84,8 +84,8 @@ export function ExportDropdown({ onExportIac, onExportRfc }: ExportDropdownProps
               </svg>
             </div>
             <div className="menu-item-content">
-              <div className="menu-item-title">Export IaC (Istio &amp; Envoy)</div>
-              <div className="menu-item-subtitle">Calibrated Kubernetes CRD manifests</div>
+              <div className="menu-item-title">Kubernetes &amp; Istio YAML</div>
+              <div className="menu-item-subtitle">Export VirtualService &amp; DestinationRule configs</div>
             </div>
           </button>
 
@@ -115,8 +115,8 @@ export function ExportDropdown({ onExportIac, onExportRfc }: ExportDropdownProps
               </svg>
             </div>
             <div className="menu-item-content">
-              <div className="menu-item-title">Export RFC (Markdown ADR)</div>
-              <div className="menu-item-subtitle">Architecture Decision Record for review</div>
+              <div className="menu-item-title">Markdown Architecture Doc (ADR)</div>
+              <div className="menu-item-subtitle">Export summary document for engineering review</div>
             </div>
           </button>
         </div>
