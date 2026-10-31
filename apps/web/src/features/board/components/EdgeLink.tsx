@@ -128,51 +128,51 @@ export const EdgeLink = memo(function EdgeLink({
         />
       </circle>
 
-      {/* Excalidraw-Grade Sliding Bend Handles for Every Segment When Selected */}
+      {/* Excalidraw-Grade Subtle Segment Handles (Small, Mild & Non-Intrusive) */}
       {isSelected &&
-        segments.map((seg) => (
-          <g
-            key={`handle-${edge.id}-${String(seg.index)}`}
-            className="edge-control-handle"
-            style={{
-              cursor: seg.isVertical ? 'ew-resize' : 'ns-resize',
-              outline: 'none',
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              onDragControlPointStart?.(edge.id, e, seg.isVertical, seg.index);
-            }}
-            onDoubleClick={(e) => {
-              e.stopPropagation();
-              onResetControlPoint?.(edge.id);
-            }}
-          >
-            {/* Invisible wide hit area for effortless grabbing */}
-            <circle cx={seg.handle.x} cy={seg.handle.y} r={16} fill="transparent" />
-            {/* Outer soft aura */}
-            <circle
-              cx={seg.handle.x}
-              cy={seg.handle.y}
-              r={7}
-              fill="var(--color-accent)"
-              fillOpacity={0.25}
-            />
-            {/* Excalidraw tactile round handle */}
-            <circle
-              cx={seg.handle.x}
-              cy={seg.handle.y}
-              r={4.5}
-              fill="#ffffff"
-              stroke="var(--color-accent)"
-              strokeWidth={2}
-            />
-            <title>
-              {seg.isVertical
-                ? 'Drag to slide vertical segment horizontally (Double-click to reset)'
-                : 'Drag to slide horizontal segment vertically (Double-click to reset)'}
-            </title>
-          </g>
-        ))}
+        segments.map((seg) => {
+          // If handle collides with policy tag capsule, suppress it so text remains clean and unobstructed
+          const isOverCapsule =
+            policySummary && Math.hypot(seg.handle.x - midX, seg.handle.y - midY) < 24;
+          if (isOverCapsule) return null;
+
+          return (
+            <g
+              key={`handle-${edge.id}-${String(seg.index)}`}
+              className="edge-control-handle"
+              style={{
+                cursor: seg.isVertical ? 'ew-resize' : 'ns-resize',
+                outline: 'none',
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                onDragControlPointStart?.(edge.id, e, seg.isVertical, seg.index);
+              }}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                onResetControlPoint?.(edge.id);
+              }}
+            >
+              {/* Invisible wide hit area for effortless grabbing */}
+              <circle cx={seg.handle.x} cy={seg.handle.y} r={14} fill="transparent" />
+              {/* Mild, small precision handle dot */}
+              <circle
+                cx={seg.handle.x}
+                cy={seg.handle.y}
+                r={3}
+                fill="var(--color-accent)"
+                stroke="var(--color-bg)"
+                strokeWidth={1.2}
+                className="edge-segment-handle-dot"
+              />
+              <title>
+                {seg.isVertical
+                  ? 'Slide vertical line horizontally (Double-click to reset)'
+                  : 'Slide horizontal line vertically (Double-click to reset)'}
+              </title>
+            </g>
+          );
+        })}
 
       {/* Sleek, Compact Policy Capsule Tag (Only when relevant policy exists) */}
       {policySummary && (

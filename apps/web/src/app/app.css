@@ -119,9 +119,16 @@ body,
   height: 6px;
 }
 
+*::-webkit-scrollbar-button,
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 *::-webkit-scrollbar-track,
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: transparent !important;
 }
 
 *::-webkit-scrollbar-thumb,
@@ -3475,8 +3482,14 @@ body {
   width: 6px;
 }
 
+.studio-drawer-content::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 .studio-drawer-content::-webkit-scrollbar-track {
-  background: transparent;
+  background: transparent !important;
 }
 
 .studio-drawer-content::-webkit-scrollbar-thumb {
@@ -5309,32 +5322,40 @@ button.validation-target-chip {
 /* Interactive Node Connector Ports */
 .node-port-handle {
   cursor: crosshair;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.canvas-node:hover .node-port-handle,
+.canvas-node-selected .node-port-handle {
+  opacity: 1;
 }
 
 .port-dot-handle {
   fill: var(--color-accent);
   stroke: var(--color-bg);
-  stroke-width: 2;
-  transition:
-    fill 0.12s ease,
-    stroke 0.12s ease;
+  stroke-width: 1.5;
+  transition: all 0.12s ease;
 }
 
 .node-port-handle:hover .port-dot-handle {
   fill: #ffffff;
   stroke: var(--color-accent);
-  stroke-width: 2.5;
+  stroke-width: 2;
 }
 
-.port-dot-target {
-  fill: #475569;
-  stroke: var(--color-bg);
+.edge-segment-handle-dot {
+  transition:
+    r 0.12s ease,
+    fill 0.12s ease,
+    stroke-width 0.12s ease;
+}
+
+.edge-control-handle:hover .edge-segment-handle-dot {
+  r: 4.5;
+  fill: #ffffff;
+  stroke: var(--color-accent);
   stroke-width: 1.5;
-  transition: fill 0.12s ease;
-}
-
-.canvas-node:hover .port-dot-target {
-  fill: var(--color-accent);
 }
 
 /* Rubberband Dragged Wire */

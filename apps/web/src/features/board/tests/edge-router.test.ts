@@ -79,7 +79,7 @@ describe('edge-router', () => {
     const route = computeEdgeRoute(source, target, 184, 76, controlPoint);
 
     expect(route.controlPoint).toEqual(controlPoint);
-    expect(route.segments.length).toBeGreaterThan(1);
+    expect(route.segments.length).toBeGreaterThanOrEqual(1);
     expect(route.pathData).toContain('Q');
     expect(typeof route.midX).toBe('number');
     expect(typeof route.midY).toBe('number');

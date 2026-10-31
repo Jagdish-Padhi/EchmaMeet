@@ -112,8 +112,8 @@ export const NodeCard = memo(function NodeCard({
   const specSummary = rawSpec.length > 34 ? `${rawSpec.slice(0, 33)}…` : rawSpec;
 
   // Clean minimal node number (1, 2, 3...) at top right corner - zero redundant badges
-  const displayNumber =
-    nodeNumber ?? (node.id.match(/\d+/) ? parseInt(node.id.match(/\d+/)![0], 10) : 1);
+  const idDigits = /\d+/.exec(node.id);
+  const displayNumber = nodeNumber ?? (idDigits ? parseInt(idDigits[0], 10) : 1);
   const numberText = String(displayNumber);
   const numberPillWidth = Math.max(16, numberText.length * 6.5 + 8);
   const numberPillX = 174 - numberPillWidth;
@@ -194,14 +194,9 @@ export const NodeCard = memo(function NodeCard({
         </text>
 
         {/* Clean minimal node number (1, 2, 3...) at top right corner */}
-        <g transform={`translate(${numberPillX}, 8)`} className="node-id-tag">
+        <g transform={`translate(${String(numberPillX)}, 8)`} className="node-id-tag">
           <title>Node #{numberText}</title>
-          <rect
-            width={numberPillWidth}
-            height={13}
-            rx={3}
-            className="node-id-pill"
-          />
+          <rect width={numberPillWidth} height={13} rx={3} className="node-id-pill" />
           <text
             x={numberPillWidth / 2}
             y={6.5}
@@ -215,13 +210,7 @@ export const NodeCard = memo(function NodeCard({
 
         {/* Problem Alert Dot */}
         {hasProblems && (
-          <circle
-            cx={numberPillX - 5}
-            cy={14.5}
-            r={2.5}
-            fill="#f43f5e"
-            className="error-alert-dot"
-          >
+          <circle cx={numberPillX - 5} cy={14.5} r={2.5} fill="#f43f5e" className="error-alert-dot">
             <title>Validation warning on Node #{numberText}</title>
           </circle>
         )}
@@ -242,10 +231,7 @@ export const NodeCard = memo(function NodeCard({
         </text>
       </g>
 
-      {/* Target Input Port (Left Edge) */}
-      <circle cx={0} cy={38} r={4} className="port-dot-target" />
-
-      {/* Source Output Connector Handle (Right Edge) */}
+      {/* Quick-Connect Perimeter Handle (Sleek, mild & revealed on hover) */}
       <g
         className="node-port-handle"
         onClick={(e) => {
@@ -257,9 +243,9 @@ export const NodeCard = memo(function NodeCard({
           onStartConnect?.(node.id, e);
         }}
       >
-        <title>Connect downstream service</title>
+        <title>Drag to connect to another service</title>
         <circle cx={184} cy={38} r={14} fill="transparent" style={{ cursor: 'crosshair' }} />
-        <circle cx={184} cy={38} r={4} className="port-dot-handle" />
+        <circle cx={184} cy={38} r={3} className="port-dot-handle" />
       </g>
     </g>
   );

@@ -503,8 +503,8 @@ export function BoardCanvas({
       const { edgeId, isVertical } = draggingEdgeControlRef.current;
       const currentControl = board.edgeControlPoints?.[edgeId] ?? null;
       const updatedPoint: CanvasPosition = {
-        x: isVertical ? Math.round(coords.x) : (currentControl?.x ?? Math.round(coords.x)),
-        y: !isVertical ? Math.round(coords.y) : (currentControl?.y ?? Math.round(coords.y)),
+        x: isVertical ? Math.round(coords.x) : (currentControl?.x ?? 0),
+        y: !isVertical ? Math.round(coords.y) : (currentControl?.y ?? 0),
       };
       onUpdateEdgeControlPoint?.(edgeId, updatedPoint);
       return;
