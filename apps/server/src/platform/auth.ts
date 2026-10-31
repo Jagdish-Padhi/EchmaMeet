@@ -404,7 +404,12 @@ export function installAuthGuard(app: FastifyInstance, db: SqlDatabase): void {
     const url = request.url;
 
     // Public exemptions
-    if (!url.startsWith('/api/') || url.startsWith('/api/health') || url.startsWith('/api/auth/')) {
+    if (
+      !url.startsWith('/api/') ||
+      url.startsWith('/api/health') ||
+      url.startsWith('/api/auth/') ||
+      url.startsWith('/api/topologies/scenarios')
+    ) {
       return;
     }
 

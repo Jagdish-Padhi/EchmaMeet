@@ -3,7 +3,7 @@ import type { ScenarioSpec } from '@chaosboard/contracts';
 
 export interface LandingPageProps {
   readonly onLaunchStudio: (scenarioId?: string) => void;
-  readonly scenarios: readonly ScenarioSpec[];
+  readonly scenarios?: readonly ScenarioSpec[];
   readonly theme: 'dark' | 'light';
   readonly onToggleTheme: () => void;
   readonly onOpenSettings: () => void;
@@ -14,51 +14,38 @@ export interface LandingPageProps {
 interface FaqItem {
   readonly question: string;
   readonly answer: string;
-  readonly category: string;
 }
 
 const FAQ_ITEMS: readonly FaqItem[] = [
   {
-    category: 'Architecture & Engine',
-    question: 'How does Resilio differ from tools like Miro, Lucidchart, or Draw.io?',
+    question: 'How is Resilio different from Miro or Lucidchart?',
     answer:
-      'Static diagramming tools store passive vector shapes that quickly become obsolete documentation. Resilio is the first executable architecture canvas. When you connect microservices, message queues, and databases on Resilio, the canvas compiles into a live distributed DAG backed by real network properties (timeouts, concurrency limits, buffer depths). You can inject physical network chaos and prove whether your architecture survives before writing production code.',
+      'Miro and Lucidchart only draw static shapes. They cannot tell you what happens when a service times out or traffic spikes. Resilio turns your architecture diagram into a live interactive simulation where you can see failure ripple across microservices before writing code.',
   },
   {
-    category: 'Deployment & Setup',
     question: 'Do I need to install Docker or run heavy local containers?',
     answer:
-      'No. Resilio runs directly in any modern browser without requiring local Docker daemons, Minikube, or heavy container runtimes. The execution engine communicates with sandboxed background Toxiproxy processes and high-throughput traffic generators that emulate real TCP/UDP sockets and packet drops with minimal memory overhead.',
+      'No. Resilio runs directly in your web browser. There are no heavy containers to manage or complex clusters to configure. You can design and simulate failure in seconds.',
   },
   {
-    category: 'AI & Invariant Verification',
-    question: 'How does the autonomous Meta AI SRE agent analyze our architecture?',
+    question: 'How does the AI assistant help during reviews?',
     answer:
-      'The Meta AI SRE agent analyzes your live DAG topology, real-time telemetry metrics (p95/p99 latency, queue depth, error rates), and team conversation in meeting rooms. It detects subtle failure patterns like retry storms, cascade timeouts, and buffer bloat under load. It then synthesizes mathematically verified circuit-breaker parameters and explains the blast radius reduction to the team.',
+      'Meta AI watches your topology metrics during failure simulations. If it detects a risky pattern—like retrying too aggressively or an unbuffered queue—it highlights the risk and suggests exact timeout and circuit-breaker settings to prevent an outage.',
   },
   {
-    category: 'Code & Infra Synchronization',
-    question: 'Can we export our verified architecture directly to infrastructure code?',
+    question: 'Can we export our designs straight to infrastructure code?',
     answer:
-      'Yes. Once your topology passes all resilience invariants under chaos injection, you can export it directly as production-ready HashiCorp Terraform modules, Envoy Proxy envoy.yaml filters, Kubernetes manifests, and Docker Compose files. This eliminates documentation drift and ensures your production infrastructure matches your verified design.',
+      'Yes. Once your architecture passes your resilience checks, you can export it directly into production-ready Terraform modules, Envoy Proxy configs, or Docker Compose manifests.',
   },
   {
-    category: 'Chaos Simulation',
-    question: 'What specific network chaos faults can we inject on the canvas?',
+    question: 'Is our architecture design private and secure?',
     answer:
-      'Resilio integrates native Toxiproxy daemons to execute real kernel-level packet latency (with normal, uniform, or Pareto jitter distributions), packet loss percentages, bandwidth throttling (simulating cross-region network degradation), and abrupt TCP socket terminations (simulating sudden node crashes or cloud availability zone failures).',
-  },
-  {
-    category: 'Security & Privacy',
-    question: 'Is our proprietary architecture data kept private and secure?',
-    answer:
-      'Security is built into every layer. Resilio encrypts all topology DAGs, node configurations, and network telemetry in transit (TLS 1.3) and at rest (AES-256). Enterprise plans support dedicated private VPC deployments or air-gapped on-premises installations with SAML 2.0 / Okta SSO authentication and zero external telemetry egress.',
+      'Yes. All designs are encrypted in transit and at rest. For enterprises with strict compliance needs, Resilio can run entirely inside your private VPC or on-premise air-gapped infrastructure with SSO authentication.',
   },
 ];
 
 export function LandingPage({
   onLaunchStudio,
-  scenarios,
   theme,
   onToggleTheme,
   onOpenSettings,
@@ -110,7 +97,7 @@ export function LandingPage({
             </div>
             <div className="brand-title-wrap">
               <span className="landing-title">Resilio</span>
-              <span className="landing-badge-enterprise">ENTERPRISE</span>
+              <span className="landing-badge-enterprise">STUDIO</span>
             </div>
           </div>
 
@@ -118,7 +105,6 @@ export function LandingPage({
             <a href="#product">Product</a>
             <a href="#how-it-works">How It Works</a>
             <a href="#benefits">Why Resilio</a>
-            <a href="#scenarios">Scenarios</a>
             <a href="#pricing">Pricing</a>
             <a href="#faq">FAQ</a>
           </nav>
@@ -259,7 +245,7 @@ export function LandingPage({
 
             <rect width="100%" height="100%" fill="url(#hero-matrix-grid)" />
 
-            {/* LEFT SIDE: Connected Architecture Blocks & Live Stepped Dataflow */}
+            {/* Left Side: Connected Architecture Graph */}
             <g mask="url(#mask-left-graph)">
               <path
                 d="M 230 190 L 290 190 Q 304 190, 304 204 L 304 296 Q 304 310, 318 310 L 360 310"
@@ -298,13 +284,6 @@ export function LandingPage({
                 strokeWidth="1.8"
                 strokeDasharray="5 3"
               />
-              <circle r="3" fill="#60a5fa">
-                <animateMotion
-                  path="M 530 310 L 610 310 Q 624 310, 624 324 L 624 380 Q 624 394, 638 394 L 800 394"
-                  dur="3.2s"
-                  repeatCount="indefinite"
-                />
-              </circle>
 
               {/* Block 1: API Gateway */}
               <g transform="translate(60, 155)">
@@ -328,14 +307,14 @@ export function LandingPage({
                   fontFamily="var(--font-mono)"
                   fontWeight="700"
                 >
-                  SERVICE &bull; ENTRY
+                  ENTRY &bull; 20k req/s
                 </text>
                 <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
-                  20w &bull; 10ms &bull; bounded
+                  p99 &lt; 15ms &bull; normal
                 </text>
               </g>
 
-              {/* Block 2: Auth Cluster */}
+              {/* Block 2: Auth Service */}
               <g transform="translate(360, 65)">
                 <rect
                   width="170"
@@ -347,7 +326,7 @@ export function LandingPage({
                 />
                 <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(245, 158, 11, 0.12)" />
                 <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
-                  Auth Cluster
+                  Auth Service
                 </text>
                 <text
                   x="44"
@@ -357,14 +336,14 @@ export function LandingPage({
                   fontFamily="var(--font-mono)"
                   fontWeight="700"
                 >
-                  SERVICE &bull; HAZARD
+                  CIRCUIT BREAKER ON
                 </text>
                 <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
-                  10w &bull; 15ms &bull; retry:3x
+                  timeout: 100ms &bull; max: 3
                 </text>
               </g>
 
-              {/* Block 3: Order Processor */}
+              {/* Block 3: Order Worker */}
               <g transform="translate(360, 275)">
                 <rect
                   width="170"
@@ -376,7 +355,7 @@ export function LandingPage({
                 />
                 <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(37, 99, 235, 0.14)" />
                 <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
-                  Order Processor
+                  Order Worker
                 </text>
                 <text
                   x="44"
@@ -386,65 +365,16 @@ export function LandingPage({
                   fontFamily="var(--font-mono)"
                   fontWeight="700"
                 >
-                  QUEUE WORKER
+                  BOUNDED QUEUE
                 </text>
                 <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
-                  15w &bull; 25ms &bull; bounded
-                </text>
-              </g>
-
-              {/* Block 4: Cache Sink */}
-              <g transform="translate(130, 395)">
-                <rect
-                  width="170"
-                  height="70"
-                  rx="8"
-                  fill="rgba(14, 18, 28, 0.55)"
-                  stroke="rgba(16, 185, 129, 0.25)"
-                  strokeWidth="1"
-                />
-                <text x="44" y="24" fill="#cbd5e1" fontSize="12" fontWeight="600">
-                  Redis Cache
-                </text>
-                <text
-                  x="44"
-                  y="35"
-                  fill="#10b981"
-                  fontSize="8.5"
-                  fontFamily="var(--font-mono)"
-                  fontWeight="700"
-                >
-                  CACHE SINK
-                </text>
-                <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
-                  5w &bull; 2ms &bull; write-through
+                  depth: 120 / 5000 &bull; safe
                 </text>
               </g>
             </g>
 
-            {/* RIGHT SIDE: Meta AI Thinking Node & Collaborative Review Room */}
+            {/* Right Side: Meta AI Assistant & Live Meeting Room */}
             <g mask="url(#mask-right-ai)">
-              <path
-                d="M 1180 200 L 1180 320"
-                fill="none"
-                stroke="#0866ff"
-                strokeWidth="1.5"
-                strokeDasharray="4 3"
-              />
-              <circle r="3" fill="#38bdf8">
-                <animateMotion path="M 1180 200 L 1180 320" dur="2s" repeatCount="indefinite" />
-              </circle>
-
-              <path
-                d="M 1040 155 L 940 155 Q 920 155, 920 175 L 920 260 Q 920 280, 900 280 L 740 280"
-                fill="none"
-                stroke="#38bdf8"
-                strokeWidth="1.5"
-                strokeDasharray="5 4"
-                opacity="0.6"
-              />
-
-              {/* Meta AI Node */}
               <g transform="translate(1040, 110)">
                 <circle
                   cx="45"
@@ -456,76 +386,50 @@ export function LandingPage({
                   opacity="0.3"
                   className="ai-breath-ring"
                 />
-                <circle
-                  cx="45"
-                  cy="45"
-                  r="34"
-                  fill="none"
-                  stroke="#38bdf8"
-                  strokeWidth="1.5"
-                  opacity="0.5"
-                  className="ai-breath-ring-inner"
-                />
-
                 <rect
                   x="0"
                   y="0"
                   width="280"
-                  height="90"
+                  height="84"
                   rx="10"
                   fill="rgba(14, 18, 28, 0.75)"
                   stroke="rgba(8, 102, 255, 0.4)"
                   strokeWidth="1.2"
                 />
-
-                <g transform="translate(20, 25)">
-                  <circle cx="20" cy="20" r="18" fill="rgba(8, 102, 255, 0.18)" />
-                  <path
-                    d="M 12 20 Q 20 12, 28 20 Q 20 28, 12 20 Z"
-                    fill="none"
-                    stroke="#38bdf8"
-                    strokeWidth="1.8"
-                  />
-                  <circle cx="20" cy="20" r="3.5" fill="#38bdf8" />
-                </g>
-
-                <text x="68" y="34" fill="#f8fafc" fontSize="13" fontWeight="700">
-                  Meta AI SRE
+                <text x="24" y="32" fill="#f8fafc" fontSize="13" fontWeight="700">
+                  Meta AI Copilot
                 </text>
                 <text
-                  x="68"
-                  y="48"
+                  x="24"
+                  y="47"
                   fill="#38bdf8"
                   fontSize="9.5"
                   fontFamily="var(--font-mono)"
                   fontWeight="700"
                 >
-                  MUSE WONDER &bull; LIVE REASONING
+                  PREVENTED RETRY STORM
                 </text>
-                <text x="68" y="68" fill="#94a3b8" fontSize="10.5">
-                  Real-time blast radius inference
+                <text x="24" y="66" fill="#94a3b8" fontSize="11">
+                  Safe circuit breaker applied to Auth
                 </text>
               </g>
 
-              {/* Meeting Room */}
-              <g transform="translate(1040, 320)">
+              <g transform="translate(1040, 230)">
                 <rect
                   width="280"
-                  height="150"
+                  height="110"
                   rx="10"
                   fill="rgba(14, 18, 28, 0.75)"
                   stroke="rgba(255, 255, 255, 0.08)"
                   strokeWidth="1.2"
                 />
-
                 <rect x="14" y="14" width="8" height="8" rx="4" fill="#10b981" />
                 <text x="28" y="21" fill="#e2e8f0" fontSize="11" fontWeight="600">
-                  #arch-review &bull; Live Room
+                  Team Review Room
                 </text>
-                <text x="186" y="21" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
-                  3 ENGINEERS
+                <text x="200" y="21" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+                  LIVE AUDIO
                 </text>
-
                 <line
                   x1="14"
                   y1="34"
@@ -534,88 +438,12 @@ export function LandingPage({
                   stroke="rgba(255, 255, 255, 0.06)"
                   strokeWidth="1"
                 />
-
-                <g transform="translate(14, 46)">
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="12"
-                    fill="#1e293b"
-                    stroke="#38bdf8"
-                    strokeWidth="1.2"
-                  />
-                  <text
-                    x="12"
-                    y="15.5"
-                    fill="#38bdf8"
-                    fontSize="9.5"
-                    fontWeight="700"
-                    textAnchor="middle"
-                  >
-                    SC
-                  </text>
-                  <text x="32" y="12" fill="#f1f5f9" fontSize="11" fontWeight="600">
-                    Sarah C.
-                  </text>
-                  <text x="32" y="23" fill="#64748b" fontSize="9.5">
-                    Lead SRE &bull; Speaking
-                  </text>
-                  <circle cx="240" cy="12" r="3" fill="#10b981" />
-                </g>
-
-                <g transform="translate(14, 80)">
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="12"
-                    fill="#1e293b"
-                    stroke="rgba(255, 255, 255, 0.15)"
-                    strokeWidth="1"
-                  />
-                  <text
-                    x="12"
-                    y="15.5"
-                    fill="#94a3b8"
-                    fontSize="9.5"
-                    fontWeight="700"
-                    textAnchor="middle"
-                  >
-                    AM
-                  </text>
-                  <text x="32" y="12" fill="#f1f5f9" fontSize="11" fontWeight="600">
-                    Alex M.
-                  </text>
-                  <text x="32" y="23" fill="#64748b" fontSize="9.5">
-                    Platform Staff
-                  </text>
-                </g>
-
-                <g transform="translate(14, 114)">
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="12"
-                    fill="#1e293b"
-                    stroke="rgba(255, 255, 255, 0.15)"
-                    strokeWidth="1"
-                  />
-                  <text
-                    x="12"
-                    y="15.5"
-                    fill="#94a3b8"
-                    fontSize="9.5"
-                    fontWeight="700"
-                    textAnchor="middle"
-                  >
-                    DK
-                  </text>
-                  <text x="32" y="12" fill="#f1f5f9" fontSize="11" fontWeight="600">
-                    Devon K.
-                  </text>
-                  <text x="32" y="23" fill="#64748b" fontSize="9.5">
-                    Security Architect
-                  </text>
-                </g>
+                <text x="14" y="58" fill="#f1f5f9" fontSize="11" fontWeight="600">
+                  Sarah C. &bull; Lead Architect
+                </text>
+                <text x="14" y="74" fill="#94a3b8" fontSize="10.5">
+                  &ldquo;Simulated 200ms lag on Redis. Cache hit fell back safely.&rdquo;
+                </text>
               </g>
             </g>
           </svg>
@@ -625,20 +453,20 @@ export function LandingPage({
         <div className="hero-center-content">
           <div className="hero-announcement-pill">
             <span className="pill-dot" />
-            <span className="pill-tag">NEW: Resilio 2.0</span>
-            <span className="pill-text">Autonomous Meta AI SRE Auto-Repair &amp; Envoy IaC</span>
+            <span className="pill-tag">RESILIO 2.0</span>
+            <span className="pill-text">Test cloud architecture before you build it</span>
           </div>
 
           <h1 className="hero-headline">
-            Distributed Systems Architecture.
+            Design Your System.
             <br />
-            <span className="hero-headline-gradient">Verified with Real Chaos.</span>
+            <span className="hero-headline-gradient">Break It Before Production Does.</span>
           </h1>
 
           <p className="hero-subhead">
-            Resilio compiles visual whiteboard topologies into live physical network DAGs. Simulate
-            Toxiproxy packet faults, prevent cascading retry stampedes, and let autonomous Meta AI
-            prove mathematical resilience bounds before you push to production.
+            Whiteboard diagrams look great until real traffic hits. Resilio lets you simulate
+            latency spikes, server crashes, and retry storms directly on your architecture design—so
+            you find breaking points before your users do.
           </p>
 
           <div className="hero-actions">
@@ -647,19 +475,19 @@ export function LandingPage({
               className="btn btn-primary btn-hero"
               onClick={() => onLaunchStudio()}
             >
-              Launch Free Studio &rarr;
+              Start Free Sandbox &rarr;
             </button>
 
             <a href="#how-it-works" className="btn btn-secondary btn-hero">
-              How It Works
+              See How It Works
             </a>
           </div>
 
           {/* Platform Trust Bar */}
           <div className="hero-trust-bar">
-            <span className="trust-label">TRUSTED INTEGRATIONS &amp; CLOUD STANDARDS</span>
+            <span className="trust-label">READY FOR MODERN INFRASTRUCTURE</span>
             <div className="trust-logos-row">
-              <span className="trust-badge">AWS VPC</span>
+              <span className="trust-badge">AWS</span>
               <span className="trust-badge">Google Cloud</span>
               <span className="trust-badge">Microsoft Azure</span>
               <span className="trust-badge">Kubernetes</span>
@@ -672,91 +500,91 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* SECTION 1: The Product (The Paradigm Shift) */}
+      {/* SECTION 1: The Product (The Reality Check) */}
       <section id="product" className="landing-section">
         <div className="section-header">
-          <span className="section-eyebrow">THE PARADIGM SHIFT</span>
-          <h2 className="section-title">Whiteboards Don't Throw HTTP 503s. Production Does.</h2>
+          <span className="section-eyebrow">THE REALITY CHECK</span>
+          <h2 className="section-title">Static Drawings Don't Crash. Production Does.</h2>
           <p className="section-desc">
-            Static diagramming tools like Miro and Lucidchart are passive vector drawings. Resilio
-            is the first executable architecture studio where nodes run actual TCP sockets, measure
-            real latencies, and expose failure cascades.
+            Diagrams in Miro or Lucidchart cannot warn you when a database lag will trigger a
+            cascading retry storm. Resilio turns your design into an interactive simulation where
+            you can see failures unfold in real time.
           </p>
         </div>
 
         <div className="comparison-container">
           <div className="comparison-card legacy">
             <div className="comparison-card-header">
-              <span className="comparison-tag red">TRADITIONAL DRAWING</span>
-              <h3 className="comparison-heading">Static Vector Diagrams</h3>
+              <span className="comparison-tag red">STATIC DRAWINGS</span>
+              <h3 className="comparison-heading">Traditional Diagramming</h3>
               <p className="comparison-sub">Miro, Lucidchart, Visio, Draw.io</p>
             </div>
             <ul className="comparison-list">
               <li>
                 <span className="comparison-icon red">&times;</span>
                 <div>
-                  <strong>Zero Runtime Validation:</strong> Boxes and arrows have no concept of
-                  thread pool exhaustion, concurrency limits, or backpressure.
+                  <strong>Dead drawings:</strong> Static boxes cannot tell you if a connection pool
+                  will drown under traffic spikes.
                 </div>
               </li>
               <li>
                 <span className="comparison-icon red">&times;</span>
                 <div>
-                  <strong>Invisible Cascading Retries:</strong> A 3x retry policy looks safe on a
-                  flowchart, but triggers a self-inflicted DDoS on downstream databases.
+                  <strong>Silent retry traps:</strong> An innocent 3x retry looks fine on paper, but
+                  causes an accidental DDoS during an outage.
                 </div>
               </li>
               <li>
                 <span className="comparison-icon red">&times;</span>
                 <div>
-                  <strong>Theoretical SLA Guesses:</strong> System availability is calculated from
-                  spreadsheet optimism rather than real packet failure telemetry.
+                  <strong>Hoping for the best:</strong> Teams only discover architecture blind spots
+                  during a stressful 3 AM production page.
                 </div>
               </li>
               <li>
                 <span className="comparison-icon red">&times;</span>
                 <div>
-                  <strong>Instant Documentation Drift:</strong> Architecture wikis fall out of sync
-                  with deployed Terraform code within days of sprint completion.
+                  <strong>Instant doc drift:</strong> Architecture wikis fall out of date the day
+                  after they are drawn.
                 </div>
               </li>
             </ul>
           </div>
 
           <div className="comparison-card active-resilio">
-            <div className="comparison-card-badge">RECOMMENDED FOR ENTERPRISE ARCHITECTURE</div>
+            <div className="comparison-card-badge">THE BETTER WAY</div>
             <div className="comparison-card-header">
-              <span className="comparison-tag blue">RESILIO EXECUTABLE DAG</span>
-              <h3 className="comparison-heading">Live Chaos Verification Studio</h3>
-              <p className="comparison-sub">Real Toxiproxy Daemons + Meta AI Reasoner</p>
+              <span className="comparison-tag blue">INTERACTIVE SIMULATION</span>
+              <h3 className="comparison-heading">Resilio Design Studio</h3>
+              <p className="comparison-sub">Live Network Simulation + AI Copilot</p>
             </div>
             <ul className="comparison-list">
               <li>
                 <span className="comparison-icon green">&#10003;</span>
                 <div>
-                  <strong>Real Kernel Socket Chaos:</strong> Toxiproxy daemons inject physical
-                  millisecond jitter, bandwidth throttling, packet drops, and sudden TCP resets.
+                  <strong>Simulate real chaos:</strong> Inject realistic lag, packet loss, and
+                  server crashes with a single slider.
                 </div>
               </li>
               <li>
                 <span className="comparison-icon green">&#10003;</span>
                 <div>
-                  <strong>Deterministic Invariant Bounds:</strong> Mathematically prove whether p99
-                  latency stays under 250ms when a third-party payment partner fails.
+                  <strong>See the blast radius:</strong> Watch response times spike across
+                  dependencies before writing a single line of code.
                 </div>
               </li>
               <li>
                 <span className="comparison-icon green">&#10003;</span>
                 <div>
-                  <strong>Autonomous Meta AI SRE:</strong> AI monitors live topology telemetry,
-                  detects unbounded queues, and recommends adaptive circuit breaker thresholds.
+                  <strong>Smart AI fixes:</strong> Meta AI spots retry loops and suggests proven
+                  timeout and circuit-breaker settings.
                 </div>
               </li>
               <li>
                 <span className="comparison-icon green">&#10003;</span>
                 <div>
-                  <strong>One-Click Production IaC Export:</strong> Export verified topologies
-                  directly into production-ready Terraform modules and Envoy Proxy configs.
+                  <strong>Export to code:</strong> Turn your verified architecture straight into
+                  production Terraform and Envoy configs.
                 </div>
               </li>
             </ul>
@@ -767,19 +595,19 @@ export function LandingPage({
         <div className="metrics-banner">
           <div className="metric-cell">
             <span className="metric-number">$2.4M</span>
-            <span className="metric-label">Avg P0 Outage Loss Prevented</span>
+            <span className="metric-label">Average Cost of a Major Outage</span>
           </div>
           <div className="metric-cell">
-            <span className="metric-number">4.8x</span>
-            <span className="metric-label">Faster Architecture Reviews</span>
+            <span className="metric-number">80%</span>
+            <span className="metric-label">Outages Caused by Retry Stampedes</span>
           </div>
           <div className="metric-cell">
-            <span className="metric-number">100%</span>
-            <span className="metric-label">Deterministic Invariant Proofs</span>
+            <span className="metric-number">10x</span>
+            <span className="metric-label">Faster Architecture Alignment</span>
           </div>
           <div className="metric-cell">
             <span className="metric-number">0</span>
-            <span className="metric-label">Production Blast Risk</span>
+            <span className="metric-label">Risk to Production Data</span>
           </div>
         </div>
       </section>
@@ -787,17 +615,16 @@ export function LandingPage({
       {/* SECTION 2: How It Works */}
       <section id="how-it-works" className="landing-section">
         <div className="section-header">
-          <span className="section-eyebrow">VERIFICATION PIPELINE</span>
-          <h2 className="section-title">How Resilio Works in 3 Steps</h2>
+          <span className="section-eyebrow">HOW IT WORKS</span>
+          <h2 className="section-title">From Sketch to Resilient System in 3 Steps</h2>
           <p className="section-desc">
-            A continuous resilience workflow designed for distributed systems architects, platform
-            squads, and Site Reliability Engineers.
+            No heavy local containers or complex setup. Everything runs right in your browser.
           </p>
         </div>
 
         <div className="steps-pipeline-grid">
           <div className="step-card">
-            <div className="step-badge">STEP 01</div>
+            <div className="step-badge">STEP 1</div>
             <div className="step-icon-wrap cyan">
               <svg
                 viewBox="0 0 24 24"
@@ -811,20 +638,20 @@ export function LandingPage({
                 <path d="M3 9h18M9 21V9" />
               </svg>
             </div>
-            <h3 className="step-title">Compose or Ingest Topology</h3>
+            <h3 className="step-title">Draw Your Architecture</h3>
             <p className="step-desc">
-              Assemble microservices, API gateways, bounded queues, Redis caches, and sharded
-              databases using spatial magnetic routing. Or import existing Docker Compose setups.
+              Drag and drop services, caches, queues, and databases onto the canvas. Connect them
+              together, or import an existing Docker Compose setup.
             </p>
             <div className="step-tags">
-              <span>Docker Ingest</span>
-              <span>Orthogonal Routing</span>
-              <span>DAG Linter</span>
+              <span>Drag &amp; Drop</span>
+              <span>Docker Import</span>
+              <span>Instant Routing</span>
             </div>
           </div>
 
           <div className="step-card">
-            <div className="step-badge">STEP 02</div>
+            <div className="step-badge">STEP 2</div>
             <div className="step-icon-wrap amber">
               <svg
                 viewBox="0 0 24 24"
@@ -837,20 +664,20 @@ export function LandingPage({
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
               </svg>
             </div>
-            <h3 className="step-title">Inject Real Physical Chaos</h3>
+            <h3 className="step-title">Break Things on Purpose</h3>
             <p className="step-desc">
-              Execute kernel-level network fault injections via embedded Toxiproxy daemons. Induce
-              cross-AZ latency spikes, flaky downstream links, packet loss, and socket drops.
+              Turn up network lag, cut off third-party APIs, or crash a database node. Watch how the
+              rest of your system reacts under pressure.
             </p>
             <div className="step-tags">
-              <span>Toxiproxy Core</span>
-              <span>Packet Loss &amp; Jitter</span>
-              <span>TCP Socket Cut</span>
+              <span>Latency Spikes</span>
+              <span>Server Outages</span>
+              <span>Packet Drops</span>
             </div>
           </div>
 
           <div className="step-card">
-            <div className="step-badge">STEP 03</div>
+            <div className="step-badge">STEP 3</div>
             <div className="step-icon-wrap blue">
               <svg
                 viewBox="0 0 24 24"
@@ -863,29 +690,28 @@ export function LandingPage({
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
               </svg>
             </div>
-            <h3 className="step-title">Meta AI SRE &amp; IaC Synthesis</h3>
+            <h3 className="step-title">Fix It &amp; Export to Code</h3>
             <p className="step-desc">
-              Autonomous Meta AI reasoning agents identify cascading retry storms, synthesize
-              adaptive circuit-breaker policies, verify mathematical invariants, and export
-              production Terraform.
+              Get smart recommendations for circuit breakers and retry limits. When you're
+              confident, export straight to Terraform and Envoy.
             </p>
             <div className="step-tags">
-              <span>Meta AI Reasoning</span>
-              <span>Circuit Breakers</span>
-              <span>Terraform &amp; Envoy IaC</span>
+              <span>Meta AI Fixes</span>
+              <span>Terraform Export</span>
+              <span>Envoy Config</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SECTION 3: Why Resilio (Enterprise Benefits) */}
+      {/* SECTION 3: Why Resilio */}
       <section id="benefits" className="landing-section">
         <div className="section-header">
-          <span className="section-eyebrow">ENTERPRISE RESILIENCE</span>
-          <h2 className="section-title">Built for Mission-Critical Engineering Teams</h2>
+          <span className="section-eyebrow">WHY RESILIO</span>
+          <h2 className="section-title">Sleep Peacefully on Deploy Day</h2>
           <p className="section-desc">
-            Eliminate P0/P1 blind spots before you commit code, open pull requests, or provision
-            cloud infrastructure.
+            Give your team complete clarity on how their distributed architecture will behave when
+            things go wrong.
           </p>
         </div>
 
@@ -904,17 +730,18 @@ export function LandingPage({
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 </svg>
               </div>
-              <h3 className="bento-title">Zero-Production-Risk Chaos Engineering</h3>
+              <h3 className="bento-title">Zero Production Risk</h3>
             </div>
             <p className="bento-desc">
-              Chaos engineering in production risks customer revenue, data corruption, and SLA
-              fines. Resilio provides an isolated pre-production verification sandbox where teams
-              can safely simulate split-brain scenarios, database failover lags, and cascading
-              timeouts.
+              Testing failure in live production is risky and stressful. Resilio gives you a safe
+              sandbox to simulate worst-case disasters—database failovers, regional outages, and
+              slow APIs—without ever putting real customer revenue in danger.
             </p>
             <div className="bento-callout">
-              <span className="callout-label">INVARIANT VERIFICATION:</span>
-              <code>assert p99_latency &lt; 250ms under 40% downstream packet drop</code>
+              <span className="callout-label">PEACE OF MIND:</span>
+              <span>
+                Identify critical failure points long before your code touches a live server.
+              </span>
             </div>
           </div>
 
@@ -935,12 +762,11 @@ export function LandingPage({
                   <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
               </div>
-              <h3 className="bento-title">Collaborative Review Rooms</h3>
+              <h3 className="bento-title">Live Team Reviews</h3>
             </div>
             <p className="bento-desc">
-              Conduct weekly architecture reviews in multi-user live rooms. Push-to-talk voice
-              coordination, simultaneous cursor pointers, and collaborative chaos slider
-              manipulation.
+              Host architecture review meetings where everyone can interact on the same canvas. Use
+              built-in voice chat, draw together, and simulate outages live in front of the team.
             </p>
           </div>
 
@@ -959,11 +785,11 @@ export function LandingPage({
                   <polyline points="12 6 12 12 14 14" />
                 </svg>
               </div>
-              <h3 className="bento-title">Deterministic Invariant Proofs</h3>
+              <h3 className="bento-title">Catch Retry Storms Early</h3>
             </div>
             <p className="bento-desc">
-              Define strict SLA mathematical invariants. Resilio runs automated trials under
-              randomized workload surges to empirically prove whether your architecture holds.
+              Cascading retries are the most common cause of cloud outages. Resilio catches retry
+              loops on the whiteboard before they can trigger an accidental DDoS in production.
             </p>
           </div>
 
@@ -985,74 +811,34 @@ export function LandingPage({
                   <polyline points="10 9 9 9 8 9" />
                 </svg>
               </div>
-              <h3 className="bento-title">Bi-Directional Infrastructure as Code</h3>
+              <h3 className="bento-title">Drawings Become Real Infrastructure</h3>
             </div>
             <p className="bento-desc">
-              Eliminate drift between architecture diagrams and reality. Export verified
-              architectures into production-ready HashiCorp Terraform modules, Envoy Proxy
-              envoy.yaml filters, and Kubernetes deployment descriptors in seconds.
+              Stop spending hours manually writing boilerplate config. Once your architecture passes
+              simulations, export it directly into HashiCorp Terraform modules and Envoy Proxy
+              configurations in seconds.
             </p>
             <div className="bento-callout">
-              <span className="callout-label">SUPPORTED FORMATS:</span>
+              <span className="callout-label">ONE-CLICK EXPORT:</span>
               <span>
-                HashiCorp Terraform (.tf) &bull; Envoy Proxy YAML &bull; Kubernetes Manifests &bull;
-                JSON DAG
+                HashiCorp Terraform (.tf) &bull; Envoy Proxy YAML &bull; Kubernetes Manifests
               </span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SECTION 4: Real Failure Scenarios */}
-      <section id="scenarios" className="landing-section">
-        <div className="section-header">
-          <span className="section-eyebrow">INCIDENT PLAYBOOK</span>
-          <h2 className="section-title">Battle-Tested Failure Modes</h2>
-          <p className="section-desc">
-            Explore and simulate notorious cascading failure patterns modeled after real-world
-            outages at hyperscale cloud platforms.
-          </p>
-        </div>
-
-        <div className="scenarios-grid">
-          {scenarios.map((sc) => (
-            <div key={sc.id} className="scenario-card-modern">
-              <div className="scenario-header">
-                <div>
-                  <h3 className="scenario-name">{sc.name}</h3>
-                  <span className="scenario-nodes-count">
-                    {String(sc.topology.nodes.length)} nodes &bull;{' '}
-                    {String(sc.topology.edges.length)} links
-                  </span>
-                </div>
-                <span className="scenario-type-pill">CHAOS TEMPLATE</span>
-              </div>
-              <p className="scenario-description">{sc.description}</p>
-              <div className="scenario-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => onLaunchStudio(sc.id)}
-                >
-                  Simulate in Studio &rarr;
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* SECTION 5: Transparent Pricing */}
+      {/* SECTION 4: Transparent Pricing */}
       <section id="pricing" className="landing-section">
         <div className="section-header">
-          <span className="section-eyebrow">TRANSPARENT PRICING</span>
-          <h2 className="section-title">Predictable Plans for Engineering Teams</h2>
+          <span className="section-eyebrow">PRICING</span>
+          <h2 className="section-title">Simple, Transparent Plans</h2>
           <p className="section-desc">
-            Start free in your browser with zero installation. Scale seamlessly to enterprise
-            private VPC clusters.
+            Start free in your browser. Upgrade when your team needs collaborative rooms and
+            enterprise compliance.
           </p>
 
-          {/* Billing Cycle Switcher */}
+          {/* Billing Switcher */}
           <div className="billing-switcher-wrap">
             <button
               type="button"
@@ -1079,7 +865,7 @@ export function LandingPage({
               <span className="pricing-tier-badge">COMMUNITY</span>
               <h3 className="pricing-tier-title">Developer</h3>
               <p className="pricing-tier-desc">
-                For individual systems engineers and architects exploring chaos-driven design.
+                For individual engineers exploring system resilience and failure simulations.
               </p>
             </div>
 
@@ -1097,16 +883,16 @@ export function LandingPage({
             </button>
 
             <div className="pricing-features-list">
-              <span className="pricing-feature-header">INCLUDED CAPABILITIES:</span>
+              <span className="pricing-feature-header">INCLUDED:</span>
               <ul>
                 <li>
-                  <span>&#10003;</span> Up to 15 nodes per topology canvas
+                  <span>&#10003;</span> Up to 15 services per canvas
                 </li>
                 <li>
-                  <span>&#10003;</span> Real-time Toxiproxy latency &amp; jitter injection
+                  <span>&#10003;</span> Real-time latency and chaos injection
                 </li>
                 <li>
-                  <span>&#10003;</span> 6 battle-tested failure mode templates
+                  <span>&#10003;</span> Standard failure simulation templates
                 </li>
                 <li>
                   <span>&#10003;</span> JSON topology import and export
@@ -1115,7 +901,7 @@ export function LandingPage({
                   <span>&#10003;</span> Dark and light theme support
                 </li>
                 <li>
-                  <span>&#10003;</span> Community Discord support
+                  <span>&#10003;</span> Free forever, no credit card required
                 </li>
               </ul>
             </div>
@@ -1128,7 +914,7 @@ export function LandingPage({
               <span className="pricing-tier-badge pro">TEAM PRO</span>
               <h3 className="pricing-tier-title">Team Pro</h3>
               <p className="pricing-tier-desc">
-                For engineering squads conducting weekly architecture reviews and resilience audits.
+                For engineering squads running weekly design reviews wanting zero outage surprises.
               </p>
             </div>
 
@@ -1152,23 +938,22 @@ export function LandingPage({
               <span className="pricing-feature-header">EVERYTHING IN DEVELOPER, PLUS:</span>
               <ul>
                 <li>
-                  <span>&#10003;</span> Unlimited topology nodes and connections
+                  <span>&#10003;</span> Unlimited services and connections
                 </li>
                 <li>
-                  <span>&#10003;</span> Real-time collaborative meeting rooms with voice
-                  push-to-talk
+                  <span>&#10003;</span> Live collaborative meeting rooms with voice
                 </li>
                 <li>
-                  <span>&#10003;</span> Autonomous Meta AI SRE invariant verification
+                  <span>&#10003;</span> Meta AI automated issue detection &amp; fix suggestions
                 </li>
                 <li>
-                  <span>&#10003;</span> Terraform and Envoy Proxy IaC generation
+                  <span>&#10003;</span> Production Terraform &amp; Envoy IaC export
                 </li>
                 <li>
-                  <span>&#10003;</span> Advanced chaos: packet drop, socket reset, bandwidth limit
+                  <span>&#10003;</span> Advanced chaos: packet drops, socket cuts, throttle
                 </li>
                 <li>
-                  <span>&#10003;</span> Scenario snapshots and version history
+                  <span>&#10003;</span> Version history and scenario snapshots
                 </li>
                 <li>
                   <span>&#10003;</span> Priority Slack and email support
@@ -1183,7 +968,7 @@ export function LandingPage({
               <span className="pricing-tier-badge">ENTERPRISE</span>
               <h3 className="pricing-tier-title">Enterprise</h3>
               <p className="pricing-tier-desc">
-                For high-scale organizations demanding private VPCs, SSO, and compliance.
+                For high-growth companies needing private clusters, SSO, and compliance.
               </p>
             </div>
 
@@ -1201,25 +986,25 @@ export function LandingPage({
             </button>
 
             <div className="pricing-features-list">
-              <span className="pricing-feature-header">MISSION-CRITICAL CAPABILITIES:</span>
+              <span className="pricing-feature-header">ENTERPRISE CAPABILITIES:</span>
               <ul>
                 <li>
-                  <span>&#10003;</span> Dedicated private cloud VPC or on-prem air-gapped deployment
+                  <span>&#10003;</span> Dedicated private cloud VPC or on-prem deployment
                 </li>
                 <li>
-                  <span>&#10003;</span> SAML 2.0 / Okta / Azure AD SSO &amp; directory sync
+                  <span>&#10003;</span> SAML 2.0 / Okta / Azure AD single sign-on
                 </li>
                 <li>
-                  <span>&#10003;</span> Custom Toxiproxy daemon plugin integrations
+                  <span>&#10003;</span> Custom chaos plugins and integrations
                 </li>
                 <li>
-                  <span>&#10003;</span> SOC-2 Type II audit report &amp; enterprise BAA
+                  <span>&#10003;</span> SOC-2 Type II audit report &amp; Enterprise BAA
                 </li>
                 <li>
-                  <span>&#10003;</span> 99.99% uptime SLA &amp; dedicated technical account manager
+                  <span>&#10003;</span> 99.99% uptime SLA &amp; dedicated technical manager
                 </li>
                 <li>
-                  <span>&#10003;</span> Role-based workspace permissions &amp; audit log export
+                  <span>&#10003;</span> Audit logs &amp; role-based workspace permissions
                 </li>
               </ul>
             </div>
@@ -1227,15 +1012,12 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* SECTION 6: Interactive FAQ Accordion */}
+      {/* SECTION 5: Frequently Asked Questions */}
       <section id="faq" className="landing-section">
         <div className="section-header">
-          <span className="section-eyebrow">FREQUENTLY ASKED QUESTIONS</span>
-          <h2 className="section-title">Everything You Need to Know</h2>
-          <p className="section-desc">
-            Common questions about Resilio architecture canvases, Toxiproxy chaos injection, and
-            enterprise deployment.
-          </p>
+          <span className="section-eyebrow">QUESTIONS &amp; ANSWERS</span>
+          <h2 className="section-title">Frequently Asked Questions</h2>
+          <p className="section-desc">Quick, honest answers to common questions about Resilio.</p>
         </div>
 
         <div className="faq-accordion-wrap">
@@ -1258,7 +1040,6 @@ export function LandingPage({
               >
                 <div className="faq-question-row">
                   <div className="faq-question-text">
-                    <span className="faq-category">{faq.category}</span>
                     <h3 className="faq-title">{faq.question}</h3>
                   </div>
                   <span className="faq-toggle-icon" aria-hidden="true">
@@ -1276,16 +1057,14 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* SECTION 7: Bottom CTA Conversion Banner */}
+      {/* SECTION 6: Bottom CTA Conversion Banner */}
       <section className="landing-cta-banner-wrap">
         <div className="landing-cta-banner">
           <div className="cta-ambient-glow" aria-hidden="true" />
-          <h2 className="cta-banner-title">
-            Stop Discovering Architecture Blind Spots in Production.
-          </h2>
+          <h2 className="cta-banner-title">Stop Discovering Architecture Flaws at 3 AM.</h2>
           <p className="cta-banner-desc">
-            Join over 1,200+ forward-thinking engineering teams verifying distributed resilience
-            before writing a single line of production code.
+            Join engineering teams building resilient distributed systems. Test your architecture
+            against real failure scenarios today.
           </p>
           <div className="cta-banner-actions">
             <button
@@ -1293,14 +1072,14 @@ export function LandingPage({
               className="btn btn-primary btn-hero"
               onClick={() => onLaunchStudio()}
             >
-              Launch Free Studio &rarr;
+              Launch Free Sandbox &rarr;
             </button>
             <button
               type="button"
               className="btn btn-secondary btn-hero"
               onClick={() => handleAuthAction('signup')}
             >
-              Create Team Account
+              Sign Up for Free
             </button>
           </div>
           <div className="cta-sub-assurance">
@@ -1313,7 +1092,7 @@ export function LandingPage({
         </div>
       </section>
 
-      {/* SECTION 8: Enterprise Multi-Column Footer */}
+      {/* SECTION 7: Enterprise Footer */}
       <footer className="landing-footer">
         <div className="landing-footer-container">
           <div className="footer-columns-grid">
@@ -1334,7 +1113,7 @@ export function LandingPage({
                 <span className="landing-title">Resilio</span>
               </div>
               <p className="footer-tagline">
-                The Executable Architecture &amp; Chaos Engineering Platform.
+                The Interactive Cloud Architecture &amp; Failure Simulation Studio.
               </p>
               <div className="footer-system-status">
                 <span className="status-dot-active" />
@@ -1347,22 +1126,19 @@ export function LandingPage({
               <h4 className="footer-col-title">Product</h4>
               <ul className="footer-col-links">
                 <li>
-                  <a href="#product">Executable DAG Studio</a>
+                  <a href="#product">Design Studio</a>
                 </li>
                 <li>
-                  <a href="#how-it-works">Toxiproxy Chaos Engine</a>
+                  <a href="#how-it-works">Failure Simulation</a>
                 </li>
                 <li>
-                  <a href="#benefits">Meta AI SRE Agent</a>
+                  <a href="#benefits">Meta AI Copilot</a>
                 </li>
                 <li>
-                  <a href="#benefits">Live Review Rooms</a>
+                  <a href="#benefits">Team Review Rooms</a>
                 </li>
                 <li>
-                  <a href="#benefits">Terraform &amp; Envoy IaC</a>
-                </li>
-                <li>
-                  <a href="#scenarios">Incident Scenario Library</a>
+                  <a href="#benefits">Terraform &amp; Envoy Export</a>
                 </li>
               </ul>
             </div>
@@ -1372,19 +1148,16 @@ export function LandingPage({
               <h4 className="footer-col-title">Solutions</h4>
               <ul className="footer-col-links">
                 <li>
-                  <a href="#benefits">Microservice Outage Prevention</a>
+                  <a href="#benefits">Prevent Outages</a>
                 </li>
                 <li>
-                  <a href="#benefits">Cloud Architecture Review</a>
+                  <a href="#benefits">Architecture Review</a>
                 </li>
                 <li>
-                  <a href="#benefits">P0 Disaster Recovery Drills</a>
+                  <a href="#benefits">Eliminate Retry Storms</a>
                 </li>
                 <li>
-                  <a href="#scenarios">Retry Storm Mitigation</a>
-                </li>
-                <li>
-                  <a href="#product">Pre-Production Chaos Engineering</a>
+                  <a href="#product">Pre-Production Testing</a>
                 </li>
               </ul>
             </div>
@@ -1397,16 +1170,13 @@ export function LandingPage({
                   <a href="#faq">Architecture FAQ</a>
                 </li>
                 <li>
-                  <a href="#scenarios">Hyperscale Failure Modes</a>
+                  <a href="#pricing">Pricing Plans</a>
                 </li>
                 <li>
-                  <a href="#pricing">Enterprise Pricing</a>
+                  <a href="#how-it-works">How It Works</a>
                 </li>
                 <li>
-                  <a href="#how-it-works">Toxiproxy Documentation</a>
-                </li>
-                <li>
-                  <a href="#how-it-works">Envoy Proxy Recipes</a>
+                  <a href="#product">The Reality Check</a>
                 </li>
               </ul>
             </div>
@@ -1420,9 +1190,6 @@ export function LandingPage({
                 </li>
                 <li>
                   <a href="#pricing">SOC-2 Type II Certified</a>
-                </li>
-                <li>
-                  <a href="#pricing">ISO/IEC 27001</a>
                 </li>
                 <li>
                   <a href="#pricing">Privacy Policy</a>
