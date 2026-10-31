@@ -39,8 +39,8 @@ function getMetricAggregate(
 export function VerdictsSummary({ verdicts, overallStatus, finalRecord }: VerdictsSummaryProps) {
   if (!verdicts) {
     return (
-      <Card title="Invariant Verdicts">
-        <p className="state-message">Verdicts will appear here once all trials complete.</p>
+      <Card title="Resilience Invariant Verdicts">
+        <p className="state-message">Verdicts evaluate automatically once all simulation trials complete.</p>
       </Card>
     );
   }

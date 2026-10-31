@@ -16,13 +16,28 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   if (telemetry.length === 0) {
+    const isSimulating = currentTrial > 0;
     return (
       <Card title="Live Telemetry">
         <div className="empty-chart-state">
-          <p>No telemetry received yet. Run an experiment to see empirical measurements.</p>
-          <span className="subtext">
-            Trials: {String(currentTrial)} of {String(totalTrials)}
-          </span>
+          {isSimulating ? (
+            <>
+              <div className="telemetry-measuring-row">
+                <span className="agentic-pulse-spinner" />
+                <p style={{ margin: 0 }}>Collecting trial measurements...</p>
+              </div>
+              <span className="subtext">
+                Executing trial {String(currentTrial)} of {String(totalTrials)}. Latency and error curves will plot as trials complete.
+              </span>
+            </>
+          ) : (
+            <>
+              <p>Ready to measure latency and throughput.</p>
+              <span className="subtext">
+                Click &ldquo;Run Simulation&rdquo; above to benchmark this architecture under traffic.
+              </span>
+            </>
+          )}
         </div>
       </Card>
     );

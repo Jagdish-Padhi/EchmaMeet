@@ -268,7 +268,11 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
       });
     }
 
-    if (response.status === 401 && typeof window !== 'undefined') {
+    const isAuthPath = path.startsWith('/api/auth/');
+    const hadToken =
+      typeof window !== 'undefined' && Boolean(localStorage.getItem('chaosboard_token'));
+
+    if (response.status === 401 && !isAuthPath && hadToken && typeof window !== 'undefined') {
       localStorage.removeItem('chaosboard_token');
       localStorage.removeItem('chaosboard_auth');
       window.dispatchEvent(new Event('chaosboard:unauthorized'));
@@ -298,14 +302,16 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
         throw new ApiError({ kind: 'problem', problem: problem.data });
       }
 
-      // Friendly fallback: if server returned standard error object with message/detail
+      // Friendly fallback: if server returned standard error object with detail, message, or error
       const fallbackDetail =
         typeof body === 'object' && body !== null
           ? typeof (body as Record<string, unknown>)['detail'] === 'string'
             ? (body as Record<string, string>)['detail']
             : typeof (body as Record<string, unknown>)['message'] === 'string'
               ? (body as Record<string, string>)['message']
-              : undefined
+              : typeof (body as Record<string, unknown>)['error'] === 'string'
+                ? (body as Record<string, string>)['error']
+                : undefined
           : undefined;
 
       if (fallbackDetail) {
@@ -331,7 +337,7 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
       throw new ApiError({
         kind: 'unexpected_response',
         status: response.status,
-        message: 'the error response did not match the problem details contract',
+        message: `HTTP error ${String(response.status)}`,
       });
     }
 

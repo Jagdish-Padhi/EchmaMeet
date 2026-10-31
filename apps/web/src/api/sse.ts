@@ -11,6 +11,25 @@ export interface SseSubscription {
   readonly close: () => void;
 }
 
+export const SSE_RUN_EVENT_TYPES = [
+  'message',
+  'experiment_started',
+  'sandbox_ready',
+  'trial_started',
+  'trial_finished',
+  'trial_invalid',
+  'phase_transition',
+  'heartbeat',
+  'experiment_finished',
+  'experiment_failed',
+  'experiment_cancelled',
+  'repair_started',
+  'repair_iteration',
+  'repair_finished',
+  'repair_failed',
+  'repair_cancelled',
+] as const;
+
 export function subscribeToRunEvents(
   url: string,
   options: SseSubscriptionOptions,
@@ -76,14 +95,18 @@ export function subscribeToRunEvents(
     }
   };
 
-  activeSource.addEventListener('message', handleMessage as EventListener);
+  for (const eventName of SSE_RUN_EVENT_TYPES) {
+    activeSource.addEventListener(eventName, handleMessage as EventListener);
+  }
   activeSource.addEventListener('error', handleError as EventListener);
 
   return {
     close: () => {
       if (!closed) {
         closed = true;
-        activeSource.removeEventListener('message', handleMessage as EventListener);
+        for (const eventName of SSE_RUN_EVENT_TYPES) {
+          activeSource.removeEventListener(eventName, handleMessage as EventListener);
+        }
         activeSource.removeEventListener('error', handleError as EventListener);
         activeSource.close();
       }

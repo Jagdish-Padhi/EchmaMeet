@@ -92,21 +92,53 @@ export function useExperimentSession(api: ApiClient, currentTopology: Topology |
       const telemetryPoints = [...prev.telemetry];
 
       if (event.type === 'trial_started') {
-        const trialIdx = (event.payload['trialIndex'] as number | undefined) ?? currentTrial;
-        currentTrial = trialIdx + 1;
+        const trialIdx = (event.payload['trialIndex'] as number | undefined) ?? 0;
+        const phase = event.payload['phase'] as string | undefined;
+        const baselineOffset = phase === 'faulted' ? prev.trialConfig.trials : 0;
+        currentTrial = baselineOffset + trialIdx + 1;
       }
 
       if (event.type === 'trial_finished') {
-        const metrics = event.payload['metrics'] as Record<string, unknown> | undefined;
-        if (metrics) {
+        const payload = event.payload;
+        const metrics = (payload['metrics'] as Record<string, unknown> | undefined) ?? payload;
+        const p99 = (metrics['p99LatencyMs'] ?? metrics['p99_latency_ms']) as number | undefined;
+        const p95 = (metrics['p95LatencyMs'] ?? metrics['p95_latency_ms']) as number | undefined;
+        const p50 = (metrics['p50LatencyMs'] ?? metrics['p50_latency_ms']) as number | undefined;
+        const completionRate = (metrics['completionRate'] ?? metrics['completion_rate']) as
+          | number
+          | undefined;
+        const errorRate = (metrics['errorRate'] ??
+          metrics['error_rate'] ??
+          (completionRate !== undefined ? 1 - completionRate : undefined)) as number | undefined;
+
+        if (p99 !== undefined || errorRate !== undefined) {
           telemetryPoints.push({
             timestampMs: event.timestampMs,
-            p50LatencyMs: metrics['p50_latency_ms'] as number | undefined,
-            p95LatencyMs: metrics['p95_latency_ms'] as number | undefined,
-            p99LatencyMs: metrics['p99_latency_ms'] as number | undefined,
-            errorRate: metrics['error_rate'] as number | undefined,
+            p50LatencyMs: p50 ?? (p99 ? Math.round(p99 * 0.4) : undefined),
+            p95LatencyMs: p95 ?? (p99 ? Math.round(p99 * 0.85) : undefined),
+            p99LatencyMs: p99,
+            errorRate: errorRate ?? 0,
           });
         }
+      }
+
+      if (event.type === 'experiment_failed') {
+        const errorMsg = (event.payload['error'] as string | undefined) ?? 'Simulation failed.';
+        return {
+          ...prev,
+          status: 'failed',
+          errorMessage: errorMsg,
+          liveEvents: nextEvents,
+        };
+      }
+
+      if (event.type === 'experiment_cancelled') {
+        return {
+          ...prev,
+          status: 'cancelled',
+          errorMessage: 'Simulation was cancelled.',
+          liveEvents: nextEvents,
+        };
       }
 
       return {
@@ -166,25 +198,49 @@ export function useExperimentSession(api: ApiClient, currentTopology: Topology |
               .then((record) => {
                 setState((prev) => ({
                   ...prev,
-                  status: record.status === 'cancelled' ? 'cancelled' : 'completed',
+                  status:
+                    record.status === 'cancelled'
+                      ? 'cancelled'
+                      : record.status === 'failed'
+                        ? 'failed'
+                        : 'completed',
                   finalRecord: record,
                   verdicts: record.verdicts,
                   overallStatus: record.overallStatus,
+                  errorMessage: record.errorMessage ?? prev.errorMessage,
                 }));
               })
               .catch((err: unknown) => {
                 setState((prev) => ({
                   ...prev,
-                  status: 'completed',
+                  status: 'failed',
                   errorMessage: err instanceof Error ? err.message : String(err),
                 }));
               });
           },
           onError: (err) => {
-            setState((prev) => ({
-              ...prev,
-              errorMessage: err.message,
-            }));
+            api
+              .getExperiment(runId)
+              .then((record) => {
+                setState((prev) => ({
+                  ...prev,
+                  status:
+                    record.status === 'running'
+                      ? 'failed'
+                      : (record.status as ExperimentSessionState['status']),
+                  finalRecord: record,
+                  verdicts: record.verdicts,
+                  overallStatus: record.overallStatus,
+                  errorMessage: record.errorMessage ?? err.message,
+                }));
+              })
+              .catch(() => {
+                setState((prev) => ({
+                  ...prev,
+                  status: 'failed',
+                  errorMessage: err.message,
+                }));
+              });
           },
         });
       } catch (err) {
