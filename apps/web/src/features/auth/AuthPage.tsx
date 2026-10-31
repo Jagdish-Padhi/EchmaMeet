@@ -2,6 +2,7 @@ import { useEffect, useState, type SyntheticEvent } from 'react';
 import type { UserProfile } from '../board';
 import { ApiError, type ApiClient, type AuthConfigResponse } from '../../api/client';
 import { isFirebaseConfigured, signInWithGoogleFirebase } from './firebase';
+import { useToast } from '../toast';
 
 export interface AuthPageProps {
   readonly onAuthenticate: (user: UserProfile) => void;
@@ -31,6 +32,12 @@ export function AuthPage({
   const [error, setError] = useState<string | null>(null);
   const [isOfflineServer, setIsOfflineServer] = useState(false);
   const [authConfig, setAuthConfig] = useState<AuthConfigResponse | null>(null);
+  const toast = useToast();
+
+  useEffect(() => {
+    setIsLogin(initialMode === 'login');
+    setError(null);
+  }, [initialMode]);
 
   // Discover configured OAuth providers on mount
   useEffect(() => {
@@ -125,22 +132,22 @@ export function AuthPage({
         handleContinueOffline();
       }
     } catch (err: unknown) {
+      let errorMsg = 'Authentication failed. Please verify credentials.';
       if (err instanceof ApiError && err.failure.kind === 'problem' && err.failure.problem.detail) {
-        setError(err.failure.problem.detail);
+        errorMsg = err.failure.problem.detail;
       } else if (err instanceof Error) {
-        const msg = err.message;
-        setError(msg);
+        errorMsg = err.message;
         if (
-          msg.includes('502') ||
-          msg.includes('offline') ||
-          msg.includes('network') ||
-          msg.includes('Failed to fetch')
+          errorMsg.includes('502') ||
+          errorMsg.includes('offline') ||
+          errorMsg.includes('network') ||
+          errorMsg.includes('Failed to fetch')
         ) {
           setIsOfflineServer(true);
         }
-      } else {
-        setError('Authentication failed. Please verify credentials.');
       }
+      setError(errorMsg);
+      toast.error(errorMsg, isLogin ? 'Sign-In Failed' : 'Registration Failed');
     } finally {
       setLoading(false);
     }
@@ -175,40 +182,28 @@ export function AuthPage({
           return;
         }
 
-        const profile = {
-          email: provider === 'github' ? 'eng@github.sso' : 'alex.chen@google.sso',
-          name: provider === 'github' ? 'Staff Engineer (GitHub)' : 'Alex Chen (Google SSO)',
-          role: 'Distributed Systems Architect',
-          avatar: provider === 'github' ? 'GH' : 'AC',
-        };
-
-        const res =
-          provider === 'google'
-            ? await api.googleAuth({ profile })
-            : await api.githubAuth({ profile });
-
-        localStorage.setItem('chaosboard_token', res.token);
-        onAuthenticate(res.user);
+        // If SSO is not configured, inform the user cleanly instead of faking a login
+        const providerName = provider === 'google' ? 'Google Workspace' : 'GitHub Enterprise';
+        toast.info(
+          `${providerName} Single Sign-On is not configured on this server. Please enter your credentials or use the offline mode below.`,
+          'SSO Configuration',
+        );
+        setError(`${providerName} SSO is not configured. Please sign in with email and password.`);
+        return;
       } else {
-        const user: UserProfile = {
-          userId: `sso-${provider}-eng`,
-          name: provider === 'github' ? 'Staff Engineer (GitHub)' : 'Alex Chen (Google SSO)',
-          role: 'Distributed Systems Architect',
-          avatar: provider === 'github' ? 'GH' : 'AC',
-          email: provider === 'github' ? 'eng@github.sso' : 'alex.chen@google.sso',
-        };
-        onAuthenticate(user);
+        toast.info(
+          'API server is not connected. Enter your name and email to continue in local offline session.',
+          'Offline Mode',
+        );
+        handleContinueOffline();
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        const msg = err.message;
-        setError(msg);
-        if (msg.includes('502') || msg.includes('offline') || msg.includes('network')) {
-          setIsOfflineServer(true);
-        }
-      } else {
-        setError(`${provider} SSO failed. Please try again.`);
+      const msg = err instanceof Error ? err.message : `${provider} SSO failed. Please try again.`;
+      setError(msg);
+      if (msg.includes('502') || msg.includes('offline') || msg.includes('network')) {
+        setIsOfflineServer(true);
       }
+      toast.error(msg, `${provider.toUpperCase()} Sign-In Failed`);
     } finally {
       setLoading(false);
     }
