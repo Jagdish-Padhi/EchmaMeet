@@ -779,10 +779,9 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
   transition:
-    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 0.25s ease;
+    transform 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .step-card:hover {
@@ -796,52 +795,22 @@ body {
   font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--color-accent);
-  margin-bottom: 12px;
-  position: relative;
-  z-index: 1;
+  margin-bottom: 16px;
 }
 
 .step-icon-wrap {
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  width: 46px;
-  height: 46px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  margin-bottom: 16px;
   background: transparent;
   color: var(--color-accent, #38bdf8);
-  opacity: 0.32;
-  pointer-events: none;
-  z-index: 0;
-  transform-origin: center center;
-  transition:
-    transform 0.38s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 0.3s ease,
-    filter 0.3s ease;
-}
-
-.step-icon-wrap svg {
-  width: 38px;
-  height: 38px;
-  stroke-width: 1.6;
 }
 
 [data-theme='light'] .step-icon-wrap {
   color: #0284c7;
-  opacity: 0.22;
-}
-
-.step-card:hover .step-icon-wrap {
-  transform: rotate(8deg) scale(1.12);
-  opacity: 0.88;
-  filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.3));
-}
-
-[data-theme='light'] .step-card:hover .step-icon-wrap {
-  opacity: 0.78;
-  filter: drop-shadow(0 0 10px rgba(2, 132, 199, 0.25));
 }
 
 .step-icon-wrap.cyan,
@@ -856,9 +825,6 @@ body {
   font-weight: 700;
   color: var(--color-text);
   margin-bottom: 12px;
-  position: relative;
-  z-index: 1;
-  max-width: calc(100% - 44px);
 }
 
 .step-desc {
@@ -867,16 +833,12 @@ body {
   line-height: 1.6;
   margin-bottom: 24px;
   flex: 1;
-  position: relative;
-  z-index: 1;
 }
 
 .step-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  position: relative;
-  z-index: 1;
 }
 
 .step-tags span {
@@ -909,11 +871,9 @@ body {
   padding: 32px;
   display: flex;
   flex-direction: column;
-  position: relative;
-  overflow: hidden;
   transition:
-    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 0.25s ease;
+    transform 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .bento-card:hover {
@@ -932,53 +892,25 @@ body {
 }
 
 .bento-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   margin-bottom: 14px;
-  position: relative;
-  z-index: 1;
 }
 
 .bento-icon {
-  position: absolute;
-  top: 26px;
-  right: 28px;
-  width: 46px;
-  height: 46px;
-  display: flex;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   background: transparent;
   color: var(--color-accent, #38bdf8);
-  opacity: 0.32;
-  pointer-events: none;
-  z-index: 0;
-  transform-origin: center center;
-  transition:
-    transform 0.38s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 0.3s ease,
-    filter 0.3s ease;
-}
-
-.bento-icon svg {
-  width: 38px;
-  height: 38px;
-  stroke-width: 1.6;
 }
 
 [data-theme='light'] .bento-icon {
   color: #0284c7;
-  opacity: 0.22;
-}
-
-.bento-card:hover .bento-icon {
-  transform: rotate(8deg) scale(1.12);
-  opacity: 0.88;
-  filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.3));
-}
-
-[data-theme='light'] .bento-card:hover .bento-icon {
-  opacity: 0.78;
-  filter: drop-shadow(0 0 10px rgba(2, 132, 199, 0.25));
 }
 
 .bento-icon.cyan,
@@ -993,7 +925,6 @@ body {
   font-size: 18px;
   font-weight: 700;
   color: var(--color-text);
-  max-width: calc(100% - 48px);
 }
 
 .bento-desc {
@@ -1001,8 +932,6 @@ body {
   color: var(--color-text-muted);
   line-height: 1.6;
   margin-bottom: 20px;
-  position: relative;
-  z-index: 1;
 }
 
 .bento-callout {
