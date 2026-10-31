@@ -197,6 +197,35 @@ export function LandingPage({
               >
                 <path d="M 0 1.5 L 7.5 5 L 0 8.5 Z" fill="#475569" />
               </marker>
+
+              {/* Crisp Neon Micro-Glow Filters for Photon Packets */}
+              <filter id="neon-cyan-glow" x="-100%" y="-100%" width="300%" height="300%">
+                <feDropShadow
+                  dx="0"
+                  dy="0"
+                  stdDeviation="1.5"
+                  floodColor="#00f0ff"
+                  floodOpacity="0.9"
+                />
+              </filter>
+              <filter id="neon-emerald-glow" x="-100%" y="-100%" width="300%" height="300%">
+                <feDropShadow
+                  dx="0"
+                  dy="0"
+                  stdDeviation="1.5"
+                  floodColor="#10b981"
+                  floodOpacity="0.9"
+                />
+              </filter>
+              <filter id="neon-blue-glow" x="-100%" y="-100%" width="300%" height="300%">
+                <feDropShadow
+                  dx="0"
+                  dy="0"
+                  stdDeviation="1.5"
+                  floodColor="#38bdf8"
+                  floodOpacity="0.9"
+                />
+              </filter>
             </defs>
 
             <rect width="100%" height="100%" fill="url(#hero-matrix-grid)" />
@@ -210,9 +239,11 @@ export function LandingPage({
               strokeWidth="1.8"
               markerEnd="url(#hero-arrow)"
             />
-            <circle r="3" fill="#38bdf8">
+            <g>
               <animateMotion path="M 140 210 L 140 310" dur="1.8s" repeatCount="indefinite" />
-            </circle>
+              <circle r="2.8" fill="#00f0ff" filter="url(#neon-cyan-glow)" />
+              <circle r="1.3" fill="#ffffff" />
+            </g>
 
             <path
               d="M 140 380 L 140 480"
@@ -221,9 +252,11 @@ export function LandingPage({
               strokeWidth="1.8"
               markerEnd="url(#hero-arrow)"
             />
-            <circle r="3" fill="#38bdf8">
+            <g>
               <animateMotion path="M 140 380 L 140 480" dur="2s" repeatCount="indefinite" />
-            </circle>
+              <circle r="2.8" fill="#00f0ff" filter="url(#neon-cyan-glow)" />
+              <circle r="1.3" fill="#ffffff" />
+            </g>
 
             {/* Bottom Interconnect: Kafka -> Order Worker -> Redis -> SLO Guard -> Patch Engine */}
             <path
@@ -233,13 +266,15 @@ export function LandingPage({
               strokeWidth="1.8"
               strokeDasharray="4 3"
             />
-            <circle r="3" fill="#3b82f6">
+            <g>
               <animateMotion
                 path="M 240 515 L 290 515 Q 310 515, 310 560 L 310 635 L 330 635"
                 dur="2.5s"
                 repeatCount="indefinite"
               />
-            </circle>
+              <circle r="2.8" fill="#38bdf8" filter="url(#neon-blue-glow)" />
+              <circle r="1.3" fill="#ffffff" />
+            </g>
 
             <path
               d="M 540 635 L 620 635"
@@ -248,9 +283,11 @@ export function LandingPage({
               strokeWidth="1.8"
               markerEnd="url(#hero-arrow)"
             />
-            <circle r="3" fill="#10b981">
+            <g>
               <animateMotion path="M 540 635 L 620 635" dur="1.6s" repeatCount="indefinite" />
-            </circle>
+              <circle r="2.8" fill="#10b981" filter="url(#neon-emerald-glow)" />
+              <circle r="1.3" fill="#ffffff" />
+            </g>
 
             <path
               d="M 830 635 L 910 635"
@@ -259,9 +296,11 @@ export function LandingPage({
               strokeWidth="1.8"
               markerEnd="url(#hero-arrow)"
             />
-            <circle r="3" fill="#38bdf8">
+            <g>
               <animateMotion path="M 830 635 L 910 635" dur="1.6s" repeatCount="indefinite" />
-            </circle>
+              <circle r="2.8" fill="#00f0ff" filter="url(#neon-cyan-glow)" />
+              <circle r="1.3" fill="#ffffff" />
+            </g>
 
             <path
               d="M 1120 635 Q 1150 635, 1150 590 L 1150 515 L 1180 515"
@@ -270,13 +309,15 @@ export function LandingPage({
               strokeWidth="1.8"
               strokeDasharray="4 3"
             />
-            <circle r="3" fill="#0866ff">
+            <g>
               <animateMotion
                 path="M 1120 635 Q 1150 635, 1150 590 L 1150 515 L 1180 515"
                 dur="2.4s"
                 repeatCount="indefinite"
               />
-            </circle>
+              <circle r="2.8" fill="#38bdf8" filter="url(#neon-blue-glow)" />
+              <circle r="1.3" fill="#ffffff" />
+            </g>
 
             {/* Right Vertical Flow: Patch Engine -> Meeting Room -> AI SRE */}
             <path
@@ -286,9 +327,11 @@ export function LandingPage({
               strokeWidth="1.8"
               markerEnd="url(#hero-arrow)"
             />
-            <circle r="3" fill="#10b981">
+            <g>
               <animateMotion path="M 1290 480 L 1290 420" dur="1.8s" repeatCount="indefinite" />
-            </circle>
+              <circle r="2.8" fill="#10b981" filter="url(#neon-emerald-glow)" />
+              <circle r="1.3" fill="#ffffff" />
+            </g>
 
             <path
               d="M 1290 270 L 1290 215"
@@ -297,9 +340,11 @@ export function LandingPage({
               strokeWidth="1.8"
               markerEnd="url(#hero-arrow)"
             />
-            <circle r="3" fill="#38bdf8">
+            <g>
               <animateMotion path="M 1290 270 L 1290 215" dur="1.7s" repeatCount="indefinite" />
-            </circle>
+              <circle r="2.8" fill="#00f0ff" filter="url(#neon-cyan-glow)" />
+              <circle r="1.3" fill="#ffffff" />
+            </g>
 
             {/* === LEFT FLANK NODES (x=40..240, clean of center & top navbar) === */}
             {/* Block 1: API Gateway (Top-Left) */}
