@@ -679,7 +679,7 @@ export function LandingPage({
         <div className="steps-pipeline-grid">
           <div className="step-card">
             <div className="step-badge">INTEGRATED AUDIO</div>
-            <div className="step-icon-wrap cyan">
+            <div className="step-icon-wrap">
               <svg
                 viewBox="0 0 24 24"
                 width="24"
@@ -708,7 +708,7 @@ export function LandingPage({
 
           <div className="step-card">
             <div className="step-badge">SHARED CHAOS DIAL</div>
-            <div className="step-icon-wrap amber">
+            <div className="step-icon-wrap">
               <svg
                 viewBox="0 0 24 24"
                 width="24"
@@ -723,9 +723,9 @@ export function LandingPage({
             </div>
             <h3 className="step-title">Simulate Failures Live in the Call</h3>
             <p className="step-desc">
-              When an engineer asks "What happens if Redis latency spikes?", turn the slider live in
-              the meeting. Everyone sees the p99 latency curve jump and requests queue up
-              synchronously.
+              When an engineer asks &quot;What happens if Redis latency spikes?&quot;, turn the
+              slider live in the meeting. Everyone sees the p99 latency curve jump and requests
+              queue up synchronously.
             </p>
             <div className="step-tags">
               <span>Live Packet Lag</span>
@@ -736,7 +736,7 @@ export function LandingPage({
 
           <div className="step-card">
             <div className="step-badge">COLLABORATIVE DAG</div>
-            <div className="step-icon-wrap blue">
+            <div className="step-icon-wrap">
               <svg
                 viewBox="0 0 24 24"
                 width="24"
@@ -874,7 +874,7 @@ export function LandingPage({
         <div className="steps-pipeline-grid">
           <div className="step-card">
             <div className="step-badge">STEP 1</div>
-            <div className="step-icon-wrap cyan">
+            <div className="step-icon-wrap">
               <svg
                 viewBox="0 0 24 24"
                 width="24"
@@ -903,7 +903,7 @@ export function LandingPage({
 
           <div className="step-card">
             <div className="step-badge">STEP 2</div>
-            <div className="step-icon-wrap amber">
+            <div className="step-icon-wrap">
               <svg
                 viewBox="0 0 24 24"
                 width="24"
@@ -929,7 +929,7 @@ export function LandingPage({
 
           <div className="step-card">
             <div className="step-badge">STEP 3</div>
-            <div className="step-icon-wrap blue">
+            <div className="step-icon-wrap">
               <svg
                 viewBox="0 0 24 24"
                 width="24"
@@ -973,7 +973,7 @@ export function LandingPage({
         <div className="bento-grid">
           <div className="bento-card bento-span-2">
             <div className="bento-header">
-              <div className="bento-icon cyan">
+              <div className="bento-icon">
                 <svg
                   viewBox="0 0 24 24"
                   width="20"
@@ -1000,7 +1000,7 @@ export function LandingPage({
 
           <div className="bento-card">
             <div className="bento-header">
-              <div className="bento-icon amber">
+              <div className="bento-icon">
                 <svg
                   viewBox="0 0 24 24"
                   width="20"
@@ -1023,7 +1023,7 @@ export function LandingPage({
 
           <div className="bento-card">
             <div className="bento-header">
-              <div className="bento-icon blue">
+              <div className="bento-icon">
                 <svg
                   viewBox="0 0 24 24"
                   width="20"
@@ -1045,7 +1045,7 @@ export function LandingPage({
 
           <div className="bento-card bento-span-2">
             <div className="bento-header">
-              <div className="bento-icon green">
+              <div className="bento-icon">
                 <svg
                   viewBox="0 0 24 24"
                   width="20"
