@@ -46,8 +46,8 @@
   --space-8: 32px;
 
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
   --radius-full: 9999px;
 
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -1211,18 +1211,39 @@ body {
    On hover: each side's border spreads outwards from the center to ends.
    On leave: smoothly collapses back towards the center of each edge.
    ============================================================================ */
+:root {
+  --card-border-glow: #00f0ff;
+  --card-neon-glow: rgba(0, 240, 255, 0.85);
+  --card-neon-blur: rgba(0, 210, 255, 0.45);
+  --card-neon-spread: rgba(0, 240, 255, 0.16);
+}
+
 .step-card,
 .comparison-card,
 .bento-card,
 .pricing-card,
 .faq-item {
   position: relative;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-lg, 10px);
+  background: rgba(14, 18, 28, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   transition:
     transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
     background-color 0.25s ease,
     border-color 0.25s ease,
-    box-shadow 0.25s ease;
+    box-shadow 0.35s ease;
+}
+
+.step-card:hover,
+.comparison-card:hover,
+.bento-card:hover,
+.pricing-card:hover,
+.faq-item:hover {
+  border-color: rgba(0, 240, 255, 0.25);
+  box-shadow:
+    0 10px 32px rgba(0, 0, 0, 0.55),
+    0 0 24px var(--card-neon-spread, rgba(0, 240, 255, 0.16)),
+    inset 0 0 16px rgba(0, 240, 255, 0.03);
 }
 
 /* 4 Independent Animated Sides:
@@ -1231,7 +1252,7 @@ body {
    left: center -> top and bottom
    right: center -> top and bottom
    Automatic reverse animation on mouse leave via background-size collapsing to 0.
-   Curved corners (16px) left completely blank (calc(100% - 32px)).
+   Curved corners (10px) left completely blank (calc(100% - 20px)).
 */
 .step-card::before,
 .comparison-card::before,
@@ -1245,10 +1266,10 @@ body {
   pointer-events: none;
   z-index: 2;
   background-image:
-    linear-gradient(to right, var(--card-border-glow, #38bdf8), var(--card-border-glow, #38bdf8)),
-    linear-gradient(to right, var(--card-border-glow, #38bdf8), var(--card-border-glow, #38bdf8)),
-    linear-gradient(to bottom, var(--card-border-glow, #38bdf8), var(--card-border-glow, #38bdf8)),
-    linear-gradient(to bottom, var(--card-border-glow, #38bdf8), var(--card-border-glow, #38bdf8));
+    linear-gradient(to right, var(--card-border-glow, #00f0ff), var(--card-border-glow, #00f0ff)),
+    linear-gradient(to right, var(--card-border-glow, #00f0ff), var(--card-border-glow, #00f0ff)),
+    linear-gradient(to bottom, var(--card-border-glow, #00f0ff), var(--card-border-glow, #00f0ff)),
+    linear-gradient(to bottom, var(--card-border-glow, #00f0ff), var(--card-border-glow, #00f0ff));
   background-position:
     center top,
     center bottom,
@@ -1256,11 +1277,13 @@ body {
     right center;
   background-repeat: no-repeat;
   background-size:
-    0% 2.5px,
-    0% 2.5px,
-    2.5px 0%,
-    2.5px 0%;
-  transition: background-size 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    0% 2px,
+    0% 2px,
+    2px 0%,
+    2px 0%;
+  filter: drop-shadow(0 0 4px var(--card-neon-glow, rgba(0, 240, 255, 0.85)))
+    drop-shadow(0 0 10px var(--card-neon-blur, rgba(0, 210, 255, 0.45)));
+  transition: background-size 0.42s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .step-card:hover::before,
@@ -1269,27 +1292,39 @@ body {
 .pricing-card:hover::before,
 .faq-item:hover::before {
   background-size:
-    calc(100% - 32px) 2.5px,
-    calc(100% - 32px) 2.5px,
-    2.5px calc(100% - 32px),
-    2.5px calc(100% - 32px);
+    calc(100% - 20px) 2px,
+    calc(100% - 20px) 2px,
+    2px calc(100% - 20px),
+    2px calc(100% - 20px);
 }
 
 /* Card-specific accent glow colors */
 .comparison-card.legacy {
   --card-border-glow: #f87171;
+  --card-neon-glow: rgba(248, 113, 113, 0.85);
+  --card-neon-blur: rgba(239, 68, 68, 0.45);
+  --card-neon-spread: rgba(239, 68, 68, 0.16);
 }
 
 .comparison-card.active-resilio {
-  --card-border-glow: #38bdf8;
+  --card-border-glow: #00f0ff;
+  --card-neon-glow: rgba(0, 240, 255, 0.85);
+  --card-neon-blur: rgba(0, 210, 255, 0.45);
+  --card-neon-spread: rgba(0, 240, 255, 0.18);
 }
 
 .pricing-card.featured-pro {
-  --card-border-glow: #0866ff;
+  --card-border-glow: #00d2ff;
+  --card-neon-glow: rgba(0, 210, 255, 0.85);
+  --card-neon-blur: rgba(0, 180, 255, 0.45);
+  --card-neon-spread: rgba(0, 210, 255, 0.22);
 }
 
 .faq-item.open {
-  --card-border-glow: #38bdf8;
+  --card-border-glow: #00f0ff;
+  --card-neon-glow: rgba(0, 240, 255, 0.85);
+  --card-neon-blur: rgba(0, 210, 255, 0.45);
+  --card-neon-spread: rgba(0, 240, 255, 0.16);
 }
 
 /* Wide, Clean & Consistent FAQ Accordion */
@@ -1629,6 +1664,9 @@ body {
 /* Light Mode: Landing Cards, Bentos, and Modals */
 [data-theme='light'] {
   --card-border-glow: #0284c7;
+  --card-neon-glow: rgba(2, 132, 199, 0.45);
+  --card-neon-blur: rgba(2, 132, 199, 0.2);
+  --card-neon-spread: rgba(2, 132, 199, 0.12);
 }
 
 [data-theme='light'] .comparison-card {
@@ -1795,6 +1833,9 @@ body {
 /* Light Mode: Landing Cards, Bentos, and Modals */
 [data-theme='light'] {
   --card-border-glow: #0284c7;
+  --card-neon-glow: rgba(2, 132, 199, 0.45);
+  --card-neon-blur: rgba(2, 132, 199, 0.2);
+  --card-neon-spread: rgba(2, 132, 199, 0.12);
 }
 
 [data-theme='light'] .comparison-card {
