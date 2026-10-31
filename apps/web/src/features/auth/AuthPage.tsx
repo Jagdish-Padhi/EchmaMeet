@@ -12,22 +12,6 @@ export interface AuthPageProps {
   readonly api?: ApiClient;
 }
 
-const DEFAULT_STAFF_USER: UserProfile = {
-  userId: 'eng-alex-chen',
-  name: 'Alex Chen',
-  role: 'Staff SRE',
-  avatar: 'AC',
-  email: 'alex.chen@meta.internal',
-};
-
-const DEMO_GUEST_USER: UserProfile = {
-  userId: 'eng-guest-reviewer',
-  name: 'Elena Rostova',
-  role: 'Meta AI SRE Partner',
-  avatar: 'ER',
-  email: 'elena.rostova@meta.internal',
-};
-
 export function AuthPage({
   onAuthenticate,
   onBackToHome,
@@ -38,9 +22,9 @@ export function AuthPage({
   api,
 }: AuthPageProps) {
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
-  const [fullName, setFullName] = useState('Alex Chen');
-  const [email, setEmail] = useState('alex.chen@meta.internal');
-  const [password, setPassword] = useState('••••••••••••');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -149,36 +133,6 @@ export function AuthPage({
         }
       } else {
         setError('Authentication failed. Please verify credentials.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickLogin = async (user: UserProfile) => {
-    setLoading(true);
-    setError(null);
-    setIsOfflineServer(false);
-    try {
-      if (api) {
-        const res = await api.login({
-          email: user.email ?? `${user.userId}@meta.internal`,
-          password: 'chaosboard123',
-        });
-        localStorage.setItem('chaosboard_token', res.token);
-        onAuthenticate(res.user);
-      } else {
-        onAuthenticate(user);
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        const msg = err.message;
-        setError(msg);
-        if (msg.includes('502') || msg.includes('offline') || msg.includes('network')) {
-          setIsOfflineServer(true);
-        }
-      } else {
-        setError('Quick login failed.');
       }
     } finally {
       setLoading(false);
@@ -352,77 +306,7 @@ export function AuthPage({
               <span className="auth-brand-gradient">io</span>
             </div>
 
-            {/* Tagline Lockup with Scribble Underline (Matching HackDekh Aesthetic) */}
-            <div className="auth-brand-tagline-lockup">
-              <span className="auth-tagline-heading">Resilience First.</span>
-              <span className="auth-tagline-highlight-wrap">
-                <span className="auth-tagline-highlight">Zero Downtime.</span>
-                {/* Handwritten Pen Scribble Underline */}
-                <svg
-                  viewBox="0 0 200 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="auth-scribble-svg"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M 2 6 C 38 3, 100 3, 198 5 C 148 8.5, 68 11, 14 13 C 70 12, 142 10, 192 11"
-                    stroke="url(#authScribbleGrad)"
-                    strokeWidth="2.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <defs>
-                    <linearGradient
-                      id="authScribbleGrad"
-                      x1="0"
-                      y1="0"
-                      x2="200"
-                      y2="0"
-                      gradientUnits="userSpaceOnUse"
-                    >
-                      <stop offset="0%" stopColor="#38bdf8" />
-                      <stop offset="50%" stopColor="#818cf8" />
-                      <stop offset="100%" stopColor="#c084fc" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </span>
-              <p className="auth-brand-description">
-                Design-time chaos testing &amp; autonomous self-healing for mission-critical
-                distributed architectures.
-              </p>
-            </div>
-
-            {/* Enterprise Security Pill Badges */}
-            <div className="auth-trust-badges">
-              <div className="auth-trust-pill">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="12"
-                  height="12"
-                  fill="none"
-                  stroke="#38bdf8"
-                  strokeWidth="2.5"
-                >
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-                <span>SOC-2 Type II Certified</span>
-              </div>
-              <div className="auth-trust-pill">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="12"
-                  height="12"
-                  fill="none"
-                  stroke="#10b981"
-                  strokeWidth="2.5"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                <span>Meta SSO &amp; RBAC Guarded</span>
-              </div>
-            </div>
+            <p className="auth-clean-tagline">Ready to break it before production does?</p>
           </div>
         </div>
 
@@ -483,7 +367,7 @@ export function AuthPage({
                   <input
                     id="auth-fullname"
                     type="text"
-                    placeholder="Alex Chen"
+                    placeholder="Your name"
                     className="auth-input-control"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
@@ -499,7 +383,7 @@ export function AuthPage({
                 <input
                   id="auth-email"
                   type="email"
-                  placeholder="alex.chen@meta.internal"
+                  placeholder="you@company.com"
                   className="auth-input-control"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -513,13 +397,12 @@ export function AuthPage({
                   <label className="auth-field-label" htmlFor="auth-password">
                     Password
                   </label>
-                  {isLogin && <span className="auth-password-sso-hint">Corporate SSO</span>}
                 </div>
                 <div className="auth-password-wrapper">
                   <input
                     id="auth-password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••••••"
+                    placeholder="Enter your password"
                     className="auth-input-control auth-password-input"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -644,42 +527,6 @@ export function AuthPage({
                 </svg>
                 <span>GitHub</span>
               </button>
-            </div>
-
-            {/* Quick Staff SRE Profiles Fast-Pass */}
-            <div className="auth-fast-pass-section">
-              <div className="auth-fast-pass-title">One-Click Staff SRE Passes</div>
-              <div className="auth-fast-pass-grid">
-                <button
-                  type="button"
-                  onClick={() => {
-                    void handleQuickLogin(DEFAULT_STAFF_USER);
-                  }}
-                  disabled={loading}
-                  className="auth-fast-pass-btn"
-                >
-                  <span className="auth-fast-pass-avatar staff">AC</span>
-                  <div className="auth-fast-pass-info">
-                    <span className="auth-fast-pass-name">Alex Chen</span>
-                    <span className="auth-fast-pass-role">Staff SRE &bull; Meta Infra</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    void handleQuickLogin(DEMO_GUEST_USER);
-                  }}
-                  disabled={loading}
-                  className="auth-fast-pass-btn"
-                >
-                  <span className="auth-fast-pass-avatar ai">ER</span>
-                  <div className="auth-fast-pass-info">
-                    <span className="auth-fast-pass-name">Elena Rostova</span>
-                    <span className="auth-fast-pass-role">Meta AI SRE Partner</span>
-                  </div>
-                </button>
-              </div>
             </div>
 
             {/* Footer Toggle Mode */}
