@@ -12,9 +12,18 @@ export interface EdgeInspectorProps {
   readonly onUpdatePolicy: (policy: EdgePolicy) => void;
   readonly onDelete: () => void;
   readonly onClose: () => void;
+  readonly hasCustomRoute?: boolean;
+  readonly onResetRoute?: () => void;
 }
 
-export function EdgeInspector({ edge, onUpdatePolicy, onDelete, onClose }: EdgeInspectorProps) {
+export function EdgeInspector({
+  edge,
+  onUpdatePolicy,
+  onDelete,
+  onClose,
+  hasCustomRoute,
+  onResetRoute,
+}: EdgeInspectorProps) {
   if (!edge) return null;
 
   const { edge: edgeBounds } = catalog;
@@ -148,7 +157,12 @@ export function EdgeInspector({ edge, onUpdatePolicy, onDelete, onClose }: EdgeI
           </select>
         </div>
 
-        <div className="inspector-actions">
+        <div className="inspector-actions" style={{ display: 'flex', gap: '8px' }}>
+          {hasCustomRoute && onResetRoute && (
+            <Button variant="secondary" size="sm" onClick={onResetRoute}>
+              Reset Curve
+            </Button>
+          )}
           <Button variant="danger" size="sm" onClick={onDelete}>
             Delete Edge
           </Button>

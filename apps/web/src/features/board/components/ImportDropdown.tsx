@@ -128,7 +128,9 @@ export function ImportDropdown({
             </div>
             <div className="menu-item-content">
               <div className="menu-item-title">Scan Whiteboard Photo</div>
-              <div className="menu-item-subtitle">Extract diagram via Vision SAM AI</div>
+              <div className="menu-item-subtitle">
+                Convert a whiteboard photo into nodes &amp; edges
+              </div>
             </div>
           </button>
 
@@ -156,8 +158,10 @@ export function ImportDropdown({
                   </svg>
                 </div>
                 <div className="menu-item-content">
-                  <div className="menu-item-title">Architecture Scenarios</div>
-                  <div className="menu-item-subtitle">Load standard resilience benchmark</div>
+                  <div className="menu-item-title">Production Scenarios</div>
+                  <div className="menu-item-subtitle">
+                    Load pre-configured architectures &amp; failure models
+                  </div>
                 </div>
                 <svg
                   viewBox="0 0 24 24"

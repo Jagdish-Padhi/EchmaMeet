@@ -120,7 +120,9 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
             </div>
             <div className="menu-item-content">
               <div className="menu-item-title">Telemetry &amp; Latency</div>
-              <div className="menu-item-subtitle">Real-time p99 latency &amp; error stream</div>
+              <div className="menu-item-subtitle">
+                Live p99 latency, throughput, and error rates
+              </div>
             </div>
           </button>
 
@@ -143,8 +145,10 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
               </svg>
             </div>
             <div className="menu-item-content">
-              <div className="menu-item-title">Chaos Faults &amp; Invariants</div>
-              <div className="menu-item-subtitle">Latency, packet drop, and circuit trip rules</div>
+              <div className="menu-item-title">Chaos Faults &amp; Rules</div>
+              <div className="menu-item-subtitle">
+                Inject latency, packet loss, or trip circuit breakers
+              </div>
             </div>
           </button>
 
@@ -168,8 +172,10 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
               </svg>
             </div>
             <div className="menu-item-content">
-              <div className="menu-item-title">Autonomous AI Repair</div>
-              <div className="menu-item-subtitle">Automated resilience patch exploration</div>
+              <div className="menu-item-title">AI Architecture Repair</div>
+              <div className="menu-item-subtitle">
+                Find and apply fixes for bottlenecks and failures
+              </div>
             </div>
           </button>
         </div>

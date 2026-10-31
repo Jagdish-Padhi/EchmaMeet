@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import type { EdgeId, TopologyEdge, TopologyProblem } from '@chaosboard/contracts';
 import type { BoardNode } from '../types';
-import { computeEdgeRoute } from '../utils/edge-router';
+import { computeEdgeRoute, type Point } from '../utils/edge-router';
 
 export interface EdgeLinkProps {
   readonly edge: TopologyEdge;
@@ -10,7 +10,44 @@ export interface EdgeLinkProps {
   readonly isSelected: boolean;
   readonly isHazard?: boolean;
   readonly problems: readonly TopologyProblem[];
+  readonly controlPoint?: Point | null;
+  readonly bidirectionalOffset?: number;
   readonly onSelect: (id: EdgeId) => void;
+  readonly onDragControlPointStart?: (
+    id: EdgeId,
+    e: React.MouseEvent,
+    isVertical: boolean,
+    segmentIndex: number,
+  ) => void;
+  readonly onResetControlPoint?: (id: EdgeId) => void;
+}
+
+function computePolicySummary(edge: TopologyEdge): string | null {
+  const parts: string[] = [];
+
+  if (edge.mode === 'async_enqueue') {
+    parts.push('async');
+  }
+
+  if (edge.policy.timeoutMs !== null) {
+    const ms = edge.policy.timeoutMs;
+    const formatted = ms >= 1000 && ms % 1000 === 0 ? `${String(ms / 1000)}s` : `${String(ms)}ms`;
+    parts.push(formatted);
+  }
+
+  if (edge.policy.retry.maxAttempts > 0) {
+    parts.push(`${String(edge.policy.retry.maxAttempts)}x`);
+  }
+
+  if (edge.policy.breaker.enabled) {
+    parts.push('CB');
+  }
+
+  if (edge.policy.fallback !== 'fail_fast_503') {
+    parts.push(edge.policy.fallback === 'serve_stale_cache' ? 'stale' : 'queue');
+  }
+
+  return parts.length > 0 ? parts.join(' · ') : null;
 }
 
 export const EdgeLink = memo(function EdgeLink({
@@ -20,20 +57,27 @@ export const EdgeLink = memo(function EdgeLink({
   isSelected,
   isHazard,
   problems,
+  controlPoint,
+  bidirectionalOffset = 0,
   onSelect,
+  onDragControlPointStart,
+  onResetControlPoint,
 }: EdgeLinkProps) {
   if (!sourceNode || !targetNode) return null;
 
-  const { pathData, midX, midY } = computeEdgeRoute(
+  const { pathData, midX, midY, segments } = computeEdgeRoute(
     sourceNode.position,
     targetNode.position,
     184,
     76,
+    controlPoint,
+    bidirectionalOffset,
   );
 
   const hasProblems = problems.some((p) => p.edgeId === edge.id);
 
-  const policySummary = `${edge.policy.timeoutMs !== null ? `${String(edge.policy.timeoutMs)}ms` : 'no timeout'} · ${String(edge.policy.retry.maxAttempts)}x`;
+  const policySummary = computePolicySummary(edge);
+  const tagWidth = policySummary ? Math.max(38, policySummary.length * 6.2 + 12) : 0;
 
   return (
     <g
@@ -84,38 +128,70 @@ export const EdgeLink = memo(function EdgeLink({
         />
       </circle>
 
-      {/* Excalidraw-Grade Subtle Bend Handle When Selected */}
-      {isSelected && (
-        <circle
-          cx={midX}
-          cy={midY}
-          r={4}
-          fill="var(--color-accent)"
-          stroke="#0b1120"
-          strokeWidth={1.5}
-          className="edge-bend-handle"
+      {/* Excalidraw-Grade Sliding Bend Handles for Every Segment When Selected */}
+      {isSelected &&
+        segments.map((seg) => (
+          <g
+            key={`handle-${edge.id}-${String(seg.index)}`}
+            className="edge-control-handle"
+            style={{
+              cursor: seg.isVertical ? 'ew-resize' : 'ns-resize',
+              outline: 'none',
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              onDragControlPointStart?.(edge.id, e, seg.isVertical, seg.index);
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              onResetControlPoint?.(edge.id);
+            }}
+          >
+            {/* Invisible wide hit area for effortless grabbing */}
+            <circle cx={seg.handle.x} cy={seg.handle.y} r={16} fill="transparent" />
+            {/* Outer soft aura */}
+            <circle
+              cx={seg.handle.x}
+              cy={seg.handle.y}
+              r={7}
+              fill="var(--color-accent)"
+              fillOpacity={0.25}
+            />
+            {/* Excalidraw tactile round handle */}
+            <circle
+              cx={seg.handle.x}
+              cy={seg.handle.y}
+              r={4.5}
+              fill="#ffffff"
+              stroke="var(--color-accent)"
+              strokeWidth={2}
+            />
+            <title>
+              {seg.isVertical
+                ? 'Drag to slide vertical segment horizontally (Double-click to reset)'
+                : 'Drag to slide horizontal segment vertically (Double-click to reset)'}
+            </title>
+          </g>
+        ))}
+
+      {/* Sleek, Compact Policy Capsule Tag (Only when relevant policy exists) */}
+      {policySummary && (
+        <g
+          transform={`translate(${String(Math.round(midX - tagWidth / 2))}, ${String(Math.round(midY - 8))})`}
           style={{ outline: 'none' }}
         >
-          <title>Stepped bend anchor</title>
-        </circle>
+          <rect
+            width={Math.round(tagWidth)}
+            height={16}
+            rx={8}
+            style={{ outline: 'none' }}
+            className={`edge-tag-bg ${isHazard ? 'edge-tag-hazard' : ''}`}
+          />
+          <text x={Math.round(tagWidth / 2)} y={11.5} className="edge-tag-text" textAnchor="middle">
+            {policySummary}
+          </text>
+        </g>
       )}
-
-      {/* Minimal Policy Capsule Tag */}
-      <g
-        transform={`translate(${String(midX - 44)}, ${String(midY - 10)})`}
-        style={{ outline: 'none' }}
-      >
-        <rect
-          width={88}
-          height={20}
-          rx={10}
-          style={{ outline: 'none' }}
-          className={`edge-tag-bg ${isHazard ? 'edge-tag-hazard' : ''}`}
-        />
-        <text x={44} y={13.5} className="edge-tag-text" textAnchor="middle">
-          {policySummary}
-        </text>
-      </g>
     </g>
   );
 });

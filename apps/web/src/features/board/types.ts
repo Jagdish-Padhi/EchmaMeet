@@ -15,9 +15,34 @@ export interface CanvasPosition {
   readonly y: number;
 }
 
+export type ArchitectureTier = 'tier-0' | 'tier-1' | 'tier-2';
+
+export type ServiceProtocol = 'grpc' | 'rest' | 'graphql' | 'thrift' | 'kafka' | 'internal_bus';
+
+export interface NodeMeta {
+  readonly tier?: ArchitectureTier | undefined;
+  readonly protocol?: ServiceProtocol | undefined;
+  readonly ownerTeam?: string | undefined;
+  readonly onCall?: string | undefined;
+  readonly slaP99Ms?: number | undefined;
+  readonly targetAvailability?: string | undefined;
+  readonly notes?: string | undefined;
+}
+
 export type BoardNode = TopologyNode & {
   readonly position: CanvasPosition;
+  readonly meta?: NodeMeta;
 };
+
+export type DrawTool = 'select' | 'marquee' | 'pen' | 'highlighter' | 'eraser';
+
+export interface CanvasStroke {
+  readonly id: string;
+  readonly tool: 'pen' | 'highlighter';
+  readonly color: string;
+  readonly width: number;
+  readonly points: readonly CanvasPosition[];
+}
 
 export interface BoardState {
   readonly id: string;
@@ -25,8 +50,11 @@ export interface BoardState {
   readonly entryNodeId: NodeId;
   readonly nodes: readonly BoardNode[];
   readonly edges: readonly TopologyEdge[];
+  readonly edgeControlPoints?: Readonly<Record<string, CanvasPosition>>;
   readonly selectedNodeId: NodeId | null;
+  readonly selectedNodeIds?: readonly NodeId[];
   readonly selectedEdgeId: EdgeId | null;
+  readonly strokes?: readonly CanvasStroke[];
   readonly validationProblems: readonly TopologyProblem[];
   readonly isValidating: boolean;
   readonly isDirty: boolean;
@@ -48,12 +76,43 @@ export function toTopology(state: BoardState): Topology {
     name: state.name || 'Canvas Architecture',
     source: 'canvas',
     entry: { nodeId: entryNodeId },
-    nodes: state.nodes.map((n) => {
-      const nodeProps = { ...n };
-      delete (nodeProps as { position?: unknown }).position;
+    nodes: state.nodes.map((n): TopologyNode => {
+      const common = {
+        id: n.id,
+        label: n.label,
+        processing: n.processing,
+        concurrency: n.concurrency,
+        queue: n.queue,
+        ingressRateLimitRps: n.ingressRateLimitRps ?? null,
+      };
+
+      if (n.kind === 'cache') {
+        const raw = n as unknown as { ttlMs?: number };
+        return {
+          ...common,
+          kind: 'cache',
+          ttlMs: typeof raw.ttlMs === 'number' ? raw.ttlMs : 60000,
+        };
+      }
+      if (n.kind === 'queue_consumer') {
+        const raw = n as unknown as { consumeRateRps?: number };
+        return {
+          ...common,
+          kind: 'queue_consumer',
+          consumeRateRps: typeof raw.consumeRateRps === 'number' ? raw.consumeRateRps : 50,
+        };
+      }
+      if (n.kind === 'ledger_sink') {
+        const raw = n as unknown as { dedupeByKey?: boolean };
+        return {
+          ...common,
+          kind: 'ledger_sink',
+          dedupeByKey: typeof raw.dedupeByKey === 'boolean' ? raw.dedupeByKey : true,
+        };
+      }
       return {
-        ...nodeProps,
-        ingressRateLimitRps: nodeProps.ingressRateLimitRps ?? null,
+        ...common,
+        kind: 'service',
       };
     }),
     edges: [...state.edges],
@@ -88,6 +147,11 @@ export function fromTopology(topology: Topology): BoardState {
         x: 100 + col * 260,
         y: 100 + row * 180,
       },
+      meta: {
+        tier: index === 0 ? 'tier-0' : 'tier-1',
+        protocol: node.kind === 'queue_consumer' ? 'kafka' : 'grpc',
+        ownerTeam: 'Core Infrastructure',
+      },
     };
   });
 
@@ -98,7 +162,10 @@ export function fromTopology(topology: Topology): BoardState {
     nodes: nodesWithPositions,
     edges: [...topology.edges],
     selectedNodeId: null,
+    selectedNodeIds: [],
     selectedEdgeId: null,
+    edgeControlPoints: {},
+    strokes: [],
     validationProblems: [],
     isValidating: false,
     isDirty: false,

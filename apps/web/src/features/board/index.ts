@@ -8,8 +8,17 @@ export { ImportDropdown } from './components/ImportDropdown';
 export { NodeInspector } from './components/NodeInspector';
 export { UserProfileMenu } from './components/UserProfileMenu';
 export type { UserProfile } from './components/UserProfileMenu';
-export { ValidationBanner } from './components/ValidationBanner';
+export { ValidationBanner, resolveNodeNumber } from './components/ValidationBanner';
 export { useBoardState } from './hooks/use-board-state';
 export type { NodePresetConfig } from './hooks/use-board-state';
 export { fromTopology, toTopology, toTopologyDraft } from './types';
-export type { BoardNode, BoardState, CanvasPosition } from './types';
+export type {
+  ArchitectureTier,
+  BoardNode,
+  BoardState,
+  CanvasPosition,
+  CanvasStroke,
+  DrawTool,
+  NodeMeta,
+  ServiceProtocol,
+} from './types';

@@ -4,12 +4,14 @@ import type { BoardNode } from '../types';
 
 export interface NodeCardProps {
   readonly node: BoardNode;
+  readonly nodeNumber?: number;
   readonly isSelected: boolean;
+  readonly isMultiSelected?: boolean;
   readonly isEntry: boolean;
   readonly isHazard?: boolean;
   readonly isConnecting?: boolean;
   readonly problems: readonly TopologyProblem[];
-  readonly onSelect: (id: NodeId) => void;
+  readonly onSelect: (id: NodeId, e?: ReactMouseEvent) => void;
   readonly onDragStart: (id: NodeId, e: ReactMouseEvent<SVGGElement>) => void;
   readonly onStartConnect?: (sourceId: NodeId, e: ReactMouseEvent<SVGElement>) => void;
   readonly onDropConnect?: (targetId: NodeId) => void;
@@ -17,7 +19,9 @@ export interface NodeCardProps {
 
 export const NodeCard = memo(function NodeCard({
   node,
+  nodeNumber,
   isSelected,
+  isMultiSelected,
   isEntry,
   isHazard,
   isConnecting,
@@ -99,26 +103,31 @@ export const NodeCard = memo(function NodeCard({
   const latencyText =
     node.processing.distribution === 'constant'
       ? `${String(node.processing.ms)}ms`
-      : `${String(node.processing.medianMs)}ms`;
-  const dedupeSuffix = node.kind === 'ledger_sink' && node.dedupeByKey ? ' · dedupe:true' : '';
-  const specSummary = `${String(node.concurrency.maxWorkers)}w · ${latencyText} · ${node.queue.mode}${dedupeSuffix}`;
+      : `~${String(node.processing.medianMs)}ms`;
+  const dedupeSuffix = node.kind === 'ledger_sink' && node.dedupeByKey ? ' · dedupe' : '';
+  const rateLimitSuffix = node.ingressRateLimitRps
+    ? ` · ${node.ingressRateLimitRps >= 1000 ? `${String(node.ingressRateLimitRps / 1000)}k` : String(node.ingressRateLimitRps)} rps`
+    : '';
+  const rawSpec = `${String(node.concurrency.maxWorkers)}w · ${latencyText} · ${node.queue.mode}${dedupeSuffix}${rateLimitSuffix}`;
+  const specSummary = rawSpec.length > 34 ? `${rawSpec.slice(0, 33)}…` : rawSpec;
+
+  // Clean minimal node number (1, 2, 3...) at top right corner - zero redundant badges
+  const displayNumber =
+    nodeNumber ?? (node.id.match(/\d+/) ? parseInt(node.id.match(/\d+/)![0], 10) : 1);
+  const numberText = String(displayNumber);
+  const numberPillWidth = Math.max(16, numberText.length * 6.5 + 8);
+  const numberPillX = 174 - numberPillWidth;
+
+  const displayLabel = node.label.length > 17 ? `${node.label.slice(0, 16)}…` : node.label;
 
   let subtitleText = node.kind.replace('_', ' ').toUpperCase();
   let subtitleColor = kindDetails.color;
 
   if (node.kind === 'queue_consumer') {
-    subtitleText = 'QUEUE WORKER';
+    subtitleText = 'QUEUE CONSUMER';
   } else if (node.kind === 'ledger_sink') {
     subtitleText = 'LEDGER SINK';
     subtitleColor = '#10b981';
-  }
-
-  if (isHazard) {
-    subtitleText = `${subtitleText} • HAZARD`;
-    subtitleColor = '#f59e0b';
-  } else if (isEntry) {
-    subtitleText = `${subtitleText} • ENTRY`;
-    subtitleColor = '#0082fb';
   }
 
   const isSink = node.kind === 'ledger_sink';
@@ -126,10 +135,10 @@ export const NodeCard = memo(function NodeCard({
   return (
     <g
       className={`canvas-node ${isSelected ? 'canvas-node-selected' : ''} ${
-        hasProblems ? 'canvas-node-error' : ''
-      } ${isHazard ? 'canvas-node-hazard' : ''} ${isEntry ? 'canvas-node-entry' : ''} ${
-        isSink ? 'canvas-node-sink' : ''
-      }`}
+        isMultiSelected && !isSelected ? 'canvas-node-multiselected' : ''
+      } ${hasProblems ? 'canvas-node-error' : ''} ${isHazard ? 'canvas-node-hazard' : ''} ${
+        isEntry ? 'canvas-node-entry' : ''
+      } ${isSink ? 'canvas-node-sink' : ''}`}
       style={{ outline: 'none' }}
       transform={`translate(${String(node.position.x)}, ${String(node.position.y)})`}
       onClick={(e) => {
@@ -137,7 +146,7 @@ export const NodeCard = memo(function NodeCard({
         if (isConnecting) {
           onDropConnect?.(node.id);
         } else {
-          onSelect(node.id);
+          onSelect(node.id, e);
         }
       }}
       onMouseDown={(e) => {
@@ -152,54 +161,91 @@ export const NodeCard = memo(function NodeCard({
       }}
       aria-label={`Node ${node.label} (${node.kind})`}
     >
-      {/* Main Sleek Card Body */}
+      <defs>
+        <clipPath id={`node-clip-${node.id}`}>
+          <rect width={184} height={76} rx={8} />
+        </clipPath>
+      </defs>
+
+      {/* Main Single Card Body (Clean Breakscale-Grade Single Border) */}
       <rect width={184} height={76} rx={8} className="node-box" />
 
-      {/* Left Icon Rounded Backdrop */}
-      <rect x={12} y={12} width={28} height={28} rx={6} fill={kindDetails.bgTint} />
+      {/* Clipped Card Interior Content */}
+      <g clipPath={`url(#node-clip-${node.id})`}>
+        {/* Left Icon Rounded Backdrop */}
+        <rect x={10} y={10} width={26} height={26} rx={6} fill={kindDetails.bgTint} />
 
-      {/* Kind SVG Icon */}
-      <g transform="translate(14, 14) scale(1)">
-        <svg width="24" height="24" viewBox="0 0 24 24">
-          {kindDetails.icon}
-        </svg>
+        {/* Kind SVG Icon */}
+        <g transform="translate(11, 11) scale(0.95)">
+          <svg width="24" height="24" viewBox="0 0 24 24">
+            {kindDetails.icon}
+          </svg>
+        </g>
+
+        {/* Node Label (Clean small crisp font with tooltip) */}
+        <text x={44} y={23} className="node-title">
+          <title>{node.label}</title>
+          {displayLabel}
+        </text>
+
+        {/* Kind Subtitle */}
+        <text x={44} y={35} className="node-kind-text" fill={subtitleColor}>
+          {subtitleText}
+        </text>
+
+        {/* Clean minimal node number (1, 2, 3...) at top right corner */}
+        <g transform={`translate(${numberPillX}, 8)`} className="node-id-tag">
+          <title>Node #{numberText}</title>
+          <rect
+            width={numberPillWidth}
+            height={13}
+            rx={3}
+            className="node-id-pill"
+          />
+          <text
+            x={numberPillWidth / 2}
+            y={6.5}
+            dominantBaseline="central"
+            textAnchor="middle"
+            className="node-id-text"
+          >
+            {numberText}
+          </text>
+        </g>
+
+        {/* Problem Alert Dot */}
+        {hasProblems && (
+          <circle
+            cx={numberPillX - 5}
+            cy={14.5}
+            r={2.5}
+            fill="#f43f5e"
+            className="error-alert-dot"
+          >
+            <title>Validation warning on Node #{numberText}</title>
+          </circle>
+        )}
+
+        {/* Bottom Technical Spec Line */}
+        <line
+          x1={10}
+          y1={46}
+          x2={174}
+          y2={46}
+          stroke="rgba(255, 255, 255, 0.08)"
+          strokeWidth={1}
+          className="node-divider"
+        />
+        <text x={12} y={61} className="node-meta-text">
+          <title>{rawSpec}</title>
+          {specSummary}
+        </text>
       </g>
-
-      {/* Node Label */}
-      <text x={48} y={26} className="node-title">
-        {node.label}
-      </text>
-
-      {/* Kind Subtitle */}
-      <text x={48} y={38} className="node-kind-text" fill={subtitleColor}>
-        {subtitleText}
-      </text>
-
-      {/* Problem Alert Dot */}
-      {hasProblems && (
-        <circle cx={170} cy={16} r={4} fill="#f43f5e" className="error-alert-dot">
-          <title>Validation warning on this node</title>
-        </circle>
-      )}
-
-      {/* Bottom Technical Spec Pill */}
-      <line
-        x1={12}
-        y1={50}
-        x2={172}
-        y2={50}
-        stroke="rgba(255, 255, 255, 0.06)"
-        strokeWidth={1}
-        className="node-divider"
-      />
-      <text x={14} y={64} className="node-meta-text">
-        {specSummary}
-      </text>
 
       {/* Target Input Port (Left Edge) */}
       <circle cx={0} cy={38} r={4} className="port-dot-target" />
 
-      {/* Source Output Connector Handle (Right Edge, Drag-to-connect or Click-to-connect) */}
+      {/* Source Output Connector Handle (Right Edge) */}
       <g
         className="node-port-handle"
         onClick={(e) => {
@@ -211,9 +257,9 @@ export const NodeCard = memo(function NodeCard({
           onStartConnect?.(node.id, e);
         }}
       >
-        <title>Click or drag to connect downstream service</title>
-        <circle cx={184} cy={38} r={16} fill="transparent" style={{ cursor: 'crosshair' }} />
-        <circle cx={184} cy={38} r={4.5} className="port-dot-handle" />
+        <title>Connect downstream service</title>
+        <circle cx={184} cy={38} r={14} fill="transparent" style={{ cursor: 'crosshair' }} />
+        <circle cx={184} cy={38} r={4} className="port-dot-handle" />
       </g>
     </g>
   );

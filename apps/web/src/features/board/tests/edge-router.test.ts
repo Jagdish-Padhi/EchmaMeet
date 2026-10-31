@@ -70,4 +70,30 @@ describe('edge-router', () => {
     expect(path).toContain('M 284.0 138.0');
     expect(path).toContain('400.0 250.0');
   });
+
+  it('computes smooth orthogonal path with custom control point and segments', () => {
+    const source = { x: 100, y: 100 };
+    const target = { x: 500, y: 300 };
+    const controlPoint = { x: 350, y: 220 };
+
+    const route = computeEdgeRoute(source, target, 184, 76, controlPoint);
+
+    expect(route.controlPoint).toEqual(controlPoint);
+    expect(route.segments.length).toBeGreaterThan(1);
+    expect(route.pathData).toContain('Q');
+    expect(typeof route.midX).toBe('number');
+    expect(typeof route.midY).toBe('number');
+  });
+
+  it('separates bidirectional edges with non-overlapping corridors', () => {
+    const nodeA = { x: 100, y: 100 };
+    const nodeB = { x: 500, y: 100 };
+
+    const forwardRoute = computeEdgeRoute(nodeA, nodeB, 184, 76, null, -24);
+    const reverseRoute = computeEdgeRoute(nodeB, nodeA, 184, 76, null, 24);
+
+    // Forward and reverse edges must have distinct non-colliding port coordinates
+    expect(forwardRoute.sourcePort.y).not.toBe(reverseRoute.targetPort.y);
+    expect(forwardRoute.pathData).not.toBe(reverseRoute.pathData);
+  });
 });
