@@ -6,7 +6,6 @@ export interface LandingPageProps {
   readonly scenarios?: readonly ScenarioSpec[];
   readonly theme: 'dark' | 'light';
   readonly onToggleTheme: () => void;
-  readonly onOpenSettings: () => void;
   readonly isAuthenticated?: boolean;
   readonly onOpenAuth?: (mode?: 'login' | 'signup') => void;
 }
@@ -48,7 +47,6 @@ export function LandingPage({
   onLaunchStudio,
   theme,
   onToggleTheme,
-  onOpenSettings,
   isAuthenticated = false,
   onOpenAuth,
 }: LandingPageProps) {
@@ -148,44 +146,22 @@ export function LandingPage({
               )}
             </button>
 
-            {isAuthenticated && (
-              <button
-                type="button"
-                className="btn-icon-toggle"
-                onClick={onOpenSettings}
-                title="System Settings"
-                aria-label="Open settings"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  width="16"
-                  height="16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
-              </button>
-            )}
-
             {isAuthenticated ? (
-              <button type="button" className="btn btn-primary" onClick={() => onLaunchStudio()}>
+              <button type="button" className="landing-signup-btn" onClick={() => onLaunchStudio()}>
                 Enter Room &rarr;
               </button>
             ) : (
               <div className="landing-auth-btn-group">
                 <button
                   type="button"
-                  className="landing-login-btn"
+                  className="landing-signin-btn"
                   onClick={() => handleAuthAction('login')}
                 >
                   Sign In
                 </button>
                 <button
                   type="button"
-                  className="btn btn-primary"
+                  className="landing-signup-btn"
                   onClick={() => handleAuthAction('signup')}
                 >
                   Sign Up &rarr;

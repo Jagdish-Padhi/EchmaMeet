@@ -425,23 +425,14 @@ export function App() {
   // 1. Landing Page View
   if (view === 'landing') {
     return (
-      <>
-        <LandingPage
-          onLaunchStudio={handleLaunchStudioFromLanding}
-          scenarios={scenariosState.scenarios}
-          theme={settings.theme}
-          onToggleTheme={handleToggleTheme}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          isAuthenticated={isAuthenticated}
-          onOpenAuth={handleOpenAuthFromLanding}
-        />
-        <SettingsModal
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-          onSave={setSettings}
-          currentSettings={settings}
-        />
-      </>
+      <LandingPage
+        onLaunchStudio={handleLaunchStudioFromLanding}
+        scenarios={scenariosState.scenarios}
+        theme={settings.theme}
+        onToggleTheme={handleToggleTheme}
+        isAuthenticated={isAuthenticated}
+        onOpenAuth={handleOpenAuthFromLanding}
+      />
     );
   }
 
