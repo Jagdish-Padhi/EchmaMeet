@@ -500,19 +500,12 @@ export function LandingPage({
         {/* Center Hero Content */}
         <div className="hero-center-content">
           <h1 className="hero-headline">
-            Where Top Teams Review Architecture.
+            Where Teams Review Architecture.
             <br />
             <span className="hero-headline-gradient">
               Live Voice. Real Chaos. An AI SRE in the Call.
             </span>
           </h1>
-
-          <p className="hero-subhead">
-            Architecture reviews shouldn't be passive slide decks. Resilio turns system reviews into
-            collaborative live rooms: jump on voice with your team, simulate real network failures
-            on your design, and let an autonomous AI SRE catch outage traps and propose live fixes
-            right in the meeting.
-          </p>
 
           <div className="hero-actions">
             <button
@@ -526,21 +519,6 @@ export function LandingPage({
             <a href="#meeting-room" className="btn btn-secondary btn-hero">
               See How Meetings Work
             </a>
-          </div>
-
-          {/* Platform Trust Bar */}
-          <div className="hero-trust-bar">
-            <span className="trust-label">READY FOR MODERN DISTRIBUTED SYSTEMS</span>
-            <div className="trust-logos-row">
-              <span className="trust-badge">AWS</span>
-              <span className="trust-badge">Google Cloud</span>
-              <span className="trust-badge">Microsoft Azure</span>
-              <span className="trust-badge">Kubernetes</span>
-              <span className="trust-badge">Envoy Proxy</span>
-              <span className="trust-badge">Apache Kafka</span>
-              <span className="trust-badge">Redis</span>
-              <span className="trust-badge">Terraform</span>
-            </div>
           </div>
         </div>
       </section>
