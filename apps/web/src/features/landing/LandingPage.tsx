@@ -528,9 +528,16 @@ export function LandingPage({
               />
               <rect x="14" y="14" width="8" height="8" rx="4" fill="#10b981" />
               <text x="28" y="21" fill="#e2e8f0" fontSize="11" fontWeight="600">
-                #arch-review &bull; Live Room
+                #arch-review
               </text>
-              <text x="150" y="21" fill="#64748b" fontSize="8.5" fontFamily="var(--font-mono)">
+              <text
+                x="206"
+                y="21"
+                fill="#64748b"
+                fontSize="8.5"
+                fontFamily="var(--font-mono)"
+                textAnchor="end"
+              >
                 VOICE ON
               </text>
               <line
@@ -622,9 +629,12 @@ export function LandingPage({
         {/* Center Hero Content (Seamlessly Blended, Zero Box Container, Breathing Room) */}
         <div className="hero-center-content">
           <h1 className="hero-headline">
-            Review on live voice. Break by choice.
+            <span className="hero-headline-primary">Review architecture with your team.</span>
             <br />
-            <span className="hero-headline-gradient">Catch every outage before the noise.</span>
+            <span className="hero-headline-secondary">
+              And <span className="hero-word-break">break it</span> before{' '}
+              <span className="hero-word-prod">production does.</span>
+            </span>
           </h1>
 
           <div className="hero-actions">
