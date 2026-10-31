@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import type { ScenarioSpec } from '@chaosboard/contracts';
 
 export interface LandingPageProps {
@@ -42,6 +42,139 @@ const FAQ_ITEMS: readonly FaqItem[] = [
       'Yes. All audio streams, node configurations, and topology data are encrypted in transit with TLS 1.3 and at rest with AES-256. For organizations with strict compliance requirements, Resilio can be deployed entirely inside your own private VPC or air-gapped on-premise infrastructure with SAML/SSO authentication.',
   },
 ];
+
+interface MetricCounterCardProps {
+  readonly target: number;
+  readonly suffix?: string;
+  readonly prefix?: string;
+  readonly label: string;
+  readonly subtext?: string;
+  readonly isTriggered: boolean;
+}
+
+const MetricCounterCard = memo(function MetricCounterCard({
+  target,
+  suffix = '',
+  prefix = '',
+  label,
+  subtext,
+  isTriggered,
+}: MetricCounterCardProps) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    if (!isTriggered) {
+      setDisplayValue(0);
+      return;
+    }
+
+    if (target === 0) {
+      setDisplayValue(0);
+      return;
+    }
+
+    const duration = 1400; // Medium speed, clearly visible human-paced animation
+    let startTimestamp: number | null = null;
+    let rafId: number;
+
+    const step = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const elapsed = timestamp - startTimestamp;
+      const progress = Math.min(elapsed / duration, 1);
+      // Cubic ease-out: responsive jump with gentle deceleration into final metric
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const nextVal = Math.round(easeOut * target);
+      setDisplayValue(nextVal);
+
+      if (progress < 1) {
+        rafId = requestAnimationFrame(step);
+      }
+    };
+
+    rafId = requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(rafId);
+    };
+  }, [isTriggered, target]);
+
+  return (
+    <div className="metric-cell" role="group" aria-label={`${target}${suffix} ${label}`}>
+      <div className="metric-number-wrap">
+        <span className="metric-number">
+          {prefix}
+          {displayValue}
+          {suffix}
+        </span>
+      </div>
+      <span className="metric-label">{label}</span>
+      {subtext && <span className="metric-subtext">{subtext}</span>}
+    </div>
+  );
+});
+
+const MetricsBanner = memo(function MetricsBanner() {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [isTriggered, setIsTriggered] = useState(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setIsTriggered(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting) {
+          setIsTriggered(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  return (
+    <div className="metrics-banner" ref={containerRef}>
+      <MetricCounterCard
+        target={20}
+        suffix=" min"
+        label="Avg Architecture Review Time"
+        subtext="Down from 3-week RFC syncs"
+        isTriggered={isTriggered}
+      />
+      <MetricCounterCard
+        target={80}
+        suffix="%"
+        label="Outage Blind Spots Caught Live"
+        subtext="Before touching production code"
+        isTriggered={isTriggered}
+      />
+      <MetricCounterCard
+        target={100}
+        suffix="%"
+        label="Team Alignment Before Merge"
+        subtext="Shared voice & state consensus"
+        isTriggered={isTriggered}
+      />
+      <MetricCounterCard
+        target={0}
+        suffix=""
+        label="Manual Terraform Boilerplate"
+        subtext="Instant verified IaC export"
+        isTriggered={isTriggered}
+      />
+    </div>
+  );
+});
 
 const HeroBackdrop = memo(function HeroBackdrop() {
   return (
@@ -840,25 +973,8 @@ export function LandingPage({
           </div>
         </div>
 
-        {/* Enterprise Metrics Bar */}
-        <div className="metrics-banner">
-          <div className="metric-cell">
-            <span className="metric-number">20 min</span>
-            <span className="metric-label">Avg Architecture Review Time</span>
-          </div>
-          <div className="metric-cell">
-            <span className="metric-number">80%</span>
-            <span className="metric-label">Outage Blind Spots Caught Live</span>
-          </div>
-          <div className="metric-cell">
-            <span className="metric-number">100%</span>
-            <span className="metric-label">Team Alignment Before Merge</span>
-          </div>
-          <div className="metric-cell">
-            <span className="metric-number">0</span>
-            <span className="metric-label">Manual Terraform Boilerplate</span>
-          </div>
-        </div>
+        {/* Enterprise Metrics Bar with Smooth Visible Counter Animation */}
+        <MetricsBanner />
       </section>
 
       {/* SECTION 3: How an Architecture Review Works */}
