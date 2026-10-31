@@ -39,7 +39,6 @@ export function AuthPage({
 }: AuthPageProps) {
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [fullName, setFullName] = useState('Alex Chen');
-  const [role, setRole] = useState('Staff SRE • Infrastructure');
   const [email, setEmail] = useState('alex.chen@meta.internal');
   const [password, setPassword] = useState('••••••••••••');
   const [showPassword, setShowPassword] = useState(false);
@@ -100,7 +99,7 @@ export function AuthPage({
           ? 'Alex Chen'
           : fullName || 'SRE Reviewer'
         : fullName,
-      role: isLogin ? 'Staff SRE' : role || 'Site Reliability Engineer',
+      role: isLogin ? 'Staff SRE' : 'Reviewer',
       avatar: initials,
       email: email.trim() || 'alex.chen@meta.internal',
     };
@@ -129,7 +128,6 @@ export function AuthPage({
             email: email.trim(),
             password,
             name: fullName.trim() || undefined,
-            role: role.trim() || undefined,
           });
           localStorage.setItem('chaosboard_token', res.token);
           onAuthenticate(res.user);
@@ -478,35 +476,20 @@ export function AuthPage({
               className="auth-fields-form"
             >
               {!isLogin && (
-                <>
-                  <div className="auth-field-group">
-                    <label className="auth-field-label" htmlFor="auth-fullname">
-                      Full Name
-                    </label>
-                    <input
-                      id="auth-fullname"
-                      type="text"
-                      placeholder="Alex Chen"
-                      className="auth-input-control"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="auth-field-group">
-                    <label className="auth-field-label" htmlFor="auth-role">
-                      Staff Role / Team
-                    </label>
-                    <input
-                      id="auth-role"
-                      type="text"
-                      placeholder="Staff SRE • Infrastructure"
-                      className="auth-input-control"
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
-                    />
-                  </div>
-                </>
+                <div className="auth-field-group">
+                  <label className="auth-field-label" htmlFor="auth-fullname">
+                    Full Name
+                  </label>
+                  <input
+                    id="auth-fullname"
+                    type="text"
+                    placeholder="Alex Chen"
+                    className="auth-input-control"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                </div>
               )}
 
               <div className="auth-field-group">
