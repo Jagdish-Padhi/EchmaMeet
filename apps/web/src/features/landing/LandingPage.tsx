@@ -198,39 +198,21 @@ export function LandingPage({
                 <path d="M 0 1.5 L 7.5 5 L 0 8.5 Z" fill="#475569" />
               </marker>
 
-              {/* Crisp Neon Micro-Glow Filters for Photon Packets */}
-              <filter id="neon-cyan-glow" x="-100%" y="-100%" width="300%" height="300%">
+              {/* Unified Enterprise Neon Flow Filter */}
+              <filter id="neon-flow-glow" x="-100%" y="-100%" width="300%" height="300%">
                 <feDropShadow
                   dx="0"
                   dy="0"
-                  stdDeviation="1.5"
-                  floodColor="#00f0ff"
-                  floodOpacity="0.9"
-                />
-              </filter>
-              <filter id="neon-emerald-glow" x="-100%" y="-100%" width="300%" height="300%">
-                <feDropShadow
-                  dx="0"
-                  dy="0"
-                  stdDeviation="1.5"
-                  floodColor="#10b981"
-                  floodOpacity="0.9"
-                />
-              </filter>
-              <filter id="neon-blue-glow" x="-100%" y="-100%" width="300%" height="300%">
-                <feDropShadow
-                  dx="0"
-                  dy="0"
-                  stdDeviation="1.5"
+                  stdDeviation="1.2"
                   floodColor="#38bdf8"
-                  floodOpacity="0.9"
+                  floodOpacity="0.8"
                 />
               </filter>
             </defs>
 
             <rect width="100%" height="100%" fill="url(#hero-matrix-grid)" />
 
-            {/* Perimeter Network Pipelines with Animated Flow Packets */}
+            {/* Perimeter Network Pipelines with Consistent Enterprise Telemetry Flow */}
             {/* Left Vertical Flow: Gateway -> Auth -> Kafka */}
             <path
               d="M 140 210 L 140 310"
@@ -241,28 +223,28 @@ export function LandingPage({
             />
             <g>
               <animateMotion path="M 140 210 L 140 310" dur="1.8s" repeatCount="indefinite" />
-              <circle r="2.8" fill="#00f0ff" filter="url(#neon-cyan-glow)" />
-              <circle r="1.3" fill="#ffffff" />
+              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+              <circle r="1.2" fill="#ffffff" />
             </g>
 
             <path
               d="M 140 380 L 140 480"
               fill="none"
-              stroke="#38bdf8"
+              stroke="#334155"
               strokeWidth="1.8"
               markerEnd="url(#hero-arrow)"
             />
             <g>
               <animateMotion path="M 140 380 L 140 480" dur="2s" repeatCount="indefinite" />
-              <circle r="2.8" fill="#00f0ff" filter="url(#neon-cyan-glow)" />
-              <circle r="1.3" fill="#ffffff" />
+              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+              <circle r="1.2" fill="#ffffff" />
             </g>
 
             {/* Bottom Interconnect: Kafka -> Order Worker -> Redis -> SLO Guard -> Patch Engine */}
             <path
               d="M 240 515 L 290 515 Q 310 515, 310 560 L 310 635 L 330 635"
               fill="none"
-              stroke="#3b82f6"
+              stroke="#334155"
               strokeWidth="1.8"
               strokeDasharray="4 3"
             />
@@ -272,8 +254,8 @@ export function LandingPage({
                 dur="2.5s"
                 repeatCount="indefinite"
               />
-              <circle r="2.8" fill="#38bdf8" filter="url(#neon-blue-glow)" />
-              <circle r="1.3" fill="#ffffff" />
+              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+              <circle r="1.2" fill="#ffffff" />
             </g>
 
             <path
@@ -285,8 +267,8 @@ export function LandingPage({
             />
             <g>
               <animateMotion path="M 540 635 L 620 635" dur="1.6s" repeatCount="indefinite" />
-              <circle r="2.8" fill="#10b981" filter="url(#neon-emerald-glow)" />
-              <circle r="1.3" fill="#ffffff" />
+              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+              <circle r="1.2" fill="#ffffff" />
             </g>
 
             <path
@@ -298,14 +280,14 @@ export function LandingPage({
             />
             <g>
               <animateMotion path="M 830 635 L 910 635" dur="1.6s" repeatCount="indefinite" />
-              <circle r="2.8" fill="#00f0ff" filter="url(#neon-cyan-glow)" />
-              <circle r="1.3" fill="#ffffff" />
+              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+              <circle r="1.2" fill="#ffffff" />
             </g>
 
             <path
               d="M 1120 635 Q 1150 635, 1150 590 L 1150 515 L 1180 515"
               fill="none"
-              stroke="#0866ff"
+              stroke="#334155"
               strokeWidth="1.8"
               strokeDasharray="4 3"
             />
@@ -315,8 +297,8 @@ export function LandingPage({
                 dur="2.4s"
                 repeatCount="indefinite"
               />
-              <circle r="2.8" fill="#38bdf8" filter="url(#neon-blue-glow)" />
-              <circle r="1.3" fill="#ffffff" />
+              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+              <circle r="1.2" fill="#ffffff" />
             </g>
 
             {/* Right Vertical Flow: Patch Engine -> Meeting Room -> AI SRE */}
@@ -329,21 +311,21 @@ export function LandingPage({
             />
             <g>
               <animateMotion path="M 1290 480 L 1290 420" dur="1.8s" repeatCount="indefinite" />
-              <circle r="2.8" fill="#10b981" filter="url(#neon-emerald-glow)" />
-              <circle r="1.3" fill="#ffffff" />
+              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+              <circle r="1.2" fill="#ffffff" />
             </g>
 
             <path
               d="M 1290 270 L 1290 215"
               fill="none"
-              stroke="#38bdf8"
+              stroke="#334155"
               strokeWidth="1.8"
               markerEnd="url(#hero-arrow)"
             />
             <g>
               <animateMotion path="M 1290 270 L 1290 215" dur="1.7s" repeatCount="indefinite" />
-              <circle r="2.8" fill="#00f0ff" filter="url(#neon-cyan-glow)" />
-              <circle r="1.3" fill="#ffffff" />
+              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+              <circle r="1.2" fill="#ffffff" />
             </g>
 
             {/* === LEFT FLANK NODES (x=40..240, clean of center & top navbar) === */}
@@ -354,10 +336,10 @@ export function LandingPage({
                 height="70"
                 rx="8"
                 fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(56, 189, 248, 0.35)"
+                stroke="rgba(255, 255, 255, 0.08)"
                 strokeWidth="1.2"
               />
-              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.12)" />
+              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
               <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
                 API Gateway
               </text>
@@ -383,17 +365,17 @@ export function LandingPage({
                 height="70"
                 rx="8"
                 fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(245, 158, 11, 0.35)"
+                stroke="rgba(255, 255, 255, 0.08)"
                 strokeWidth="1.2"
               />
-              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(245, 158, 11, 0.12)" />
+              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
               <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
                 Auth Service
               </text>
               <text
                 x="44"
                 y="35"
-                fill="#f59e0b"
+                fill="#38bdf8"
                 fontSize="8.5"
                 fontFamily="var(--font-mono)"
                 fontWeight="700"
@@ -412,17 +394,17 @@ export function LandingPage({
                 height="70"
                 rx="8"
                 fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(129, 140, 248, 0.35)"
+                stroke="rgba(255, 255, 255, 0.08)"
                 strokeWidth="1.2"
               />
-              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(129, 140, 248, 0.14)" />
+              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
               <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
                 Kafka Event Stream
               </text>
               <text
                 x="44"
                 y="35"
-                fill="#818cf8"
+                fill="#38bdf8"
                 fontSize="8.5"
                 fontFamily="var(--font-mono)"
                 fontWeight="700"
@@ -442,17 +424,17 @@ export function LandingPage({
                 height="70"
                 rx="8"
                 fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(37, 99, 235, 0.35)"
+                stroke="rgba(255, 255, 255, 0.08)"
                 strokeWidth="1.2"
               />
-              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(37, 99, 235, 0.14)" />
+              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
               <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
                 Order Worker
               </text>
               <text
                 x="44"
                 y="35"
-                fill="#3b82f6"
+                fill="#38bdf8"
                 fontSize="8.5"
                 fontFamily="var(--font-mono)"
                 fontWeight="700"
@@ -471,17 +453,17 @@ export function LandingPage({
                 height="70"
                 rx="8"
                 fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(16, 185, 129, 0.35)"
+                stroke="rgba(255, 255, 255, 0.08)"
                 strokeWidth="1.2"
               />
-              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(16, 185, 129, 0.14)" />
+              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
               <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
                 Redis Cache Cluster
               </text>
               <text
                 x="44"
                 y="35"
-                fill="#10b981"
+                fill="#38bdf8"
                 fontSize="8.5"
                 fontFamily="var(--font-mono)"
                 fontWeight="700"
@@ -500,10 +482,10 @@ export function LandingPage({
                 height="70"
                 rx="8"
                 fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(56, 189, 248, 0.35)"
+                stroke="rgba(255, 255, 255, 0.08)"
                 strokeWidth="1.2"
               />
-              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.14)" />
+              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
               <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
                 Live SLO Guard
               </text>
@@ -540,7 +522,7 @@ export function LandingPage({
                 height="85"
                 rx="10"
                 fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(8, 102, 255, 0.4)"
+                stroke="rgba(8, 102, 255, 0.35)"
                 strokeWidth="1.2"
               />
               <text x="18" y="28" fill="#f8fafc" fontSize="12.5" fontWeight="700">
@@ -571,7 +553,7 @@ export function LandingPage({
                 stroke="rgba(255, 255, 255, 0.08)"
                 strokeWidth="1.2"
               />
-              <rect x="14" y="14" width="8" height="8" rx="4" fill="#10b981" />
+              <rect x="14" y="14" width="8" height="8" rx="4" fill="#38bdf8" />
               <text x="28" y="21" fill="#e2e8f0" fontSize="11" fontWeight="600">
                 #arch-review
               </text>
@@ -647,17 +629,17 @@ export function LandingPage({
                 height="70"
                 rx="8"
                 fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(16, 185, 129, 0.35)"
+                stroke="rgba(255, 255, 255, 0.08)"
                 strokeWidth="1.2"
               />
-              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(16, 185, 129, 0.14)" />
+              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
               <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
                 AI Patch Engine
               </text>
               <text
                 x="44"
                 y="35"
-                fill="#10b981"
+                fill="#38bdf8"
                 fontSize="8.5"
                 fontFamily="var(--font-mono)"
                 fontWeight="700"
@@ -677,8 +659,7 @@ export function LandingPage({
             <span className="hero-headline-primary">Review architecture with your team.</span>
             <br />
             <span className="hero-headline-secondary">
-              And <span className="hero-word-break">break it</span> before{' '}
-              <span className="hero-word-prod">production does.</span>
+              And break it <span className="hero-headline-accent">before production does.</span>
             </span>
           </h1>
 

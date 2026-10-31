@@ -331,25 +331,18 @@ body {
 }
 
 .hero-headline-primary {
-  color: #ffffff;
+  color: #f8fafc;
   display: inline-block;
 }
 
 .hero-headline-secondary {
-  color: rgba(226, 232, 240, 0.9);
+  color: #94a3b8;
   display: inline-block;
 }
 
-/* Crisp neon contrast without noisy brightness blur or glow shadows */
-.hero-word-break {
-  color: #ff3366;
-  font-weight: 900;
-  display: inline;
-}
-
-.hero-word-prod {
-  color: #00f0ff;
-  font-weight: 900;
+.hero-headline-accent {
+  color: #38bdf8;
+  font-weight: 800;
   display: inline;
 }
 
@@ -1672,14 +1665,10 @@ body {
 }
 
 [data-theme='light'] .hero-headline-secondary {
-  color: #334155;
+  color: #475569;
 }
 
-[data-theme='light'] .hero-word-break {
-  color: #e11d48;
-}
-
-[data-theme='light'] .hero-word-prod {
+[data-theme='light'] .hero-headline-accent {
   color: #0284c7;
 }
 
@@ -1851,14 +1840,10 @@ body {
 }
 
 [data-theme='light'] .hero-headline-secondary {
-  color: #334155;
+  color: #475569;
 }
 
-[data-theme='light'] .hero-word-break {
-  color: #e11d48;
-}
-
-[data-theme='light'] .hero-word-prod {
+[data-theme='light'] .hero-headline-accent {
   color: #0284c7;
 }
 
