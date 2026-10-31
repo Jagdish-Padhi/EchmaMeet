@@ -47,7 +47,7 @@
 
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-lg: 16px;
   --radius-full: 9999px;
 
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -1255,87 +1255,210 @@ body {
   flex-shrink: 0;
 }
 
-/* FAQ Accordion */
+/* ============================================================================
+   Sleek Enterprise Interactive Card Borders & Radius
+   On hover: each side's border spreads outwards from the center to ends.
+   On leave: smoothly collapses back towards the center of each edge.
+   ============================================================================ */
+.step-card,
+.comparison-card,
+.bento-card,
+.pricing-card,
+.faq-item {
+  position: relative;
+  border-radius: var(--radius-lg);
+  transition:
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+/* Horizontal borders (top & bottom) - spread outwards from center */
+.step-card::before,
+.comparison-card::before,
+.bento-card::before,
+.pricing-card::before,
+.faq-item::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-top: 1.5px solid var(--card-border-glow, #38bdf8);
+  border-bottom: 1.5px solid var(--card-border-glow, #38bdf8);
+  border-radius: inherit;
+  transform: scaleX(0);
+  transform-origin: center;
+  opacity: 0;
+  transition:
+    transform 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.22s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Vertical borders (left & right) - spread outwards from center */
+.step-card::after,
+.comparison-card::after,
+.bento-card::after,
+.pricing-card::after,
+.faq-item::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-left: 1.5px solid var(--card-border-glow, #38bdf8);
+  border-right: 1.5px solid var(--card-border-glow, #38bdf8);
+  border-radius: inherit;
+  transform: scaleY(0);
+  transform-origin: center;
+  opacity: 0;
+  transition:
+    transform 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.22s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* On hover: smoothly spread outwards from center towards all ends */
+.step-card:hover::before,
+.comparison-card:hover::before,
+.bento-card:hover::before,
+.pricing-card:hover::before,
+.faq-item:hover::before {
+  transform: scaleX(1);
+  opacity: 1;
+}
+
+.step-card:hover::after,
+.comparison-card:hover::after,
+.bento-card:hover::after,
+.pricing-card:hover::after,
+.faq-item:hover::after {
+  transform: scaleY(1);
+  opacity: 1;
+}
+
+/* Card-specific accent glow colors */
+.comparison-card.legacy {
+  --card-border-glow: #f87171;
+}
+
+.comparison-card.active-resilio {
+  --card-border-glow: #38bdf8;
+}
+
+.pricing-card.featured-pro {
+  --card-border-glow: #0866ff;
+}
+
+.faq-item.open {
+  --card-border-glow: #38bdf8;
+}
+
+/* Wide, Clean & Consistent FAQ Accordion */
 .faq-accordion-wrap {
-  max-width: 860px;
+  max-width: 1080px;
+  width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .faq-item {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .faq-item:hover {
-  border-color: rgba(56, 189, 248, 0.4);
+  border-color: rgba(56, 189, 248, 0.35);
+  background: var(--color-surface-hover);
 }
 
 .faq-item.open {
-  border-color: var(--color-accent);
-  background: var(--color-surface-elevated);
+  border-color: rgba(8, 102, 255, 0.45);
+  background: rgba(14, 22, 38, 0.65);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 }
 
 .faq-question-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 20px;
 }
 
 .faq-question-text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.faq-category {
-  font-size: 10.5px;
-  font-family: var(--font-mono);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--color-accent);
-  text-transform: uppercase;
+  flex: 1;
 }
 
 .faq-title {
-  font-size: 16px;
+  font-size: 16.5px;
   font-weight: 700;
   color: var(--color-text);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .faq-toggle-icon {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
-.faq-answer-row {
-  margin-top: 14px;
-  padding-top: 14px;
+.faq-item:hover .faq-toggle-icon {
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--color-accent);
+}
+
+.faq-item.open .faq-toggle-icon {
+  transform: rotate(45deg);
+  background: rgba(8, 102, 255, 0.2);
+  color: #38bdf8;
+}
+
+/* Smooth Non-Abrupt CSS Grid Collapse (Industry Grade) */
+.faq-answer-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition:
+    grid-template-rows 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.25s ease;
+  opacity: 0;
+}
+
+.faq-item.open .faq-answer-collapse {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.faq-answer-content {
+  overflow: hidden;
+}
+
+.faq-answer-content p {
+  padding-top: 16px;
+  margin-top: 16px;
   border-top: 1px solid var(--color-border);
-}
-
-.faq-answer-row p {
-  font-size: 14px;
+  font-size: 14.5px;
   color: var(--color-text-muted);
   line-height: 1.65;
-  margin: 0;
+  margin-bottom: 2px;
 }
 
 /* Bottom CTA Banner */
