@@ -5,6 +5,7 @@ const apiTarget = process.env['API_PROXY_TARGET'] ?? 'http://127.0.0.1:8787';
 
 export default defineConfig({
   plugins: [react()],
+  envDir: '../../',
   server: {
     port: 5173,
     // The browser only ever talks to its own origin. In development Vite forwards API calls to
