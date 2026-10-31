@@ -1,4 +1,5 @@
 import { useState, type SyntheticEvent } from 'react';
+import { Button } from '../../components/ui/Button';
 
 export interface CreateMeetingModalProps {
   readonly isOpen: boolean;
@@ -8,7 +9,7 @@ export interface CreateMeetingModalProps {
 
 export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingModalProps) {
   const [roomCode, setRoomCode] = useState(() => `#rfc-${Math.random().toString(36).slice(2, 8)}`);
-  const [topic, setTopic] = useState('Architecture Resilience Review');
+  const [topic, setTopic] = useState('Architecture Review');
   const [role, setRole] = useState<'Staff SRE' | 'Tech Lead' | 'Principal Architect'>('Staff SRE');
 
   if (!isOpen) return null;
@@ -48,10 +49,10 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
           </div>
           <div>
             <h2 id="create-meeting-title" className="meeting-dialog-title">
-              New Meeting
+              Create Meeting
             </h2>
             <p className="meeting-dialog-subtitle">
-              Start an architecture review room with live AI SRE analysis.
+              Start a live architecture review room for your team with automated risk detection.
             </p>
           </div>
           <button type="button" className="btn-close-drawer" onClick={onClose} aria-label="Close">
@@ -86,7 +87,7 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
 
           <div className="meeting-form-field">
             <label htmlFor="create-topic" className="meeting-form-label">
-              Session Topic
+              Meeting Topic
             </label>
             <input
               id="create-topic"
@@ -94,14 +95,14 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
               className="meeting-text-input"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g. Checkout Service Review"
+              placeholder="e.g. Checkout Service Architecture"
               required
             />
           </div>
 
           <div className="meeting-form-field">
             <label htmlFor="create-role" className="meeting-form-label">
-              Your Role
+              Role
             </label>
             <select
               id="create-role"
@@ -118,12 +119,12 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
           </div>
 
           <div className="meeting-dialog-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>
+            <Button variant="secondary" onClick={onClose} type="button">
               Cancel
-            </button>
-            <button type="submit" className="btn-primary">
-              Create &amp; Join
-            </button>
+            </Button>
+            <Button variant="primary" type="submit">
+              Create Room
+            </Button>
           </div>
         </form>
       </div>

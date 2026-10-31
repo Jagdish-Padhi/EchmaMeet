@@ -17,6 +17,7 @@ export interface MeetingBarProps {
   readonly hazards: readonly SreHazard[];
   readonly onYieldFloor: () => void;
   readonly onShareRoom: () => void;
+  readonly remoteParticipants?: readonly MeetingParticipant[];
 }
 
 export function MeetingBar({
@@ -26,6 +27,7 @@ export function MeetingBar({
   hazards,
   onYieldFloor,
   onShareRoom,
+  remoteParticipants = [],
 }: MeetingBarProps) {
   const [copied, setCopied] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -41,14 +43,7 @@ export function MeetingBar({
 
   const participants: readonly MeetingParticipant[] = [
     { ...currentUser, isMuted },
-    {
-      id: 'user-2',
-      name: 'Elena Rostova',
-      role: 'Principal Architect',
-      avatar: 'ER',
-      isSpeaking: true,
-      isMuted: false,
-    },
+    ...remoteParticipants,
     {
       id: 'ai-sre',
       name: 'Meta AI SRE',
@@ -77,7 +72,7 @@ export function MeetingBar({
           type="button"
           className="btn-live-session-start"
           onClick={onToggleConnect}
-          title="Join live Google Meet / Figma-style Architecture Review Huddle"
+          title="Join live Google Meet / Architecture Review Call"
         >
           <span className="live-dot-idle" />
           <span>Join Review Huddle</span>
@@ -99,164 +94,115 @@ export function MeetingBar({
       {/* Enterprise Reviewer Persona Stack */}
       <div className="huddle-participants-stack">
         {participants.map((p) => {
-          const isAi = p.role === 'Meta AI SRE';
+          const isAI = p.id === 'ai-sre';
+          const isCurrent = p.id === currentUser.id;
           return (
             <div
               key={p.id}
-              className={`huddle-avatar-pill ${p.isSpeaking ? 'speaking-waveform' : ''} ${
-                isAi ? 'huddle-avatar-ai' : ''
-              }`}
-              title={`${p.name} (${p.role}) ${p.isMuted ? '• Muted' : ''}`}
+              className={`huddle-avatar-chip ${isAI ? 'ai' : ''} ${p.isSpeaking ? 'speaking' : ''}`}
+              title={`${p.name} (${p.role})${p.isMuted ? ' - Muted' : ''}`}
             >
-              <span className="huddle-avatar-initials">{p.avatar}</span>
-              {p.isMuted && <span className="huddle-muted-dot" />}
+              <span className="avatar-label">{p.avatar}</span>
+              {p.isMuted && <span className="avatar-muted-badge" />}
+              {isCurrent && <span className="avatar-current-dot" />}
             </div>
           );
         })}
+
+        {/* Change Role Persona Trigger */}
+        <div className="huddle-persona-dropdown-wrap">
+          <button
+            type="button"
+            className="btn-persona-switch"
+            onClick={() => setShowPersonaMenu((prev) => !prev)}
+            title="Switch your reviewer persona"
+          >
+            Switch Persona &darr;
+          </button>
+
+          {showPersonaMenu && (
+            <div className="persona-menu-panel">
+              <div className="persona-menu-header">Select Perspective</div>
+              <button
+                type="button"
+                className="persona-option"
+                onClick={() => handleSelectRole('Alex Chen', 'Staff SRE', 'AC')}
+              >
+                <strong>Alex Chen</strong> &bull; Staff SRE
+              </button>
+              <button
+                type="button"
+                className="persona-option"
+                onClick={() => handleSelectRole('Priya Patel', 'Tech Lead', 'PP')}
+              >
+                <strong>Priya Patel</strong> &bull; Tech Lead
+              </button>
+              <button
+                type="button"
+                className="persona-option"
+                onClick={() => handleSelectRole('Marcus Vance', 'Principal Architect', 'MV')}
+              >
+                <strong>Marcus Vance</strong> &bull; Principal Architect
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Switch Persona Trigger */}
-      <div className="huddle-role-dropdown-container">
-        <button
-          type="button"
-          className="huddle-role-btn"
-          onClick={() => setShowPersonaMenu((open) => !open)}
-          title="Switch engineering role"
-        >
-          <span>{currentUser.role}</span>
-          <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
-            <path d="M7 10l5 5 5-5z" />
-          </svg>
-        </button>
-
-        {showPersonaMenu && (
-          <div className="huddle-persona-menu">
-            <button
-              type="button"
-              className="huddle-persona-item"
-              onClick={() => handleSelectRole('Alex Chen', 'Staff SRE', 'AC')}
-            >
-              <span className="persona-avatar">AC</span>
-              <div className="persona-meta">
-                <span className="persona-name">Alex Chen</span>
-                <span className="persona-title">Staff SRE</span>
-              </div>
-            </button>
-            <button
-              type="button"
-              className="huddle-persona-item"
-              onClick={() => handleSelectRole('Marcus Vance', 'Tech Lead', 'MV')}
-            >
-              <span className="persona-avatar">MV</span>
-              <div className="persona-meta">
-                <span className="persona-name">Marcus Vance</span>
-                <span className="persona-title">Tech Lead</span>
-              </div>
-            </button>
-            <button
-              type="button"
-              className="huddle-persona-item"
-              onClick={() => handleSelectRole('Elena Rostova', 'Principal Architect', 'ER')}
-            >
-              <span className="persona-avatar">ER</span>
-              <div className="persona-meta">
-                <span className="persona-name">Elena Rostova</span>
-                <span className="persona-title">Principal Architect</span>
-              </div>
-            </button>
+      {/* Meta AI SRE Architectural Risk Badge */}
+      <div className="huddle-sre-status">
+        {aiRaisedHand ? (
+          <button
+            type="button"
+            className="btn-sre-callout pulse-alert"
+            onClick={onYieldFloor}
+            title="Meta AI SRE has raised a Sev-1 architectural risk"
+          >
+            <span className="ai-icon-shield">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 3" />
+              </svg>
+            </span>
+            <span>Meta AI SRE Raised Hand ({hazards.length})</span>
+          </button>
+        ) : (
+          <div className="sre-idle-pill">
+            <span className="sre-scan-dot" />
+            <span>AI SRE Sentinel: Monitoring Active</span>
           </div>
         )}
       </div>
 
-      {/* Audio Mute/Unmute Huddle Mic */}
-      <button
-        type="button"
-        className={`huddle-control-btn ${isMuted ? 'btn-mic-muted' : 'btn-mic-active'}`}
-        onClick={() => setIsMuted((m) => !m)}
-        title={isMuted ? 'Unmute microphone (Ctrl+Shift+M)' : 'Mute microphone'}
-      >
-        {isMuted ? (
-          <svg
-            viewBox="0 0 24 24"
-            width="14"
-            height="14"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <line x1="1" y1="1" x2="23" y2="23" />
-            <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6" />
-            <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23" />
-            <line x1="12" y1="19" x2="12" y2="23" />
-            <line x1="8" y1="23" x2="16" y2="23" />
-          </svg>
-        ) : (
-          <svg
-            viewBox="0 0 24 24"
-            width="14"
-            height="14"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-            <line x1="12" y1="19" x2="12" y2="23" />
-            <line x1="8" y1="23" x2="16" y2="23" />
-          </svg>
-        )}
-      </button>
-
-      {/* Meta AI SRE Floor Interruption Button */}
-      {aiRaisedHand && (
+      {/* Audio & Room Management Actions */}
+      <div className="huddle-actions">
         <button
           type="button"
-          className="yield-floor-btn"
-          onClick={onYieldFloor}
-          title="Review architectural risk detected by Meta AI SRE"
+          className={`btn-huddle-action ${isMuted ? 'muted' : ''}`}
+          onClick={() => setIsMuted((prev) => !prev)}
+          title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
         >
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
-            <path d="M18 11V6a2 2 0 0 0-4 0v5" />
-            <path d="M14 10V4a2 2 0 0 0-4 0v7" />
-            <path d="M10 10.5V6a2 2 0 0 0-4 0v8" />
-            <path d="M6 14v-1a2 2 0 0 0-4 0v6a6 6 0 0 0 6 6h4a6 6 0 0 0 6-6v-4a2 2 0 0 0-4 0" />
-          </svg>
-          <span className="hazard-count-badge">{hazards.length}</span>
-          <span>Review AI Finding</span>
+          {isMuted ? 'Muted' : 'Mute'}
         </button>
-      )}
 
-      {/* Copy Room Link */}
-      <button
-        type="button"
-        className="btn-share-room"
-        onClick={handleShare}
-        title="Copy secure Review Huddle Link"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          width="12"
-          height="12"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
+        <button
+          type="button"
+          className="btn-huddle-action"
+          onClick={handleShare}
+          title="Copy room code and invite link"
         >
-          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-          <polyline points="16 6 12 2 8 6" />
-          <line x1="12" y1="2" x2="12" y2="15" />
-        </svg>
-        <span>{copied ? 'Copied' : 'Share'}</span>
-      </button>
+          {copied ? 'Link Copied!' : 'Share Room'}
+        </button>
 
-      {/* Leave Huddle */}
-      <button
-        type="button"
-        className="btn-leave-room"
-        onClick={onToggleConnect}
-        title="Leave Review Huddle"
-      >
-        Leave
-      </button>
+        <button
+          type="button"
+          className="btn-huddle-action danger"
+          onClick={onToggleConnect}
+          title="Disconnect from review room"
+        >
+          Leave Call
+        </button>
+      </div>
     </div>
   );
 }

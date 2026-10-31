@@ -1,4 +1,5 @@
 import { useState, type SyntheticEvent } from 'react';
+import { Button } from '../../components/ui/Button';
 
 export interface JoinMeetingModalProps {
   readonly isOpen: boolean;
@@ -60,7 +61,7 @@ export function JoinMeetingModal({
               Join Meeting
             </h2>
             <p className="meeting-dialog-subtitle">
-              Connect to a team room or start a solo review with AI.
+              Join an architecture review room with your team or review your diagram with AI.
             </p>
           </div>
           <button type="button" className="btn-close-drawer" onClick={onClose} aria-label="Close">
@@ -88,7 +89,7 @@ export function JoinMeetingModal({
               <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
             </svg>
-            <span>Team Code</span>
+            <span>Team Room</span>
           </button>
           <button
             type="button"
@@ -117,7 +118,7 @@ export function JoinMeetingModal({
           <form onSubmit={handleSubmitCode} className="meeting-dialog-form">
             <div className="meeting-form-field">
               <label htmlFor="join-room-code" className="meeting-form-label">
-                Room Code or Link
+                Room Code
               </label>
               <input
                 id="join-room-code"
@@ -132,12 +133,12 @@ export function JoinMeetingModal({
             </div>
 
             <div className="meeting-dialog-actions">
-              <button type="button" className="btn-secondary" onClick={onClose}>
+              <Button variant="secondary" onClick={onClose} type="button">
                 Cancel
-              </button>
-              <button type="submit" className="btn-primary" disabled={!roomCode.trim()}>
+              </Button>
+              <Button variant="primary" type="submit" disabled={!roomCode.trim()}>
                 Join Room
-              </button>
+              </Button>
             </div>
           </form>
         )}
@@ -151,21 +152,21 @@ export function JoinMeetingModal({
                   <span className="solo-ai-dot" />
                 </div>
                 <div>
-                  <div className="solo-ai-title">Meta AI SRE Session</div>
+                  <div className="solo-ai-title">Solo Architecture Review</div>
                   <div className="solo-ai-desc">
-                    Private 1-on-1 review with live hazard detection and sandbox proof.
+                    Review your architecture 1-on-1 with the AI. It flags bottlenecks, circular loops, and single points of failure in real time.
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="meeting-dialog-actions">
-              <button type="button" className="btn-secondary" onClick={onClose}>
+              <Button variant="secondary" onClick={onClose} type="button">
                 Cancel
-              </button>
-              <button type="button" className="btn-primary" onClick={handleStartSolo}>
+              </Button>
+              <Button variant="primary" onClick={handleStartSolo} type="button">
                 Start Solo Review
-              </button>
+              </Button>
             </div>
           </div>
         )}

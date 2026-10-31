@@ -49,9 +49,9 @@ export function SreYieldFloorModal({
             </div>
             <div>
               <div className="sre-agent-name">
-                Meta AI SRE &bull; Autonomous Architecture Review
+                AI Architecture Reviewer
               </div>
-              <div className="sre-agent-subtitle">Continuous Resilience Analysis</div>
+              <div className="sre-agent-subtitle">Live Architecture Risk Detection</div>
             </div>
           </div>
           <button
@@ -67,7 +67,7 @@ export function SreYieldFloorModal({
         {/* Hazard Body */}
         <div className="sre-modal-body">
           <div className="hazard-severity-pill critical">
-            <span>SEV-1 ARCHITECTURAL RISK</span>
+            <span>High Risk Finding</span>
           </div>
 
           <h3 id="sre-hazard-title" className="sre-hazard-heading">
@@ -83,14 +83,14 @@ export function SreYieldFloorModal({
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor">
                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
-              <span>Empirical Recommendation</span>
+              <span>Recommended Fix</span>
             </div>
             <p className="recommendation-text">{currentHazard.recommendation}</p>
           </div>
 
           {hazards.length > 1 && (
             <div className="sre-additional-hazards-note">
-              +{hazards.length - 1} additional architectural hazard(s) flagged across the topology.
+              +{hazards.length - 1} other issue(s) found in this architecture.
             </div>
           )}
         </div>
@@ -105,9 +105,9 @@ export function SreYieldFloorModal({
                 onRunProof(currentHazard.targetEdgeId as EdgeId);
                 onClose();
               }}
-              title="Spawn sandbox processes and simulate latency to test this failure live"
+              title="Run simulation to test this failure live"
             >
-              Run 5s Sandbox Proof
+              Simulate Failure (5s)
             </Button>
           )}
 
@@ -122,9 +122,9 @@ export function SreYieldFloorModal({
                 );
                 onClose();
               }}
-              title="Automatically update edge policy on canvas with mathematically proven resilience settings"
+              title="Automatically update connection with recommended resilience settings"
             >
-              Apply SRE Patch to Canvas
+              Apply Fix to Architecture
             </Button>
           )}
 
