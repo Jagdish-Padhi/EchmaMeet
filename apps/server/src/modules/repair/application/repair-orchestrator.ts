@@ -37,6 +37,7 @@ export interface RepairOrchestratorDependencies {
   runs: RunsService;
   modelProposer: RepairProposerPort;
   ruleBasedProposer: RepairProposerPort;
+  mlProposer?: RepairProposerPort | undefined;
   broadcaster: EventBroadcasterPort;
 }
 
@@ -186,7 +187,11 @@ export class RepairOrchestrator implements RepairOrchestratorPort {
     });
 
     const proposer =
-      request.proposer === 'model' ? this.deps.modelProposer : this.deps.ruleBasedProposer;
+      request.proposer === 'model'
+        ? this.deps.modelProposer
+        : request.proposer === 'ml_random_forest'
+          ? (this.deps.mlProposer ?? this.deps.ruleBasedProposer)
+          : this.deps.ruleBasedProposer;
     let currentTopology: Topology = request.topology;
     let bestTopology: Topology = request.topology;
     let latestVerdicts: readonly InvariantVerdict[];

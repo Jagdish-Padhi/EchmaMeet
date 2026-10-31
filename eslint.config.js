@@ -53,6 +53,8 @@ export default tseslint.config(
       '**/dist/**',
       '**/coverage/**',
       '**/.smoke-output/**',
+      '**/.venv/**',
+      'ml/**',
       'data/**',
       'docs/**',
       'pnpm-lock.yaml',

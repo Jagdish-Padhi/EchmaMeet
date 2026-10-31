@@ -3,12 +3,79 @@ import { runIdSchema, startRepairRequestSchema, type RunEvent } from '@chaosboar
 import { openEventStream, parseWith } from '../../../platform/http-kit';
 import type { RepairOrchestratorPort } from '../application/ports';
 import type { RunsService } from '../../runs';
+import { MLDiagnosisService } from '../application/ml-diagnosis-service';
 
 export function registerRepairRoutes(
   app: FastifyInstance,
   orchestrator: RepairOrchestratorPort,
   runs: RunsService,
 ): void {
+  const mlDiagnosisService = new MLDiagnosisService(runs);
+
+  // POST /api/ml/diagnose
+  app.post('/api/ml/diagnose', (req, reply) => {
+    const body = req.body as {
+      runId?: string;
+      metrics?: {
+        p50_latency_ms?: number;
+        p95_latency_ms?: number;
+        p99_latency_ms?: number;
+        completion_rate?: number;
+        retry_amplification?: number;
+        worker_saturation?: number;
+        max_queue_depth?: number;
+        duplicate_write_rate?: number;
+        breaker_open_fraction?: number;
+      };
+    };
+
+    if (body.runId) {
+      const parsedId = runIdSchema.parse(body.runId);
+      const result = mlDiagnosisService.diagnoseRun(parsedId);
+      if (!result) {
+        return reply.status(404).send({
+          type: 'about:blank',
+          title: 'Not Found',
+          status: 404,
+          detail: `Run ${parsedId} was not found.`,
+          code: 'run_not_found',
+        });
+      }
+      return reply.send(result);
+    }
+
+    const metrics = body.metrics ?? {};
+    const result = mlDiagnosisService.diagnoseTelemetry({
+      p50_latency_ms: metrics.p50_latency_ms ?? 25,
+      p95_latency_ms: metrics.p95_latency_ms ?? 55,
+      p99_latency_ms: metrics.p99_latency_ms ?? 85,
+      completion_rate: metrics.completion_rate ?? 1.0,
+      retry_amplification: metrics.retry_amplification ?? 1.0,
+      worker_saturation: metrics.worker_saturation ?? 0.3,
+      max_queue_depth: metrics.max_queue_depth ?? 0,
+      duplicate_write_rate: metrics.duplicate_write_rate ?? 0.0,
+      breaker_open_fraction: metrics.breaker_open_fraction ?? 0.0,
+    });
+
+    return reply.send(result);
+  });
+
+  // GET /api/runs/:id/ml-diagnosis
+  app.get('/api/runs/:id/ml-diagnosis', (req, reply) => {
+    const { id } = req.params as { id: string };
+    const parsedId = runIdSchema.parse(id);
+    const result = mlDiagnosisService.diagnoseRun(parsedId);
+    if (!result) {
+      return reply.status(404).send({
+        type: 'about:blank',
+        title: 'Not Found',
+        status: 404,
+        detail: `Run ${parsedId} was not found.`,
+        code: 'run_not_found',
+      });
+    }
+    return reply.send(result);
+  });
   // POST /api/repairs
   app.post('/api/repairs', async (req, reply) => {
     const parsed = parseWith(startRepairRequestSchema, req.body, 'start repair request');

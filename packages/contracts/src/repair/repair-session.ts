@@ -18,7 +18,7 @@ export const repairStatusSchema = z.enum([
 ]);
 export type RepairStatus = z.infer<typeof repairStatusSchema>;
 
-export const repairProposerKindSchema = z.enum(['model', 'rule_based']);
+export const repairProposerKindSchema = z.enum(['model', 'rule_based', 'ml_random_forest']);
 export type RepairProposerKind = z.infer<typeof repairProposerKindSchema>;
 
 export const startRepairRequestSchema = z.strictObject({
