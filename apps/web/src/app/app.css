@@ -409,29 +409,6 @@ body {
   padding: 36px 20px 48px;
 }
 
-/* Ambient Breathing Glow on Meta AI Intelligence Node */
-@keyframes aiBreathPulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.3;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.65;
-  }
-}
-
-.ai-breath-ring {
-  transform-origin: 45px 45px;
-  animation: aiBreathPulse 4s ease-in-out infinite;
-}
-
-.ai-breath-ring-inner {
-  transform-origin: 45px 45px;
-  animation: aiBreathPulse 3s ease-in-out infinite 0.7s;
-}
-
 .hud-value.green {
   color: #10b981;
 }

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { EdgeId, TopologyEdge, TopologyProblem } from '@chaosboard/contracts';
 import type { BoardNode } from '../types';
 import { computeEdgeRoute } from '../utils/edge-router';
@@ -12,7 +13,7 @@ export interface EdgeLinkProps {
   readonly onSelect: (id: EdgeId) => void;
 }
 
-export function EdgeLink({
+export const EdgeLink = memo(function EdgeLink({
   edge,
   sourceNode,
   targetNode,
@@ -117,4 +118,4 @@ export function EdgeLink({
       </g>
     </g>
   );
-}
+});

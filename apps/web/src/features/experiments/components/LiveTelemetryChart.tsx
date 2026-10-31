@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Card } from '../../../components/ui/Card';
 import type { ExperimentTelemetryPoint } from '../types';
 
@@ -8,7 +8,7 @@ export interface LiveTelemetryChartProps {
   readonly totalTrials: number;
 }
 
-export function LiveTelemetryChart({
+export const LiveTelemetryChart = memo(function LiveTelemetryChart({
   telemetry,
   currentTrial,
   totalTrials,
@@ -317,4 +317,4 @@ export function LiveTelemetryChart({
       </div>
     </Card>
   );
-}
+});

@@ -1,4 +1,4 @@
-import type { MouseEvent as ReactMouseEvent } from 'react';
+import { memo, type MouseEvent as ReactMouseEvent } from 'react';
 import type { NodeId, TopologyProblem } from '@chaosboard/contracts';
 import type { BoardNode } from '../types';
 
@@ -15,7 +15,7 @@ export interface NodeCardProps {
   readonly onDropConnect?: (targetId: NodeId) => void;
 }
 
-export function NodeCard({
+export const NodeCard = memo(function NodeCard({
   node,
   isSelected,
   isEntry,
@@ -217,4 +217,4 @@ export function NodeCard({
       </g>
     </g>
   );
-}
+});

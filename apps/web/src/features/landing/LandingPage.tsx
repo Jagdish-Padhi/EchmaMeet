@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import type { ScenarioSpec } from '@chaosboard/contracts';
 
 export interface LandingPageProps {
@@ -43,6 +43,464 @@ const FAQ_ITEMS: readonly FaqItem[] = [
   },
 ];
 
+const HeroBackdrop = memo(function HeroBackdrop() {
+  return (
+    <div className="hero-backdrop-layer" aria-hidden="true">
+      <svg
+        className="hero-backdrop-svg"
+        viewBox="0 0 1440 760"
+        preserveAspectRatio="xMidYMid slice"
+      >
+        <defs>
+          <pattern id="hero-matrix-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1" fill="rgba(255, 255, 255, 0.04)" />
+          </pattern>
+
+          <marker
+            id="hero-arrow"
+            viewBox="0 0 10 10"
+            refX="7.5"
+            refY="5"
+            markerWidth="6"
+            markerHeight="6"
+            orient="auto-start-reverse"
+          >
+            <path d="M 0 1.5 L 7.5 5 L 0 8.5 Z" fill="#475569" />
+          </marker>
+
+          {/* Unified Enterprise Neon Flow Filter */}
+          <filter id="neon-flow-glow" x="-100%" y="-100%" width="300%" height="300%">
+            <feDropShadow
+              dx="0"
+              dy="0"
+              stdDeviation="1.2"
+              floodColor="#38bdf8"
+              floodOpacity="0.8"
+            />
+          </filter>
+        </defs>
+
+        <rect width="100%" height="100%" fill="url(#hero-matrix-grid)" />
+
+        {/* Perimeter Network Pipelines with Consistent Enterprise Telemetry Flow */}
+        {/* Left Vertical Flow: Gateway -> Auth -> Kafka */}
+        <path
+          d="M 140 210 L 140 310"
+          fill="none"
+          stroke="#334155"
+          strokeWidth="1.8"
+          markerEnd="url(#hero-arrow)"
+        />
+        <g>
+          <animateMotion path="M 140 210 L 140 310" dur="1.8s" repeatCount="indefinite" />
+          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1.2" fill="#ffffff" />
+        </g>
+
+        <path
+          d="M 140 380 L 140 480"
+          fill="none"
+          stroke="#334155"
+          strokeWidth="1.8"
+          markerEnd="url(#hero-arrow)"
+        />
+        <g>
+          <animateMotion path="M 140 380 L 140 480" dur="2s" repeatCount="indefinite" />
+          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1.2" fill="#ffffff" />
+        </g>
+
+        {/* Bottom Interconnect: Kafka -> Order Worker -> Redis -> SLO Guard -> Patch Engine */}
+        <path
+          d="M 240 515 L 290 515 Q 310 515, 310 560 L 310 635 L 330 635"
+          fill="none"
+          stroke="#334155"
+          strokeWidth="1.8"
+          strokeDasharray="4 3"
+        />
+        <g>
+          <animateMotion
+            path="M 240 515 L 290 515 Q 310 515, 310 560 L 310 635 L 330 635"
+            dur="2.5s"
+            repeatCount="indefinite"
+          />
+          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1.2" fill="#ffffff" />
+        </g>
+
+        <path
+          d="M 540 635 L 620 635"
+          fill="none"
+          stroke="#334155"
+          strokeWidth="1.8"
+          markerEnd="url(#hero-arrow)"
+        />
+        <g>
+          <animateMotion path="M 540 635 L 620 635" dur="1.6s" repeatCount="indefinite" />
+          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1.2" fill="#ffffff" />
+        </g>
+
+        <path
+          d="M 830 635 L 910 635"
+          fill="none"
+          stroke="#334155"
+          strokeWidth="1.8"
+          markerEnd="url(#hero-arrow)"
+        />
+        <g>
+          <animateMotion path="M 830 635 L 910 635" dur="1.6s" repeatCount="indefinite" />
+          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1.2" fill="#ffffff" />
+        </g>
+
+        <path
+          d="M 1120 635 Q 1150 635, 1150 590 L 1150 515 L 1180 515"
+          fill="none"
+          stroke="#334155"
+          strokeWidth="1.8"
+          strokeDasharray="4 3"
+        />
+        <g>
+          <animateMotion
+            path="M 1120 635 Q 1150 635, 1150 590 L 1150 515 L 1180 515"
+            dur="2.4s"
+            repeatCount="indefinite"
+          />
+          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1.2" fill="#ffffff" />
+        </g>
+
+        {/* Right Vertical Flow: Patch Engine -> Meeting Room -> AI SRE */}
+        <path
+          d="M 1290 480 L 1290 420"
+          fill="none"
+          stroke="#334155"
+          strokeWidth="1.8"
+          markerEnd="url(#hero-arrow)"
+        />
+        <g>
+          <animateMotion path="M 1290 480 L 1290 420" dur="1.8s" repeatCount="indefinite" />
+          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1.2" fill="#ffffff" />
+        </g>
+
+        <path
+          d="M 1290 270 L 1290 215"
+          fill="none"
+          stroke="#334155"
+          strokeWidth="1.8"
+          markerEnd="url(#hero-arrow)"
+        />
+        <g>
+          <animateMotion path="M 1290 270 L 1290 215" dur="1.7s" repeatCount="indefinite" />
+          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1.2" fill="#ffffff" />
+        </g>
+
+        {/* === LEFT FLANK NODES (x=40..240, clean of center & top navbar) === */}
+        {/* Block 1: API Gateway (Top-Left) */}
+        <g transform="translate(40, 140)">
+          <rect
+            width="200"
+            height="70"
+            rx="8"
+            fill="rgba(14, 18, 28, 0.75)"
+            stroke="rgba(255, 255, 255, 0.08)"
+            strokeWidth="1.2"
+          />
+          <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
+          <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+            API Gateway
+          </text>
+          <text
+            x="44"
+            y="35"
+            fill="#38bdf8"
+            fontSize="8.5"
+            fontFamily="var(--font-mono)"
+            fontWeight="700"
+          >
+            LIVE TRAFFIC STREAM
+          </text>
+          <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+            p99: 14ms &bull; 0% loss
+          </text>
+        </g>
+
+        {/* Block 2: Auth Service (Mid-Left) */}
+        <g transform="translate(40, 310)">
+          <rect
+            width="200"
+            height="70"
+            rx="8"
+            fill="rgba(14, 18, 28, 0.75)"
+            stroke="rgba(255, 255, 255, 0.08)"
+            strokeWidth="1.2"
+          />
+          <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
+          <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+            Auth Service
+          </text>
+          <text
+            x="44"
+            y="35"
+            fill="#38bdf8"
+            fontSize="8.5"
+            fontFamily="var(--font-mono)"
+            fontWeight="700"
+          >
+            CIRCUIT BREAKER ON
+          </text>
+          <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+            safe timeout: 100ms
+          </text>
+        </g>
+
+        {/* Block 3: Kafka Event Stream (Bottom-Left) */}
+        <g transform="translate(40, 480)">
+          <rect
+            width="200"
+            height="70"
+            rx="8"
+            fill="rgba(14, 18, 28, 0.75)"
+            stroke="rgba(255, 255, 255, 0.08)"
+            strokeWidth="1.2"
+          />
+          <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
+          <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+            Kafka Event Stream
+          </text>
+          <text
+            x="44"
+            y="35"
+            fill="#38bdf8"
+            fontSize="8.5"
+            fontFamily="var(--font-mono)"
+            fontWeight="700"
+          >
+            PARTITION REPLICATED
+          </text>
+          <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+            24k msg/s &bull; 0 lag
+          </text>
+        </g>
+
+        {/* === BOTTOM SIDE INFRASTRUCTURE NODES (y=600, evenly spaced under CTA buttons) === */}
+        {/* Block 4: Order Worker (Bottom-Center-Left) */}
+        <g transform="translate(330, 600)">
+          <rect
+            width="210"
+            height="70"
+            rx="8"
+            fill="rgba(14, 18, 28, 0.75)"
+            stroke="rgba(255, 255, 255, 0.08)"
+            strokeWidth="1.2"
+          />
+          <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
+          <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+            Order Worker
+          </text>
+          <text
+            x="44"
+            y="35"
+            fill="#38bdf8"
+            fontSize="8.5"
+            fontFamily="var(--font-mono)"
+            fontWeight="700"
+          >
+            BOUNDED QUEUE
+          </text>
+          <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+            depth: 140 / 5000 &bull; safe
+          </text>
+        </g>
+
+        {/* Block 5: Redis Cache Cluster (Bottom-Center) */}
+        <g transform="translate(620, 600)">
+          <rect
+            width="210"
+            height="70"
+            rx="8"
+            fill="rgba(14, 18, 28, 0.75)"
+            stroke="rgba(255, 255, 255, 0.08)"
+            strokeWidth="1.2"
+          />
+          <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
+          <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+            Redis Cache Cluster
+          </text>
+          <text
+            x="44"
+            y="35"
+            fill="#38bdf8"
+            fontSize="8.5"
+            fontFamily="var(--font-mono)"
+            fontWeight="700"
+          >
+            CACHE HIT 99.4%
+          </text>
+          <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+            read: 0.8ms &bull; write: 1.2ms
+          </text>
+        </g>
+
+        {/* Block 6: Live SLO Guard (Bottom-Center-Right) */}
+        <g transform="translate(910, 600)">
+          <rect
+            width="210"
+            height="70"
+            rx="8"
+            fill="rgba(14, 18, 28, 0.75)"
+            stroke="rgba(255, 255, 255, 0.08)"
+            strokeWidth="1.2"
+          />
+          <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
+          <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+            Live SLO Guard
+          </text>
+          <text
+            x="44"
+            y="35"
+            fill="#38bdf8"
+            fontSize="8.5"
+            fontFamily="var(--font-mono)"
+            fontWeight="700"
+          >
+            ALL INVARIANTS PASS
+          </text>
+          <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+            error budget: 99.98% intact
+          </text>
+        </g>
+
+        {/* === RIGHT FLANK NODES (x=1180..1400, clean of center & top navbar) === */}
+        {/* Block 7: Meta AI SRE Node (Top-Right) */}
+        <g transform="translate(1180, 130)">
+          <rect
+            width="220"
+            height="85"
+            rx="10"
+            fill="rgba(14, 18, 28, 0.75)"
+            stroke="rgba(8, 102, 255, 0.35)"
+            strokeWidth="1.2"
+          />
+          <text x="18" y="28" fill="#f8fafc" fontSize="12.5" fontWeight="700">
+            Meta AI SRE in Call
+          </text>
+          <text
+            x="18"
+            y="43"
+            fill="#38bdf8"
+            fontSize="9"
+            fontFamily="var(--font-mono)"
+            fontWeight="700"
+          >
+            ACTIVE PARTICIPANT
+          </text>
+          <text x="18" y="66" fill="#94a3b8" fontSize="10.5">
+            &ldquo;Flagged 3x retry; patch ready.&rdquo;
+          </text>
+        </g>
+
+        {/* Block 8: Collaborative Meeting Room (Mid-Right) */}
+        <g transform="translate(1180, 270)">
+          <rect
+            width="220"
+            height="150"
+            rx="10"
+            fill="rgba(14, 18, 28, 0.75)"
+            stroke="rgba(255, 255, 255, 0.08)"
+            strokeWidth="1.2"
+          />
+          <rect x="14" y="14" width="8" height="8" rx="4" fill="#38bdf8" />
+          <text x="28" y="21" fill="#e2e8f0" fontSize="11" fontWeight="600">
+            #arch-review
+          </text>
+          <text
+            x="206"
+            y="21"
+            fill="#64748b"
+            fontSize="8.5"
+            fontFamily="var(--font-mono)"
+            textAnchor="end"
+          >
+            VOICE ON
+          </text>
+          <line
+            x1="14"
+            y1="34"
+            x2="206"
+            y2="34"
+            stroke="rgba(255, 255, 255, 0.06)"
+            strokeWidth="1"
+          />
+          <g transform="translate(14, 46)">
+            <circle cx="10" cy="10" r="10" fill="#1e293b" stroke="#38bdf8" strokeWidth="1.2" />
+            <text x="10" y="13.5" fill="#38bdf8" fontSize="9" fontWeight="700" textAnchor="middle">
+              SC
+            </text>
+            <text x="28" y="11" fill="#f1f5f9" fontSize="11" fontWeight="600">
+              Sarah C. (Staff SRE)
+            </text>
+            <text x="28" y="22" fill="#64748b" fontSize="9">
+              Speaking &bull; Simulated DB lag
+            </text>
+          </g>
+          <g transform="translate(14, 86)">
+            <circle
+              cx="10"
+              cy="10"
+              r="10"
+              fill="#1e293b"
+              stroke="rgba(255,255,255,0.2)"
+              strokeWidth="1"
+            />
+            <text x="10" y="13.5" fill="#94a3b8" fontSize="9" fontWeight="700" textAnchor="middle">
+              AM
+            </text>
+            <text x="28" y="11" fill="#f1f5f9" fontSize="11" fontWeight="600">
+              Alex M. (Platform Lead)
+            </text>
+            <text x="28" y="22" fill="#64748b" fontSize="9">
+              Accepted AI circuit breaker
+            </text>
+          </g>
+        </g>
+
+        {/* Block 9: Autonomous Patch Engine (Bottom-Right) */}
+        <g transform="translate(1180, 480)">
+          <rect
+            width="220"
+            height="70"
+            rx="8"
+            fill="rgba(14, 18, 28, 0.75)"
+            stroke="rgba(255, 255, 255, 0.08)"
+            strokeWidth="1.2"
+          />
+          <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
+          <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+            AI Patch Engine
+          </text>
+          <text
+            x="44"
+            y="35"
+            fill="#38bdf8"
+            fontSize="8.5"
+            fontFamily="var(--font-mono)"
+            fontWeight="700"
+          >
+            PARETO OPTIMAL
+          </text>
+          <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+            automated rollback armed
+          </text>
+        </g>
+      </svg>
+    </div>
+  );
+});
+
 export function LandingPage({
   onLaunchStudio,
   theme,
@@ -53,17 +511,20 @@ export function LandingPage({
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  const toggleFaq = (index: number) => {
+  const toggleFaq = useCallback((index: number) => {
     setOpenFaqIndex((prev) => (prev === index ? null : index));
-  };
+  }, []);
 
-  const handleAuthAction = (mode: 'login' | 'signup') => {
-    if (onOpenAuth) {
-      onOpenAuth(mode);
-    } else {
-      onLaunchStudio();
-    }
-  };
+  const handleAuthAction = useCallback(
+    (mode: 'login' | 'signup') => {
+      if (onOpenAuth) {
+        onOpenAuth(mode);
+      } else {
+        onLaunchStudio();
+      }
+    },
+    [onOpenAuth, onLaunchStudio],
+  );
 
   return (
     <div className="landing-page-root">
@@ -174,484 +635,8 @@ export function LandingPage({
 
       {/* Cinematic Hero Section */}
       <section id="hero" className="landing-hero-cinematic">
-        {/* Atmospheric Background Layer: Architecture Topology & Live Meeting Room */}
-        <div className="hero-backdrop-layer" aria-hidden="true">
-          <svg
-            className="hero-backdrop-svg"
-            viewBox="0 0 1440 760"
-            preserveAspectRatio="xMidYMid slice"
-          >
-            <defs>
-              <pattern id="hero-matrix-grid" width="32" height="32" patternUnits="userSpaceOnUse">
-                <circle cx="2" cy="2" r="1" fill="rgba(255, 255, 255, 0.04)" />
-              </pattern>
-
-              <marker
-                id="hero-arrow"
-                viewBox="0 0 10 10"
-                refX="7.5"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-              >
-                <path d="M 0 1.5 L 7.5 5 L 0 8.5 Z" fill="#475569" />
-              </marker>
-
-              {/* Unified Enterprise Neon Flow Filter */}
-              <filter id="neon-flow-glow" x="-100%" y="-100%" width="300%" height="300%">
-                <feDropShadow
-                  dx="0"
-                  dy="0"
-                  stdDeviation="1.2"
-                  floodColor="#38bdf8"
-                  floodOpacity="0.8"
-                />
-              </filter>
-            </defs>
-
-            <rect width="100%" height="100%" fill="url(#hero-matrix-grid)" />
-
-            {/* Perimeter Network Pipelines with Consistent Enterprise Telemetry Flow */}
-            {/* Left Vertical Flow: Gateway -> Auth -> Kafka */}
-            <path
-              d="M 140 210 L 140 310"
-              fill="none"
-              stroke="#334155"
-              strokeWidth="1.8"
-              markerEnd="url(#hero-arrow)"
-            />
-            <g>
-              <animateMotion path="M 140 210 L 140 310" dur="1.8s" repeatCount="indefinite" />
-              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-              <circle r="1.2" fill="#ffffff" />
-            </g>
-
-            <path
-              d="M 140 380 L 140 480"
-              fill="none"
-              stroke="#334155"
-              strokeWidth="1.8"
-              markerEnd="url(#hero-arrow)"
-            />
-            <g>
-              <animateMotion path="M 140 380 L 140 480" dur="2s" repeatCount="indefinite" />
-              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-              <circle r="1.2" fill="#ffffff" />
-            </g>
-
-            {/* Bottom Interconnect: Kafka -> Order Worker -> Redis -> SLO Guard -> Patch Engine */}
-            <path
-              d="M 240 515 L 290 515 Q 310 515, 310 560 L 310 635 L 330 635"
-              fill="none"
-              stroke="#334155"
-              strokeWidth="1.8"
-              strokeDasharray="4 3"
-            />
-            <g>
-              <animateMotion
-                path="M 240 515 L 290 515 Q 310 515, 310 560 L 310 635 L 330 635"
-                dur="2.5s"
-                repeatCount="indefinite"
-              />
-              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-              <circle r="1.2" fill="#ffffff" />
-            </g>
-
-            <path
-              d="M 540 635 L 620 635"
-              fill="none"
-              stroke="#334155"
-              strokeWidth="1.8"
-              markerEnd="url(#hero-arrow)"
-            />
-            <g>
-              <animateMotion path="M 540 635 L 620 635" dur="1.6s" repeatCount="indefinite" />
-              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-              <circle r="1.2" fill="#ffffff" />
-            </g>
-
-            <path
-              d="M 830 635 L 910 635"
-              fill="none"
-              stroke="#334155"
-              strokeWidth="1.8"
-              markerEnd="url(#hero-arrow)"
-            />
-            <g>
-              <animateMotion path="M 830 635 L 910 635" dur="1.6s" repeatCount="indefinite" />
-              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-              <circle r="1.2" fill="#ffffff" />
-            </g>
-
-            <path
-              d="M 1120 635 Q 1150 635, 1150 590 L 1150 515 L 1180 515"
-              fill="none"
-              stroke="#334155"
-              strokeWidth="1.8"
-              strokeDasharray="4 3"
-            />
-            <g>
-              <animateMotion
-                path="M 1120 635 Q 1150 635, 1150 590 L 1150 515 L 1180 515"
-                dur="2.4s"
-                repeatCount="indefinite"
-              />
-              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-              <circle r="1.2" fill="#ffffff" />
-            </g>
-
-            {/* Right Vertical Flow: Patch Engine -> Meeting Room -> AI SRE */}
-            <path
-              d="M 1290 480 L 1290 420"
-              fill="none"
-              stroke="#334155"
-              strokeWidth="1.8"
-              markerEnd="url(#hero-arrow)"
-            />
-            <g>
-              <animateMotion path="M 1290 480 L 1290 420" dur="1.8s" repeatCount="indefinite" />
-              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-              <circle r="1.2" fill="#ffffff" />
-            </g>
-
-            <path
-              d="M 1290 270 L 1290 215"
-              fill="none"
-              stroke="#334155"
-              strokeWidth="1.8"
-              markerEnd="url(#hero-arrow)"
-            />
-            <g>
-              <animateMotion path="M 1290 270 L 1290 215" dur="1.7s" repeatCount="indefinite" />
-              <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-              <circle r="1.2" fill="#ffffff" />
-            </g>
-
-            {/* === LEFT FLANK NODES (x=40..240, clean of center & top navbar) === */}
-            {/* Block 1: API Gateway (Top-Left) */}
-            <g transform="translate(40, 140)">
-              <rect
-                width="200"
-                height="70"
-                rx="8"
-                fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(255, 255, 255, 0.08)"
-                strokeWidth="1.2"
-              />
-              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
-              <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
-                API Gateway
-              </text>
-              <text
-                x="44"
-                y="35"
-                fill="#38bdf8"
-                fontSize="8.5"
-                fontFamily="var(--font-mono)"
-                fontWeight="700"
-              >
-                LIVE TRAFFIC STREAM
-              </text>
-              <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
-                p99: 14ms &bull; 0% loss
-              </text>
-            </g>
-
-            {/* Block 2: Auth Service (Mid-Left) */}
-            <g transform="translate(40, 310)">
-              <rect
-                width="200"
-                height="70"
-                rx="8"
-                fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(255, 255, 255, 0.08)"
-                strokeWidth="1.2"
-              />
-              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
-              <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
-                Auth Service
-              </text>
-              <text
-                x="44"
-                y="35"
-                fill="#38bdf8"
-                fontSize="8.5"
-                fontFamily="var(--font-mono)"
-                fontWeight="700"
-              >
-                CIRCUIT BREAKER ON
-              </text>
-              <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
-                safe timeout: 100ms
-              </text>
-            </g>
-
-            {/* Block 3: Kafka Event Stream (Bottom-Left) */}
-            <g transform="translate(40, 480)">
-              <rect
-                width="200"
-                height="70"
-                rx="8"
-                fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(255, 255, 255, 0.08)"
-                strokeWidth="1.2"
-              />
-              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
-              <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
-                Kafka Event Stream
-              </text>
-              <text
-                x="44"
-                y="35"
-                fill="#38bdf8"
-                fontSize="8.5"
-                fontFamily="var(--font-mono)"
-                fontWeight="700"
-              >
-                PARTITION REPLICATED
-              </text>
-              <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
-                24k msg/s &bull; 0 lag
-              </text>
-            </g>
-
-            {/* === BOTTOM SIDE INFRASTRUCTURE NODES (y=600, evenly spaced under CTA buttons) === */}
-            {/* Block 4: Order Worker (Bottom-Center-Left) */}
-            <g transform="translate(330, 600)">
-              <rect
-                width="210"
-                height="70"
-                rx="8"
-                fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(255, 255, 255, 0.08)"
-                strokeWidth="1.2"
-              />
-              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
-              <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
-                Order Worker
-              </text>
-              <text
-                x="44"
-                y="35"
-                fill="#38bdf8"
-                fontSize="8.5"
-                fontFamily="var(--font-mono)"
-                fontWeight="700"
-              >
-                BOUNDED QUEUE
-              </text>
-              <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
-                depth: 140 / 5000 &bull; safe
-              </text>
-            </g>
-
-            {/* Block 5: Redis Cache Cluster (Bottom-Center) */}
-            <g transform="translate(620, 600)">
-              <rect
-                width="210"
-                height="70"
-                rx="8"
-                fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(255, 255, 255, 0.08)"
-                strokeWidth="1.2"
-              />
-              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
-              <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
-                Redis Cache Cluster
-              </text>
-              <text
-                x="44"
-                y="35"
-                fill="#38bdf8"
-                fontSize="8.5"
-                fontFamily="var(--font-mono)"
-                fontWeight="700"
-              >
-                CACHE HIT 99.4%
-              </text>
-              <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
-                read: 0.8ms &bull; write: 1.2ms
-              </text>
-            </g>
-
-            {/* Block 6: Live SLO Guard (Bottom-Center-Right) */}
-            <g transform="translate(910, 600)">
-              <rect
-                width="210"
-                height="70"
-                rx="8"
-                fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(255, 255, 255, 0.08)"
-                strokeWidth="1.2"
-              />
-              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
-              <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
-                Live SLO Guard
-              </text>
-              <text
-                x="44"
-                y="35"
-                fill="#38bdf8"
-                fontSize="8.5"
-                fontFamily="var(--font-mono)"
-                fontWeight="700"
-              >
-                ALL INVARIANTS PASS
-              </text>
-              <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
-                error budget: 99.98% intact
-              </text>
-            </g>
-
-            {/* === RIGHT FLANK NODES (x=1180..1400, clean of center & top navbar) === */}
-            {/* Block 7: Meta AI SRE Node (Top-Right) */}
-            <g transform="translate(1180, 130)">
-              <circle
-                cx="35"
-                cy="42"
-                r="38"
-                fill="none"
-                stroke="#0866ff"
-                strokeWidth="1.2"
-                opacity="0.3"
-                className="ai-breath-ring"
-              />
-              <rect
-                width="220"
-                height="85"
-                rx="10"
-                fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(8, 102, 255, 0.35)"
-                strokeWidth="1.2"
-              />
-              <text x="18" y="28" fill="#f8fafc" fontSize="12.5" fontWeight="700">
-                Meta AI SRE in Call
-              </text>
-              <text
-                x="18"
-                y="43"
-                fill="#38bdf8"
-                fontSize="9"
-                fontFamily="var(--font-mono)"
-                fontWeight="700"
-              >
-                ACTIVE PARTICIPANT
-              </text>
-              <text x="18" y="66" fill="#94a3b8" fontSize="10.5">
-                &ldquo;Flagged 3x retry; patch ready.&rdquo;
-              </text>
-            </g>
-
-            {/* Block 8: Collaborative Meeting Room (Mid-Right) */}
-            <g transform="translate(1180, 270)">
-              <rect
-                width="220"
-                height="150"
-                rx="10"
-                fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(255, 255, 255, 0.08)"
-                strokeWidth="1.2"
-              />
-              <rect x="14" y="14" width="8" height="8" rx="4" fill="#38bdf8" />
-              <text x="28" y="21" fill="#e2e8f0" fontSize="11" fontWeight="600">
-                #arch-review
-              </text>
-              <text
-                x="206"
-                y="21"
-                fill="#64748b"
-                fontSize="8.5"
-                fontFamily="var(--font-mono)"
-                textAnchor="end"
-              >
-                VOICE ON
-              </text>
-              <line
-                x1="14"
-                y1="34"
-                x2="206"
-                y2="34"
-                stroke="rgba(255, 255, 255, 0.06)"
-                strokeWidth="1"
-              />
-              <g transform="translate(14, 46)">
-                <circle cx="10" cy="10" r="10" fill="#1e293b" stroke="#38bdf8" strokeWidth="1.2" />
-                <text
-                  x="10"
-                  y="13.5"
-                  fill="#38bdf8"
-                  fontSize="9"
-                  fontWeight="700"
-                  textAnchor="middle"
-                >
-                  SC
-                </text>
-                <text x="28" y="11" fill="#f1f5f9" fontSize="11" fontWeight="600">
-                  Sarah C. (Staff SRE)
-                </text>
-                <text x="28" y="22" fill="#64748b" fontSize="9">
-                  Speaking &bull; Simulated DB lag
-                </text>
-              </g>
-              <g transform="translate(14, 86)">
-                <circle
-                  cx="10"
-                  cy="10"
-                  r="10"
-                  fill="#1e293b"
-                  stroke="rgba(255,255,255,0.2)"
-                  strokeWidth="1"
-                />
-                <text
-                  x="10"
-                  y="13.5"
-                  fill="#94a3b8"
-                  fontSize="9"
-                  fontWeight="700"
-                  textAnchor="middle"
-                >
-                  AM
-                </text>
-                <text x="28" y="11" fill="#f1f5f9" fontSize="11" fontWeight="600">
-                  Alex M. (Platform Lead)
-                </text>
-                <text x="28" y="22" fill="#64748b" fontSize="9">
-                  Accepted AI circuit breaker
-                </text>
-              </g>
-            </g>
-
-            {/* Block 9: Autonomous Patch Engine (Bottom-Right) */}
-            <g transform="translate(1180, 480)">
-              <rect
-                width="220"
-                height="70"
-                rx="8"
-                fill="rgba(14, 18, 28, 0.75)"
-                stroke="rgba(255, 255, 255, 0.08)"
-                strokeWidth="1.2"
-              />
-              <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
-              <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
-                AI Patch Engine
-              </text>
-              <text
-                x="44"
-                y="35"
-                fill="#38bdf8"
-                fontSize="8.5"
-                fontFamily="var(--font-mono)"
-                fontWeight="700"
-              >
-                PARETO OPTIMAL
-              </text>
-              <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
-                automated rollback armed
-              </text>
-            </g>
-          </svg>
-        </div>
+        {/* Memoized Atmospheric Background Layer: Architecture Topology & Live Meeting Room */}
+        <HeroBackdrop />
 
         {/* Center Hero Content (Seamlessly Blended, Zero Box Container, Breathing Room) */}
         <div className="hero-center-content">
