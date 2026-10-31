@@ -65,6 +65,25 @@ export function loadSettings(env: Readonly<Record<string, string | undefined>>):
       picked[name] = value;
     }
   }
+
+  // Smart auto-detection for free testing vs Meta production credits:
+  const groqApiKey = env['GROQ_API_KEY']?.trim();
+  const metaApiKey = env['META_API_KEY']?.trim();
+
+  if (!picked['PARTNER_API_KEY']) {
+    if (groqApiKey) {
+      picked['PARTNER_API_KEY'] = groqApiKey;
+      if (!picked['PARTNER_BASE_URL'] || picked['PARTNER_BASE_URL'].includes('meta.ai')) {
+        picked['PARTNER_BASE_URL'] = 'https://api.groq.com/openai/v1';
+      }
+      if (!picked['PARTNER_MODEL_ID'] || picked['PARTNER_MODEL_ID'].includes('muse')) {
+        picked['PARTNER_MODEL_ID'] = 'llama-3.3-70b-versatile';
+      }
+    } else if (metaApiKey) {
+      picked['PARTNER_API_KEY'] = metaApiKey;
+    }
+  }
+
   const parsed = settingsSchema.safeParse(picked);
   if (!parsed.success) {
     const variables = parsed.error.issues.map((issue) => String(issue.path[0] ?? 'unknown'));
