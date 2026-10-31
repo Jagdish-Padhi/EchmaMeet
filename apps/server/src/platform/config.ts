@@ -12,6 +12,12 @@ const settingsSchema = z.strictObject({
   PARTNER_BASE_URL: z.string().default('http://127.0.0.1:8000/v1'),
   PARTNER_API_KEY: z.string().default(''),
   PARTNER_MODEL_ID: z.string().default('meta-models/muse-spark-open-1026'),
+  JWT_SECRET: z.string().default('chaosboard-default-jwt-secret-replace-in-production-2026'),
+  JWT_EXPIRES_IN: z.coerce.number().int().min(60).default(1209600),
+  GOOGLE_CLIENT_ID: z.string().default(''),
+  FIREBASE_PROJECT_ID: z.string().default(''),
+  GITHUB_CLIENT_ID: z.string().default(''),
+  GITHUB_CLIENT_SECRET: z.string().default(''),
 });
 
 export interface Settings {
@@ -26,6 +32,12 @@ export interface Settings {
   readonly partnerBaseUrl: string;
   readonly partnerApiKey: string;
   readonly partnerModelId: string;
+  readonly jwtSecret: string;
+  readonly jwtExpiresIn: number;
+  readonly googleClientId: string;
+  readonly firebaseProjectId: string;
+  readonly githubClientId: string;
+  readonly githubClientSecret: string;
 }
 
 export class ConfigError extends Error {
@@ -73,5 +85,11 @@ export function loadSettings(env: Readonly<Record<string, string | undefined>>):
     partnerBaseUrl: parsed.data.PARTNER_BASE_URL,
     partnerApiKey: parsed.data.PARTNER_API_KEY,
     partnerModelId: parsed.data.PARTNER_MODEL_ID,
+    jwtSecret: parsed.data.JWT_SECRET,
+    jwtExpiresIn: parsed.data.JWT_EXPIRES_IN,
+    googleClientId: parsed.data.GOOGLE_CLIENT_ID,
+    firebaseProjectId: parsed.data.FIREBASE_PROJECT_ID,
+    githubClientId: parsed.data.GITHUB_CLIENT_ID,
+    githubClientSecret: parsed.data.GITHUB_CLIENT_SECRET,
   };
 }

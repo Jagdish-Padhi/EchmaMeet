@@ -16,6 +16,12 @@ describe('loadSettings', () => {
       partnerBaseUrl: 'http://127.0.0.1:8000/v1',
       partnerApiKey: '',
       partnerModelId: 'meta-models/muse-spark-open-1026',
+      jwtSecret: 'chaosboard-default-jwt-secret-replace-in-production-2026',
+      jwtExpiresIn: 1209600,
+      googleClientId: '',
+      firebaseProjectId: '',
+      githubClientId: '',
+      githubClientSecret: '',
     });
   });
 

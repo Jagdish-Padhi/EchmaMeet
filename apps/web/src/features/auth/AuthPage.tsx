@@ -1,6 +1,6 @@
-import { useState, type SyntheticEvent } from 'react';
+import { useEffect, useState, type SyntheticEvent } from 'react';
 import type { UserProfile } from '../board';
-import type { ApiClient } from '../../api/client';
+import type { ApiClient, AuthConfigResponse } from '../../api/client';
 
 export interface AuthPageProps {
   readonly onAuthenticate: (user: UserProfile) => void;
@@ -45,10 +45,73 @@ export function AuthPage({
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isOfflineServer, setIsOfflineServer] = useState(false);
+  const [authConfig, setAuthConfig] = useState<AuthConfigResponse | null>(null);
+
+  // Discover configured OAuth providers on mount
+  useEffect(() => {
+    if (!api) return;
+    api
+      .getAuthConfig()
+      .then((cfg) => {
+        setAuthConfig(cfg);
+      })
+      .catch(() => {
+        // Server might be offline
+      });
+
+    // Check if returning from GitHub OAuth redirect
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      if (code) {
+        setLoading(true);
+        api
+          .githubAuth({ code })
+          .then((res) => {
+            localStorage.setItem('chaosboard_token', res.token);
+            // Clean up code parameter from URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            onAuthenticate(res.user);
+          })
+          .catch((err: unknown) => {
+            setError(err instanceof Error ? err.message : 'GitHub OAuth verification failed.');
+          })
+          .finally(() => {
+            setLoading(false);
+          });
+      }
+    }
+  }, [api, onAuthenticate]);
+
+  const handleContinueOffline = () => {
+    const initials =
+      fullName
+        .split(' ')
+        .map((p) => p[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2) || 'SRE';
+
+    const user: UserProfile = {
+      userId: email.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() || 'eng-alex-chen',
+      name: isLogin
+        ? email.includes('alex')
+          ? 'Alex Chen'
+          : fullName || 'SRE Reviewer'
+        : fullName,
+      role: isLogin ? 'Staff SRE' : role || 'Site Reliability Engineer',
+      avatar: initials,
+      email: email.trim() || 'alex.chen@meta.internal',
+    };
+    localStorage.setItem('chaosboard_token', 'local-offline-session-token');
+    onAuthenticate(user);
+  };
 
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+    setIsOfflineServer(false);
     if (!email.trim()) {
       setError('Please provide a valid corporate email address.');
       return;
@@ -72,30 +135,20 @@ export function AuthPage({
           onAuthenticate(res.user);
         }
       } else {
-        const initials =
-          fullName
-            .split(' ')
-            .map((p) => p[0])
-            .join('')
-            .toUpperCase()
-            .slice(0, 2) || 'SRE';
-
-        const user: UserProfile = {
-          userId: email.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase(),
-          name: isLogin
-            ? email.includes('alex')
-              ? 'Alex Chen'
-              : fullName || 'SRE Engineer'
-            : fullName,
-          role: isLogin ? 'Staff SRE' : role || 'Site Reliability Engineer',
-          avatar: initials,
-          email: email.trim(),
-        };
-        onAuthenticate(user);
+        handleContinueOffline();
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message);
+        const msg = err.message;
+        setError(msg);
+        if (
+          msg.includes('502') ||
+          msg.includes('offline') ||
+          msg.includes('network') ||
+          msg.includes('Failed to fetch')
+        ) {
+          setIsOfflineServer(true);
+        }
       } else {
         setError('Authentication failed. Please verify credentials.');
       }
@@ -107,6 +160,7 @@ export function AuthPage({
   const handleQuickLogin = async (user: UserProfile) => {
     setLoading(true);
     setError(null);
+    setIsOfflineServer(false);
     try {
       if (api) {
         const res = await api.login({
@@ -120,7 +174,11 @@ export function AuthPage({
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message);
+        const msg = err.message;
+        setError(msg);
+        if (msg.includes('502') || msg.includes('offline') || msg.includes('network')) {
+          setIsOfflineServer(true);
+        }
       } else {
         setError('Quick login failed.');
       }
@@ -132,15 +190,28 @@ export function AuthPage({
   const handleSsoLogin = async (provider: 'google' | 'github') => {
     setLoading(true);
     setError(null);
+    setIsOfflineServer(false);
     try {
       if (api) {
+        // If real GitHub OAuth client ID is configured and user clicks GitHub
+        if (provider === 'github' && authConfig?.githubClientId) {
+          const redirectUri = window.location.origin + window.location.pathname;
+          window.location.href = `https://github.com/login/oauth/authorize?client_id=${authConfig.githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=read:user,user:email`;
+          return;
+        }
+
         const profile = {
           email: provider === 'github' ? 'eng@github.sso' : 'alex.chen@google.sso',
           name: provider === 'github' ? 'Staff Engineer (GitHub)' : 'Alex Chen (Google SSO)',
           role: 'Distributed Systems Architect',
           avatar: provider === 'github' ? 'GH' : 'AC',
         };
-        const res = await api.sso({ provider, profile });
+
+        const res =
+          provider === 'google'
+            ? await api.googleAuth({ profile })
+            : await api.githubAuth({ profile });
+
         localStorage.setItem('chaosboard_token', res.token);
         onAuthenticate(res.user);
       } else {
@@ -155,7 +226,11 @@ export function AuthPage({
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message);
+        const msg = err.message;
+        setError(msg);
+        if (msg.includes('502') || msg.includes('offline') || msg.includes('network')) {
+          setIsOfflineServer(true);
+        }
       } else {
         setError(`${provider} SSO failed. Please try again.`);
       }
@@ -379,7 +454,19 @@ export function AuthPage({
             {/* Feedback Error Banner */}
             {error && (
               <div className="auth-error-banner" role="alert">
-                {error}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <span>{error}</span>
+                  {isOfflineServer && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      style={{ alignSelf: 'flex-start', marginTop: '4px' }}
+                      onClick={handleContinueOffline}
+                    >
+                      Continue in Standalone Mode &rarr;
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 

@@ -40,6 +40,14 @@ async function main(): Promise<void> {
     partnerBaseUrl: settings.partnerBaseUrl,
     partnerApiKey: settings.partnerApiKey,
     partnerModelId: settings.partnerModelId,
+    authConfig: {
+      jwtSecret: settings.jwtSecret,
+      jwtExpiresIn: settings.jwtExpiresIn,
+      googleClientId: settings.googleClientId,
+      firebaseProjectId: settings.firebaseProjectId,
+      githubClientId: settings.githubClientId,
+      githubClientSecret: settings.githubClientSecret,
+    },
   });
 
   const webDistPath = join(import.meta.dirname, '../../web/dist');

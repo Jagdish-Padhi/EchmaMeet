@@ -18,7 +18,7 @@ import { registerReportingRoutes, ReportingService } from './modules/reporting';
 import type { RunId } from '@chaosboard/contracts';
 import type { SqlDatabase } from './platform/db';
 import { registerHealthRoute } from './platform/health';
-import { installAuthGuard, registerAuthRoutes } from './platform/auth';
+import { installAuthGuard, registerAuthRoutes, type AuthConfig } from './platform/auth';
 import { registerProblemHandlers } from './platform/http-kit';
 import type { Logger } from './platform/logging';
 
@@ -30,6 +30,7 @@ export interface AppDependencies {
   readonly partnerBaseUrl?: string | undefined;
   readonly partnerApiKey?: string | undefined;
   readonly partnerModelId?: string | undefined;
+  readonly authConfig?: AuthConfig | undefined;
 }
 
 /**
@@ -44,14 +45,15 @@ export function buildApp({
   partnerBaseUrl = 'http://127.0.0.1:8000/v1',
   partnerApiKey = '',
   partnerModelId = 'meta-models/muse-spark-open-1026',
+  authConfig,
 }: AppDependencies): FastifyInstance {
   const baseLogger: FastifyBaseLogger = logger;
   const app = Fastify({ loggerInstance: baseLogger });
   registerProblemHandlers(app);
 
   registerHealthRoute(app, database);
-  registerAuthRoutes(app, database);
-  installAuthGuard(app, database);
+  registerAuthRoutes(app, database, authConfig);
+  installAuthGuard(app, database, authConfig);
   registerTopologyRoutes(app);
 
   const runsService = createRunsService(database);

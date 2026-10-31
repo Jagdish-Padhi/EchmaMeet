@@ -120,6 +120,15 @@ const cancelRepairResponseSchema = z.object({
   status: z.string(),
 });
 
+const authConfigResponseSchema = z.object({
+  googleClientId: z.string().optional(),
+  firebaseProjectId: z.string().optional(),
+  githubClientId: z.string().optional(),
+  providers: z.array(z.string()),
+});
+
+export type AuthConfigResponse = z.infer<typeof authConfigResponseSchema>;
+
 export interface ApiClient {
   getHealth(signal?: AbortSignal): Promise<HealthResponse>;
   login(
@@ -147,6 +156,36 @@ export interface ApiClient {
     },
     signal?: AbortSignal,
   ): Promise<AuthSessionResponse>;
+  googleAuth(
+    payload: {
+      credential?: string | undefined;
+      idToken?: string | undefined;
+      accessToken?: string | undefined;
+      profile?:
+        | {
+            email?: string | undefined;
+            name?: string | undefined;
+            avatar?: string | undefined;
+          }
+        | undefined;
+    },
+    signal?: AbortSignal,
+  ): Promise<AuthSessionResponse>;
+  githubAuth(
+    payload: {
+      code?: string | undefined;
+      accessToken?: string | undefined;
+      profile?:
+        | {
+            email?: string | undefined;
+            name?: string | undefined;
+            avatar?: string | undefined;
+          }
+        | undefined;
+    },
+    signal?: AbortSignal,
+  ): Promise<AuthSessionResponse>;
+  getAuthConfig(signal?: AbortSignal): Promise<AuthConfigResponse>;
   getCurrentUser(signal?: AbortSignal): Promise<{ user: UserSessionProfile }>;
   logout(signal?: AbortSignal): Promise<{ success: boolean }>;
   validateTopology(
@@ -239,6 +278,13 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
     try {
       body = await response.json();
     } catch {
+      if (response.status === 502 || response.status === 503 || response.status === 504) {
+        throw new ApiError({
+          kind: 'unexpected_response',
+          status: response.status,
+          message: `The server answered with status ${String(response.status)}: the backend API server (http://127.0.0.1:8787) appears to be offline. Run 'pnpm dev' in your terminal to start both web and backend services.`,
+        });
+      }
       throw new ApiError({
         kind: 'unexpected_response',
         status: response.status,
@@ -334,6 +380,23 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
         authSessionResponseSchema,
         withSignal('POST', signal, JSON.stringify(payload)),
       ),
+
+    googleAuth: (payload, signal) =>
+      request(
+        '/api/auth/google',
+        authSessionResponseSchema,
+        withSignal('POST', signal, JSON.stringify(payload)),
+      ),
+
+    githubAuth: (payload, signal) =>
+      request(
+        '/api/auth/github',
+        authSessionResponseSchema,
+        withSignal('POST', signal, JSON.stringify(payload)),
+      ),
+
+    getAuthConfig: (signal) =>
+      request('/api/auth/config', authConfigResponseSchema, withSignal('GET', signal)),
 
     getCurrentUser: (signal) =>
       request('/api/auth/me', currentUserResponseSchema, withSignal('GET', signal)),
