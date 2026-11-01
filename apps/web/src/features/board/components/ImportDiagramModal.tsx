@@ -102,7 +102,7 @@ export function ImportDiagramModal({ isOpen, onClose, onImport }: ImportDiagramM
             <button
               key={tmpl.name}
               type="button"
-              className="studio-action-pill"
+              className={`studio-action-pill ${code.trim() === tmpl.code.trim() ? 'active' : ''}`}
               style={{ fontSize: '0.75rem', padding: '4px 10px' }}
               onClick={() => setCode(tmpl.code)}
               title={tmpl.description}

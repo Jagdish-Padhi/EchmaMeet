@@ -130,7 +130,7 @@ export function ToastProvider({ children }: { readonly children: ReactNode }) {
                   strokeLinejoin="round"
                 >
                   <circle cx="12" cy="12" r="10" />
-                  <path d="m9 12 2 2 4-4" />
+                  <polyline points="8 12 11 15 16 9" />
                 </svg>
               )}
               {toast.kind === 'error' && (

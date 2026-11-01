@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, it, expect, afterEach } from 'vitest';
 import { buildApp } from '../src/app';
+import { DEMO_AUTH_TOKEN } from '../src/platform/auth';
 import { openDatabase, IN_MEMORY, type SqlDatabase } from '../src/platform/db';
 import { runMigrations } from '../src/platform/migrations';
 import { moduleMigrations } from '../src/module-migrations';
@@ -42,6 +43,15 @@ describe('Experiment orchestration and storage integration', () => {
   function setupServer(database: SqlDatabase = openDatabase(IN_MEMORY)) {
     runMigrations(database, moduleMigrations, clock);
     const app = buildApp({ logger, database });
+    const origInject = app.inject.bind(app);
+    app.inject = ((opt: unknown) => {
+      const opts = typeof opt === 'string' ? { url: opt } : { ...(opt as Record<string, unknown>) };
+      opts['headers'] = {
+        authorization: `Bearer ${DEMO_AUTH_TOKEN}`,
+        ...((opts['headers'] as Record<string, string>) || {}),
+      };
+      return origInject(opts as any);
+    }) as any;
     closers.push(() => app.close());
     closers.push(() => {
       try {

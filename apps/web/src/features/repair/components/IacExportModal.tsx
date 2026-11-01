@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Topology } from '@chaosboard/contracts';
-import { generateIstioResilienceManifest } from '../utils/iac-generator';
+import { generateIstioResilienceManifest, generateEnvoyMeshManifest } from '../utils/iac-generator';
 
 export interface IacExportModalProps {
   readonly isOpen: boolean;
@@ -14,12 +14,29 @@ export function IacExportModal({ isOpen, topology, onClose }: IacExportModalProp
 
   if (!isOpen) return null;
 
-  const manifestYaml = generateIstioResilienceManifest(topology);
+  const manifestYaml =
+    format === 'istio'
+      ? generateIstioResilienceManifest(topology)
+      : generateEnvoyMeshManifest(topology);
 
   const handleCopy = () => {
     void navigator.clipboard.writeText(manifestYaml);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const downloadFileName = format === 'istio' ? 'istio-resilience.yaml' : 'envoy-mesh.yaml';
+
+  const handleDownload = () => {
+    const blob = new Blob([manifestYaml], { type: 'text/yaml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = downloadFileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -121,6 +138,9 @@ export function IacExportModal({ isOpen, topology, onClose }: IacExportModalProp
         </div>
 
         <div className="sre-modal-footer">
+          <button type="button" className="btn btn-secondary btn-sm" onClick={handleDownload}>
+            Download YAML
+          </button>
           <button type="button" className="btn btn-primary btn-sm" onClick={handleCopy}>
             {copied ? 'Copied' : 'Copy Manifest'}
           </button>

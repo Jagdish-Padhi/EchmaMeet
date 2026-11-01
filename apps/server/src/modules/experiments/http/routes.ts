@@ -32,6 +32,14 @@ export function registerExperimentRoutes(
     return { runId, status: 'cancelled' };
   });
 
+  app.post('/api/experiments/reset-lock', async (_request, reply) => {
+    await orchestrator.forceReset();
+    return reply.status(200).send({
+      status: 'ok',
+      message: 'Host execution lock released successfully.',
+    });
+  });
+
   app.get('/api/experiments/:id/events', (request, reply) => {
     const params = request.params as { id: string };
     const runId = runIdSchema.parse(params.id);

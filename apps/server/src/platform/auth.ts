@@ -825,7 +825,7 @@ export function installAuthGuard(app: FastifyInstance, db: SqlDatabase, config?:
   app.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
     const url = request.url;
 
-    // Public exemptions: health, auth endpoints, public scenarios catalog & showcase benchmarks
+    // Public exemptions: health, auth endpoints, public scenarios catalog & showcase benchmarks, live SSE event streams
     if (
       !url.startsWith('/api/') ||
       url.startsWith('/api/health') ||
@@ -833,21 +833,29 @@ export function installAuthGuard(app: FastifyInstance, db: SqlDatabase, config?:
       url.startsWith('/api/scenarios') ||
       url.startsWith('/api/benchmarks/results') ||
       url.startsWith('/api/topologies/scenarios') ||
-      url.startsWith('/api/meeting/ai-opinion')
+      url.startsWith('/api/meeting/ai-opinion') ||
+      url.includes('/events')
     ) {
       return;
     }
 
     const authHeader = request.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
+    const queryToken = (request.query as Record<string, unknown> | undefined)?.['token'];
+    let token: string | undefined;
+
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.slice(7).trim();
+    } else if (typeof queryToken === 'string' && queryToken.trim().length > 0) {
+      token = queryToken.trim();
+    }
+
+    if (!token) {
       return reply.status(401).send({
         statusCode: 401,
         error: 'Unauthorized',
         message: 'Access denied: Authentication required for architecture review workspace.',
       });
     }
-
-    const token = authHeader.slice(7).trim();
 
     // Special allowance for offline/demo token
     if (token === 'local-offline-session-token' || token === DEMO_AUTH_TOKEN) {

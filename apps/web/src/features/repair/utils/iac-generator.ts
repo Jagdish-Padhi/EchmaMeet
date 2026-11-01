@@ -95,3 +95,60 @@ typed_extension_protocol_options:
     "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
     use_downstream_protocol_config: {}`;
 }
+
+/**
+ * Generates a complete production Envoy Mesh bootstrap and static cluster configuration
+ * representing the full topology mesh with connection pooling and circuit breakers.
+ */
+export function generateEnvoyMeshManifest(topology: Topology): string {
+  const clusters: string[] = [];
+
+  for (const edge of topology.edges) {
+    const targetNode = topology.nodes.find((n) => n.id === edge.target);
+    const targetName = targetNode?.label.toLowerCase().replace(/[^a-z0-9]/g, '_') ?? edge.target.replace(/-/g, '_');
+    const clusterConfig = generateEnvoyClusterSnippet(edge.policy, targetName);
+    const indented = clusterConfig
+      .split('\n')
+      .map((line) => `      ${line}`)
+      .join('\n');
+    clusters.push(`    - ${indented.trimStart()}`);
+  }
+
+  return `static_resources:
+  listeners:
+    - name: ingress_listener
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 10000
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: ingress_http
+                route_config:
+                  name: mesh_route
+                  virtual_hosts:
+                    - name: mesh_backend
+                      domains: ["*"]
+                      routes:
+${topology.edges
+  .map((e) => {
+    const target = topology.nodes.find((n) => n.id === e.target);
+    const targetName = target?.label.toLowerCase().replace(/[^a-z0-9]/g, '_') ?? e.target.replace(/-/g, '_');
+    const timeoutSec = e.policy.timeoutMs !== null ? `${(e.policy.timeoutMs / 1000).toFixed(2)}s` : '2.00s';
+    return `                        - match:
+                            prefix: "/${e.source}-to-${e.target}"
+                          route:
+                            cluster: ${targetName}_cluster
+                            timeout: ${timeoutSec}
+                            retry_policy:
+                              retry_on: "5xx,connect-failure,refused-stream"
+                              num_retries: ${String(e.policy.retry.maxAttempts)}`;
+  })
+  .join('\n')}
+  clusters:
+${clusters.length > 0 ? clusters.join('\n') : '    []'}`;
+}
+

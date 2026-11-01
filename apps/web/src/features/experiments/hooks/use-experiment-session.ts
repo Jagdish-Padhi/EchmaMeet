@@ -227,28 +227,52 @@ export function useExperimentSession(api: ApiClient, currentTopology: Topology |
               });
           },
           onError: (err) => {
-            api
-              .getExperiment(runId)
-              .then((record) => {
-                setState((prev) => ({
-                  ...prev,
-                  status:
-                    record.status === 'running'
-                      ? 'failed'
-                      : (record.status as ExperimentSessionState['status']),
-                  finalRecord: record,
-                  verdicts: record.verdicts,
-                  overallStatus: record.overallStatus,
-                  errorMessage: record.errorMessage ?? err.message,
-                }));
-              })
-              .catch(() => {
-                setState((prev) => ({
-                  ...prev,
-                  status: 'failed',
-                  errorMessage: err.message,
-                }));
-              });
+            let pollAttempts = 0;
+            const maxPollAttempts = 45;
+            const pollInterval = setInterval(() => {
+              pollAttempts += 1;
+              api
+                .getExperiment(runId)
+                .then((record) => {
+                  if (record.status === 'running') {
+                    if (pollAttempts >= maxPollAttempts) {
+                      clearInterval(pollInterval);
+                      setState((prev) => ({
+                        ...prev,
+                        status: 'failed',
+                        errorMessage: 'Simulation exceeded timeout window.',
+                      }));
+                    }
+                    return;
+                  }
+
+                  clearInterval(pollInterval);
+                  setState((prev) => ({
+                    ...prev,
+                    status:
+                      record.status === 'cancelled'
+                        ? 'cancelled'
+                        : record.status === 'failed'
+                          ? 'failed'
+                          : 'completed',
+                    finalRecord: record,
+                    verdicts: record.verdicts,
+                    overallStatus: record.overallStatus,
+                    errorMessage:
+                      record.errorMessage ?? (record.status === 'failed' ? err.message : null),
+                  }));
+                })
+                .catch(() => {
+                  if (pollAttempts >= maxPollAttempts) {
+                    clearInterval(pollInterval);
+                    setState((prev) => ({
+                      ...prev,
+                      status: 'failed',
+                      errorMessage: err.message,
+                    }));
+                  }
+                });
+            }, 1000);
           },
         });
       } catch (err) {
@@ -257,7 +281,8 @@ export function useExperimentSession(api: ApiClient, currentTopology: Topology |
             setState((prev) => ({
               ...prev,
               status: 'busy',
-              errorMessage: 'Host lock active: another experiment is currently running.',
+              errorMessage:
+                'Host lock active: another experiment is currently running or releasing resources. You can wait a moment or click Force Release Lock to reset.',
             }));
             return;
           }
@@ -271,6 +296,29 @@ export function useExperimentSession(api: ApiClient, currentTopology: Topology |
     },
     [api, state.fault, state.invariants, state.trialConfig, handleLiveEvent],
   );
+
+  const forceResetExperiment = useCallback(async () => {
+    try {
+      await api.resetExperimentLock();
+    } catch {
+      // Fallback
+    }
+    if (sseSubRef.current) {
+      sseSubRef.current.close();
+      sseSubRef.current = null;
+    }
+    setState((prev) => ({
+      ...prev,
+      status: 'idle',
+      runId: null,
+      errorMessage: null,
+      liveEvents: [],
+      telemetry: [],
+      finalRecord: null,
+      verdicts: null,
+      overallStatus: null,
+    }));
+  }, [api]);
 
   const cancelExperiment = useCallback(async () => {
     if (!state.runId) return;
@@ -303,5 +351,6 @@ export function useExperimentSession(api: ApiClient, currentTopology: Topology |
     updateTrialConfig,
     startExperiment,
     cancelExperiment,
+    forceResetExperiment,
   };
 }

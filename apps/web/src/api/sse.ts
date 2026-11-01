@@ -34,19 +34,26 @@ export function subscribeToRunEvents(
   url: string,
   options: SseSubscriptionOptions,
 ): SseSubscription {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('chaosboard_token') : null;
+  let targetUrl = url;
+  if (token && !targetUrl.includes('token=')) {
+    const sep = targetUrl.includes('?') ? '&' : '?';
+    targetUrl = `${targetUrl}${sep}token=${encodeURIComponent(token)}`;
+  }
+
   const factory =
     options.eventSourceFactory ??
-    ((targetUrl: string) => {
+    ((u: string) => {
       if (typeof EventSource === 'undefined') {
         throw new Error('EventSource is not supported in this environment');
       }
-      return new EventSource(targetUrl);
+      return new EventSource(u);
     });
 
   let source: EventSource;
 
   try {
-    source = factory(url);
+    source = factory(targetUrl);
   } catch (err: unknown) {
     if (options.onError) {
       options.onError(err instanceof Error ? err : new Error(String(err)));

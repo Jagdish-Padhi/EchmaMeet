@@ -200,6 +200,7 @@ export interface ApiClient {
   ): Promise<StartExperimentResponse>;
   getExperiment(id: RunId, signal?: AbortSignal): Promise<RunRecord>;
   cancelExperiment(id: RunId, signal?: AbortSignal): Promise<CancelExperimentResponse>;
+  resetExperimentLock(signal?: AbortSignal): Promise<{ status: string; message: string }>;
   startRepair(request: StartRepairRequest, signal?: AbortSignal): Promise<StartRepairResponse>;
   getRepair(id: RunId, signal?: AbortSignal): Promise<RepairSessionRecord>;
   cancelRepair(id: RunId, signal?: AbortSignal): Promise<CancelRepairResponse>;
@@ -489,6 +490,13 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
       request(
         `/api/experiments/${encodeURIComponent(id)}/cancel`,
         cancelExperimentResponseSchema,
+        withSignal('POST', signal),
+      ),
+
+    resetExperimentLock: (signal) =>
+      request(
+        '/api/experiments/reset-lock',
+        z.object({ status: z.string(), message: z.string() }),
         withSignal('POST', signal),
       ),
 

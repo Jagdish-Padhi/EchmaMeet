@@ -43,13 +43,13 @@ export const NodeCard = memo(function NodeCard({
     switch (kind) {
       case 'cache':
         return {
-          color: '#f59e0b',
-          bgTint: 'rgba(245, 158, 11, 0.12)',
+          color: '#38bdf8',
+          bgTint: 'rgba(56, 189, 248, 0.12)',
           icon: (
             <path
               d="M13 2L3 14h8l-1 8 11-12h-8l1-8z"
               fill="none"
-              stroke="#f59e0b"
+              stroke="#38bdf8"
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"

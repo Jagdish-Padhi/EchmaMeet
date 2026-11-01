@@ -1,6 +1,7 @@
 import type { TrialConfig } from '@chaosboard/contracts';
 import { Card } from '../../../components/ui/Card';
 import { StatusPill } from '../../../components/ui/StatusPill';
+import { Button } from '../../../components/ui/Button';
 
 export interface TrialProgressCardProps {
   readonly status: 'idle' | 'starting' | 'running' | 'completed' | 'cancelled' | 'failed' | 'busy';
@@ -8,7 +9,10 @@ export interface TrialProgressCardProps {
   readonly totalTrials: number;
   readonly errorMessage: string | null;
   readonly runId: string | null;
-  readonly config?: TrialConfig;
+  readonly config?: TrialConfig | undefined;
+  readonly onOpenDiagnostics?: (() => void) | undefined;
+  readonly onForceReset?: (() => void) | undefined;
+  readonly onRetry?: (() => void) | undefined;
 }
 
 export function TrialProgressCard({
@@ -18,6 +22,9 @@ export function TrialProgressCard({
   errorMessage,
   runId,
   config,
+  onOpenDiagnostics,
+  onForceReset,
+  onRetry,
 }: TrialProgressCardProps) {
   const effectiveTrial = currentTrial === 0 && status === 'running' ? 1 : currentTrial;
   const progressPercent =
@@ -116,19 +123,96 @@ export function TrialProgressCard({
         </div>
       )}
 
-      {/* 3. Failed or Cancelled State */}
-      {(status === 'failed' || status === 'cancelled') && (
-        <div className="execution-halted-container">
-          <span className="execution-halted-title">
-            {status === 'failed' ? 'Execution Error' : 'Simulation Cancelled'}
-          </span>
-          <p className="execution-halted-message">
-            {errorMessage ?? (status === 'cancelled' ? 'Simulation stopped by user.' : 'An error occurred during execution.')}
+      {/* 3. Host Busy State */}
+      {status === 'busy' && (
+        <div className="execution-halted-container" style={{ borderLeft: '3px solid #f59e0b', background: 'rgba(245, 158, 11, 0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <span className="execution-halted-title" style={{ color: '#fbbf24' }}>
+              Execution Lock Held (Host Busy)
+            </span>
+            {onOpenDiagnostics && (
+              <button
+                type="button"
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: '#38bdf8',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+                onClick={onOpenDiagnostics}
+              >
+                Diagnostics & Checks
+              </button>
+            )}
+          </div>
+          <p className="execution-halted-message" style={{ margin: '0 0 10px 0' }}>
+            {errorMessage ??
+              'Single-host process isolation lock is active. Another simulation is executing or releasing sandbox ports.'}
           </p>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {onRetry && (
+              <Button variant="secondary" size="sm" onClick={onRetry}>
+                Try Running Again
+              </Button>
+            )}
+            {onForceReset && (
+              <Button variant="danger" size="sm" onClick={onForceReset}>
+                Force Release Lock
+              </Button>
+            )}
+          </div>
         </div>
       )}
 
-      {/* 4. Idle Ready State */}
+      {/* 4. Failed or Cancelled State */}
+      {(status === 'failed' || status === 'cancelled') && (
+        <div className="execution-halted-container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <span className="execution-halted-title">
+              {status === 'failed' ? 'Execution Error' : 'Simulation Cancelled'}
+            </span>
+            {status === 'failed' && onOpenDiagnostics && (
+              <button
+                type="button"
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: '#38bdf8',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+                onClick={onOpenDiagnostics}
+              >
+                Inspect Cause & Settings
+              </button>
+            )}
+          </div>
+          <p className="execution-halted-message" style={{ margin: '0 0 10px 0' }}>
+            {errorMessage ?? (status === 'cancelled' ? 'Simulation stopped by user.' : 'An error occurred during execution.')}
+          </p>
+          {status === 'failed' && (
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {onRetry && (
+                <Button variant="secondary" size="sm" onClick={onRetry}>
+                  Retry Simulation
+                </Button>
+              )}
+              {onForceReset && (
+                <Button variant="ghost" size="sm" onClick={onForceReset}>
+                  Reset Lock
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 5. Idle Ready State */}
       {status === 'idle' && (
         <div className="execution-idle-container">
           <p className="execution-idle-title">Ready for resilience simulation</p>

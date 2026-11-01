@@ -185,14 +185,14 @@ export function AuthPage({
 
         // If SSO is not configured, inform the user cleanly instead of faking a login
         const providerName = provider === 'google' ? 'Google Workspace' : 'GitHub Enterprise';
-        toast.info(
+        toast.warning(
           `${providerName} Single Sign-On is not configured on this server. Please enter your credentials or use the offline mode below.`,
           'SSO Configuration',
         );
         setError(`${providerName} SSO is not configured. Please sign in with email and password.`);
         return;
       } else {
-        toast.info(
+        toast.warning(
           'API server is not connected. Enter your name and email to continue in local offline session.',
           'Offline Mode',
         );

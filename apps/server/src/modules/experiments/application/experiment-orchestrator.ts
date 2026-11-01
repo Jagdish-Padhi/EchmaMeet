@@ -150,6 +150,34 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
     return this.lock.isLocked();
   }
 
+  async forceReset(): Promise<void> {
+    for (const [runId, exec] of this.activeExecutions) {
+      exec.markCancelled();
+      if (exec.activeLoadgen && exec.activeLoadgen.isRunning()) {
+        await exec.activeLoadgen.forceKill().catch(() => undefined);
+      }
+      if (exec.activeSandbox) {
+        await exec.activeSandbox.stop().catch(() => undefined);
+      }
+      this.runs.updateRunStatus(runId, 'cancelled', {
+        finishedAt: new Date().toISOString(),
+        errorMessage: 'Simulation was reset by user.',
+      });
+      const event: RunEvent = {
+        runId,
+        sequence: 999999,
+        timestampMs: Date.now(),
+        type: 'experiment_cancelled',
+        payload: { reason: 'Simulation forcefully reset by user' },
+      };
+      this.runs.appendEvent(event);
+      this.broadcaster.broadcast(event);
+    }
+    this.activeExecutions.clear();
+    await this.chaos.teardown().catch(() => undefined);
+    this.lock.forceRelease();
+  }
+
   private async executeExperiment(
     runId: RunId,
     request: StartExperimentRequest,
@@ -175,6 +203,8 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
       invariantCount: request.invariants.length,
       trials: request.trialConfig.trials,
     });
+
+    let terminalEvent: { type: RunEventType; payload: Record<string, unknown> } | null = null;
 
     try {
       const plan = this.sandbox.allocateNetworkPlan(request.topology, {
@@ -399,14 +429,17 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
         overallStatus,
       });
 
-      emit('experiment_finished', {
-        overallStatus,
-        verdicts: verdicts.map((v) => ({
-          invariantId: v.invariantId,
-          status: v.status,
-          reason: v.reason,
-        })),
-      });
+      terminalEvent = {
+        type: 'experiment_finished',
+        payload: {
+          overallStatus,
+          verdicts: verdicts.map((v) => ({
+            invariantId: v.invariantId,
+            status: v.status,
+            reason: v.reason,
+          })),
+        },
+      };
     } catch (err: unknown) {
       const isCancelled = exec.isCancelled() || err instanceof CancelledError;
 
@@ -416,14 +449,14 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
           finishedAt,
           errorMessage: 'Experiment was cancelled by user.',
         });
-        emit('experiment_cancelled', { reason: 'User cancellation' });
+        terminalEvent = { type: 'experiment_cancelled', payload: { reason: 'User cancellation' } };
       } else {
         const errorMsg = err instanceof Error ? err.message : String(err);
         this.runs.updateRunStatus(runId, 'failed', {
           finishedAt,
           errorMessage: errorMsg,
         });
-        emit('experiment_failed', { error: errorMsg });
+        terminalEvent = { type: 'experiment_failed', payload: { error: errorMsg } };
       }
     } finally {
       if (exec.activeLoadgen && exec.activeLoadgen.isRunning()) {
@@ -435,6 +468,10 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
       }
       this.lock.release(runId);
       this.activeExecutions.delete(runId);
+
+      if (terminalEvent) {
+        emit(terminalEvent.type, terminalEvent.payload);
+      }
     }
   }
 }

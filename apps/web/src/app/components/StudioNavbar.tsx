@@ -56,7 +56,9 @@ export interface StudioNavbarProps {
   readonly onToastInfo: (msg: string, title?: string) => void;
   readonly onToastSuccess: (msg: string, title?: string) => void;
   readonly onToastWarning: (msg: string, title?: string) => void;
-  readonly onOpenPreflightBlocker?: () => void;
+  readonly onToastError?: ((msg: string, title?: string) => void) | undefined;
+  readonly onOpenPreflightBlocker?: (() => void) | undefined;
+  readonly onOpenDiagnostics?: (() => void) | undefined;
 }
 
 export function StudioNavbar({
@@ -89,9 +91,12 @@ export function StudioNavbar({
   onToastInfo,
   onToastSuccess,
   onToastWarning,
+  onToastError,
   onOpenPreflightBlocker,
+  onOpenDiagnostics,
 }: StudioNavbarProps) {
   const [isMorePrimitivesOpen, setIsMorePrimitivesOpen] = useState(false);
+  void onToastError;
 
   return (
     <header className="studio-topbar">
@@ -145,7 +150,7 @@ export function StudioNavbar({
             }
             title="Add Redis In-Memory Cache (Key: 2)"
           >
-            <span className="palette-dot yellow" />
+            <span className="palette-dot cyan" />
             <span>+ Cache</span>
           </button>
           <button
@@ -161,7 +166,7 @@ export function StudioNavbar({
             }
             title="Add Kafka / Queue Consumer (Key: 3)"
           >
-            <span className="palette-dot cyan" />
+            <span className="palette-dot blue" />
             <span>+ Queue</span>
           </button>
           <button
@@ -235,7 +240,7 @@ export function StudioNavbar({
                     setIsMorePrimitivesOpen(false);
                   }}
                 >
-                  <span className="palette-dot yellow" />
+                  <span className="palette-dot cyan" />
                   <span>CDN Edge (Cloudflare/Fastly)</span>
                 </button>
                 <button
@@ -359,12 +364,28 @@ export function StudioNavbar({
             variant="danger"
             size="sm"
             onClick={() => {
-              onToastInfo('Stopping simulation...', 'Simulation');
+              onToastWarning('Stopping active resilience simulation...', 'Simulation Halted');
               void experimentSession.cancelExperiment();
             }}
             title="Halt active resilience simulation"
           >
             Cancel Simulation
+          </Button>
+        ) : experimentSession.status === 'busy' ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            style={{ border: '1px solid #f59e0b', color: '#fbbf24' }}
+            onClick={() => {
+              if (onOpenDiagnostics) {
+                onOpenDiagnostics();
+              } else {
+                setActiveDrawer('telemetry');
+              }
+            }}
+            title="Host lock active: another simulation is running or finalizing. Click to inspect or release."
+          >
+            Host Busy (Resolve)
           </Button>
         ) : (
           <Button

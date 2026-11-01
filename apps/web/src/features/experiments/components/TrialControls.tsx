@@ -9,6 +9,7 @@ export interface TrialControlsProps {
   readonly onStart: () => void;
   readonly onCancel: () => void;
   readonly canStart: boolean;
+  readonly onForceReset?: (() => void) | undefined;
 }
 
 export function TrialControls({
@@ -18,6 +19,7 @@ export function TrialControls({
   onStart,
   onCancel,
   canStart,
+  onForceReset,
 }: TrialControlsProps) {
   const isRunning = status === 'running' || status === 'starting';
 
@@ -84,7 +86,7 @@ export function TrialControls({
           </label>
         </div>
 
-        <div className="trial-actions">
+        <div className="trial-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {isRunning ? (
             <Button variant="danger" onClick={onCancel} className="btn-full-width">
               Halt Resilience Simulation
@@ -98,6 +100,18 @@ export function TrialControls({
               title={!canStart ? 'Resolve topology incompatibilities before running simulation' : 'Start resilience test'}
             >
               Execute Resilience Simulation
+            </Button>
+          )}
+
+          {status === 'busy' && onForceReset && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onForceReset}
+              className="btn-full-width"
+              title="Clear single-host mutual exclusion lock and release sandbox"
+            >
+              Force Release Host Lock
             </Button>
           )}
         </div>

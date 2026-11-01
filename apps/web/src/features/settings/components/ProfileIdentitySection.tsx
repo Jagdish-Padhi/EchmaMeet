@@ -16,7 +16,7 @@ export function ProfileIdentitySection({ form, onChange }: ProfileIdentitySectio
 
   const handleCopyToken = () => {
     void navigator.clipboard.writeText(sessionToken);
-    toast.info('Session token copied to clipboard.', 'Copied');
+    toast.success('Session token copied to clipboard.', 'Copied');
   };
 
   return (

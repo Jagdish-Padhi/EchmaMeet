@@ -59,7 +59,8 @@ export interface StudioDrawersProps {
   readonly handleSelectNode: (id: NodeId | null) => void;
   readonly selectEdge: (id: any) => void;
   readonly setEntryNode: (id: NodeId) => void;
-  readonly onOpenPreflightBlocker?: () => void;
+  readonly onOpenPreflightBlocker?: (() => void) | undefined;
+  readonly onOpenDiagnostics?: (() => void) | undefined;
   readonly updateNode: (id: NodeId, patch: any) => void;
   readonly updateEdgeControlPoint: (id: any, point: any) => void;
   readonly updateEdgePolicy: (id: any, policy: any) => void;
@@ -87,6 +88,7 @@ export function StudioDrawers({
   selectEdge,
   setEntryNode,
   onOpenPreflightBlocker,
+  onOpenDiagnostics,
   updateNode,
   updateEdgeControlPoint,
   updateEdgePolicy,
@@ -221,6 +223,7 @@ export function StudioDrawers({
                 void experimentSession.cancelExperiment();
               }}
               canStart={canStartExperiment}
+              onForceReset={() => void experimentSession.forceResetExperiment?.()}
             />
           </>
         )}
@@ -235,6 +238,15 @@ export function StudioDrawers({
               errorMessage={experimentSession.errorMessage}
               runId={experimentSession.runId}
               config={experimentSession.trialConfig}
+              onOpenDiagnostics={onOpenDiagnostics}
+              onForceReset={() => void experimentSession.forceResetExperiment?.()}
+              onRetry={() => {
+                if (canStartExperiment) {
+                  void experimentSession.startExperiment(currentTopology);
+                } else if (onOpenPreflightBlocker) {
+                  onOpenPreflightBlocker();
+                }
+              }}
             />
 
             <LiveTelemetryChart
