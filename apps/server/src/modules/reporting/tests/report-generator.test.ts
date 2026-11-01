@@ -63,7 +63,7 @@ describe('report-generator domain', () => {
       generatedAt: '2026-10-30T12:00:00.000Z',
     });
     expect(md).toContain(
-      '# ChaosBoard Experiment Report: run-12345678-1234-1234-1234-123456789abc',
+      '# EchmaMeet Experiment Report: run-12345678-1234-1234-1234-123456789abc',
     );
     expect(md).toContain('Simple Topo');
     expect(md).toContain('`abc1234`');

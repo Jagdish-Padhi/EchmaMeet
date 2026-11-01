@@ -110,7 +110,7 @@ describe('Reporting HTTP API Integration', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.headers['content-type']).toContain('text/markdown');
-    expect(res.body).toContain('# ChaosBoard Experiment Report');
+    expect(res.body).toContain('# EchmaMeet Experiment Report');
     expect(res.body).toContain(dummyRunId);
     expect(res.body).toContain('Gateway Service Topology');
   });

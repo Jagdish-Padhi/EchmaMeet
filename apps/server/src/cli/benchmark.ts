@@ -79,7 +79,7 @@ async function main(): Promise<void> {
   const cpuModel = cpuList[0]?.model ?? 'CPU';
   const hostDescription = `${platform()} (${cpuModel}, ${String(cpuList.length)} cores)`;
 
-  process.stdout.write(`Starting ChaosBoard Benchmark Suite...\n`);
+  process.stdout.write(`Starting EchmaMeet Benchmark Suite...\n`);
   process.stdout.write(`Git Commit: ${gitCommit}\n`);
   process.stdout.write(`Host: ${hostDescription}\n`);
   if (scenarioFilter) {

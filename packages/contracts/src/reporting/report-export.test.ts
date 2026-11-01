@@ -46,7 +46,7 @@ describe('report-export contracts', () => {
     verdicts: [],
     repairTimeline: [],
     tradeOffReport: null,
-    markdown: '# ChaosBoard Run Report\n\nRun ID: run-12345678-1234-1234-1234-123456789abc',
+    markdown: '# EchmaMeet Run Report\n\nRun ID: run-12345678-1234-1234-1234-123456789abc',
     diagramSvg: '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"></svg>',
   };
 

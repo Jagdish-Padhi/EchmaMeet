@@ -11,7 +11,7 @@ export function generateMarkdownReport(options: GenerateReportOptions): string {
   const { runRecord, tradeOffReport } = options;
   const lines: string[] = [];
 
-  lines.push(`# ChaosBoard Experiment Report: ${runRecord.id}`);
+  lines.push(`# EchmaMeet Experiment Report: ${runRecord.id}`);
   lines.push('');
   lines.push(`- **Status**: ${runRecord.status}`);
   lines.push(`- **Overall Verdict**: ${runRecord.overallStatus}`);
