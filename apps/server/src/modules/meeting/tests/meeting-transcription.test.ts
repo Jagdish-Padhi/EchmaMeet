@@ -9,6 +9,12 @@ import type { Topology } from '@chaosboard/contracts';
 describe('Meeting Transcription & Grounded Meta SRE AI Reasoning (Tasks 5 & 6)', () => {
   function createTestServer(customModel?: StructuredModelPort) {
     const app = fastify();
+    app.addHook('onRequest', async (req) => {
+      (req as unknown as { user: { userId: string; name: string } }).user = {
+        userId: 'eng-alex-chen',
+        name: 'Alex Chen',
+      };
+    });
     const mockModel: StructuredModelPort = customModel ?? {
       async generateStructured<T>() {
         return {

@@ -13,7 +13,7 @@ _Draw distributed systems, inject real physical network chaos, verify declarativ
 [![Fastify](https://img.shields.io/badge/Fastify-5.12.7-white?logo=fastify&logoColor=black)](apps/server/package.json)
 [![Toxiproxy](https://img.shields.io/badge/Chaos%20Engine-Shopify%20Toxiproxy%202.13-red)](https://github.com/Shopify/toxiproxy)
 [![Architecture Enforcement](https://img.shields.io/badge/Architecture-Dependency%20Cruiser%20Strict-purple)](.dependency-cruiser.cjs)
-[![Meta AI Hackathon](https://img.shields.io/badge/Meta%20AI-Muse%20Wonder%20%7C%20Spark%20%7C%20SAM%203.1-0081FB?logo=meta&logoColor=white)](https://dev.meta.ai)
+[![Meta AI Hackathon](https://img.shields.io/badge/Meta%20AI-Llama%203.2%20Vision%20%7C%20Muse%20Spark%20Open-0081FB?logo=meta&logoColor=white)](https://dev.meta.ai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
@@ -30,12 +30,12 @@ Distributed system failure modes—such as cascading retry storms, thread exhaus
 
 **EchmaMeet** bridges this gap by bringing **physical chaos engineering directly into design time**:
 
-1. **Draw or Scan**: Architects design system topologies on an interactive SVG canvas or ingest napkin sketches and whiteboard photos via Meta SAM 3.1 computer vision.
+1. **Draw or Scan**: Architects design system topologies on an interactive SVG canvas or ingest napkin sketches and whiteboard photos via Meta Llama 3.2 Vision.
 2. **Materialize**: EchmaMeet provisions standalone Node.js operating-system processes (`apps/worker`) communicating over real loopback TCP/HTTP sockets with Shopify Toxiproxy inline on every edge.
 3. **Stress & Break**: An open-loop synthetic load generator (`apps/loadgen`) dishes monotonic drift-corrected Poisson/constant request schedules, while Toxiproxy injects latency, jitter, connection drops, and bandwidth throttling.
 4. **Evaluate Invariants**: Declarative architectural contracts (e.g., end-to-end $p_{99} \le 500\text{ ms}$, completion rate $\ge 99\%$, zero duplicate commits) are evaluated across repeated trials with statistical medians and interquartile ranges (IQR).
-5. **Autonomously Heal**: When an invariant is violated, Meta AI models (Muse Wonder 1.0, Muse Spark 1.3) analyze raw telemetry, diagnose root causes, and propose targeted resilience repairs from a bounded, typed catalog (adaptive timeouts, exponential backoff with jitter, half-open circuit breakers, queue high-water marks, idempotency tokens).
-6. **Empirically Verify**: EchmaMeet re-executes the chaos experiment in the real sandbox. A repair is accepted **only if** empirical measurements improve and no secondary invariants break.
+5. **Autonomously Heal**: When an invariant is violated, Meta AI models (`meta-models/muse-spark-open-1026`, Llama 3.x) analyze raw telemetry, diagnose root causes, and propose targeted resilience repairs from a bounded, typed catalog (adaptive timeouts, exponential backoff with jitter, half-open circuit breakers, queue high-water marks, idempotency tokens).
+6. **Empirically Verify**: EchmaMeet re-executes the chaos experiment in the real sandbox. A repair is accepted **only if** empirical measurements improve beyond statistical noise (IQR) and no secondary invariants break.
 
 ---
 
@@ -55,22 +55,22 @@ Traditional closed-loop benchmarking tools artificially under-report tail latenc
 - **Typed Catalog Bounds**: Proposals strictly conform to `packages/contracts/src/catalog.ts` (e.g., maximum backoff $\le 30{,}000\text{ ms}$, circuit breaker trip thresholds $1\text{--}100$). The model cannot inject arbitrary code.
 - **Re-Measurement Verification**: Before/after differential reports prove whether an invariant was restored. If the trade-off is insurmountable (e.g. CAP theorem partition), EchmaMeet provides an honest trade-off analysis.
 
-### 👁️ Whiteboard & Diagram Computer Vision (Meta SAM 3.1)
+### 👁️ Whiteboard & Diagram Computer Vision (Meta Llama 3.2 Vision)
 
 Architectural reviews frequently start on physical whiteboards. EchmaMeet allows uploading or photographing sketches:
 
-- Meta SAM 3.1 (Segment Anything) extracts service boundaries, queues, databases, and directional arrows.
-- Automatic fallback: Built-in deterministic color-threshold detection and contour clustering for air-gapped or offline environments.
+- Meta Llama 3.2 11B Vision (`meta-models/llama-3.2-11b-vision` / `llama-3.2-11b-vision-preview`) extracts service boundaries, queues, databases, and directional arrows into structured topology drafts.
+- Gesture-Based Fault Selection: Built-in deterministic RGB color-threshold polyline detection ($R>130, G<110, B<110$) identifies red pen marker strokes across edge paths to select and inject faults directly from the physical whiteboard.
 
 ### 🎙️ Live Architecture Review Voice Bridge
 
-EchmaMeet includes an active meeting copilot. Engineering teams can conduct live architecture reviews while the streaming audio bridge transcribes discussion, detects anti-patterns (e.g., "we will just retry immediately on failure"), triggers real-time visual hazard warnings on canvas edges, and allows voice-driven chaos execution.
+EchmaMeet includes an active meeting copilot. Engineering teams can conduct live architecture reviews while the streaming audio WebSocket bridge (`/ws/voice`) transcribes discussion, detects anti-patterns (e.g., "we will just retry immediately on failure"), triggers real-time visual hazard warnings on canvas edges, and allows voice-driven chaos execution.
 
-### 🗄️ Pluggable Enterprise Storage & Distributed Tasks
+### 🗄️ Zero-Dependency Local Storage & Enterprise Security
 
-- **Persistence**: Out-of-the-box zero-dependency SQLite (via `node:sqlite`), instantly switchable to enterprise PostgreSQL (Neon Serverless, Supabase, or AWS RDS).
-- **Execution Fabric**: In-process synchronous execution with seamless upgrade to Redis + BullMQ distributed worker queues for clustered load testing.
-- **Security**: Firebase Google Auth popup integration, GitHub OAuth SSO, and cryptographic HMAC-SHA256 JWT sessions.
+- **Persistence**: Out-of-the-box native SQLite via Node 22 (`node:sqlite`) for deterministic single-host execution and offline reliability.
+- **Execution Fabric**: In-process synchronous execution and process supervisor with host Toxiproxy chaos injection.
+- **Security**: Cryptographically verified Google/Firebase OAuth and GitHub OAuth integrations, HMAC-SHA256 JWT sessions with timing-safe comparison, and room-isolated WebRTC signaling.
 
 ---
 
@@ -155,14 +155,14 @@ flowchart TB
 
 ## Meta AI SRE & Multimodal Integration
 
-EchmaMeet utilizes Meta's frontier models across vision, voice, and autonomous reasoning, backed by deterministic fallbacks ensuring offline and self-hosted functionality:
+EchmaMeet utilizes Meta frontier models across vision, meeting reasoning, and autonomous repair, backed by deterministic fallbacks ensuring offline and self-hosted functionality:
 
 | Capability                          | Model                                                                                                    | Endpoint / Provider                                           | Fallback When Unconfigured                                                    |
 | :---------------------------------- | :------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------ | :---------------------------------------------------------------------------- |
-| **Autonomous SRE Copilot & Repair** | **Meta Muse Wonder 1.0** (`muse-wonder-1.0`)<br/>_1M token context for multi-node failure telemetry RCA_ | Dev Meta AI (`https://api.meta.ai/v1`) or vLLM / Hugging Face | Local Random Forest ML classifier + deterministic heuristics                  |
-| **Real-Time Meeting Voice Copilot** | **Meta Muse Spark 1.3** (`muse-spark-1.3`)<br/>_Sub-second streaming intent parsing_                     | Meta WebSocket API or compatible inference provider           | Deterministic regex and tokenized architectural keyword extractor             |
-| **Whiteboard Diagram Ingestion**    | **Meta SAM 3.1** (`meta-models/sam-3.1`)<br/>_Zero-shot structural segmentation_                         | Meta Multimodal Vision API                                    | Pure TypeScript contour analysis & color thresholding ($R>130, G<110, B<110$) |
-| **Visual Architecture Artifacts**   | **Meta Muse Image** (`meta-models/muse-image`)                                                           | Meta Generation API                                           | Deterministic vector SVG schematic renderer                                   |
+| **Autonomous SRE Copilot & Repair** | **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026`) / Llama 3<br/>_Bounded catalog proposal engine_ | Dev Meta AI (`https://api.meta.ai/v1`) or vLLM / Hugging Face | Local Random Forest ML classifier + deterministic heuristics                  |
+| **Real-Time Meeting Voice Copilot** | **Meta SRE Meeting Reviewer** (`meta-models/muse-spark-open-1026`)<br/>_Live transcript-grounded risk advisor_ | Meta WebSocket API or compatible inference provider           | Deterministic regex and tokenized architectural keyword extractor             |
+| **Whiteboard Diagram Ingestion**    | **Meta Llama 3.2 11B Vision** (`meta-models/llama-3.2-11b-vision`)<br/>_Zero-shot diagram-to-graph extraction_  | Meta Multimodal Vision API / Groq API                         | Pure TypeScript contour analysis & color thresholding ($R>130, G<110, B<110$) |
+| **Physical Whiteboard Fault Gesture**| **Deterministic Color-Threshold Intersector**<br/>_Polyline segment intersection for red markers_       | Pure domain geometry (`modules/vision/domain`)               | Manual edge selection via SVG UI canvas                                       |
 
 ---
 

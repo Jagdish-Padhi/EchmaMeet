@@ -45,15 +45,21 @@ export function generateBenchmarkReport(suite: BenchmarkSuiteSummary): string {
     const p99Predicted = item.staticPredictions[0]?.predictedMetrics.p99LatencyMs;
     const p99PredictedStr =
       p99Predicted !== null && p99Predicted !== undefined ? `${String(p99Predicted)} ms` : 'N/A';
-    const p99Measured = item.empiricalRun.p99LatencyMs;
-    const p99MeasuredStr = p99Measured !== null ? `${String(p99Measured)} ms` : 'N/A';
+    const p99Measured = item.empiricalRun?.p99LatencyMs;
+    const p99MeasuredStr =
+      p99Measured !== null && p99Measured !== undefined ? `${String(p99Measured)} ms` : 'N/A';
     const p99RatioStr =
-      item.agreement.p99Ratio !== null ? `${String(item.agreement.p99Ratio)}x` : 'N/A';
-    const modeMatchStr = item.agreement.failureModeMatched ? 'MATCH' : 'MISMATCH';
-    const agreementPct = `${String(Math.round(item.agreement.violationAccuracy * 100))}%`;
+      item.agreement?.p99Ratio !== null && item.agreement?.p99Ratio !== undefined
+        ? `${String(item.agreement.p99Ratio)}x`
+        : 'N/A';
+    const modeMatchStr = item.agreement ? (item.agreement.failureModeMatched ? 'MATCH' : 'MISMATCH') : 'N/A';
+    const agreementPct = item.agreement
+      ? `${String(Math.round(item.agreement.violationAccuracy * 100))}%`
+      : 'N/A';
+    const empiricalStatus = item.empiricalRun ? `**${item.empiricalRun.overallStatus}**` : 'PENDING';
 
     lines.push(
-      `| \`${item.scenarioId}\` | **${item.empiricalRun.overallStatus}** | ${agreementPct} | ${p99PredictedStr} | ${p99MeasuredStr} | ${p99RatioStr} | ${modeMatchStr} |`,
+      `| \`${item.scenarioId}\` | ${empiricalStatus} | ${agreementPct} | ${p99PredictedStr} | ${p99MeasuredStr} | ${p99RatioStr} | ${modeMatchStr} |`,
     );
   }
   lines.push('');
@@ -96,20 +102,25 @@ export function generateBenchmarkReport(suite: BenchmarkSuiteSummary): string {
     lines.push(`### Scenario: \`${item.scenarioId}\``);
     lines.push('');
     lines.push(`- **Designed Failure Mode**: ${item.designedFailureMode}`);
-    lines.push(`- **Empirical Run ID**: \`${item.empiricalRun.runId}\``);
-    lines.push(`- **Overall Verdict**: **${item.empiricalRun.overallStatus}**`);
-    lines.push('');
+    if (item.empiricalRun) {
+      lines.push(`- **Empirical Run ID**: \`${item.empiricalRun.runId}\``);
+      lines.push(`- **Overall Verdict**: **${item.empiricalRun.overallStatus}**`);
+      lines.push('');
 
-    lines.push('#### Invariant Verdicts');
-    lines.push('');
-    lines.push('| Invariant ID | Status | Metric | Threshold | Reason |');
-    lines.push('|---|---|---|---|---|');
-    for (const v of item.empiricalRun.verdicts) {
-      lines.push(
-        `| \`${v.invariantId}\` | ${v.status} | \`${v.evidence.metric}\` | ${String(v.evidence.threshold)} | ${v.reason ?? 'N/A'} |`,
-      );
+      lines.push('#### Invariant Verdicts');
+      lines.push('');
+      lines.push('| Invariant ID | Status | Metric | Threshold | Reason |');
+      lines.push('|---|---|---|---|---|');
+      for (const v of item.empiricalRun.verdicts) {
+        lines.push(
+          `| \`${v.invariantId}\` | ${v.status} | \`${v.evidence.metric}\` | ${String(v.evidence.threshold)} | ${v.reason ?? 'N/A'} |`,
+        );
+      }
+      lines.push('');
+    } else {
+      lines.push(`- **Empirical Run Status**: *Pending Sandbox Execution*`);
+      lines.push('');
     }
-    lines.push('');
 
     lines.push('#### Static Predictions');
     lines.push('');

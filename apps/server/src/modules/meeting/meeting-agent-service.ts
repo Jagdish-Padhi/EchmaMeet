@@ -96,7 +96,7 @@ export const meetingAiResponseSchema = z.object({
   affectedEdgeIds: z.array(z.string()).optional().default([]),
   facts: z.array(z.string()).optional().default([]),
   assumptions: z.array(z.string()).optional().default([]),
-  confidence: z.number().min(0).max(1).optional().default(0.85),
+  confidence: z.number().min(0).max(1).optional(),
   proposedExperiment: proposedExperimentSchema.optional(),
   hazards: z.array(sreHazardSchema).optional().default([]),
   remediation: z.any().optional(),
@@ -209,12 +209,24 @@ export class MeetingAgentService {
       signal: opts.signal,
     });
 
+    // Grounded transcript verification: filter out fabricated transcript quotes that do not appear in actual transcript
+    const rawQuotes = llmResult.data.supportingTranscriptReferences ?? [];
+    const groundedReferences = rawQuotes.filter((ref) => {
+      if (!recentTranscriptText || recentTranscriptText.trim().length === 0) return false;
+      const lowerTranscript = recentTranscriptText.toLowerCase();
+      const lowerQuote = ref.quote.toLowerCase().trim();
+      if (lowerTranscript.includes(lowerQuote)) return true;
+      // Check significant words (length > 3)
+      const words = lowerQuote.split(/\s+/).filter((w) => w.length > 3);
+      return words.length > 0 && words.some((w) => lowerTranscript.includes(w));
+    });
+
     const parsedHazards = (llmResult.data.hazards ?? []).map((h) => ({
       id: h.id || `hazard-${Math.random().toString(36).slice(2, 7)}`,
-      title: h.title || h.issue || 'Architectural Risk',
-      severity: h.severity || 'high',
-      risk: h.risk || h.issue || 'Service vulnerability identified under sustained traffic.',
-      recommendation: h.recommendation || 'Apply bounded queues and circuit breaking.',
+      title: h.title || h.issue || 'Identified Hazard',
+      severity: h.severity || 'medium',
+      risk: h.risk || h.issue || 'Resilience hazard identified.',
+      recommendation: h.recommendation || 'Tune resilience policy parameters.',
       targetNodeId: h.targetNodeId || h.nodeId,
       targetEdgeId: h.targetEdgeId,
       patch: h.patch,
@@ -224,7 +236,7 @@ export class MeetingAgentService {
       handRaised: llmResult.data.handRaised || parsedHazards.length > 0,
       spokenOpinion: llmResult.data.spokenOpinion,
       identifiedRisk: llmResult.data.identifiedRisk ?? (parsedHazards[0]?.risk || undefined),
-      supportingTranscriptReferences: llmResult.data.supportingTranscriptReferences ?? [],
+      supportingTranscriptReferences: groundedReferences,
       affectedNodeIds:
         (llmResult.data.affectedNodeIds ?? []).length > 0
           ? (llmResult.data.affectedNodeIds ?? [])
@@ -235,7 +247,7 @@ export class MeetingAgentService {
           : parsedHazards.map((h) => h.targetEdgeId).filter((id): id is string => Boolean(id)),
       facts: (llmResult.data.facts ?? []).length > 0 ? (llmResult.data.facts ?? []) : [`Topology has ${nodeCount} services and ${topology.edges.length} connections.`],
       assumptions: llmResult.data.assumptions ?? [],
-      confidence: llmResult.data.confidence ?? 0.85,
+      confidence: llmResult.data.confidence ?? (groundedReferences.length > 0 ? 0.8 : 0.6),
       proposedExperiment: llmResult.data.proposedExperiment,
       hazards: parsedHazards,
       tokenUsage: {

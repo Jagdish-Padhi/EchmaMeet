@@ -3,21 +3,53 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import { voiceClientMessageSchema, type VoiceServerMessage } from '@chaosboard/contracts';
 import type { VoiceService } from '../application/voice-service';
 
+export interface VoiceBridgeOptions {
+  readonly authenticate?: (token: string) => boolean | Promise<boolean>;
+}
+
 export function attachVoiceWebSocketBridge(
   httpServer: Server,
   voiceService: VoiceService,
+  options?: VoiceBridgeOptions,
 ): WebSocketServer {
   const wss = new WebSocketServer({
     noServer: true,
   });
 
-  httpServer.on('upgrade', (request, socket, head) => {
+  httpServer.on('upgrade', async (request, socket, head) => {
     const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
-    if (url.pathname === '/ws/voice') {
-      wss.handleUpgrade(request, socket, head, (ws) => {
-        wss.emit('connection', ws, request);
-      });
+    if (url.pathname !== '/ws/voice') {
+      return;
     }
+
+    if (options?.authenticate) {
+      const authHeader = request.headers.authorization;
+      let token = url.searchParams.get('token');
+      if (!token && authHeader?.startsWith('Bearer ')) {
+        token = authHeader.slice(7).trim();
+      }
+      if (!token) {
+        socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nUnauthorized\n');
+        socket.destroy();
+        return;
+      }
+      try {
+        const authed = await options.authenticate(token);
+        if (!authed) {
+          socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nUnauthorized\n');
+          socket.destroy();
+          return;
+        }
+      } catch {
+        socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nUnauthorized\n');
+        socket.destroy();
+        return;
+      }
+    }
+
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
   });
 
   wss.on('connection', (ws: WebSocket) => {

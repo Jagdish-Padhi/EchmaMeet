@@ -13,12 +13,14 @@ describe('loadSettings', () => {
       databaseUrl: '',
       redisUrl: '',
       toxiproxyUrl: 'http://127.0.0.1:8474',
+      toxiproxyUpstreamHost: 'host.docker.internal',
       partnerBaseUrl: 'http://127.0.0.1:8000/v1',
       partnerApiKey: '',
       partnerModelId: 'meta-models/muse-spark-open-1026',
       aiProvider: 'mock',
       jwtSecret: 'chaosboard-default-jwt-secret-replace-in-production-2026',
       jwtExpiresIn: 1209600,
+      allowDevMockAuth: false,
       googleClientId: '',
       firebaseProjectId: '',
       githubClientId: '',
@@ -33,10 +35,26 @@ describe('loadSettings', () => {
       SERVER_PORT: '9000',
       DATA_DIR: '/var/lib/chaosboard',
       LOG_LEVEL: 'debug',
+      JWT_SECRET: 'a-secure-production-jwt-secret-with-at-least-32-chars!',
     });
     expect(settings.port).toBe(9000);
     expect(settings.nodeEnv).toBe('production');
     expect(settings.logLevel).toBe('debug');
+  });
+
+  it('enforces secure non-default JWT_SECRET in production', () => {
+    expect(() =>
+      loadSettings({
+        NODE_ENV: 'production',
+      }),
+    ).toThrow(ConfigError);
+
+    expect(() =>
+      loadSettings({
+        NODE_ENV: 'production',
+        JWT_SECRET: 'short-secret',
+      }),
+    ).toThrow(ConfigError);
   });
 
   it('treats empty strings as unset', () => {

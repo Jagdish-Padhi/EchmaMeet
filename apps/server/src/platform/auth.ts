@@ -15,6 +15,7 @@ export interface UserSessionProfile {
 export interface AuthConfig {
   readonly jwtSecret?: string;
   readonly jwtExpiresIn?: number;
+  readonly allowDevMockAuth?: boolean;
   readonly googleClientId?: string;
   readonly firebaseProjectId?: string;
   readonly githubClientId?: string;
@@ -149,7 +150,10 @@ function verifyPassword(password: string, storedHash: string): boolean {
   }
 }
 
-export function seedDefaultUsersAndSessions(db: SqlDatabase): void {
+export function seedDefaultUsersAndSessions(
+  db: SqlDatabase,
+  allowDemoUsers = process.env.NODE_ENV !== 'production',
+): void {
   try {
     db.exec(`CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -168,6 +172,10 @@ export function seedDefaultUsersAndSessions(db: SqlDatabase): void {
     )`);
     db.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)`);
     db.exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
+
+    if (!allowDemoUsers) {
+      return;
+    }
 
     const now = new Date().toISOString();
     const farFuture = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -290,6 +298,151 @@ const ssoSchema = z.object({
   }),
 });
 
+export interface VerifiedOauthProfile {
+  readonly email: string;
+  readonly name: string;
+  readonly avatar?: string | undefined;
+}
+
+export async function verifyGoogleToken(
+  rawToken: string,
+  config?: AuthConfig,
+): Promise<VerifiedOauthProfile | null> {
+  // If running in development/test with explicit dev mock authorization enabled
+  if (config?.allowDevMockAuth && (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development')) {
+    const verified = verifyJwt<{ email?: string; name?: string; picture?: string; avatar?: string }>(
+      rawToken,
+      config.jwtSecret || DEFAULT_JWT_SECRET,
+    );
+    if (verified.valid && verified.payload.email) {
+      return {
+        email: verified.payload.email,
+        name: verified.payload.name || 'Google SRE Reviewer',
+        avatar: verified.payload.picture || verified.payload.avatar,
+      };
+    }
+  }
+
+  try {
+    const res = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(rawToken)}`,
+    );
+    if (!res.ok) return null;
+    const body = (await res.json()) as {
+      email?: string;
+      email_verified?: string | boolean;
+      name?: string;
+      picture?: string;
+      aud?: string;
+    };
+    if (!body.email) return null;
+    if (body.email_verified !== 'true' && body.email_verified !== true) return null;
+    if (config?.googleClientId && body.aud && body.aud !== config.googleClientId) {
+      return null;
+    }
+    return {
+      email: body.email,
+      name: body.name || 'Google SRE Reviewer',
+      avatar: body.picture,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function verifyGithubToken(
+  code: string | undefined,
+  accessToken: string | undefined,
+  config?: AuthConfig,
+): Promise<VerifiedOauthProfile | null> {
+  let effectiveToken = accessToken;
+  if (code && config?.githubClientId && config?.githubClientSecret) {
+    try {
+      const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          accept: 'application/json',
+        },
+        body: JSON.stringify({
+          client_id: config.githubClientId,
+          client_secret: config.githubClientSecret,
+          code,
+        }),
+      });
+      if (tokenResponse.ok) {
+        const tokenData = (await tokenResponse.json()) as { access_token?: string };
+        effectiveToken = tokenData.access_token;
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  if (
+    config?.allowDevMockAuth &&
+    (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development') &&
+    effectiveToken
+  ) {
+    const verified = verifyJwt<{ email?: string; name?: string; avatar?: string }>(
+      effectiveToken,
+      config.jwtSecret || DEFAULT_JWT_SECRET,
+    );
+    if (verified.valid && verified.payload.email) {
+      return {
+        email: verified.payload.email,
+        name: verified.payload.name || 'GitHub Staff Engineer',
+        avatar: verified.payload.avatar,
+      };
+    }
+  }
+
+  if (!effectiveToken) return null;
+
+  try {
+    const userRes = await fetch('https://api.github.com/user', {
+      headers: {
+        authorization: `Bearer ${effectiveToken}`,
+        'user-agent': 'ChaosBoard-Auth',
+      },
+    });
+    if (!userRes.ok) return null;
+    const ghUser = (await userRes.json()) as {
+      email?: string;
+      login?: string;
+      name?: string;
+      avatar_url?: string;
+    };
+    let email = ghUser.email;
+    if (!email) {
+      const emailsRes = await fetch('https://api.github.com/user/emails', {
+        headers: {
+          authorization: `Bearer ${effectiveToken}`,
+          'user-agent': 'ChaosBoard-Auth',
+        },
+      });
+      if (emailsRes.ok) {
+        const emails = (await emailsRes.json()) as Array<{
+          email: string;
+          primary: boolean;
+          verified: boolean;
+        }>;
+        const primary =
+          emails.find((e) => e.primary && e.verified) ?? emails.find((e) => e.verified);
+        if (primary) email = primary.email;
+      }
+    }
+    if (!email) return null;
+    return {
+      email,
+      name: ghUser.name ?? ghUser.login ?? 'GitHub Staff Engineer',
+      avatar: ghUser.avatar_url,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function registerAuthRoutes(
   app: FastifyInstance,
   db: SqlDatabase,
@@ -400,11 +553,7 @@ export function registerAuthRoutes(
     }
 
     const valid = verifyPassword(password, userRow['password_hash']);
-    const isDemo =
-      cleanEmail.includes('@meta.internal') &&
-      (password === 'chaosboard123' || password === '••••••••••••');
-
-    if (!valid && !isDemo) {
+    if (!valid) {
       return sendAuthProblem(
         reply,
         401,
@@ -445,37 +594,30 @@ export function registerAuthRoutes(
       });
     }
 
-    const { credential, idToken, profile } = parse.data;
+    const { credential, idToken } = parse.data;
     const rawToken = credential || idToken;
-
-    let email = profile?.email;
-    let name = profile?.name || 'Google SRE Reviewer';
-    let avatar = profile?.avatar;
-
-    if (rawToken) {
-      try {
-        const parts = rawToken.split('.');
-        if (parts.length === 3 && parts[1]) {
-          const payload = JSON.parse(base64UrlDecode(parts[1])) as {
-            email?: string;
-            name?: string;
-            picture?: string;
-            sub?: string;
-          };
-          if (payload.email) email = payload.email;
-          if (payload.name) name = payload.name;
-          if (payload.picture) avatar = payload.picture;
-        }
-      } catch {
-        // Fallback to profile
-      }
+    if (!rawToken) {
+      return sendAuthProblem(
+        reply,
+        401,
+        'unauthorized',
+        'Google authentication requires an idToken or credential token.',
+      );
     }
 
-    if (!email) {
-      email = 'eng.google@meta.internal';
+    const verified = await verifyGoogleToken(rawToken, config);
+    if (!verified) {
+      return sendAuthProblem(
+        reply,
+        401,
+        'unauthorized',
+        'Google token signature or identity verification failed.',
+      );
     }
 
-    const cleanEmail = email.toLowerCase().trim();
+    const cleanEmail = verified.email.toLowerCase().trim();
+    const name = verified.name;
+    const avatar = verified.avatar;
     let userRow = db.get('SELECT * FROM users WHERE email = ?', [cleanEmail]);
     const now = new Date().toISOString();
     const expiresAt = new Date(Date.now() + jwtExpiresIn * 1000).toISOString();
@@ -541,81 +683,29 @@ export function registerAuthRoutes(
       });
     }
 
-    const { code, accessToken, profile } = parse.data;
-    let email = profile?.email;
-    let name = profile?.name || 'GitHub Staff Engineer';
-    let avatar = profile?.avatar;
-
-    // Real GitHub OAuth code exchange if credentials exist
-    if (code && config?.githubClientId && config?.githubClientSecret) {
-      try {
-        const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/json',
-            accept: 'application/json',
-          },
-          body: JSON.stringify({
-            client_id: config.githubClientId,
-            client_secret: config.githubClientSecret,
-            code,
-          }),
-        });
-
-        if (tokenResponse.ok) {
-          const tokenData = (await tokenResponse.json()) as { access_token?: string };
-          if (tokenData.access_token) {
-            const userResponse = await fetch('https://api.github.com/user', {
-              headers: {
-                authorization: `Bearer ${tokenData.access_token}`,
-                'user-agent': 'ChaosBoard-Auth',
-              },
-            });
-            if (userResponse.ok) {
-              const ghUser = (await userResponse.json()) as {
-                login?: string;
-                name?: string;
-                email?: string;
-                avatar_url?: string;
-              };
-              if (ghUser.name) name = ghUser.name;
-              else if (ghUser.login) name = ghUser.login;
-              if (ghUser.email) email = ghUser.email;
-              if (ghUser.avatar_url) avatar = ghUser.avatar_url;
-            }
-          }
-        }
-      } catch {
-        // Fallback gracefully to profile or default
-      }
-    } else if (accessToken) {
-      try {
-        const userResponse = await fetch('https://api.github.com/user', {
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-            'user-agent': 'ChaosBoard-Auth',
-          },
-        });
-        if (userResponse.ok) {
-          const ghUser = (await userResponse.json()) as {
-            login?: string;
-            name?: string;
-            email?: string;
-          };
-          if (ghUser.name) name = ghUser.name;
-          else if (ghUser.login) name = ghUser.login;
-          if (ghUser.email) email = ghUser.email;
-        }
-      } catch {
-        // Fallback
-      }
+    const { code, accessToken } = parse.data;
+    if (!code && !accessToken) {
+      return sendAuthProblem(
+        reply,
+        401,
+        'unauthorized',
+        'GitHub authentication requires either an OAuth code or an accessToken.',
+      );
     }
 
-    if (!email) {
-      email = 'eng.github@meta.internal';
+    const verified = await verifyGithubToken(code, accessToken, config);
+    if (!verified) {
+      return sendAuthProblem(
+        reply,
+        401,
+        'unauthorized',
+        'GitHub OAuth verification failed or no verified email address found.',
+      );
     }
 
-    const cleanEmail = email.toLowerCase().trim();
+    const cleanEmail = verified.email.toLowerCase().trim();
+    const name = verified.name;
+    const avatar = verified.avatar;
     let userRow = db.get('SELECT * FROM users WHERE email = ?', [cleanEmail]);
     const now = new Date().toISOString();
     const expiresAt = new Date(Date.now() + jwtExpiresIn * 1000).toISOString();
@@ -672,6 +762,16 @@ export function registerAuthRoutes(
 
   // POST /api/auth/sso
   app.post('/api/auth/sso', async (request: FastifyRequest, reply: FastifyReply) => {
+    // In production without explicit mock auth, reject arbitrary unverified SSO posts
+    if (process.env.NODE_ENV === 'production' && !config?.allowDevMockAuth) {
+      return sendAuthProblem(
+        reply,
+        403,
+        'sso_not_configured',
+        'Enterprise SSO SAML/OIDC assertions must be configured via identity provider.',
+      );
+    }
+
     const parse = ssoSchema.safeParse(request.body);
     if (!parse.success) {
       return reply.status(400).send({
@@ -747,19 +847,6 @@ export function registerAuthRoutes(
 
     const token = authHeader.slice(7).trim();
 
-    // Special allowance for seeded offline/demo token
-    if (token === 'local-offline-session-token' || token === DEMO_AUTH_TOKEN) {
-      return reply.status(200).send({
-        user: {
-          userId: 'eng-alex-chen',
-          name: 'Alex Chen',
-          email: 'alex.chen@meta.internal',
-          role: 'Staff SRE',
-          avatar: 'AC',
-        },
-      });
-    }
-
     // 1. First attempt JWT cryptographic verification
     const verifiedJwt = verifyJwt<UserSessionProfile>(token, jwtSecret);
     if (verifiedJwt.valid && verifiedJwt.payload.userId) {
@@ -826,15 +913,6 @@ export function authenticateToken(
 ): UserSessionProfile | null {
   if (!token || typeof token !== 'string') return null;
   const trimmed = token.trim();
-  if (trimmed === 'local-offline-session-token' || trimmed === DEMO_AUTH_TOKEN) {
-    return {
-      userId: 'eng-alex-chen',
-      name: 'Alex Chen',
-      email: 'alex.chen@meta.internal',
-      role: 'Staff SRE',
-      avatar: 'AC',
-    };
-  }
 
   // 1. Verify via signed JWT
   const verifiedJwt = verifyJwt<UserSessionProfile>(trimmed, jwtSecret);
@@ -891,19 +969,27 @@ export function installAuthGuard(app: FastifyInstance, db: SqlDatabase, config?:
   const jwtSecret = config?.jwtSecret || DEFAULT_JWT_SECRET;
 
   app.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
-    const url = request.url;
+    // Parse URL pathname safely, completely immune to query parameter tampering
+    const pathname = new URL(request.url, 'http://localhost').pathname;
 
-    // Public exemptions: health, auth endpoints, public scenarios catalog & showcase benchmarks, live SSE event streams
-    if (
-      !url.startsWith('/api/') ||
-      url.startsWith('/api/health') ||
-      url.startsWith('/api/auth/') ||
-      url.startsWith('/api/scenarios') ||
-      url.startsWith('/api/benchmarks/results') ||
-      url.startsWith('/api/topologies/scenarios') ||
-      url.startsWith('/api/meeting/ai-opinion') ||
-      url.includes('/events')
-    ) {
+    if (!pathname.startsWith('/api/')) {
+      return;
+    }
+
+    // Strict whitelist of public endpoints
+    const isPublic =
+      pathname === '/api/health' ||
+      pathname === '/api/auth/login' ||
+      pathname === '/api/auth/register' ||
+      pathname === '/api/auth/google' ||
+      pathname === '/api/auth/github' ||
+      pathname === '/api/auth/config' ||
+      pathname === '/api/scenarios' ||
+      pathname.startsWith('/api/scenarios/') ||
+      pathname === '/api/benchmarks/results' ||
+      pathname === '/api/topologies/scenarios';
+
+    if (isPublic) {
       return;
     }
 

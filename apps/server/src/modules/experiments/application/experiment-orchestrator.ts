@@ -18,7 +18,7 @@ class CancelledError extends Error {
   }
 }
 import type { ExperimentLock } from '../domain/experiment-lock';
-import { validateTopologyInput } from '../../topology/application/validate-topology';
+import { validateTopologyInput } from '../../topology';
 import type {
   ChaosPort,
   EventBroadcasterPort,

@@ -178,10 +178,14 @@ export function computeSuiteSummary(
   let ruleRepairsSucceeded = 0;
   let unpredictedFailuresCount = 0;
 
+  let evaluatedAgreementCount = 0;
   for (const comp of results) {
-    totalAccuracy += comp.agreement.violationAccuracy;
+    if (comp.agreement) {
+      totalAccuracy += comp.agreement.violationAccuracy;
+      evaluatedAgreementCount++;
+    }
 
-    if (comp.empiricalRun.overallStatus === 'VIOLATED') {
+    if (comp.empiricalRun && comp.empiricalRun.overallStatus === 'VIOLATED') {
       const anyPredictedViolation = comp.staticPredictions.some((p) =>
         Object.values(p.predictedViolations).some((v) => v),
       );
@@ -205,7 +209,10 @@ export function computeSuiteSummary(
     }
   }
 
-  const staticAccuracyPct = Number(((totalAccuracy / results.length) * 100).toFixed(1));
+  const staticAccuracyPct =
+    evaluatedAgreementCount > 0
+      ? Number(((totalAccuracy / evaluatedAgreementCount) * 100).toFixed(1))
+      : 0;
   const modelRepairSuccessPct =
     modelRepairsAttempted > 0
       ? Number(((modelRepairsSucceeded / modelRepairsAttempted) * 100).toFixed(1))

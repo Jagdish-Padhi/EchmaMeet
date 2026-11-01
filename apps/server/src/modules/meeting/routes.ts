@@ -13,18 +13,34 @@ const transcriptChunkSchema = z.object({
   recordingConsent: z.boolean(),
 });
 
+export interface MeetingRoutesOptions {
+  readonly generateMediaToken?: (userId: string, roomId: string) => string;
+}
+
 export function registerMeetingRoutes(
   app: FastifyInstance,
   meetingService: MeetingAgentService,
+  options?: MeetingRoutesOptions,
 ): void {
   // POST /api/rooms/:roomId/media-token
   app.post('/api/rooms/:roomId/media-token', async (request: FastifyRequest, reply: FastifyReply) => {
     const params = request.params as { roomId: string };
     const roomId = params.roomId?.trim() || 'default';
-    const user = (request as any).user ?? { userId: 'guest', name: 'Reviewer' };
+    const user = (request as unknown as { user?: { userId: string; name: string } }).user;
 
-    // Default: Authenticated Room WebRTC Signaling Token over WebSocket Bridge
-    const token = `webrtc-${roomId}-${user.userId}-${Date.now().toString(36)}`;
+    if (!user) {
+      return reply.status(401).send({
+        type: 'https://chaosboard.dev/errors/unauthorized',
+        title: 'Unauthorized',
+        status: 401,
+        detail: 'Authentication is required to obtain a WebRTC media token.',
+      });
+    }
+
+    const token = options?.generateMediaToken
+      ? options.generateMediaToken(user.userId, roomId)
+      : `webrtc-${roomId}-${user.userId}-${Date.now().toString(36)}`;
+
     return reply.status(200).send({
       roomId,
       participantId: user.userId,
@@ -133,6 +149,16 @@ export function registerMeetingRoutes(
 
   // GET /api/rooms/:roomId/transcripts - Retrieve persisted transcript segments
   app.get('/api/rooms/:roomId/transcripts', async (request: FastifyRequest, reply: FastifyReply) => {
+    const user = (request as unknown as { user?: { userId: string } }).user;
+    if (!user) {
+      return reply.status(401).send({
+        type: 'https://chaosboard.dev/errors/unauthorized',
+        title: 'Unauthorized',
+        status: 401,
+        detail: 'Authentication required to inspect room transcripts.',
+      });
+    }
+
     const params = request.params as { roomId: string };
     const roomId = params.roomId?.trim() || 'default';
     const segments = globalTranscriptStore.getSegments(roomId);
@@ -143,6 +169,16 @@ export function registerMeetingRoutes(
   app.post(
     '/api/meeting/ai-opinion',
     async (request: FastifyRequest, reply: FastifyReply) => {
+      const user = (request as unknown as { user?: { userId: string } }).user;
+      if (!user) {
+        return reply.status(401).send({
+          type: 'https://chaosboard.dev/errors/unauthorized',
+          title: 'Unauthorized',
+          status: 401,
+          detail: 'Authentication required to invoke meeting AI copilot.',
+        });
+      }
+
       const parsed = meetingAiRequestSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply.status(400).send({

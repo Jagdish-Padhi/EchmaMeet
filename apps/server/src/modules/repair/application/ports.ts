@@ -22,6 +22,7 @@ export interface ProposeRepairResult {
   patch: RepairPatch | null;
   rawOutput: string | null;
   metadata: ModelCallMetadata | null;
+  error?: string | null | undefined;
 }
 
 export interface RepairProposerPort {

@@ -50,6 +50,7 @@ describe('Auth routes and OAuth integrations', () => {
   const authConfig: AuthConfig = {
     jwtSecret: 'test-secret-key-32-chars-long-abc',
     jwtExpiresIn: 3600,
+    allowDevMockAuth: true,
     googleClientId: 'google-test-id.apps.googleusercontent.com',
     firebaseProjectId: 'firebase-test-proj',
     githubClientId: 'gh_client_123',
@@ -73,22 +74,72 @@ describe('Auth routes and OAuth integrations', () => {
     expect(data.providers).toContain('github');
   });
 
+  it('rejects forged login attempts without valid credentials', async () => {
+    const db = openDatabase(IN_MEMORY);
+    const app = Fastify();
+    registerAuthRoutes(app, db, { ...authConfig, allowDevMockAuth: false });
+
+    // Hostile attempt: forging victim email with no token
+    const forgedGoogle = await app.inject({
+      method: 'POST',
+      url: '/api/auth/google',
+      payload: {
+        profile: { email: 'victim@example.com' },
+      },
+    });
+    expect(forgedGoogle.statusCode).toBe(401);
+
+    // Hostile attempt: arbitrary fake id token without signature
+    const fakeToken = await app.inject({
+      method: 'POST',
+      url: '/api/auth/google',
+      payload: {
+        idToken: 'fake.unsigned.jwt',
+      },
+    });
+    expect(fakeToken.statusCode).toBe(401);
+  });
+
+  it('prevents query string auth bypass attacks like ?x=/events', async () => {
+    const db = openDatabase(IN_MEMORY);
+    const app = Fastify();
+    app.get('/api/runs', async () => ({ runs: [] }));
+    registerAuthRoutes(app, db, authConfig);
+    installAuthGuard(app, db, authConfig);
+
+    // Normal access without token is blocked
+    const directRes = await app.inject({
+      method: 'GET',
+      url: '/api/runs',
+    });
+    expect(directRes.statusCode).toBe(401);
+
+    // Malicious query string attempting to trigger url.includes('/events') bypass
+    const bypassRes = await app.inject({
+      method: 'GET',
+      url: '/api/runs?x=/events',
+    });
+    expect(bypassRes.statusCode).toBe(401);
+  });
+
   it('authenticates via Google/Firebase endpoint and issues valid JWT', async () => {
     const db = openDatabase(IN_MEMORY);
     const app = Fastify();
     registerAuthRoutes(app, db, authConfig);
     installAuthGuard(app, db, authConfig);
 
-    // Mock Google payload
+    // Valid signed token for dev/test
+    const validTestIdToken = signJwt(
+      { email: 'google.engineer@meta.internal', name: 'Sarah Chen (Google)', picture: 'SC' },
+      authConfig.jwtSecret,
+      3600,
+    );
+
     const response = await app.inject({
       method: 'POST',
       url: '/api/auth/google',
       payload: {
-        profile: {
-          email: 'google.engineer@meta.internal',
-          name: 'Sarah Chen (Google)',
-          avatar: 'SC',
-        },
+        idToken: validTestIdToken,
       },
     });
 
@@ -116,15 +167,17 @@ describe('Auth routes and OAuth integrations', () => {
     registerAuthRoutes(app, db, authConfig);
     installAuthGuard(app, db, authConfig);
 
+    const validGhToken = signJwt(
+      { email: 'github.lead@meta.internal', name: 'Marcus Vance (GitHub)', avatar: 'MV' },
+      authConfig.jwtSecret,
+      3600,
+    );
+
     const response = await app.inject({
       method: 'POST',
       url: '/api/auth/github',
       payload: {
-        profile: {
-          email: 'github.lead@meta.internal',
-          name: 'Marcus Vance (GitHub)',
-          avatar: 'MV',
-        },
+        accessToken: validGhToken,
       },
     });
 

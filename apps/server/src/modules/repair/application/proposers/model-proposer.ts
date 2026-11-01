@@ -38,12 +38,14 @@ export class ModelRepairProposer implements RepairProposerPort {
         patch: result.data,
         rawOutput: result.rawOutput,
         metadata: result.metadata,
+        error: null,
       };
-    } catch {
+    } catch (err) {
       return {
         patch: null,
         rawOutput: null,
         metadata: null,
+        error: err instanceof Error ? err.message : String(err),
       };
     }
   }

@@ -24,7 +24,13 @@ import { MeetingAgentService, registerMeetingRoutes } from './modules/meeting';
 import type { RunId } from '@chaosboard/contracts';
 import type { SqlDatabase } from './platform/db';
 import { registerHealthRoute } from './platform/health';
-import { installAuthGuard, registerAuthRoutes, type AuthConfig } from './platform/auth';
+import {
+  DEFAULT_JWT_SECRET,
+  installAuthGuard,
+  registerAuthRoutes,
+  signJwt,
+  type AuthConfig,
+} from './platform/auth';
 import { registerProblemHandlers } from './platform/http-kit';
 import type { Logger } from './platform/logging';
 
@@ -135,7 +141,16 @@ export function buildApp({
   registerReportingRoutes(app, reportingService);
 
   const meetingAgentService = new MeetingAgentService(modelClient);
-  registerMeetingRoutes(app, meetingAgentService);
+  registerMeetingRoutes(app, meetingAgentService, {
+    generateMediaToken: (userId, roomId) =>
+      signJwt(
+        { sub: userId, roomId, purpose: 'webrtc_media_signaling' },
+        authConfig?.jwtSecret ?? DEFAULT_JWT_SECRET,
+        7200,
+      ),
+  });
+
+  (app as unknown as { voiceService: VoiceService }).voiceService = voiceService;
 
   return app;
 }

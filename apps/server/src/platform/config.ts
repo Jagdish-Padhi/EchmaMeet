@@ -9,12 +9,14 @@ const settingsSchema = z.strictObject({
   DATABASE_URL: z.string().optional().default(''),
   REDIS_URL: z.string().optional().default(''),
   TOXIPROXY_URL: z.url().default('http://127.0.0.1:8474'),
+  TOXIPROXY_UPSTREAM_HOST: z.string().default('host.docker.internal'),
   PARTNER_BASE_URL: z.string().default('http://127.0.0.1:8000/v1'),
   PARTNER_API_KEY: z.string().default(''),
   PARTNER_MODEL_ID: z.string().default('meta-models/muse-spark-open-1026'),
   AI_PROVIDER: z.enum(['meta', 'groq', 'openai', 'mock', 'auto']).default('auto'),
   JWT_SECRET: z.string().default('chaosboard-default-jwt-secret-replace-in-production-2026'),
   JWT_EXPIRES_IN: z.coerce.number().int().min(60).default(1209600),
+  ALLOW_DEV_MOCK_AUTH: z.enum(['true', 'false', '1', '0']).default('false'),
   GOOGLE_CLIENT_ID: z.string().default(''),
   FIREBASE_PROJECT_ID: z.string().default(''),
   GITHUB_CLIENT_ID: z.string().default(''),
@@ -30,12 +32,14 @@ export interface Settings {
   readonly databaseUrl: string;
   readonly redisUrl: string;
   readonly toxiproxyUrl: string;
+  readonly toxiproxyUpstreamHost: string;
   readonly partnerBaseUrl: string;
   readonly partnerApiKey: string;
   readonly partnerModelId: string;
   readonly aiProvider: 'meta' | 'groq' | 'openai' | 'mock';
   readonly jwtSecret: string;
   readonly jwtExpiresIn: number;
+  readonly allowDevMockAuth: boolean;
   readonly googleClientId: string;
   readonly firebaseProjectId: string;
   readonly githubClientId: string;
@@ -127,6 +131,18 @@ export function loadSettings(env: Readonly<Record<string, string | undefined>>):
     throw new ConfigError(`Invalid configuration. ${lines.join('; ')}`, variables);
   }
 
+  // Security Hardening: Enforce production JWT secret guard
+  if (
+    parsed.data.NODE_ENV === 'production' &&
+    (parsed.data.JWT_SECRET === 'chaosboard-default-jwt-secret-replace-in-production-2026' ||
+      parsed.data.JWT_SECRET.length < 32)
+  ) {
+    throw new ConfigError(
+      'In production, JWT_SECRET must be explicitly set to a cryptographically secure string with at least 32 characters, and cannot be the default development secret.',
+      ['JWT_SECRET'],
+    );
+  }
+
   // Determine effective provider
   let resolvedProvider: 'meta' | 'groq' | 'openai' | 'mock' = 'mock';
   if (parsed.data.AI_PROVIDER !== 'auto') {
@@ -148,12 +164,14 @@ export function loadSettings(env: Readonly<Record<string, string | undefined>>):
     databaseUrl: parsed.data.DATABASE_URL,
     redisUrl: parsed.data.REDIS_URL,
     toxiproxyUrl: parsed.data.TOXIPROXY_URL,
+    toxiproxyUpstreamHost: parsed.data.TOXIPROXY_UPSTREAM_HOST,
     partnerBaseUrl: parsed.data.PARTNER_BASE_URL,
     partnerApiKey: parsed.data.PARTNER_API_KEY,
     partnerModelId: parsed.data.PARTNER_MODEL_ID,
     aiProvider: resolvedProvider,
     jwtSecret: parsed.data.JWT_SECRET,
     jwtExpiresIn: parsed.data.JWT_EXPIRES_IN,
+    allowDevMockAuth: parsed.data.ALLOW_DEV_MOCK_AUTH === 'true' || parsed.data.ALLOW_DEV_MOCK_AUTH === '1',
     googleClientId: parsed.data.GOOGLE_CLIENT_ID,
     firebaseProjectId: parsed.data.FIREBASE_PROJECT_ID,
     githubClientId: parsed.data.GITHUB_CLIENT_ID,

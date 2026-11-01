@@ -61,12 +61,16 @@ export function evaluateRepairDecision(
         currMedian !== null &&
         currMedian !== undefined
       ) {
+        // Statistical significance guard: improvement must exceed 20% of IQR or 2% of baseline median to distinguish from noise
+        const iqr = curr.evidence.faultedAggregate?.iqr ?? 0;
+        const minEffect = Math.max(iqr * 0.2, Math.abs(prevMedian) * 0.02, 1e-4);
+
         if (comp === 'lte' || comp === 'lt') {
-          if (currMedian < prevMedian) {
+          if (prevMedian - currMedian >= minEffect) {
             metricImprovementCount += 1;
           }
         } else {
-          if (currMedian > prevMedian) {
+          if (currMedian - prevMedian >= minEffect) {
             metricImprovementCount += 1;
           }
         }

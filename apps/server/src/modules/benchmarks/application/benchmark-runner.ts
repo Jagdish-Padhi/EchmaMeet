@@ -47,7 +47,15 @@ export class BenchmarkRunner {
     for (const scenario of scenarios) {
       if (options.predictOnly) {
         if (this.deps.predictor) {
-          await this.loadOrGeneratePredictions(scenario, kPredictions);
+          const preds = await this.loadOrGeneratePredictions(scenario, kPredictions);
+          comparisons.push({
+            scenarioId: scenario.id,
+            designedFailureMode: scenario.designedFailureMode,
+            staticPredictions: preds,
+            empiricalRun: undefined,
+            repairComparisons: undefined,
+            agreement: undefined,
+          });
         }
         continue;
       }

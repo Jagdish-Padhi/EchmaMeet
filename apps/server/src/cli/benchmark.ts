@@ -68,6 +68,7 @@ async function main(): Promise<void> {
   });
 
   const benchmarks = createBenchmarkModule({
+    workspaceRoot: process.cwd(),
     experiments: experimentOrchestrator,
     runs: runsService,
     model: modelClient,

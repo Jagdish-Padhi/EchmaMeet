@@ -303,19 +303,8 @@ export function attachCollaborationWebSocketBridge(
 
     const room = getOrCreateRoom(roomId);
 
-    // Handle reconnects / duplicate sessions for the same user in this room
-    for (const existing of room.clients) {
-      if (existing.authenticatedUser.userId === authenticatedUser.userId) {
-        try {
-          existing.ws.terminate();
-        } catch {
-          // ignore
-        }
-        room.clients.delete(existing);
-        socketSessionMap.delete(existing.ws);
-        break;
-      }
-    }
+    // Support multi-tab sessions for the same authenticated reviewer seamlessly
+    // without prematurely evicting previous active tabs.
 
     const initialUser: PresenceUser = {
       userId: authenticatedUser.userId,
@@ -513,12 +502,32 @@ export function attachCollaborationWebSocketBridge(
         const currentRoom = getOrCreateRoom(roomId);
         currentRoom.latestSnapshot = msg.topology;
         broadcastToRoom(roomId, ws, msg as CollaborationMessage);
-      } else if (
-        msg.type === 'node_moved' ||
-        msg.type === 'edge_selected' ||
-        msg.type === 'chat_message'
-      ) {
+      } else if (msg.type === 'node_moved' || msg.type === 'edge_selected') {
         broadcastToRoom(roomId, ws, msg as CollaborationMessage);
+      } else if (msg.type === 'chat_message') {
+        // Anti-spoofing enforcement: enforce authenticated sender metadata
+        const messagePayload =
+          typeof msg.message === 'object' && msg.message !== null
+            ? {
+                ...(msg.message as Record<string, unknown>),
+                senderId: session.authenticatedUser.userId,
+                senderName: session.authenticatedUser.name,
+                senderRole: session.authenticatedUser.role,
+                senderAvatar: session.authenticatedUser.avatar,
+                timestamp: Date.now(),
+              }
+            : {
+                text: String(msg.message),
+                senderId: session.authenticatedUser.userId,
+                senderName: session.authenticatedUser.name,
+                senderRole: session.authenticatedUser.role,
+                senderAvatar: session.authenticatedUser.avatar,
+                timestamp: Date.now(),
+              };
+        broadcastToRoom(roomId, ws, {
+          type: 'chat_message',
+          message: messagePayload,
+        });
       } else if (
         msg.type === 'webrtc_offer' ||
         msg.type === 'webrtc_answer' ||
@@ -554,12 +563,20 @@ export function attachCollaborationWebSocketBridge(
 
   // Keep-alive heartbeat interval to clean up stale connections
   const heartbeatInterval = setInterval(() => {
-    for (const [, room] of rooms) {
+    for (const [roomId, room] of rooms) {
       for (const session of room.clients) {
         if (!session.isAlive) {
+          // Broadcast user_left before terminating so peers are informed immediately
+          broadcastToRoom(roomId, session.ws, {
+            type: 'user_left',
+            userId: session.authenticatedUser.userId,
+          });
           session.ws.terminate();
           room.clients.delete(session);
           socketSessionMap.delete(session.ws);
+          if (room.clients.size === 0) {
+            rooms.delete(roomId);
+          }
           continue;
         }
         session.isAlive = false;

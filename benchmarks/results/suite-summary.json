@@ -1,10 +1,235 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-01T08:04:07.841Z",
-  "gitCommit": "test-commit",
-  "hostDescription": "test-environment",
-  "nodeVersion": "v22.14.0",
+  "generatedAt": "2026-11-01T18:48:03.741Z",
+  "gitCommit": "5d2a4f2",
+  "hostDescription": "win32 (12th Gen Intel(R) Core(TM) i3-1215U, 8 cores)",
+  "nodeVersion": "v24.13.0",
   "results": [
+    {
+      "scenarioId": "availability-tradeoff",
+      "designedFailureMode": "Irreconcilable availability-consistency trade-off when critical write downstream is down",
+      "staticPredictions": [
+        {
+          "scenarioId": "availability-tradeoff",
+          "predictionIndex": 0,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-completion": true,
+            "inv-p99": false
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 150,
+            "errorRate": 1
+          },
+          "predictedFailureMode": "Irreconcilable availability-consistency trade-off when critical write downstream is down",
+          "rationale": "When downstream payments service is down and cannot be deferred or cached, complete failure of the transaction is mathematically inevitable.",
+          "timestamp": "2026-10-30T10:25:00.000Z"
+        },
+        {
+          "scenarioId": "availability-tradeoff",
+          "predictionIndex": 1,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-completion": true,
+            "inv-p99": false
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 180,
+            "errorRate": 1
+          },
+          "predictedFailureMode": "Hard dependency outage violating availability invariant",
+          "rationale": "No policy adjustment can complete a synchronous payment write when payments dependency is down.",
+          "timestamp": "2026-10-30T10:26:00.000Z"
+        },
+        {
+          "scenarioId": "availability-tradeoff",
+          "predictionIndex": 2,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-completion": true,
+            "inv-p99": false
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 120,
+            "errorRate": 1
+          },
+          "predictedFailureMode": "Unrecoverable availability collapse due to down critical dependency",
+          "rationale": "Fail fast policy will maintain low p99 latency but completion rate will drop to zero.",
+          "timestamp": "2026-10-30T10:27:00.000Z"
+        }
+      ]
+    },
+    {
+      "scenarioId": "missing-timeout-cascade",
+      "designedFailureMode": "Workers pinned by stalled downstream connection with failure cascading upstream",
+      "staticPredictions": [
+        {
+          "scenarioId": "missing-timeout-cascade",
+          "predictionIndex": 0,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-completion": true,
+            "inv-sat-gateway": true
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 5000,
+            "errorRate": 0.4
+          },
+          "predictedFailureMode": "Workers pinned by stalled downstream connection with failure cascading upstream",
+          "rationale": "With no timeout configured, 80% stalled connections on user-db edge block auth workers, cascading into gateway worker saturation.",
+          "timestamp": "2026-10-30T10:05:00.000Z"
+        },
+        {
+          "scenarioId": "missing-timeout-cascade",
+          "predictionIndex": 1,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-completion": true,
+            "inv-sat-gateway": true
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 4800,
+            "errorRate": 0.35
+          },
+          "predictedFailureMode": "Cascading thread starvation from unconstrained connection stall",
+          "rationale": "Unbounded wait times on auth-to-user-db exhaust gateway thread pool as incoming client requests accumulate.",
+          "timestamp": "2026-10-30T10:06:00.000Z"
+        },
+        {
+          "scenarioId": "missing-timeout-cascade",
+          "predictionIndex": 2,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-completion": true,
+            "inv-sat-gateway": true
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 5200,
+            "errorRate": 0.45
+          },
+          "predictedFailureMode": "Upstream saturation and timeout cascade",
+          "rationale": "Without explicit timeouts, blocked downstream sockets hold resources indefinitely until client-side timeouts expire.",
+          "timestamp": "2026-10-30T10:07:00.000Z"
+        }
+      ]
+    },
+    {
+      "scenarioId": "non-idempotent-retry",
+      "designedFailureMode": "Duplicate writes committed to downstream ledger due to uncoordinated retries",
+      "staticPredictions": [
+        {
+          "scenarioId": "non-idempotent-retry",
+          "predictionIndex": 0,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-duplicates": true
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 450,
+            "errorRate": 0.01
+          },
+          "predictedFailureMode": "Duplicate writes committed to downstream ledger due to uncoordinated retries",
+          "rationale": "Client timeout of 300ms fires before downstream 400ms latency completes, causing premature retry without idempotency key and resulting in duplicate ledger records.",
+          "timestamp": "2026-10-30T10:15:00.000Z"
+        },
+        {
+          "scenarioId": "non-idempotent-retry",
+          "predictionIndex": 1,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-duplicates": true
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 500,
+            "errorRate": 0.02
+          },
+          "predictedFailureMode": "Double ledger write from timeout shorter than processing latency",
+          "rationale": "Because dedupeByKey is false on the ledger, retried payments will be inserted twice whenever payment timeout is breached.",
+          "timestamp": "2026-10-30T10:16:00.000Z"
+        },
+        {
+          "scenarioId": "non-idempotent-retry",
+          "predictionIndex": 2,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-duplicates": true
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 420,
+            "errorRate": 0
+          },
+          "predictedFailureMode": "Non-idempotent retry duplicate write propagation",
+          "rationale": "Premature retries on the payments-to-ledger edge inject duplicate transactions violating the duplicate write threshold of 0.01.",
+          "timestamp": "2026-10-30T10:17:00.000Z"
+        }
+      ]
+    },
+    {
+      "scenarioId": "oversensitive-breaker",
+      "designedFailureMode": "Premature circuit breaker trips converting transient errors into extended full outage",
+      "staticPredictions": [
+        {
+          "scenarioId": "oversensitive-breaker",
+          "predictionIndex": 0,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-completion": true,
+            "inv-breaker-open": true
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 250,
+            "errorRate": 0.35
+          },
+          "predictedFailureMode": "Premature circuit breaker trips converting transient errors into extended full outage",
+          "rationale": "A 10% failure threshold over a tiny 5-request window will trip on 15% reset rate, opening the breaker for 10 seconds and dropping subsequent traffic.",
+          "timestamp": "2026-10-30T10:20:00.000Z"
+        },
+        {
+          "scenarioId": "oversensitive-breaker",
+          "predictionIndex": 1,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-completion": true,
+            "inv-breaker-open": true
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 220,
+            "errorRate": 0.3
+          },
+          "predictedFailureMode": "False-positive circuit trip magnifying transient reset fault",
+          "rationale": "The circuit breaker is oversensitive to minor noise, converting transient 15% peer resets into prolonged open breaker state.",
+          "timestamp": "2026-10-30T10:21:00.000Z"
+        },
+        {
+          "scenarioId": "oversensitive-breaker",
+          "predictionIndex": 2,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-completion": true,
+            "inv-breaker-open": true
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 300,
+            "errorRate": 0.4
+          },
+          "predictedFailureMode": "Oversensitive circuit breaker failure",
+          "rationale": "Breaker open fraction will exceed the 0.20 limit because the cooldown period is significantly longer than error intervals.",
+          "timestamp": "2026-10-30T10:22:00.000Z"
+        }
+      ]
+    },
     {
       "scenarioId": "retry-storm",
       "designedFailureMode": "Synchronous retry storm causing worker exhaustion downstream",
@@ -63,109 +288,70 @@
           "rationale": "Latency toxic of 800ms with jitter causes requests to timeout and retry, multiplying queue arrival rate beyond capacity.",
           "timestamp": "2026-10-30T10:02:00.000Z"
         }
-      ],
-      "empiricalRun": {
-        "runId": "run-12345678-abcd-1234-abcd-retry-st0000",
-        "verdicts": [
-          {
-            "invariantId": "inv-p99",
-            "status": "VIOLATED",
-            "reason": "Measured p99 exceeds threshold",
-            "evidence": {
-              "metric": "e2e_p99_ms",
-              "scope": {
-                "kind": "system"
-              },
-              "comparator": "lte",
-              "threshold": 500,
-              "baselineAggregate": {
-                "median": 100,
-                "p25": 90,
-                "p75": 110,
-                "iqr": 20
-              },
-              "faultedAggregate": {
-                "median": 1000,
-                "p25": 950,
-                "p75": 1050,
-                "iqr": 100
-              },
-              "baselineValues": [
-                100
-              ],
-              "faultedValues": [
-                1000
-              ]
-            }
+      ]
+    },
+    {
+      "scenarioId": "unbounded-queue",
+      "designedFailureMode": "Uncontrolled queue growth and latency degradation from unthrottled producer",
+      "staticPredictions": [
+        {
+          "scenarioId": "unbounded-queue",
+          "predictionIndex": 0,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-queue-depth": true,
+            "inv-p99": true
           },
-          {
-            "invariantId": "inv-completion",
-            "status": "PASS",
-            "reason": null,
-            "evidence": {
-              "metric": "completion_rate",
-              "scope": {
-                "kind": "system"
-              },
-              "comparator": "gte",
-              "threshold": 0.95,
-              "baselineAggregate": {
-                "median": 1,
-                "p25": 1,
-                "p75": 1,
-                "iqr": 0
-              },
-              "faultedAggregate": {
-                "median": 0.98,
-                "p25": 0.97,
-                "p75": 0.99,
-                "iqr": 0.02
-              },
-              "baselineValues": [
-                1
-              ],
-              "faultedValues": [
-                0.98
-              ]
-            }
-          }
-        ],
-        "overallStatus": "VIOLATED",
-        "p99LatencyMs": 1000,
-        "errorRate": 0.02
-      },
-      "repairComparisons": {
-        "ruleBased": {
-          "status": "repaired",
-          "iterationsCount": 2,
-          "patchCount": 2,
-          "totalTokens": {
-            "promptTokens": 400,
-            "completionTokens": 80
-          }
+          "predictedMetrics": {
+            "p99LatencyMs": 2400,
+            "errorRate": 0.02
+          },
+          "predictedFailureMode": "Uncontrolled queue growth and latency degradation from unthrottled producer",
+          "rationale": "Order API pushes asynchronous requests faster than the consumer can flush downstream, causing queue depth and queue delay to rise monotonically.",
+          "timestamp": "2026-10-30T10:10:00.000Z"
         },
-        "model": {
-          "status": "repaired",
-          "iterationsCount": 2,
-          "patchCount": 2,
-          "totalTokens": {
-            "promptTokens": 400,
-            "completionTokens": 80
-          }
+        {
+          "scenarioId": "unbounded-queue",
+          "predictionIndex": 1,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-queue-depth": true,
+            "inv-p99": true
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 2800,
+            "errorRate": 0.03
+          },
+          "predictedFailureMode": "Unbounded consumer queue growth under downstream backpressure",
+          "rationale": "Downstream latency causes consumer processing rate to drop below arrival rate, violating queue depth threshold of 50.",
+          "timestamp": "2026-10-30T10:11:00.000Z"
+        },
+        {
+          "scenarioId": "unbounded-queue",
+          "predictionIndex": 2,
+          "modelId": "meta-models/muse-spark-open-1026",
+          "promptVersion": "prediction-v1",
+          "predictedViolations": {
+            "inv-queue-depth": true,
+            "inv-p99": true
+          },
+          "predictedMetrics": {
+            "p99LatencyMs": 2200,
+            "errorRate": 0.01
+          },
+          "predictedFailureMode": "Async queue depth accumulation and end-to-end latency spike",
+          "rationale": "Unbounded queue mode eliminates backpressure to producer, accumulating messages and inflating p99 latency beyond 1000ms.",
+          "timestamp": "2026-10-30T10:12:00.000Z"
         }
-      },
-      "agreement": {
-        "violationAccuracy": 1,
-        "p99Ratio": 1.5,
-        "errorRateDelta": 0.02,
-        "failureModeMatched": true
-      }
+      ]
     }
   ],
   "aggregateMetrics": {
-    "staticAccuracyPct": 100,
-    "modelRepairSuccessPct": 100,
-    "ruleBasedRepairSuccessPct": 100,
+    "staticAccuracyPct": 0,
+    "modelRepairSuccessPct": 0,
+    "ruleBasedRepairSuccessPct": 0,
     "unpredictedFailuresCount": 0
   }
 }

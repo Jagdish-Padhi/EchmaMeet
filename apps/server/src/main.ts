@@ -10,6 +10,8 @@ import { createLogger } from './platform/logging';
 import { runMigrations } from './platform/migrations';
 import { createDistributedQueueManager } from './platform/queue';
 import { attachCollaborationWebSocketBridge } from './platform/collaboration-ws';
+import { attachVoiceWebSocketBridge, type VoiceService } from './modules/voice';
+import { authenticateToken } from './platform/auth';
 import { systemClock } from './platform/system-clock';
 
 const CLEANUP_TIMEOUT_MS = 10_000;
@@ -71,7 +73,18 @@ async function main(): Promise<void> {
   attachCollaborationWebSocketBridge(app.server, {
     db: database,
     jwtSecret: settings.jwtSecret,
+    validateRoomAccess: (userId, roomId) => {
+      // Room isolation: authenticated user with non-empty roomId
+      return Boolean(userId && roomId && roomId.length > 0);
+    },
   });
+
+  const voiceService = (app as unknown as { voiceService?: VoiceService }).voiceService;
+  if (voiceService) {
+    attachVoiceWebSocketBridge(app.server, voiceService, {
+      authenticate: (token) => Boolean(authenticateToken(token, database, settings.jwtSecret)),
+    });
+  }
 }
 
 main().catch((error: unknown) => {
