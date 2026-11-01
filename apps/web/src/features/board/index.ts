@@ -9,6 +9,7 @@ export { NodeInspector } from './components/NodeInspector';
 export { UserProfileMenu } from './components/UserProfileMenu';
 export type { UserProfile } from './components/UserProfileMenu';
 export { ValidationBanner, resolveNodeNumber } from './components/ValidationBanner';
+export { PreflightBlockerModal } from './components/PreflightBlockerModal';
 export { useBoardState } from './hooks/use-board-state';
 export type { NodePresetConfig } from './hooks/use-board-state';
 export { fromTopology, toTopology, toTopologyDraft } from './types';

@@ -71,6 +71,8 @@ describe('Board state conversions', () => {
     expect(board.edges.length).toBe(1);
     expect(board.nodes[0]?.position.x).toBe(100);
     expect(board.nodes[1]?.position.x).toBe(360);
+    expect(board.edgeSourcePorts).toEqual({});
+    expect(board.edgeTargetPorts).toEqual({});
 
     const draft = toTopologyDraft(board);
     expect(draft.name).toBe('Test Topology');

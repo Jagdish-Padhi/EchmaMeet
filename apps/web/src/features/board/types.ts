@@ -44,17 +44,21 @@ export interface CanvasStroke {
   readonly points: readonly CanvasPosition[];
 }
 
+export type EdgePortSide = 'top' | 'right' | 'bottom' | 'left';
+
 export interface BoardState {
   readonly id: string;
   readonly name: string;
   readonly entryNodeId: NodeId;
   readonly nodes: readonly BoardNode[];
   readonly edges: readonly TopologyEdge[];
-  readonly edgeControlPoints?: Readonly<Record<string, CanvasPosition>>;
+  readonly edgeControlPoints?: Readonly<Record<string, CanvasPosition>> | undefined;
+  readonly edgeSourcePorts?: Readonly<Record<string, EdgePortSide>> | undefined;
+  readonly edgeTargetPorts?: Readonly<Record<string, EdgePortSide>> | undefined;
   readonly selectedNodeId: NodeId | null;
-  readonly selectedNodeIds?: readonly NodeId[];
+  readonly selectedNodeIds?: readonly NodeId[] | undefined;
   readonly selectedEdgeId: EdgeId | null;
-  readonly strokes?: readonly CanvasStroke[];
+  readonly strokes?: readonly CanvasStroke[] | undefined;
   readonly validationProblems: readonly TopologyProblem[];
   readonly isValidating: boolean;
   readonly isDirty: boolean;
@@ -165,6 +169,8 @@ export function fromTopology(topology: Topology): BoardState {
     selectedNodeIds: [],
     selectedEdgeId: null,
     edgeControlPoints: {},
+    edgeSourcePorts: {},
+    edgeTargetPorts: {},
     strokes: [],
     validationProblems: [],
     isValidating: false,

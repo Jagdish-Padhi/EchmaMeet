@@ -2,6 +2,8 @@ import { memo, type MouseEvent as ReactMouseEvent } from 'react';
 import type { NodeId, TopologyProblem } from '@chaosboard/contracts';
 import type { BoardNode } from '../types';
 
+export type NodePortPosition = 'top' | 'right' | 'bottom' | 'left';
+
 export interface NodeCardProps {
   readonly node: BoardNode;
   readonly nodeNumber?: number;
@@ -13,8 +15,12 @@ export interface NodeCardProps {
   readonly problems: readonly TopologyProblem[];
   readonly onSelect: (id: NodeId, e?: ReactMouseEvent) => void;
   readonly onDragStart: (id: NodeId, e: ReactMouseEvent<SVGGElement>) => void;
-  readonly onStartConnect?: (sourceId: NodeId, e: ReactMouseEvent<SVGElement>) => void;
-  readonly onDropConnect?: (targetId: NodeId) => void;
+  readonly onStartConnect?: (
+    sourceId: NodeId,
+    e: ReactMouseEvent<SVGElement>,
+    port?: NodePortPosition,
+  ) => void;
+  readonly onDropConnect?: (targetId: NodeId, port?: NodePortPosition) => void;
 }
 
 export const NodeCard = memo(function NodeCard({
@@ -231,21 +237,121 @@ export const NodeCard = memo(function NodeCard({
         </text>
       </g>
 
-      {/* Quick-Connect Perimeter Handle (Sleek, mild & revealed on hover) */}
+      {/* 4 Interactive Edge Connection Ports (Top, Right, Bottom, Left centers) */}
+      {/* Top Edge Port */}
       <g
-        className="node-port-handle"
+        className="node-port-handle node-port-top"
         onClick={(e) => {
           e.stopPropagation();
-          onStartConnect?.(node.id, e);
+          if (isConnecting) {
+            onDropConnect?.(node.id, 'top');
+          } else {
+            onStartConnect?.(node.id, e, 'top');
+          }
         }}
         onMouseDown={(e) => {
           e.stopPropagation();
-          onStartConnect?.(node.id, e);
+          if (!isConnecting) {
+            onStartConnect?.(node.id, e, 'top');
+          }
+        }}
+        onMouseUp={(e) => {
+          e.stopPropagation();
+          if (isConnecting) {
+            onDropConnect?.(node.id, 'top');
+          }
         }}
       >
-        <title>Drag to connect to another service</title>
-        <circle cx={184} cy={38} r={14} fill="transparent" style={{ cursor: 'crosshair' }} />
-        <circle cx={184} cy={38} r={3} className="port-dot-handle" />
+        <title>{isConnecting ? 'Drop to connect to top edge' : 'Connect from top edge'}</title>
+        <circle cx={92} cy={0} r={16} fill="transparent" style={{ cursor: 'crosshair' }} />
+        <circle cx={92} cy={0} r={2.5} className="port-dot-handle" />
+      </g>
+
+      {/* Right Edge Port */}
+      <g
+        className="node-port-handle node-port-right"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isConnecting) {
+            onDropConnect?.(node.id, 'right');
+          } else {
+            onStartConnect?.(node.id, e, 'right');
+          }
+        }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          if (!isConnecting) {
+            onStartConnect?.(node.id, e, 'right');
+          }
+        }}
+        onMouseUp={(e) => {
+          e.stopPropagation();
+          if (isConnecting) {
+            onDropConnect?.(node.id, 'right');
+          }
+        }}
+      >
+        <title>{isConnecting ? 'Drop to connect to right edge' : 'Connect from right edge'}</title>
+        <circle cx={184} cy={38} r={16} fill="transparent" style={{ cursor: 'crosshair' }} />
+        <circle cx={184} cy={38} r={2.5} className="port-dot-handle" />
+      </g>
+
+      {/* Bottom Edge Port */}
+      <g
+        className="node-port-handle node-port-bottom"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isConnecting) {
+            onDropConnect?.(node.id, 'bottom');
+          } else {
+            onStartConnect?.(node.id, e, 'bottom');
+          }
+        }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          if (!isConnecting) {
+            onStartConnect?.(node.id, e, 'bottom');
+          }
+        }}
+        onMouseUp={(e) => {
+          e.stopPropagation();
+          if (isConnecting) {
+            onDropConnect?.(node.id, 'bottom');
+          }
+        }}
+      >
+        <title>{isConnecting ? 'Drop to connect to bottom edge' : 'Connect from bottom edge'}</title>
+        <circle cx={92} cy={76} r={16} fill="transparent" style={{ cursor: 'crosshair' }} />
+        <circle cx={92} cy={76} r={2.5} className="port-dot-handle" />
+      </g>
+
+      {/* Left Edge Port */}
+      <g
+        className="node-port-handle node-port-left"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isConnecting) {
+            onDropConnect?.(node.id, 'left');
+          } else {
+            onStartConnect?.(node.id, e, 'left');
+          }
+        }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          if (!isConnecting) {
+            onStartConnect?.(node.id, e, 'left');
+          }
+        }}
+        onMouseUp={(e) => {
+          e.stopPropagation();
+          if (isConnecting) {
+            onDropConnect?.(node.id, 'left');
+          }
+        }}
+      >
+        <title>{isConnecting ? 'Drop to connect to left edge' : 'Connect from left edge'}</title>
+        <circle cx={0} cy={38} r={16} fill="transparent" style={{ cursor: 'crosshair' }} />
+        <circle cx={0} cy={38} r={2.5} className="port-dot-handle" />
       </g>
     </g>
   );

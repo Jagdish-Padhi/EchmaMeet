@@ -56,6 +56,7 @@ export interface StudioNavbarProps {
   readonly onToastInfo: (msg: string, title?: string) => void;
   readonly onToastSuccess: (msg: string, title?: string) => void;
   readonly onToastWarning: (msg: string, title?: string) => void;
+  readonly onOpenPreflightBlocker?: () => void;
 }
 
 export function StudioNavbar({
@@ -88,6 +89,7 @@ export function StudioNavbar({
   onToastInfo,
   onToastSuccess,
   onToastWarning,
+  onOpenPreflightBlocker,
 }: StudioNavbarProps) {
   const [isMorePrimitivesOpen, setIsMorePrimitivesOpen] = useState(false);
 
@@ -370,23 +372,28 @@ export function StudioNavbar({
             size="sm"
             className={!canStartExperiment ? 'btn-simulation-blocked' : ''}
             onClick={() => {
-              setActiveDrawer('telemetry');
               if (!canStartExperiment) {
-                onToastWarning(
-                  board.nodes.length === 0
-                    ? 'Add at least one service to canvas first.'
-                    : `Architecture has ${String(board.validationProblems.length)} issue(s). Check the panel to resolve them.`,
-                  'Cannot Simulate',
-                );
+                if (onOpenPreflightBlocker) {
+                  onOpenPreflightBlocker();
+                } else {
+                  setActiveDrawer('telemetry');
+                  onToastWarning(
+                    board.nodes.length === 0
+                      ? 'Add at least one service to canvas first.'
+                      : `Architecture has ${String(board.validationProblems.length)} issue(s). Check the panel to resolve them.`,
+                    'Cannot Simulate',
+                  );
+                }
                 return;
               }
+              setActiveDrawer('telemetry');
               void experimentSession.startExperiment(currentTopology);
             }}
             title={
               !canStartExperiment
                 ? board.nodes.length === 0
                   ? 'Add at least one service to canvas to simulate'
-                  : `Cannot simulate: ${String(board.validationProblems.length)} architecture issue(s) detected`
+                  : `Cannot simulate: ${String(board.validationProblems.length)} architecture issue(s) detected. Click to inspect.`
                 : 'Run real-time resilience simulation (5s)'
             }
           >

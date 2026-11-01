@@ -95,6 +95,8 @@ export function computeEdgeRoute(
   nodeHeight = 76,
   controlPoint?: Point | null,
   bidirectionalOffset = 0,
+  sourceSide?: 'top' | 'right' | 'bottom' | 'left',
+  targetSide?: 'top' | 'right' | 'bottom' | 'left',
 ): EdgeRouteResult {
   const sLeft = source.x;
   const sRight = source.x + nodeWidth;
@@ -113,92 +115,201 @@ export function computeEdgeRoute(
   const dx = tcx - scx;
   const dy = tcy - scy;
 
-  let sourcePort: Point;
-  let targetPort: Point;
-  const rawPoints: Point[] = [];
+  // Resolve sourceSide and targetSide: if not specified, determine from geometric relative position
+  let resolvedSourceSide: 'top' | 'right' | 'bottom' | 'left';
+  let resolvedTargetSide: 'top' | 'right' | 'bottom' | 'left';
 
-  const isHorizontalFlow = Math.abs(dx) >= Math.abs(dy) * 0.85;
-
-  if (isHorizontalFlow) {
-    // Horizontal Flow (East or West)
-    if (dx >= 0) {
-      // East (Target is to the right)
-      const sy = Number((scy + bidirectionalOffset * 0.45).toFixed(1));
-      const ty = Number((tcy + bidirectionalOffset * 0.45).toFixed(1));
-      sourcePort = { x: Number(sRight.toFixed(1)), y: sy };
-      targetPort = { x: Number(tLeft.toFixed(1)), y: ty };
-
-      const defaultCorridorX = Number(
-        (sourcePort.x + (targetPort.x - sourcePort.x) / 2 + bidirectionalOffset * 0.5).toFixed(1),
-      );
-      const corridorX =
-        controlPoint &&
-        typeof controlPoint.x === 'number' &&
-        Number.isFinite(controlPoint.x) &&
-        controlPoint.x > 0
-          ? Number(controlPoint.x.toFixed(1))
-          : defaultCorridorX;
-
-      if (Math.abs(ty - sy) < 4 && !controlPoint) {
-        rawPoints.push(sourcePort, targetPort);
-      } else {
-        rawPoints.push(
-          sourcePort,
-          { x: corridorX, y: sourcePort.y },
-          { x: corridorX, y: targetPort.y },
-          targetPort,
-        );
-      }
+  if (sourceSide && targetSide) {
+    resolvedSourceSide = sourceSide;
+    resolvedTargetSide = targetSide;
+  } else if (sourceSide && !targetSide) {
+    resolvedSourceSide = sourceSide;
+    if (sourceSide === 'left') {
+      resolvedTargetSide = dx < -20 ? 'right' : dy < 0 ? 'bottom' : 'top';
+    } else if (sourceSide === 'right') {
+      resolvedTargetSide = dx > 20 ? 'left' : dy < 0 ? 'bottom' : 'top';
+    } else if (sourceSide === 'top') {
+      resolvedTargetSide = dy < -20 ? 'bottom' : dx < 0 ? 'right' : 'left';
     } else {
-      // West (Target is to the left)
-      const sy = Number((scy + bidirectionalOffset * 0.45).toFixed(1));
-      const ty = Number((tcy + bidirectionalOffset * 0.45).toFixed(1));
-      sourcePort = { x: Number(sLeft.toFixed(1)), y: sy };
-      targetPort = { x: Number(tRight.toFixed(1)), y: ty };
-
-      const defaultCorridorX = Number(
-        (sourcePort.x + (targetPort.x - sourcePort.x) / 2 + bidirectionalOffset * 0.5).toFixed(1),
-      );
-      const corridorX =
-        controlPoint &&
-        typeof controlPoint.x === 'number' &&
-        Number.isFinite(controlPoint.x) &&
-        controlPoint.x > 0
-          ? Number(controlPoint.x.toFixed(1))
-          : defaultCorridorX;
-
-      if (Math.abs(ty - sy) < 4 && !controlPoint) {
-        rawPoints.push(sourcePort, targetPort);
-      } else {
-        rawPoints.push(
-          sourcePort,
-          { x: corridorX, y: sourcePort.y },
-          { x: corridorX, y: targetPort.y },
-          targetPort,
-        );
-      }
+      resolvedTargetSide = dy > 20 ? 'top' : dx < 0 ? 'right' : 'left';
+    }
+  } else if (!sourceSide && targetSide) {
+    resolvedTargetSide = targetSide;
+    if (targetSide === 'left') {
+      resolvedSourceSide = dx > 20 ? 'right' : dy < 0 ? 'bottom' : 'top';
+    } else if (targetSide === 'right') {
+      resolvedSourceSide = dx < -20 ? 'left' : dy < 0 ? 'bottom' : 'top';
+    } else if (targetSide === 'top') {
+      resolvedSourceSide = dy > 20 ? 'bottom' : dx > 0 ? 'right' : 'left';
+    } else {
+      resolvedSourceSide = dy < -20 ? 'top' : dx > 0 ? 'right' : 'left';
     }
   } else {
-    // Vertical Flow (South or North)
-    if (dy >= 0) {
-      // South (Target is below)
-      const sx = Number((scx + bidirectionalOffset * 0.45).toFixed(1));
-      const tx = Number((tcx + bidirectionalOffset * 0.45).toFixed(1));
-      sourcePort = { x: sx, y: Number(sBottom.toFixed(1)) };
-      targetPort = { x: tx, y: Number(tTop.toFixed(1)) };
+    // Smart geometric flow when neither side is explicit
+    if (Math.abs(dx) >= Math.abs(dy) * 0.85) {
+      if (dx >= 0) {
+        resolvedSourceSide = 'right';
+        resolvedTargetSide = 'left';
+      } else {
+        resolvedSourceSide = 'left';
+        resolvedTargetSide = 'right';
+      }
+    } else {
+      if (dy >= 0) {
+        resolvedSourceSide = 'bottom';
+        resolvedTargetSide = 'top';
+      } else {
+        resolvedSourceSide = 'top';
+        resolvedTargetSide = 'bottom';
+      }
+    }
+  }
 
+  // Exact anchored port coordinates on node perimeters (strictly immutable by controlPoint)
+  let sourcePort: Point;
+  switch (resolvedSourceSide) {
+    case 'top':
+      sourcePort = {
+        x: Number((scx + bidirectionalOffset * 0.45).toFixed(1)),
+        y: Number(sTop.toFixed(1)),
+      };
+      break;
+    case 'bottom':
+      sourcePort = {
+        x: Number((scx + bidirectionalOffset * 0.45).toFixed(1)),
+        y: Number(sBottom.toFixed(1)),
+      };
+      break;
+    case 'left':
+      sourcePort = {
+        x: Number(sLeft.toFixed(1)),
+        y: Number((scy + bidirectionalOffset * 0.45).toFixed(1)),
+      };
+      break;
+    case 'right':
+    default:
+      sourcePort = {
+        x: Number(sRight.toFixed(1)),
+        y: Number((scy + bidirectionalOffset * 0.45).toFixed(1)),
+      };
+      break;
+  }
+
+  let targetPort: Point;
+  switch (resolvedTargetSide) {
+    case 'top':
+      targetPort = {
+        x: Number((tcx + bidirectionalOffset * 0.45).toFixed(1)),
+        y: Number(tTop.toFixed(1)),
+      };
+      break;
+    case 'bottom':
+      targetPort = {
+        x: Number((tcx + bidirectionalOffset * 0.45).toFixed(1)),
+        y: Number(tBottom.toFixed(1)),
+      };
+      break;
+    case 'left':
+      targetPort = {
+        x: Number(tLeft.toFixed(1)),
+        y: Number((tcy + bidirectionalOffset * 0.45).toFixed(1)),
+      };
+      break;
+    case 'right':
+    default:
+      targetPort = {
+        x: Number(tRight.toFixed(1)),
+        y: Number((tcy + bidirectionalOffset * 0.45).toFixed(1)),
+      };
+      break;
+  }
+
+  const isSourceHorizontal = resolvedSourceSide === 'left' || resolvedSourceSide === 'right';
+  const isTargetHorizontal = resolvedTargetSide === 'left' || resolvedTargetSide === 'right';
+  const rawPoints: Point[] = [];
+
+  // Branch 1: Horizontal Exit -> Vertical Entry (e.g. Left/Right of Source to Bottom/Top of Target)
+  if (isSourceHorizontal && !isTargetHorizontal) {
+    const isDirectX =
+      (resolvedSourceSide === 'left' && targetPort.x < sourcePort.x) ||
+      (resolvedSourceSide === 'right' && targetPort.x > sourcePort.x);
+
+    if (isDirectX && !controlPoint) {
+      // Clean single-corner L bend straight from source port to target port
+      rawPoints.push(sourcePort, { x: targetPort.x, y: sourcePort.y }, targetPort);
+    } else {
+      const defaultCorridorX = Number(
+        (sourcePort.x + (targetPort.x - sourcePort.x) / 2 + bidirectionalOffset * 0.5).toFixed(1),
+      );
+      const corridorX =
+        controlPoint && typeof controlPoint.x === 'number' && Number.isFinite(controlPoint.x)
+          ? Number(controlPoint.x.toFixed(1))
+          : defaultCorridorX;
+      const defaultCorridorY =
+        resolvedTargetSide === 'bottom' ? Math.max(sBottom, tBottom) + 36 : Math.min(sTop, tTop) - 36;
+      const corridorY =
+        controlPoint && typeof controlPoint.y === 'number' && Number.isFinite(controlPoint.y)
+          ? Number(controlPoint.y.toFixed(1))
+          : defaultCorridorY;
+
+      rawPoints.push(
+        sourcePort,
+        { x: corridorX, y: sourcePort.y },
+        { x: corridorX, y: corridorY },
+        { x: targetPort.x, y: corridorY },
+        targetPort,
+      );
+    }
+  }
+  // Branch 2: Vertical Exit -> Horizontal Entry (e.g. Bottom/Top of Source to Left/Right of Target)
+  else if (!isSourceHorizontal && isTargetHorizontal) {
+    const isDirectY =
+      (resolvedSourceSide === 'top' && targetPort.y < sourcePort.y) ||
+      (resolvedSourceSide === 'bottom' && targetPort.y > sourcePort.y);
+
+    if (isDirectY && !controlPoint) {
+      // Clean single-corner L bend straight from source port to target port
+      rawPoints.push(sourcePort, { x: sourcePort.x, y: targetPort.y }, targetPort);
+    } else {
       const defaultCorridorY = Number(
         (sourcePort.y + (targetPort.y - sourcePort.y) / 2 + bidirectionalOffset * 0.5).toFixed(1),
       );
       const corridorY =
-        controlPoint &&
-        typeof controlPoint.y === 'number' &&
-        Number.isFinite(controlPoint.y) &&
-        controlPoint.y > 0
+        controlPoint && typeof controlPoint.y === 'number' && Number.isFinite(controlPoint.y)
+          ? Number(controlPoint.y.toFixed(1))
+          : defaultCorridorY;
+      const defaultCorridorX =
+        resolvedTargetSide === 'right' ? Math.max(sRight, tRight) + 36 : Math.min(sLeft, tLeft) - 36;
+      const corridorX =
+        controlPoint && typeof controlPoint.x === 'number' && Number.isFinite(controlPoint.x)
+          ? Number(controlPoint.x.toFixed(1))
+          : defaultCorridorX;
+
+      rawPoints.push(
+        sourcePort,
+        { x: sourcePort.x, y: corridorY },
+        { x: corridorX, y: corridorY },
+        { x: corridorX, y: targetPort.y },
+        targetPort,
+      );
+    }
+  }
+  // Branch 3: Vertical Exit -> Vertical Entry (e.g. Bottom of Source to Top of Target)
+  else if (!isSourceHorizontal && !isTargetHorizontal) {
+    const isFlowForward =
+      (resolvedSourceSide === 'bottom' && targetPort.y >= sourcePort.y) ||
+      (resolvedSourceSide === 'top' && targetPort.y <= sourcePort.y);
+
+    if (isFlowForward) {
+      const defaultCorridorY = Number(
+        (sourcePort.y + (targetPort.y - sourcePort.y) / 2 + bidirectionalOffset * 0.5).toFixed(1),
+      );
+      const corridorY =
+        controlPoint && typeof controlPoint.y === 'number' && Number.isFinite(controlPoint.y)
           ? Number(controlPoint.y.toFixed(1))
           : defaultCorridorY;
 
-      if (Math.abs(tx - sx) < 4 && !controlPoint) {
+      if (Math.abs(targetPort.x - sourcePort.x) < 4 && !controlPoint) {
         rawPoints.push(sourcePort, targetPort);
       } else {
         rawPoints.push(
@@ -209,33 +320,68 @@ export function computeEdgeRoute(
         );
       }
     } else {
-      // North (Target is above)
-      const sx = Number((scx + bidirectionalOffset * 0.45).toFixed(1));
-      const tx = Number((tcx + bidirectionalOffset * 0.45).toFixed(1));
-      sourcePort = { x: sx, y: Number(sTop.toFixed(1)) };
-      targetPort = { x: tx, y: Number(tBottom.toFixed(1)) };
+      // Loop around side
+      const defaultCorridorX = Math.max(sRight, tRight) + 36 + bidirectionalOffset * 0.5;
+      const corridorX =
+        controlPoint && typeof controlPoint.x === 'number' && Number.isFinite(controlPoint.x)
+          ? Number(controlPoint.x.toFixed(1))
+          : defaultCorridorX;
+      const outY = resolvedSourceSide === 'top' ? sTop - 28 : sBottom + 28;
+      const inY = resolvedTargetSide === 'top' ? tTop - 28 : tBottom + 28;
 
-      const defaultCorridorY = Number(
-        (sourcePort.y + (targetPort.y - sourcePort.y) / 2 + bidirectionalOffset * 0.5).toFixed(1),
+      rawPoints.push(
+        sourcePort,
+        { x: sourcePort.x, y: outY },
+        { x: corridorX, y: outY },
+        { x: corridorX, y: inY },
+        { x: targetPort.x, y: inY },
+        targetPort,
       );
-      const corridorY =
-        controlPoint &&
-        typeof controlPoint.y === 'number' &&
-        Number.isFinite(controlPoint.y) &&
-        controlPoint.y > 0
-          ? Number(controlPoint.y.toFixed(1))
-          : defaultCorridorY;
+    }
+  }
+  // Branch 4: Horizontal Exit -> Horizontal Entry (e.g. Right of Source to Left of Target)
+  else {
+    const isFlowForward =
+      (resolvedSourceSide === 'right' && targetPort.x >= sourcePort.x) ||
+      (resolvedSourceSide === 'left' && targetPort.x <= sourcePort.x);
 
-      if (Math.abs(tx - sx) < 4 && !controlPoint) {
+    if (isFlowForward) {
+      const defaultCorridorX = Number(
+        (sourcePort.x + (targetPort.x - sourcePort.x) / 2 + bidirectionalOffset * 0.5).toFixed(1),
+      );
+      const corridorX =
+        controlPoint && typeof controlPoint.x === 'number' && Number.isFinite(controlPoint.x)
+          ? Number(controlPoint.x.toFixed(1))
+          : defaultCorridorX;
+
+      if (Math.abs(targetPort.y - sourcePort.y) < 4 && !controlPoint) {
         rawPoints.push(sourcePort, targetPort);
       } else {
         rawPoints.push(
           sourcePort,
-          { x: sourcePort.x, y: corridorY },
-          { x: targetPort.x, y: corridorY },
+          { x: corridorX, y: sourcePort.y },
+          { x: corridorX, y: targetPort.y },
           targetPort,
         );
       }
+    } else {
+      // Loop under / over
+      const defaultCorridorY = Math.max(sBottom, tBottom) + 36 + bidirectionalOffset * 0.5;
+      const corridorY =
+        controlPoint && typeof controlPoint.y === 'number' && Number.isFinite(controlPoint.y)
+          ? Number(controlPoint.y.toFixed(1))
+          : defaultCorridorY;
+      const outX = resolvedSourceSide === 'left' ? sLeft - 28 : sRight + 28;
+      const inX = resolvedTargetSide === 'left' ? tLeft - 28 : tRight + 28;
+
+      rawPoints.push(
+        sourcePort,
+        { x: outX, y: sourcePort.y },
+        { x: outX, y: corridorY },
+        { x: inX, y: corridorY },
+        { x: inX, y: targetPort.y },
+        targetPort,
+      );
     }
   }
 
@@ -248,47 +394,28 @@ export function computeEdgeRoute(
     }
   }
 
-  // Build segments directly from the rendered points:
-  // For straight line (2 points), 1 handle at midpoint
-  // For stepped orthogonal lines (4 points = 3 segments), only the movable interior corridor segment has a handle.
+  // Excalidraw-Grade multi-segment sliding handles:
+  // Every segment with length >= 10 receives a responsive sliding handle
   const segments: RouteSegment[] = [];
-  if (points.length === 2) {
-    const start = points[0];
-    const end = points[1];
-    if (start && end) {
-      const isVertical = Math.abs(end.y - start.y) >= Math.abs(end.x - start.x);
-      segments.push({
-        index: 0,
-        isVertical,
-        start,
-        end,
-        handle: {
-          x: Number(((start.x + end.x) / 2).toFixed(1)),
-          y: Number(((start.y + end.y) / 2).toFixed(1)),
-        },
-      });
-    }
-  } else {
-    for (let i = 1; i < points.length - 2; i++) {
-      const start = points[i];
-      const end = points[i + 1];
-      if (!start || !end) continue;
-      const lenX = Math.abs(end.x - start.x);
-      const lenY = Math.abs(end.y - start.y);
-      if (lenX < 1 && lenY < 1) continue;
+  for (let i = 0; i < points.length - 1; i++) {
+    const start = points[i];
+    const end = points[i + 1];
+    if (!start || !end) continue;
+    const lenX = Math.abs(end.x - start.x);
+    const lenY = Math.abs(end.y - start.y);
+    if (lenX < 8 && lenY < 8) continue;
 
-      const isVertical = lenY >= lenX;
-      segments.push({
-        index: i,
-        isVertical,
-        start,
-        end,
-        handle: {
-          x: Number(((start.x + end.x) / 2).toFixed(1)),
-          y: Number(((start.y + end.y) / 2).toFixed(1)),
-        },
-      });
-    }
+    const isVertical = lenY >= lenX;
+    segments.push({
+      index: i,
+      isVertical,
+      start,
+      end,
+      handle: {
+        x: Number(((start.x + end.x) / 2).toFixed(1)),
+        y: Number(((start.y + end.y) / 2).toFixed(1)),
+      },
+    });
   }
 
   const middleSegment = segments[Math.floor(segments.length / 2)] ?? segments[0];
@@ -315,15 +442,37 @@ export function computeEdgeRoute(
 
 /**
  * Rubberband wire route from source to moving cursor with rounded orthogonal bend.
+ * Can optionally accept a specific start port (top, bottom, left, right).
  */
 export function computeRubberbandRoute(
   source: Point,
   cursor: Point,
   nodeWidth = 184,
   nodeHeight = 76,
+  startPort?: 'top' | 'right' | 'bottom' | 'left',
 ): string {
-  const sx = source.x + nodeWidth;
-  const sy = source.y + nodeHeight / 2;
+  let sx: number;
+  let sy: number;
+
+  switch (startPort) {
+    case 'top':
+      sx = source.x + nodeWidth / 2;
+      sy = source.y;
+      break;
+    case 'bottom':
+      sx = source.x + nodeWidth / 2;
+      sy = source.y + nodeHeight;
+      break;
+    case 'left':
+      sx = source.x;
+      sy = source.y + nodeHeight / 2;
+      break;
+    case 'right':
+    default:
+      sx = source.x + nodeWidth;
+      sy = source.y + nodeHeight / 2;
+      break;
+  }
 
   const mx = sx + (cursor.x - sx) / 2;
   const deltaY = cursor.y - sy;

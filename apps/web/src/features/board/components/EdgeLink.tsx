@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import type { EdgeId, TopologyEdge, TopologyProblem } from '@chaosboard/contracts';
+import type { EdgeId, NodeId, TopologyEdge, TopologyProblem } from '@chaosboard/contracts';
 import type { BoardNode } from '../types';
 import { computeEdgeRoute, type Point } from '../utils/edge-router';
 
@@ -12,6 +12,8 @@ export interface EdgeLinkProps {
   readonly problems: readonly TopologyProblem[];
   readonly controlPoint?: Point | null;
   readonly bidirectionalOffset?: number;
+  readonly sourceSide?: 'top' | 'right' | 'bottom' | 'left' | undefined;
+  readonly targetSide?: 'top' | 'right' | 'bottom' | 'left' | undefined;
   readonly onSelect: (id: EdgeId) => void;
   readonly onDragControlPointStart?: (
     id: EdgeId,
@@ -20,6 +22,8 @@ export interface EdgeLinkProps {
     segmentIndex: number,
     handlePoint: Point,
   ) => void;
+  readonly onStartReconnectSource?: (edgeId: EdgeId, targetId: NodeId, e: React.MouseEvent) => void;
+  readonly onStartReconnectTarget?: (edgeId: EdgeId, sourceId: NodeId, e: React.MouseEvent) => void;
   readonly onResetControlPoint?: (id: EdgeId) => void;
 }
 
@@ -60,19 +64,25 @@ export const EdgeLink = memo(function EdgeLink({
   problems,
   controlPoint,
   bidirectionalOffset = 0,
+  sourceSide,
+  targetSide,
   onSelect,
   onDragControlPointStart,
+  onStartReconnectSource,
+  onStartReconnectTarget,
   onResetControlPoint,
 }: EdgeLinkProps) {
   if (!sourceNode || !targetNode) return null;
 
-  const { pathData, midX, midY, segments } = computeEdgeRoute(
+  const { pathData, midX, midY, segments, sourcePort, targetPort } = computeEdgeRoute(
     sourceNode.position,
     targetNode.position,
     184,
     76,
     controlPoint,
     bidirectionalOffset,
+    sourceSide,
+    targetSide,
   );
 
   const hasProblems = problems.some((p) => p.edgeId === edge.id);
@@ -129,51 +139,117 @@ export const EdgeLink = memo(function EdgeLink({
         />
       </circle>
 
-      {/* Excalidraw-Grade Subtle Segment Handles (Small, Mild & Non-Intrusive) */}
-      {isSelected &&
-        segments.map((seg) => {
-          // If handle collides with policy tag capsule, suppress it so text remains clean and unobstructed
-          const isOverCapsule =
-            policySummary && Math.hypot(seg.handle.x - midX, seg.handle.y - midY) < 24;
-          if (isOverCapsule) return null;
+      {/* Excalidraw-Grade Sliding Corridors: Draggable along entire segment + Precision Handle Dot */}
+      {segments.map((seg) => {
+        // If handle center coincides with the policy tag capsule, offset the handle dot along the segment so it is NEVER suppressed
+        const isNearCapsule =
+          policySummary && Math.hypot(seg.handle.x - midX, seg.handle.y - midY) < 26;
+        const dotX = isNearCapsule
+          ? seg.isVertical
+            ? seg.handle.x
+            : seg.handle.x + (seg.start.x < seg.end.x ? 32 : -32)
+          : seg.handle.x;
+        const dotY = isNearCapsule
+          ? !seg.isVertical
+            ? seg.handle.y
+            : seg.handle.y + (seg.start.y < seg.end.y ? 32 : -32)
+          : seg.handle.y;
 
-          return (
-            <g
-              key={`handle-${edge.id}-${String(seg.index)}`}
-              className="edge-control-handle"
-              style={{
-                cursor: seg.isVertical ? 'ew-resize' : 'ns-resize',
-                outline: 'none',
-              }}
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                onDragControlPointStart?.(edge.id, e, seg.isVertical, seg.index, seg.handle);
-              }}
-              onDoubleClick={(e) => {
-                e.stopPropagation();
-                onResetControlPoint?.(edge.id);
-              }}
-            >
-              {/* Invisible wide hit area for effortless grabbing */}
-              <circle cx={seg.handle.x} cy={seg.handle.y} r={14} fill="transparent" />
-              {/* Mild, small precision handle dot */}
-              <circle
-                cx={seg.handle.x}
-                cy={seg.handle.y}
-                r={3}
-                fill="var(--color-accent)"
-                stroke="var(--color-bg)"
-                strokeWidth={1.2}
-                className="edge-segment-handle-dot"
-              />
-              <title>
-                {seg.isVertical
-                  ? 'Slide vertical line horizontally (Double-click to reset)'
-                  : 'Slide horizontal line vertically (Double-click to reset)'}
-              </title>
-            </g>
-          );
-        })}
+        return (
+          <g
+            key={`handle-${edge.id}-${String(seg.index)}`}
+            className="edge-control-handle"
+            style={{
+              cursor: seg.isVertical ? 'ew-resize' : 'ns-resize',
+              outline: 'none',
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              onDragControlPointStart?.(edge.id, e, seg.isVertical, seg.index, seg.handle);
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              onResetControlPoint?.(edge.id);
+            }}
+          >
+            {/* Full invisible hitline along the entire segment for effortless, natural Excalidraw sliding */}
+            <line
+              x1={seg.start.x}
+              y1={seg.start.y}
+              x2={seg.end.x}
+              y2={seg.end.y}
+              stroke="transparent"
+              strokeWidth={18}
+            />
+            {/* Invisible circular hitzone around handle */}
+            <circle cx={dotX} cy={dotY} r={16} fill="transparent" />
+            {/* Mild, small precision handle dot */}
+            <circle
+              cx={dotX}
+              cy={dotY}
+              r={2.5}
+              fill="var(--color-accent)"
+              stroke="var(--color-bg)"
+              strokeWidth={1.2}
+              className="edge-segment-handle-dot"
+            />
+            <title>
+              {seg.isVertical
+                ? 'Slide vertical corridor horizontally (Double-click to reset)'
+                : 'Slide horizontal corridor vertically (Double-click to reset)'}
+            </title>
+          </g>
+        );
+      })}
+
+      {/* Excalidraw-Grade Source Detach / Reconnect Port Handle (Visible on hover & selection) */}
+      {onStartReconnectSource && (
+        <g
+          className="edge-arrow-reconnect-handle edge-source-reconnect-handle"
+          style={{ cursor: 'grab', outline: 'none' }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            onStartReconnectSource(edge.id, edge.target, e);
+          }}
+        >
+          <title>Hold and drag start point to reattach to any node or position</title>
+          <circle cx={sourcePort.x} cy={sourcePort.y} r={16} fill="transparent" />
+          <circle
+            cx={sourcePort.x}
+            cy={sourcePort.y}
+            r={3.5}
+            fill="#ffffff"
+            stroke="var(--color-accent)"
+            strokeWidth={1.5}
+            className="arrow-reconnect-dot"
+          />
+        </g>
+      )}
+
+      {/* Excalidraw-Grade Arrowhead Detach / Reconnect Port Handle (Visible on hover & selection) */}
+      {onStartReconnectTarget && (
+        <g
+          className="edge-arrow-reconnect-handle"
+          style={{ cursor: 'grab', outline: 'none' }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            onStartReconnectTarget(edge.id, edge.source, e);
+          }}
+        >
+          <title>Hold and drag arrowhead to slide and reattach to any node or position</title>
+          {/* Generous 32px grab hitzone directly over arrow tip */}
+          <circle cx={targetPort.x} cy={targetPort.y} r={16} fill="transparent" />
+          <circle
+            cx={targetPort.x}
+            cy={targetPort.y}
+            r={3.5}
+            fill="#ffffff"
+            stroke="var(--color-accent)"
+            strokeWidth={1.5}
+            className="arrow-reconnect-dot"
+          />
+        </g>
+      )}
 
       {/* Sleek, Compact Policy Capsule Tag (Only when relevant policy exists) */}
       {policySummary && (

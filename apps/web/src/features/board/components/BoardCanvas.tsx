@@ -9,8 +9,9 @@ import {
 import type { EdgeId, NodeId, NodeKind } from '@chaosboard/contracts';
 import type { BoardNode, BoardState, CanvasPosition, CanvasStroke, DrawTool } from '../types';
 import { EdgeLink } from './EdgeLink';
-import { NodeCard } from './NodeCard';
+import { NodeCard, type NodePortPosition } from './NodeCard';
 import { computeRubberbandRoute, type Point } from '../utils/edge-router';
+import { FemaleArchitectIcon } from '../../../components/ui/FemaleArchitectIcon';
 
 export interface RemoteCursor {
   readonly userId: string;
@@ -35,13 +36,27 @@ export interface BoardCanvasProps {
   readonly onMoveNode: (id: NodeId, x: number, y: number) => void;
   readonly onMoveSelectedNodes?: (dx: number, dy: number) => void;
   readonly onAddNode: (kind?: NodeKind) => void;
-  readonly onAddEdge: (source: NodeId, target: NodeId) => void;
+  readonly onAddEdge: (
+    source: NodeId,
+    target: NodeId,
+    sourcePort?: 'top' | 'right' | 'bottom' | 'left',
+    targetPort?: 'top' | 'right' | 'bottom' | 'left',
+  ) => void;
+  readonly onReconnectEdge?: (
+    edgeId: EdgeId,
+    newSource: NodeId,
+    newTarget: NodeId,
+    newSourceSide?: 'top' | 'right' | 'bottom' | 'left',
+    newTargetSide?: 'top' | 'right' | 'bottom' | 'left',
+  ) => void;
   readonly onDuplicateNode?: (id: NodeId) => void;
   readonly onDuplicateSelected?: () => void;
   readonly onDeleteNode?: (id: NodeId) => void;
   readonly onDeleteSelected?: () => void;
   readonly onDeleteEdge?: (id: EdgeId) => void;
-  readonly onAlignSelected?: (direction: 'left' | 'top' | 'distribute') => void;
+  readonly onUndo?: () => void;
+  readonly onRedo?: () => void;
+  readonly onRecordHistory?: () => void;
   readonly onAddStroke?: (stroke: CanvasStroke) => void;
   readonly onUndoStroke?: () => void;
   readonly onClearStrokes?: () => void;
@@ -49,6 +64,12 @@ export interface BoardCanvasProps {
   readonly onUpdateEdgeControlPoint?: (edgeId: EdgeId, point: CanvasPosition | null) => void;
   readonly hazardEdgeId?: EdgeId | null;
   readonly hazardNodeId?: NodeId | null;
+  readonly echmaSpeakingRequest?: {
+    readonly isRequested: boolean;
+    readonly hostName: string;
+    readonly onAllow: () => void;
+    readonly onDismiss: () => void;
+  } | undefined;
 }
 
 function pointsToSmoothPath(points: readonly CanvasPosition[]): string {
@@ -139,12 +160,15 @@ export function BoardCanvas({
   onMoveSelectedNodes,
   onAddNode,
   onAddEdge,
+  onReconnectEdge,
   onDuplicateNode,
   onDuplicateSelected,
   onDeleteNode,
   onDeleteSelected,
   onDeleteEdge,
-  onAlignSelected,
+  onUndo,
+  onRedo,
+  onRecordHistory,
   onAddStroke,
   onUndoStroke,
   onClearStrokes,
@@ -152,6 +176,7 @@ export function BoardCanvas({
   onUpdateEdgeControlPoint,
   hazardEdgeId,
   hazardNodeId,
+  echmaSpeakingRequest,
 }: BoardCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -160,7 +185,10 @@ export function BoardCanvas({
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const isPanningRef = useRef(false);
+  const [isPanningState, setIsPanningState] = useState(false);
   const panStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const lastCanvasClickTimeRef = useRef<number>(0);
+  const lastCanvasClickPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const isErasingRef = useRef(false);
   const draggingEdgeControlRef = useRef<{
     edgeId: EdgeId;
@@ -168,6 +196,7 @@ export function BoardCanvas({
     segmentIndex: number;
     initialHandle: Point;
   } | null>(null);
+  const hasRecordedDragRef = useRef<boolean>(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
 
   // Active Tool Mode (Controlled via Props or Internal Fallback)
@@ -225,8 +254,12 @@ export function BoardCanvas({
     currentY: number;
   } | null>(null);
 
-  // Wire Connection Dragging State
+  // Wire Connection Dragging & Reconnecting State
   const [connectingSource, setConnectingSource] = useState<NodeId | null>(null);
+  const [connectingTarget, setConnectingTarget] = useState<NodeId | null>(null);
+  const [reconnectingEdgeId, setReconnectingEdgeId] = useState<EdgeId | null>(null);
+  const [reconnectingSide, setReconnectingSide] = useState<'source' | 'target'>('target');
+  const [connectingPort, setConnectingPort] = useState<'top' | 'right' | 'bottom' | 'left'>('right');
   const [connectingCursor, setConnectingCursor] = useState<{ x: number; y: number } | null>(null);
   const connectStartPosRef = useRef<{ clientX: number; clientY: number } | null>(null);
   const hasMovedWireRef = useRef(false);
@@ -264,10 +297,8 @@ export function BoardCanvas({
       }
 
       // Tool Switching Shortcuts
-      if (e.key.toLowerCase() === 'v') {
+      if (e.key.toLowerCase() === 'v' || e.key.toLowerCase() === 'm') {
         setActiveTool('select');
-      } else if (e.key.toLowerCase() === 'm') {
-        setActiveTool('marquee');
       } else if (e.key.toLowerCase() === 'p') {
         setActiveTool('pen');
       } else if (e.key.toLowerCase() === 'h') {
@@ -276,18 +307,32 @@ export function BoardCanvas({
         setActiveTool('eraser');
       }
 
-      // Ctrl+Z or Cmd+Z for Undo Drawing Stroke
+      // Ctrl+Z or Cmd+Z for Canvas Undo
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
-        if (onUndoStroke) {
+        if (onUndo) {
+          e.preventDefault();
+          onUndo();
+        } else if (onUndoStroke) {
           e.preventDefault();
           onUndoStroke();
         }
       }
 
-      // Ctrl+D or Cmd+D to Duplicate Selected Node or Group
+      // Ctrl+Y or Cmd+Y or Ctrl+Shift+Z for Canvas Redo
+      if (
+        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') ||
+        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && e.shiftKey)
+      ) {
+        if (onRedo) {
+          e.preventDefault();
+          onRedo();
+        }
+      }
+
+      // Ctrl+D or Cmd+D to Duplicate Selected Node or Group (including connecting arrows)
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
         e.preventDefault();
-        if (selectedNodeSet.size > 1 && onDuplicateSelected) {
+        if (selectedNodeSet.size >= 1 && onDuplicateSelected) {
           onDuplicateSelected();
         } else if (board.selectedNodeId && onDuplicateNode) {
           onDuplicateNode(board.selectedNodeId);
@@ -352,6 +397,8 @@ export function BoardCanvas({
     onDeleteNode,
     onDeleteSelected,
     onDeleteEdge,
+    onUndo,
+    onRedo,
     onSelectNode,
     onSelectNodes,
     onSelectEdge,
@@ -414,20 +461,69 @@ export function BoardCanvas({
   };
 
   // Start wire dragging from output handle
-  const handleStartConnect = (sourceId: NodeId, e: ReactMouseEvent<SVGElement>) => {
+  const handleStartConnect = (
+    sourceId: NodeId,
+    e: ReactMouseEvent<SVGElement>,
+    port: 'top' | 'right' | 'bottom' | 'left' = 'right',
+  ) => {
     e.stopPropagation();
     setConnectingSource(sourceId);
+    setConnectingTarget(null);
+    setReconnectingEdgeId(null);
+    setConnectingPort(port);
     setConnectingCursor(screenToCanvasCoords(e.clientX, e.clientY));
     connectStartPosRef.current = { clientX: e.clientX, clientY: e.clientY };
     hasMovedWireRef.current = false;
   };
 
+  // Start reconnecting / detaching an existing edge source dot
+  const handleStartReconnectSource = (
+    edgeId: EdgeId,
+    targetId: NodeId,
+    e: ReactMouseEvent,
+  ) => {
+    e.stopPropagation();
+    setConnectingSource(null);
+    setConnectingTarget(targetId);
+    setReconnectingEdgeId(edgeId);
+    setReconnectingSide('source');
+    setConnectingPort('left');
+    setConnectingCursor(screenToCanvasCoords(e.clientX, e.clientY));
+    connectStartPosRef.current = { clientX: e.clientX, clientY: e.clientY };
+    hasMovedWireRef.current = true;
+  };
+
+  // Start reconnecting / detaching an existing edge arrowhead
+  const handleStartReconnectTarget = (
+    edgeId: EdgeId,
+    sourceId: NodeId,
+    e: ReactMouseEvent,
+  ) => {
+    e.stopPropagation();
+    setConnectingSource(sourceId);
+    setConnectingTarget(null);
+    setReconnectingEdgeId(edgeId);
+    setReconnectingSide('target');
+    setConnectingPort('right');
+    setConnectingCursor(screenToCanvasCoords(e.clientX, e.clientY));
+    connectStartPosRef.current = { clientX: e.clientX, clientY: e.clientY };
+    hasMovedWireRef.current = true;
+  };
+
   // Drop wire on target node
-  const handleDropConnect = (targetId: NodeId) => {
-    if (connectingSource && connectingSource !== targetId) {
-      onAddEdge(connectingSource, targetId);
+  const handleDropConnect = (targetId: NodeId, targetPort?: NodePortPosition) => {
+    if (reconnectingEdgeId && onReconnectEdge) {
+      if (reconnectingSide === 'source' && connectingTarget && connectingTarget !== targetId) {
+        onReconnectEdge(reconnectingEdgeId, targetId, connectingTarget, targetPort, undefined);
+      } else if (reconnectingSide === 'target' && connectingSource && connectingSource !== targetId) {
+        onReconnectEdge(reconnectingEdgeId, connectingSource, targetId, undefined, targetPort);
+      }
+    } else if (connectingSource && connectingSource !== targetId) {
+      onAddEdge(connectingSource, targetId, connectingPort, targetPort);
     }
     setConnectingSource(null);
+    setConnectingTarget(null);
+    setReconnectingEdgeId(null);
     setConnectingCursor(null);
     connectStartPosRef.current = null;
     hasMovedWireRef.current = false;
@@ -460,6 +556,7 @@ export function BoardCanvas({
     // 1. Pan with Middle Click or Space Key
     if (e.button === 1 || isSpacePressed) {
       isPanningRef.current = true;
+      setIsPanningState(true);
       panStartRef.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
       e.preventDefault();
       return;
@@ -482,12 +579,33 @@ export function BoardCanvas({
       return;
     }
 
-    // 3. Marquee Crop Select Mode or Left Drag on Empty Canvas
+    // 3. Selection Mode / Free Space on Canvas (Marquee drag or Double-Click-Hold to Pan)
     if (
+      activeTool === 'select' ||
       activeTool === 'marquee' ||
       e.target === svgRef.current ||
       (e.target as SVGElement).id === 'canvas-matrix-bg'
     ) {
+      const now = Date.now();
+      const timeSinceLastClick = now - lastCanvasClickTimeRef.current;
+      const posDiff = Math.hypot(
+        e.clientX - lastCanvasClickPosRef.current.x,
+        e.clientY - lastCanvasClickPosRef.current.y,
+      );
+
+      // Excalidraw-style Double-Click & Hold to pan/move canvas in free space
+      if (timeSinceLastClick < 400 && posDiff < 30) {
+        isPanningRef.current = true;
+        setIsPanningState(true);
+        panStartRef.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
+        lastCanvasClickTimeRef.current = 0;
+        e.preventDefault();
+        return;
+      }
+
+      lastCanvasClickTimeRef.current = now;
+      lastCanvasClickPosRef.current = { x: e.clientX, y: e.clientY };
+
       setMarqueeBox({
         startX: coords.x,
         startY: coords.y,
@@ -512,12 +630,15 @@ export function BoardCanvas({
 
     // 0. Dragging Edge Bend / Control Point (Excalidraw-Grade Sliding & Curving)
     if (draggingEdgeControlRef.current) {
-      const { edgeId, isVertical, initialHandle } = draggingEdgeControlRef.current;
-      const currentControl = board.edgeControlPoints?.[edgeId] ?? null;
-      const basePoint = currentControl ?? initialHandle;
+      if (!hasRecordedDragRef.current) {
+        onRecordHistory?.();
+        hasRecordedDragRef.current = true;
+      }
+      const { edgeId, isVertical } = draggingEdgeControlRef.current;
+      const current = board.edgeControlPoints?.[edgeId];
       const updatedPoint: CanvasPosition = {
-        x: isVertical ? Math.round(coords.x) : basePoint.x,
-        y: !isVertical ? Math.round(coords.y) : basePoint.y,
+        x: isVertical ? Math.round(coords.x) : (current?.x ?? Math.round(coords.x)),
+        y: !isVertical ? Math.round(coords.y) : (current?.y ?? Math.round(coords.y)),
       };
       onUpdateEdgeControlPoint?.(edgeId, updatedPoint);
       return;
@@ -564,6 +685,10 @@ export function BoardCanvas({
 
     // 5. Node or Group Dragging (Absolute delta, rock-solid 60fps)
     if (draggingNodeRef.current) {
+      if (!hasRecordedDragRef.current) {
+        onRecordHistory?.();
+        hasRecordedDragRef.current = true;
+      }
       const { id, isGroup, startClientX, startClientY, initialPositions } = draggingNodeRef.current;
       const dx = (e.clientX - startClientX) / zoom;
       const dy = (e.clientY - startClientY) / zoom;
@@ -594,12 +719,15 @@ export function BoardCanvas({
       }
 
       if (draggingEdgeControlRef.current) {
-        const { edgeId, isVertical, initialHandle } = draggingEdgeControlRef.current;
-        const currentControl = board.edgeControlPoints?.[edgeId] ?? null;
-        const basePoint = currentControl ?? initialHandle;
+        if (!hasRecordedDragRef.current) {
+          onRecordHistory?.();
+          hasRecordedDragRef.current = true;
+        }
+        const { edgeId, isVertical } = draggingEdgeControlRef.current;
+        const current = board.edgeControlPoints?.[edgeId];
         const updatedPoint: CanvasPosition = {
-          x: isVertical ? Math.round(coords.x) : basePoint.x,
-          y: !isVertical ? Math.round(coords.y) : basePoint.y,
+          x: isVertical ? Math.round(coords.x) : (current?.x ?? Math.round(coords.x)),
+          y: !isVertical ? Math.round(coords.y) : (current?.y ?? Math.round(coords.y)),
         };
         onUpdateEdgeControlPoint?.(edgeId, updatedPoint);
         return;
@@ -635,6 +763,10 @@ export function BoardCanvas({
       }
 
       if (draggingNodeRef.current) {
+        if (!hasRecordedDragRef.current) {
+          onRecordHistory?.();
+          hasRecordedDragRef.current = true;
+        }
         const { id, isGroup, startClientX, startClientY, initialPositions } =
           draggingNodeRef.current;
         const dx = (e.clientX - startClientX) / zoom;
@@ -659,9 +791,14 @@ export function BoardCanvas({
 
     const handleGlobalMouseUp = () => {
       isPanningRef.current = false;
+      setIsPanningState(false);
+      if (draggingNodeRef.current) {
+        lastCanvasClickTimeRef.current = 0;
+      }
       draggingNodeRef.current = null;
       isErasingRef.current = false;
       draggingEdgeControlRef.current = null;
+      hasRecordedDragRef.current = false;
 
       // Finalize Freehand Drawing Stroke
       if (currentStroke && currentStroke.length > 1) {
@@ -685,6 +822,7 @@ export function BoardCanvas({
         const height = Math.abs(marqueeBox.currentY - marqueeBox.startY);
 
         if (width > 6 || height > 6) {
+          lastCanvasClickTimeRef.current = 0;
           // Detect all enclosed / intersecting nodes (cards are 188x80)
           const enclosedIds = board.nodes
             .filter((node) => {
@@ -706,8 +844,11 @@ export function BoardCanvas({
         setMarqueeBox(null);
       }
 
-      if (connectingSource && hasMovedWireRef.current) {
+      // Cleanly cancel connection / reconnection if released in empty space (not dropped on a node port)
+      if (connectingSource || connectingTarget || reconnectingEdgeId) {
         setConnectingSource(null);
+        setConnectingTarget(null);
+        setReconnectingEdgeId(null);
         setConnectingCursor(null);
         connectStartPosRef.current = null;
         hasMovedWireRef.current = false;
@@ -732,6 +873,7 @@ export function BoardCanvas({
     onCursorMove,
     onMoveNode,
     onMoveSelectedNodes,
+    onRecordHistory,
     onSelectNodes,
     onUpdateEdgeControlPoint,
     penColor,
@@ -784,6 +926,7 @@ export function BoardCanvas({
 
   const nodeMap = new Map<NodeId, BoardNode>(board.nodes.map((n) => [n.id, n]));
   const sourceConnectingNode = connectingSource ? nodeMap.get(connectingSource) : null;
+  const targetConnectingNode = connectingTarget ? nodeMap.get(connectingTarget) : null;
 
   // Bidirectional & parallel edge detection for automatic non-overlapping separation
   const bidirectionalMap = useMemo(() => {
@@ -810,20 +953,6 @@ export function BoardCanvas({
     return map;
   }, [board.edges]);
 
-  // Compute bounding box for floating group selection action pill
-  let groupActionPos: { x: number; y: number } | null = null;
-  if (selectedNodeSet.size > 1) {
-    const selectedNodes = board.nodes.filter((n) => selectedNodeSet.has(n.id));
-    if (selectedNodes.length > 0) {
-      const minX = Math.min(...selectedNodes.map((n) => n.position.x));
-      const minY = Math.min(...selectedNodes.map((n) => n.position.y));
-      groupActionPos = {
-        x: minX * zoom + pan.x,
-        y: (minY - 46) * zoom + pan.y,
-      };
-    }
-  }
-
   return (
     <div className="board-canvas-container" ref={containerRef}>
       {/* 1. Permanent Excalidraw-Grade Centered Floating Canvas Toolbox */}
@@ -832,35 +961,14 @@ export function BoardCanvas({
           {/* Select Tool */}
           <button
             type="button"
-            className={`toolbox-btn ${activeTool === 'select' ? 'active' : ''}`}
+            className={`toolbox-btn ${activeTool === 'select' || activeTool === 'marquee' ? 'active' : ''}`}
             onClick={() => setActiveTool('select')}
-            title="Pointer / Select Tool (Key: V)"
+            title="Pointer / Select Tool (Key: V) - Click to select, drag to box-select, double-click & hold in free space to move canvas"
           >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
               <path d="M4 3l12 9-5.5 1 4 7-2.5 1.5-4-7-4 4.5z" />
             </svg>
             <span className="toolbox-shortcut">V</span>
-          </button>
-
-          {/* Marquee Crop Box Select Tool */}
-          <button
-            type="button"
-            className={`toolbox-btn ${activeTool === 'marquee' ? 'active' : ''}`}
-            onClick={() => setActiveTool('marquee')}
-            title="Crop / Box Select (Key: M) - Drag to select a group of services"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="16"
-              height="16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeDasharray="3 3"
-            >
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-            </svg>
-            <span className="toolbox-shortcut">M</span>
           </button>
 
           {/* Smooth Pen Tool */}
@@ -1002,80 +1110,42 @@ export function BoardCanvas({
             )}
           </div>
         )}
+
+        {/* Echma SRE Permission Speaking Request Badge (Next to Draw Tools) */}
+        {echmaSpeakingRequest?.isRequested && (
+          <div className="toolbox-echma-allow-badge" role="alert" aria-live="polite">
+            <div className="toolbox-divider" />
+            <div className="echma-badge-content">
+              <span className="echma-alert-dot" />
+              <div className="echma-badge-avatar">
+                <FemaleArchitectIcon size={15} strokeWidth={2} />
+              </div>
+              <span className="echma-badge-text">
+                <strong>Echma:</strong> Wait... {echmaSpeakingRequest.hostName || 'Engineer'}?
+              </span>
+              <button
+                type="button"
+                className="echma-badge-allow-btn"
+                onClick={echmaSpeakingRequest.onAllow}
+                title="Allow Echma to speak on architectural hazard"
+              >
+                Allow
+              </button>
+              <button
+                type="button"
+                className="echma-badge-dismiss-btn"
+                onClick={echmaSpeakingRequest.onDismiss}
+                title="Dismiss Echma speaking prompt"
+                aria-label="Dismiss alert"
+              >
+                &times;
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* 2. Floating Multi-Selection Action Dock (like Excalidraw / Figma) */}
-      {selectedNodeSet.size > 1 && groupActionPos && (
-        <div
-          className="canvas-group-selection-dock"
-          style={{
-            position: 'absolute',
-            left: Math.max(16, groupActionPos.x),
-            top: Math.max(16, groupActionPos.y),
-          }}
-        >
-          <span className="group-selection-badge">
-            <span className="selection-dot" />
-            {String(selectedNodeSet.size)} selected
-          </span>
-
-          {onDuplicateSelected && (
-            <button
-              type="button"
-              className="group-action-btn"
-              onClick={onDuplicateSelected}
-              title="Duplicate selected group with internal links (Cmd+D)"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="13"
-                height="13"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
-              <span>Duplicate</span>
-            </button>
-          )}
-
-          {onAlignSelected && (
-            <>
-              <button
-                type="button"
-                className="group-action-btn"
-                onClick={() => onAlignSelected('left')}
-                title="Align nodes vertically"
-              >
-                <span>Align Vertical</span>
-              </button>
-              <button
-                type="button"
-                className="group-action-btn"
-                onClick={() => onAlignSelected('top')}
-                title="Align nodes horizontally"
-              >
-                <span>Align Horizontal</span>
-              </button>
-            </>
-          )}
-
-          {onDeleteSelected && (
-            <button
-              type="button"
-              className="group-action-btn danger"
-              onClick={onDeleteSelected}
-              title="Delete selected nodes (Del / Backspace)"
-            >
-              <span>Delete</span>
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* 3. Floating Zoom Controls */}
+      {/* 2. Floating Zoom Controls */}
       <div className="canvas-zoom-dock" role="toolbar" aria-label="Canvas zoom controls">
         <button
           type="button"
@@ -1109,7 +1179,7 @@ export function BoardCanvas({
       {/* 4. Infinite SVG Canvas Scene */}
       <svg
         ref={svgRef}
-        className={`canvas-svg ${isSpacePressed ? 'canvas-panning' : ''} ${
+        className={`canvas-svg ${isSpacePressed || isPanningState ? 'canvas-panning' : ''} ${
           activeTool === 'pen' || activeTool === 'highlighter' ? 'canvas-drawing' : ''
         } ${activeTool === 'eraser' ? 'canvas-erasing' : ''}`}
         onMouseDown={handleCanvasMouseDown}
@@ -1212,27 +1282,59 @@ export function BoardCanvas({
           </g>
 
           {/* Layer B: Edges */}
-          {board.edges.map((edge) => (
-            <EdgeLink
-              key={edge.id}
-              edge={edge}
-              sourceNode={nodeMap.get(edge.source)}
-              targetNode={nodeMap.get(edge.target)}
-              isSelected={board.selectedEdgeId === edge.id}
-              isHazard={hazardEdgeId === edge.id}
-              problems={board.validationProblems}
-              controlPoint={board.edgeControlPoints?.[edge.id] ?? null}
-              bidirectionalOffset={bidirectionalMap.get(edge.id) ?? 0}
-              onSelect={onSelectEdge}
-              onDragControlPointStart={handleEdgeControlPointDragStart}
-              onResetControlPoint={(id) => onUpdateEdgeControlPoint?.(id, null)}
-            />
-          ))}
+          {board.edges.map((edge) => {
+            // If this edge is currently being reconnected, hide its static target path so the live dragged rubberband takes over seamlessly
+            if (reconnectingEdgeId === edge.id) return null;
+
+            return (
+              <EdgeLink
+                key={edge.id}
+                edge={edge}
+                sourceNode={nodeMap.get(edge.source)}
+                targetNode={nodeMap.get(edge.target)}
+                isSelected={board.selectedEdgeId === edge.id}
+                isHazard={hazardEdgeId === edge.id}
+                problems={board.validationProblems}
+                controlPoint={board.edgeControlPoints?.[edge.id] ?? null}
+                bidirectionalOffset={bidirectionalMap.get(edge.id) ?? 0}
+                sourceSide={board.edgeSourcePorts?.[edge.id]}
+                targetSide={board.edgeTargetPorts?.[edge.id]}
+                onSelect={onSelectEdge}
+                onDragControlPointStart={handleEdgeControlPointDragStart}
+                onStartReconnectSource={handleStartReconnectSource}
+                onStartReconnectTarget={handleStartReconnectTarget}
+                onResetControlPoint={(id) => onUpdateEdgeControlPoint?.(id, null)}
+              />
+            );
+          })}
 
           {/* Layer C: Live Dragged Wire (Rubberband Connection Preview) */}
           {sourceConnectingNode && connectingCursor && (
             <path
-              d={computeRubberbandRoute(sourceConnectingNode.position, connectingCursor, 188, 80)}
+              d={computeRubberbandRoute(
+                sourceConnectingNode.position,
+                connectingCursor,
+                184,
+                76,
+                connectingPort,
+              )}
+              fill="none"
+              stroke="var(--color-accent)"
+              strokeWidth={2}
+              strokeDasharray="5 3"
+              markerEnd="url(#arrow-selected)"
+              className="rubberband-wire"
+            />
+          )}
+          {targetConnectingNode && connectingCursor && (
+            <path
+              d={computeRubberbandRoute(
+                connectingCursor,
+                targetConnectingNode.position,
+                184,
+                76,
+                'right',
+              )}
               fill="none"
               stroke="var(--color-accent)"
               strokeWidth={2}

@@ -5,7 +5,6 @@ import {
   EdgeInspector,
   NodeInspector,
   ValidationBanner,
-  resolveNodeNumber,
   type BoardNode,
   type BoardState,
 } from '../../features/board';
@@ -60,6 +59,7 @@ export interface StudioDrawersProps {
   readonly handleSelectNode: (id: NodeId | null) => void;
   readonly selectEdge: (id: any) => void;
   readonly setEntryNode: (id: NodeId) => void;
+  readonly onOpenPreflightBlocker?: () => void;
   readonly updateNode: (id: NodeId, patch: any) => void;
   readonly updateEdgeControlPoint: (id: any, point: any) => void;
   readonly updateEdgePolicy: (id: any, policy: any) => void;
@@ -86,6 +86,7 @@ export function StudioDrawers({
   handleSelectNode,
   selectEdge,
   setEntryNode,
+  onOpenPreflightBlocker,
   updateNode,
   updateEdgeControlPoint,
   updateEdgePolicy,
@@ -146,6 +147,12 @@ export function StudioDrawers({
           isValidating={board.isValidating}
           nodes={board.nodes}
           onSelectNode={handleSelectNode}
+          entryNodeId={board.entryNodeId}
+          onFixEntryNode={() => {
+            const firstNode = board.nodes[0];
+            if (firstNode) setEntryNode(firstNode.id);
+          }}
+          entryNodeCandidateLabel={board.nodes[0]?.label}
         />
 
         {/* 1. Inspector Tab */}
@@ -184,6 +191,8 @@ export function StudioDrawers({
             <FaultConfigForm
               fault={experimentSession.fault}
               availableEdges={board.edges.map((e: any) => e.id)}
+              edges={board.edges}
+              nodes={board.nodes}
               onChange={experimentSession.updateFault}
               disabled={experimentSession.status === 'running'}
             />
@@ -199,6 +208,12 @@ export function StudioDrawers({
               status={experimentSession.status}
               onConfigChange={experimentSession.updateTrialConfig}
               onStart={() => {
+                if (!canStartExperiment) {
+                  if (onOpenPreflightBlocker) {
+                    onOpenPreflightBlocker();
+                  }
+                  return;
+                }
                 setActiveDrawer('telemetry');
                 void experimentSession.startExperiment(currentTopology);
               }}
@@ -213,73 +228,13 @@ export function StudioDrawers({
         {/* 3. Telemetry & Verdicts Tab */}
         {activeDrawer === 'telemetry' && (
           <>
-            {board.validationProblems.length > 0 && (
-              <div className="telemetry-compatibility-warning">
-                <div className="compatibility-warning-header">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="16"
-                    height="16"
-                    fill="none"
-                    stroke="#f59e0b"
-                    strokeWidth="2"
-                  >
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                    <line x1="12" y1="9" x2="12" y2="13" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                  </svg>
-                  <span className="compatibility-warning-title">
-                    Architecture Incompatibilities ({String(board.validationProblems.length)})
-                  </span>
-                </div>
-                <p className="compatibility-warning-text">
-                  The simulation cannot run until the topology issues below are resolved:
-                </p>
-                <ul className="compatibility-issues-list">
-                  {board.validationProblems.map((prob, i) => {
-                    const nodeNum = prob.nodeId
-                      ? resolveNodeNumber(prob.nodeId, board.nodes)
-                      : null;
-                    return (
-                      <li key={i} className="compatibility-issue-item">
-                        <span className="issue-bullet">•</span>
-                        <span className="compatibility-issue-message">{prob.message}</span>
-                        {prob.nodeId && nodeNum !== null && (
-                          <button
-                            type="button"
-                            className="validation-target-chip"
-                            onClick={() => handleSelectNode(prob.nodeId as NodeId)}
-                            title={`Focus Node #${String(nodeNum)} on canvas`}
-                          >
-                            <span className="target-chip-type">Node</span>
-                            <span className="target-chip-id">{nodeNum}</span>
-                          </button>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-                {!board.entryNodeId && board.nodes.length > 0 && (
-                  <button
-                    type="button"
-                    className="btn-compatibility-fix"
-                    onClick={() => {
-                      const firstNode = board.nodes[0];
-                      if (firstNode) setEntryNode(firstNode.id);
-                    }}
-                  >
-                    Designate &ldquo;{board.nodes[0]?.label}&rdquo; as Ingress Entry
-                  </button>
-                )}
-              </div>
-            )}
-
             <TrialProgressCard
               status={experimentSession.status}
               currentTrial={experimentSession.currentTrialIndex}
               totalTrials={experimentSession.totalTrials}
               errorMessage={experimentSession.errorMessage}
               runId={experimentSession.runId}
+              config={experimentSession.trialConfig}
             />
 
             <LiveTelemetryChart

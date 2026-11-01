@@ -11,6 +11,7 @@ import { createApiClient } from '../api/client';
 import {
   BoardCanvas,
   ImportDiagramModal,
+  PreflightBlockerModal,
   toTopology,
   useBoardState,
   type DrawTool,
@@ -32,7 +33,8 @@ import {
   JoinMeetingModal,
   SreYieldFloorModal,
   useCollaborationPresence,
-  useMeetingSreWatcher,
+  useMeetingAgent,
+  MetaAgentSettingsModal,
 } from '../features/meeting';
 import { IacExportModal } from '../features/repair';
 import {
@@ -131,14 +133,17 @@ export function App() {
     duplicateSelected,
     removeNode,
     deleteSelected,
-    alignSelected,
     addEdge,
+    reconnectEdge,
     removeEdge,
     updateEdgeControlPoint,
     addStroke,
     undoStroke,
     clearStrokes,
     deleteStroke,
+    undo,
+    redo,
+    recordActionBeforeChange,
   } = useBoardState(null, api);
 
   // Live Review Collaboration Room state
@@ -148,6 +153,7 @@ export function App() {
   const [isJoinMeetingOpen, setIsJoinMeetingOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isIacModalOpen, setIsIacModalOpen] = useState(false);
+  const [isPreflightBlockerOpen, setIsPreflightBlockerOpen] = useState(false);
 
   const handleCreateMeeting = (roomCode: string) => {
     setMeetingRoomCode(roomCode);
@@ -182,7 +188,13 @@ export function App() {
 
   // Meeting Room SRE Watcher
   const [isSreModalOpen, setIsSreModalOpen] = useState(false);
-  const sreWatcher = useMeetingSreWatcher(board);
+  const [isAgentSettingsOpen, setIsAgentSettingsOpen] = useState(false);
+  const sreWatcher = useMeetingAgent({
+    board,
+    api,
+    hostName: currentReviewer?.name || 'Engineer',
+    isMeetingActive: isMeetingLive,
+  });
 
   // Experiments state
   const experimentSession = useExperimentSession(api, null);
@@ -514,6 +526,7 @@ export function App() {
         onToastInfo={(msg, title) => toast.info(msg, title)}
         onToastSuccess={(msg, title) => toast.success(msg, title)}
         onToastWarning={(msg, title) => toast.warning(msg, title)}
+        onOpenPreflightBlocker={() => setIsPreflightBlockerOpen(true)}
       />
 
       {/* Main Studio Canvas Layout */}
@@ -542,6 +555,7 @@ export function App() {
             onMoveSelectedNodes={moveSelectedNodes}
             onAddNode={addNode}
             onAddEdge={addEdge}
+            onReconnectEdge={reconnectEdge}
             onDuplicateNode={duplicateNode}
             onDuplicateSelected={duplicateSelected}
             remoteCursors={remoteReviewers}
@@ -558,7 +572,9 @@ export function App() {
               removeEdge(edgeId);
               if (activeDrawer === 'inspect') setActiveDrawer('none');
             }}
-            onAlignSelected={alignSelected}
+            onUndo={undo}
+            onRedo={redo}
+            onRecordHistory={recordActionBeforeChange}
             onAddStroke={addStroke}
             onUndoStroke={undoStroke}
             onClearStrokes={clearStrokes}
@@ -566,6 +582,16 @@ export function App() {
             onUpdateEdgeControlPoint={updateEdgeControlPoint}
             hazardEdgeId={isMeetingLive ? (sreWatcher.primaryHazard?.targetEdgeId ?? null) : null}
             hazardNodeId={isMeetingLive ? (sreWatcher.primaryHazard?.targetNodeId ?? null) : null}
+            echmaSpeakingRequest={
+              isMeetingLive
+                ? {
+                    isRequested: sreWatcher.permissionRequested,
+                    hostName: currentReviewer?.name || 'Engineer',
+                    onAllow: sreWatcher.allowSpeaking,
+                    onDismiss: sreWatcher.dismissPermission,
+                  }
+                : undefined
+            }
           />
 
           {/* Google Meet-Style Floating Picture-in-Picture Mini-Window (Bottom-Right) */}
@@ -573,11 +599,15 @@ export function App() {
             isActive={isMeetingLive}
             roomCode={meetingRoomCode}
             aiRaisedHand={sreWatcher.aiRaisedHand}
+            isEvaluatingAi={sreWatcher.isEvaluating}
+            onAskAiOpinion={(prompt) => sreWatcher.askOpinion(prompt)}
             onOpenSreFinding={() => setIsSreModalOpen(true)}
             onLeaveMeeting={() => setIsMeetingLive(false)}
             currentUser={currentReviewer}
             remoteReviewers={remoteReviewers}
             hazardsCount={sreWatcher.hazards.length}
+            spokenOpinion={sreWatcher.spokenOpinion}
+            hazards={sreWatcher.hazards}
           />
         </main>
 
@@ -606,6 +636,7 @@ export function App() {
           updateEdgeControlPoint={updateEdgeControlPoint}
           updateEdgePolicy={updateEdgePolicy}
           removeEdge={removeEdge}
+          onOpenPreflightBlocker={() => setIsPreflightBlockerOpen(true)}
         />
       </div>
 
@@ -678,6 +709,26 @@ export function App() {
             setActiveDrawer('telemetry');
             void experimentSession.startExperiment(currentTopology);
           }
+        }}
+      />
+
+      {/* Meta Agent AI Settings Modal */}
+      <MetaAgentSettingsModal
+        isOpen={isAgentSettingsOpen}
+        onClose={() => setIsAgentSettingsOpen(false)}
+        tokenUsage={sreWatcher.tokenUsage}
+      />
+
+      {/* Preflight Blocker Architecture Modal */}
+      <PreflightBlockerModal
+        isOpen={isPreflightBlockerOpen}
+        onClose={() => setIsPreflightBlockerOpen(false)}
+        problems={board.validationProblems}
+        nodes={board.nodes}
+        onSelectNode={handleSelectNode}
+        onAutoFixEntry={() => {
+          const firstNode = board.nodes[0];
+          if (firstNode) setEntryNode(firstNode.id);
         }}
       />
     </div>

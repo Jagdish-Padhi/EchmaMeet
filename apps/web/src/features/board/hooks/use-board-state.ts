@@ -18,6 +18,7 @@ import {
   type BoardState,
   type CanvasPosition,
   type CanvasStroke,
+  type EdgePortSide,
   type NodeMeta,
 } from '../types';
 
@@ -87,6 +88,9 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
       selectedNodeId: gatewayId,
       selectedNodeIds: [gatewayId],
       selectedEdgeId: null,
+      edgeControlPoints: {},
+      edgeSourcePorts: {},
+      edgeTargetPorts: {},
       strokes: [],
       validationProblems: [],
       isValidating: false,
@@ -95,6 +99,48 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
   });
 
   const validateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Excalidraw-Grade Board History (Undo / Redo for all canvas architecture actions)
+  interface HistorySnapshot {
+    readonly nodes: readonly BoardNode[];
+    readonly edges: readonly TopologyEdge[];
+    readonly edgeSourcePorts?: Readonly<Record<string, EdgePortSide>> | undefined;
+    readonly edgeTargetPorts?: Readonly<Record<string, EdgePortSide>> | undefined;
+    readonly edgeControlPoints?: Readonly<Record<string, CanvasPosition>> | undefined;
+    readonly strokes?: readonly CanvasStroke[] | undefined;
+    readonly entryNodeId: NodeId;
+    readonly selectedNodeId: NodeId | null;
+    readonly selectedNodeIds?: readonly NodeId[] | undefined;
+    readonly selectedEdgeId: EdgeId | null;
+  }
+
+  const pastRef = useRef<HistorySnapshot[]>([]);
+  const futureRef = useRef<HistorySnapshot[]>([]);
+
+  const createSnapshot = (s: BoardState): HistorySnapshot => ({
+    nodes: s.nodes,
+    edges: s.edges,
+    edgeSourcePorts: s.edgeSourcePorts,
+    edgeTargetPorts: s.edgeTargetPorts,
+    edgeControlPoints: s.edgeControlPoints,
+    strokes: s.strokes,
+    entryNodeId: s.entryNodeId,
+    selectedNodeId: s.selectedNodeId,
+    selectedNodeIds: s.selectedNodeIds,
+    selectedEdgeId: s.selectedEdgeId,
+  });
+
+  const pushHistory = useCallback((prevBoard: BoardState) => {
+    pastRef.current = [...pastRef.current.slice(-50), createSnapshot(prevBoard)];
+    futureRef.current = [];
+  }, []);
+
+  const recordActionBeforeChange = useCallback(() => {
+    setBoard((current) => {
+      pushHistory(current);
+      return current;
+    });
+  }, [pushHistory]);
 
   const triggerValidation = useCallback(
     (currentBoard: BoardState) => {
@@ -120,6 +166,60 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
     },
     [api],
   );
+
+  const undo = useCallback(() => {
+    if (pastRef.current.length === 0) return;
+    setBoard((current) => {
+      const prevSnapshot = pastRef.current[pastRef.current.length - 1];
+      if (!prevSnapshot) return current;
+      pastRef.current = pastRef.current.slice(0, -1);
+      futureRef.current = [...futureRef.current.slice(-50), createSnapshot(current)];
+
+      const nextBoard: BoardState = {
+        ...current,
+        isDirty: true,
+        nodes: [...prevSnapshot.nodes],
+        edges: [...prevSnapshot.edges],
+        edgeSourcePorts: prevSnapshot.edgeSourcePorts ? { ...prevSnapshot.edgeSourcePorts } : {},
+        edgeTargetPorts: prevSnapshot.edgeTargetPorts ? { ...prevSnapshot.edgeTargetPorts } : {},
+        edgeControlPoints: prevSnapshot.edgeControlPoints ? { ...prevSnapshot.edgeControlPoints } : {},
+        strokes: prevSnapshot.strokes ? [...prevSnapshot.strokes] : [],
+        entryNodeId: prevSnapshot.entryNodeId,
+        selectedNodeId: prevSnapshot.selectedNodeId,
+        selectedNodeIds: prevSnapshot.selectedNodeIds ? [...prevSnapshot.selectedNodeIds] : [],
+        selectedEdgeId: prevSnapshot.selectedEdgeId,
+      };
+      triggerValidation(nextBoard);
+      return nextBoard;
+    });
+  }, [triggerValidation]);
+
+  const redo = useCallback(() => {
+    if (futureRef.current.length === 0) return;
+    setBoard((current) => {
+      const nextSnapshot = futureRef.current[futureRef.current.length - 1];
+      if (!nextSnapshot) return current;
+      futureRef.current = futureRef.current.slice(0, -1);
+      pastRef.current = [...pastRef.current.slice(-50), createSnapshot(current)];
+
+      const nextBoard: BoardState = {
+        ...current,
+        isDirty: true,
+        nodes: [...nextSnapshot.nodes],
+        edges: [...nextSnapshot.edges],
+        edgeSourcePorts: nextSnapshot.edgeSourcePorts ? { ...nextSnapshot.edgeSourcePorts } : {},
+        edgeTargetPorts: nextSnapshot.edgeTargetPorts ? { ...nextSnapshot.edgeTargetPorts } : {},
+        edgeControlPoints: nextSnapshot.edgeControlPoints ? { ...nextSnapshot.edgeControlPoints } : {},
+        strokes: nextSnapshot.strokes ? [...nextSnapshot.strokes] : [],
+        entryNodeId: nextSnapshot.entryNodeId,
+        selectedNodeId: nextSnapshot.selectedNodeId,
+        selectedNodeIds: nextSnapshot.selectedNodeIds ? [...nextSnapshot.selectedNodeIds] : [],
+        selectedEdgeId: nextSnapshot.selectedEdgeId,
+      };
+      triggerValidation(nextBoard);
+      return nextBoard;
+    });
+  }, [triggerValidation]);
 
   const loadTopology = useCallback(
     (topology: Topology) => {
@@ -224,6 +324,7 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
     (nodeId: NodeId) => {
       setBoard((prev) => {
         if (!prev.nodes.some((n) => n.id === nodeId)) return prev;
+        pushHistory(prev);
         const next: BoardState = {
           ...prev,
           entryNodeId: nodeId,
@@ -233,12 +334,13 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         return next;
       });
     },
-    [triggerValidation],
+    [pushHistory, triggerValidation],
   );
 
   const updateNode = useCallback(
     (nodeId: NodeId, patch: Partial<TopologyNode>, metaPatch?: Partial<NodeMeta>) => {
       setBoard((prev) => {
+        pushHistory(prev);
         const next: BoardState = {
           ...prev,
           isDirty: true,
@@ -266,12 +368,13 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         return next;
       });
     },
-    [triggerValidation],
+    [pushHistory, triggerValidation],
   );
 
   const updateEdgePolicy = useCallback(
     (edgeId: EdgeId, policy: EdgePolicy) => {
       setBoard((prev) => {
+        pushHistory(prev);
         const next: BoardState = {
           ...prev,
           isDirty: true,
@@ -281,12 +384,13 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         return next;
       });
     },
-    [triggerValidation],
+    [pushHistory, triggerValidation],
   );
 
   const addNode = useCallback(
     (kind: NodeKind = 'service', preset?: NodePresetConfig) => {
       setBoard((prev) => {
+        pushHistory(prev);
         let count = prev.nodes.length + 1;
         let newIdStr = `node-${String(count)}`;
         while (prev.nodes.some((n) => n.id === newIdStr)) {
@@ -353,18 +457,33 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         return next;
       });
     },
-    [triggerValidation],
+    [pushHistory, triggerValidation],
   );
 
   const removeNode = useCallback(
     (nodeId: NodeId) => {
       setBoard((prev) => {
         if (prev.nodes.length <= 1) return prev; // Cannot delete last node
+        pushHistory(prev);
+        const remainingEdges = prev.edges.filter((e) => e.source !== nodeId && e.target !== nodeId);
+        const validEdgeIds = new Set(remainingEdges.map((e) => e.id));
+        const nextControlPoints = Object.fromEntries(
+          Object.entries(prev.edgeControlPoints ?? {}).filter(([k]) => validEdgeIds.has(k as EdgeId)),
+        );
+        const nextSourcePorts = Object.fromEntries(
+          Object.entries(prev.edgeSourcePorts ?? {}).filter(([k]) => validEdgeIds.has(k as EdgeId)),
+        );
+        const nextTargetPorts = Object.fromEntries(
+          Object.entries(prev.edgeTargetPorts ?? {}).filter(([k]) => validEdgeIds.has(k as EdgeId)),
+        );
         const next: BoardState = {
           ...prev,
           isDirty: true,
           nodes: prev.nodes.filter((n) => n.id !== nodeId),
-          edges: prev.edges.filter((e) => e.source !== nodeId && e.target !== nodeId),
+          edges: remainingEdges,
+          edgeControlPoints: nextControlPoints,
+          edgeSourcePorts: nextSourcePorts,
+          edgeTargetPorts: nextTargetPorts,
           selectedNodeId: prev.selectedNodeId === nodeId ? null : prev.selectedNodeId,
           selectedNodeIds: (prev.selectedNodeIds ?? []).filter((id) => id !== nodeId),
         };
@@ -372,7 +491,7 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         return next;
       });
     },
-    [triggerValidation],
+    [pushHistory, triggerValidation],
   );
 
   const duplicateNode = useCallback(
@@ -380,6 +499,7 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
       setBoard((prev) => {
         const target = prev.nodes.find((n) => n.id === nodeId);
         if (!target) return prev;
+        pushHistory(prev);
         let count = prev.nodes.length + 1;
         let newId = nodeIdSchema.parse(`node-${String(count)}`);
         while (prev.nodes.some((n) => n.id === newId)) {
@@ -412,7 +532,7 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         return next;
       });
     },
-    [triggerValidation],
+    [pushHistory, triggerValidation],
   );
 
   const duplicateSelected = useCallback(() => {
@@ -420,6 +540,7 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
       const selectedIds =
         prev.selectedNodeIds ?? (prev.selectedNodeId ? [prev.selectedNodeId] : []);
       if (selectedIds.length === 0) return prev;
+      pushHistory(prev);
 
       const idMap = new Map<NodeId, NodeId>();
       let count = prev.nodes.length + 1;
@@ -453,8 +574,12 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         });
       }
 
-      // Replicate internal edges between the duplicated nodes
+      // Replicate internal edges between the duplicated nodes along with their source/target ports and control points
       const newEdges: TopologyEdge[] = [];
+      const newSourcePorts: Record<string, EdgePortSide> = {};
+      const newTargetPorts: Record<string, EdgePortSide> = {};
+      const newControlPoints: Record<string, CanvasPosition> = {};
+
       for (const edge of prev.edges) {
         const newSource = idMap.get(edge.source);
         const newTarget = idMap.get(edge.target);
@@ -466,6 +591,22 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
             source: newSource,
             target: newTarget,
           });
+
+          const sPort = prev.edgeSourcePorts?.[edge.id];
+          if (sPort) {
+            newSourcePorts[newEdgeId] = sPort;
+          }
+          const tPort = prev.edgeTargetPorts?.[edge.id];
+          if (tPort) {
+            newTargetPorts[newEdgeId] = tPort;
+          }
+          const cp = prev.edgeControlPoints?.[edge.id];
+          if (cp) {
+            newControlPoints[newEdgeId] = {
+              x: cp.x + 40,
+              y: cp.y + 40,
+            };
+          }
         }
       }
 
@@ -475,6 +616,9 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         isDirty: true,
         nodes: [...prev.nodes, ...newNodes],
         edges: [...prev.edges, ...newEdges],
+        edgeSourcePorts: { ...(prev.edgeSourcePorts ?? {}), ...newSourcePorts },
+        edgeTargetPorts: { ...(prev.edgeTargetPorts ?? {}), ...newTargetPorts },
+        edgeControlPoints: { ...(prev.edgeControlPoints ?? {}), ...newControlPoints },
         selectedNodeIds: nextSelected,
         selectedNodeId: nextSelected[0] ?? null,
         selectedEdgeId: null,
@@ -482,7 +626,7 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
       triggerValidation(next);
       return next;
     });
-  }, [triggerValidation]);
+  }, [pushHistory, triggerValidation]);
 
   const deleteSelected = useCallback(() => {
     setBoard((prev) => {
@@ -496,10 +640,21 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         // Prevent deleting every single node
         return prev;
       }
+      pushHistory(prev);
 
       const remainingNodes = prev.nodes.filter((n) => !selectedIds.has(n.id));
       const remainingEdges = prev.edges.filter(
         (e) => !selectedIds.has(e.source) && !selectedIds.has(e.target) && e.id !== edgeIdToDelete,
+      );
+      const validEdgeIds = new Set(remainingEdges.map((e) => e.id));
+      const nextControlPoints = Object.fromEntries(
+        Object.entries(prev.edgeControlPoints ?? {}).filter(([k]) => validEdgeIds.has(k as EdgeId)),
+      );
+      const nextSourcePorts = Object.fromEntries(
+        Object.entries(prev.edgeSourcePorts ?? {}).filter(([k]) => validEdgeIds.has(k as EdgeId)),
+      );
+      const nextTargetPorts = Object.fromEntries(
+        Object.entries(prev.edgeTargetPorts ?? {}).filter(([k]) => validEdgeIds.has(k as EdgeId)),
       );
 
       const next: BoardState = {
@@ -507,6 +662,9 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         isDirty: true,
         nodes: remainingNodes,
         edges: remainingEdges,
+        edgeControlPoints: nextControlPoints,
+        edgeSourcePorts: nextSourcePorts,
+        edgeTargetPorts: nextTargetPorts,
         selectedNodeId: null,
         selectedNodeIds: [],
         selectedEdgeId: null,
@@ -514,7 +672,7 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
       triggerValidation(next);
       return next;
     });
-  }, [triggerValidation]);
+  }, [pushHistory, triggerValidation]);
 
   const alignSelected = useCallback((direction: 'left' | 'top' | 'distribute') => {
     setBoard((prev) => {
@@ -522,6 +680,7 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         prev.selectedNodeIds ?? (prev.selectedNodeId ? [prev.selectedNodeId] : []),
       );
       if (selectedIds.size < 2) return prev;
+      pushHistory(prev);
 
       const selected = prev.nodes.filter((n) => selectedIds.has(n.id));
       if (direction === 'left') {
@@ -566,51 +725,87 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         };
       }
     });
-  }, []);
+  }, [pushHistory]);
 
   const addStroke = useCallback((stroke: CanvasStroke) => {
-    setBoard((prev) => ({
-      ...prev,
-      isDirty: true,
-      strokes: [...(prev.strokes ?? []), stroke],
-    }));
-  }, []);
+    setBoard((prev) => {
+      pushHistory(prev);
+      return {
+        ...prev,
+        isDirty: true,
+        strokes: [...(prev.strokes ?? []), stroke],
+      };
+    });
+  }, [pushHistory]);
 
   const undoStroke = useCallback(() => {
     setBoard((prev) => {
       const current = prev.strokes ?? [];
       if (current.length === 0) return prev;
+      pushHistory(prev);
       return {
         ...prev,
         isDirty: true,
         strokes: current.slice(0, -1),
       };
     });
-  }, []);
+  }, [pushHistory]);
 
   const clearStrokes = useCallback(() => {
-    setBoard((prev) => ({
-      ...prev,
-      isDirty: true,
-      strokes: [],
-    }));
-  }, []);
+    setBoard((prev) => {
+      pushHistory(prev);
+      return {
+        ...prev,
+        isDirty: true,
+        strokes: [],
+      };
+    });
+  }, [pushHistory]);
 
   const deleteStroke = useCallback((strokeId: string) => {
-    setBoard((prev) => ({
-      ...prev,
-      isDirty: true,
-      strokes: (prev.strokes ?? []).filter((s) => s.id !== strokeId),
-    }));
-  }, []);
+    setBoard((prev) => {
+      pushHistory(prev);
+      return {
+        ...prev,
+        isDirty: true,
+        strokes: (prev.strokes ?? []).filter((s) => s.id !== strokeId),
+      };
+    });
+  }, [pushHistory]);
 
   const addEdge = useCallback(
-    (source: NodeId, target: NodeId) => {
+    (
+      source: NodeId,
+      target: NodeId,
+      sourcePort?: EdgePortSide,
+      targetPort?: EdgePortSide,
+    ) => {
       setBoard((prev) => {
         const id = edgeIdSchema.parse(`${source}-to-${target}`);
         if (prev.edges.some((e) => e.id === id || (e.source === source && e.target === target))) {
+          // If edge already exists but user targeted specific ports, update cleanly
+          let updatedSourcePorts = prev.edgeSourcePorts;
+          let updatedTargetPorts = prev.edgeTargetPorts;
+          let changed = false;
+          if (sourcePort && prev.edgeSourcePorts?.[id] !== sourcePort) {
+            updatedSourcePorts = { ...(prev.edgeSourcePorts ?? {}), [id]: sourcePort };
+            changed = true;
+          }
+          if (targetPort && prev.edgeTargetPorts?.[id] !== targetPort) {
+            updatedTargetPorts = { ...(prev.edgeTargetPorts ?? {}), [id]: targetPort };
+            changed = true;
+          }
+          if (changed) {
+            pushHistory(prev);
+            return {
+              ...prev,
+              edgeSourcePorts: updatedSourcePorts,
+              edgeTargetPorts: updatedTargetPorts,
+            };
+          }
           return prev;
         }
+        pushHistory(prev);
         const newEdge: TopologyEdge = {
           id,
           source,
@@ -618,10 +813,18 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
           mode: 'sync_call',
           policy: defaultEdgePolicy,
         };
+        const nextSourcePorts = sourcePort
+          ? { ...(prev.edgeSourcePorts ?? {}), [id]: sourcePort }
+          : prev.edgeSourcePorts;
+        const nextTargetPorts = targetPort
+          ? { ...(prev.edgeTargetPorts ?? {}), [id]: targetPort }
+          : prev.edgeTargetPorts;
         const next: BoardState = {
           ...prev,
           isDirty: true,
           edges: [...prev.edges, newEdge],
+          edgeSourcePorts: nextSourcePorts,
+          edgeTargetPorts: nextTargetPorts,
           selectedEdgeId: id,
           selectedNodeId: null,
           selectedNodeIds: [],
@@ -630,27 +833,102 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         return next;
       });
     },
-    [triggerValidation],
+    [pushHistory, triggerValidation],
+  );
+
+  const reconnectEdge = useCallback(
+    (
+      edgeId: EdgeId,
+      newSource: NodeId,
+      newTarget: NodeId,
+      newSourceSide?: EdgePortSide,
+      newTargetSide?: EdgePortSide,
+    ) => {
+      setBoard((prev) => {
+        const existing = prev.edges.find((e) => e.id === edgeId);
+        if (!existing) return prev;
+        if (newSource === newTarget) return prev; // Avoid self-loop on reconnection
+
+        const newId = edgeIdSchema.parse(`${newSource}-to-${newTarget}`);
+        const edgesWithoutOld = prev.edges.filter((e) => e.id !== edgeId);
+
+        // Check if an edge between these two nodes already exists (different from the one being reconnected)
+        if (newId !== edgeId && edgesWithoutOld.some((e) => e.source === newSource && e.target === newTarget)) {
+          return prev;
+        }
+
+        pushHistory(prev);
+
+        const updatedEdge: TopologyEdge = {
+          ...existing,
+          id: newId,
+          source: newSource,
+          target: newTarget,
+        };
+
+        const nextControlPoints = Object.fromEntries(
+          Object.entries(prev.edgeControlPoints ?? {}).filter(([k]) => k !== edgeId),
+        );
+
+        const nextSourcePorts = { ...(prev.edgeSourcePorts ?? {}) };
+        delete nextSourcePorts[edgeId];
+        if (newSourceSide) {
+          nextSourcePorts[newId] = newSourceSide;
+        } else if (prev.edgeSourcePorts?.[edgeId]) {
+          nextSourcePorts[newId] = prev.edgeSourcePorts[edgeId];
+        }
+
+        const nextTargetPorts = { ...(prev.edgeTargetPorts ?? {}) };
+        delete nextTargetPorts[edgeId];
+        if (newTargetSide) {
+          nextTargetPorts[newId] = newTargetSide;
+        } else if (prev.edgeTargetPorts?.[edgeId]) {
+          nextTargetPorts[newId] = prev.edgeTargetPorts[edgeId];
+        }
+
+        const next: BoardState = {
+          ...prev,
+          isDirty: true,
+          edges: [...edgesWithoutOld, updatedEdge],
+          edgeControlPoints: nextControlPoints,
+          edgeSourcePorts: nextSourcePorts,
+          edgeTargetPorts: nextTargetPorts,
+          selectedEdgeId: newId,
+        };
+        triggerValidation(next);
+        return next;
+      });
+    },
+    [pushHistory, triggerValidation],
   );
 
   const removeEdge = useCallback(
     (edgeId: EdgeId) => {
       setBoard((prev) => {
+        pushHistory(prev);
         const nextControlPoints = Object.fromEntries(
           Object.entries(prev.edgeControlPoints ?? {}).filter(([k]) => k !== edgeId),
+        );
+        const nextSourcePorts = Object.fromEntries(
+          Object.entries(prev.edgeSourcePorts ?? {}).filter(([k]) => k !== edgeId),
+        );
+        const nextTargetPorts = Object.fromEntries(
+          Object.entries(prev.edgeTargetPorts ?? {}).filter(([k]) => k !== edgeId),
         );
         const next: BoardState = {
           ...prev,
           isDirty: true,
           edges: prev.edges.filter((e) => e.id !== edgeId),
           edgeControlPoints: nextControlPoints,
+          edgeSourcePorts: nextSourcePorts,
+          edgeTargetPorts: nextTargetPorts,
           selectedEdgeId: prev.selectedEdgeId === edgeId ? null : prev.selectedEdgeId,
         };
         triggerValidation(next);
         return next;
       });
     },
-    [triggerValidation],
+    [pushHistory, triggerValidation],
   );
 
   const updateEdgeControlPoint = useCallback((edgeId: EdgeId, point: CanvasPosition | null) => {
@@ -694,11 +972,15 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
     deleteSelected,
     alignSelected,
     addEdge,
+    reconnectEdge,
     removeEdge,
     updateEdgeControlPoint,
     addStroke,
     undoStroke,
     clearStrokes,
     deleteStroke,
+    undo,
+    redo,
+    recordActionBeforeChange,
   };
 }

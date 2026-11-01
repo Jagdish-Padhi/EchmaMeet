@@ -232,6 +232,19 @@ export interface ApiClient {
   getReportJson(runId: RunId, signal?: AbortSignal): Promise<ReportExport>;
   getReportDiagramSvg(runId: RunId, signal?: AbortSignal): Promise<string>;
   getBlueprintCard(runId: RunId, signal?: AbortSignal): Promise<BlueprintCard>;
+  getMeetingAiOpinion(
+    body: {
+      topology: unknown;
+      hostName?: string | undefined;
+      userPrompt?: string | undefined;
+    },
+    signal?: AbortSignal,
+  ): Promise<{
+    handRaised: boolean;
+    spokenOpinion: string;
+    hazards: readonly any[];
+    tokenUsage?: { promptTokens?: number | undefined; completionTokens?: number | undefined; totalTokens?: number | undefined } | undefined;
+  }>;
 }
 
 /**
@@ -573,5 +586,23 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
 
     getBlueprintCard: (runId, signal) =>
       request(`/api/reports/${runId}/card`, blueprintCardSchema, withSignal('GET', signal)),
+
+    getMeetingAiOpinion: (body, signal) =>
+      request(
+        '/api/meeting/ai-opinion',
+        z.object({
+          handRaised: z.boolean(),
+          spokenOpinion: z.string(),
+          hazards: z.array(z.any()),
+          tokenUsage: z
+            .object({
+              promptTokens: z.number().optional(),
+              completionTokens: z.number().optional(),
+              totalTokens: z.number().optional(),
+            })
+            .optional(),
+        }),
+        withSignal('POST', signal, JSON.stringify(body)),
+      ),
   };
 }
