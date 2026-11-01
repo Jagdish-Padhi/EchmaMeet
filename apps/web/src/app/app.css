@@ -158,10 +158,15 @@ body,
   background: rgba(15, 23, 42, 0.45);
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 72px;
+}
+
 html,
 body {
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
+  overflow-x: hidden;
   font-family: var(--font-sans);
   background: var(--color-bg);
   background-image: var(--color-bg-mesh);
@@ -171,6 +176,13 @@ body {
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Studio workspace locks scroll so canvas panning is smooth and contained */
+html:has(.studio-root),
+body:has(.studio-root) {
+  height: 100%;
+  overflow: hidden;
 }
 
 .sr-only {
@@ -196,6 +208,8 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  position: relative;
 }
 
 .landing-header {
