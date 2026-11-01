@@ -1,5 +1,6 @@
 import type React from 'react';
 import type { RemoteReviewer } from '../useCollaborationPresence';
+import { FemaleArchitectIcon } from '../../../components/ui/FemaleArchitectIcon';
 
 export interface MeetingFloatingWindowProps {
   readonly windowRef: React.RefObject<HTMLDivElement | null>;
@@ -23,6 +24,8 @@ export interface MeetingFloatingWindowProps {
     readonly avatar: string;
   };
   readonly aiRaisedHand: boolean;
+  readonly isEvaluatingAi?: boolean | undefined;
+  readonly onAskAiOpinion?: (() => void) | undefined;
   readonly onOpenSreFinding: () => void;
   readonly remoteReviewers: readonly RemoteReviewer[];
   readonly copied: boolean;
@@ -52,6 +55,8 @@ export function MeetingFloatingWindow({
   selfVideoRef,
   currentUser,
   aiRaisedHand,
+  isEvaluatingAi,
+  onAskAiOpinion,
   onOpenSreFinding,
   remoteReviewers,
   copied,
@@ -88,25 +93,6 @@ export function MeetingFloatingWindow({
           <button
             type="button"
             className="pip-control-icon-btn"
-            onClick={onMinimize}
-            title="Minimize to floating pill"
-            aria-label="Minimize"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="12"
-              height="12"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-          </button>
-
-          <button
-            type="button"
-            className="pip-control-icon-btn"
             onClick={onFullscreen}
             title="Enlarge to full screen (Google Meet)"
             aria-label="Enlarge to full screen"
@@ -128,10 +114,10 @@ export function MeetingFloatingWindow({
 
           <button
             type="button"
-            className="pip-control-icon-btn danger"
-            onClick={onOpenLeaveModal}
-            title="Leave call"
-            aria-label="Close"
+            className="pip-control-icon-btn"
+            onClick={onMinimize}
+            title="Minimize to floating pill"
+            aria-label="Minimize"
           >
             <svg
               viewBox="0 0 24 24"
@@ -186,29 +172,19 @@ export function MeetingFloatingWindow({
           </div>
         </div>
 
-        {/* Meta AI SRE Watcher Tile */}
+        {/* Echma Watcher Tile */}
         <div
           className="pip-tile tile-ai"
           onClick={onOpenSreFinding}
           role="button"
           tabIndex={0}
-          title="Click to view AI SRE findings"
+          title="Click to view Echma findings"
         >
           <div className="pip-avatar-wrap ai-pulse">
-            <svg
-              viewBox="0 0 24 24"
-              width="16"
-              height="16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 3" />
-            </svg>
+            <FemaleArchitectIcon size={18} strokeWidth={2} />
           </div>
           <div className="pip-tile-meta">
-            <span className="pip-tile-name ai">Meta AI SRE</span>
+            <span className="pip-tile-name ai">Echma</span>
             {aiRaisedHand && <span className="pip-alert-dot" title="Risk identified" />}
           </div>
         </div>
@@ -339,7 +315,7 @@ export function MeetingFloatingWindow({
           type="button"
           className={`pip-action-btn ${aiRaisedHand ? 'highlight' : ''}`}
           onClick={onOpenSreFinding}
-          title="Review Meta AI SRE analysis findings"
+          title="Review Echma analysis findings"
           aria-label="Review findings"
         >
           <svg
@@ -357,24 +333,20 @@ export function MeetingFloatingWindow({
           </svg>
         </button>
 
-        <button
-          type="button"
-          className="pip-action-btn"
-          onClick={onFullscreen}
-          title="Enlarge to full screen (Google Meet)"
-          aria-label="Full screen"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="14"
-            height="14"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
+        {onAskAiOpinion && (
+          <button
+            type="button"
+            className={`pip-action-btn pip-ask-echma-btn ${isEvaluatingAi ? 'highlight' : ''}`}
+            onClick={onAskAiOpinion}
+            title="Ask Echma for live architecture opinion"
+            aria-label="Ask Echma"
           >
-            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-          </svg>
-        </button>
+            <span style={{ fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', padding: '0 4px' }}>
+              <FemaleArchitectIcon size={14} strokeWidth={2} />
+              <span>{isEvaluatingAi ? '...' : 'Ask Echma'}</span>
+            </span>
+          </button>
+        )}
 
         <button
           type="button"

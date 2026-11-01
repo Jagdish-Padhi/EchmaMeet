@@ -4,7 +4,7 @@ import type { SreHazard } from './types';
 export interface MeetingParticipant {
   readonly id: string;
   readonly name: string;
-  readonly role: 'Staff SRE' | 'Tech Lead' | 'Principal Architect' | 'Meta AI SRE';
+  readonly role: 'Staff SRE' | 'Tech Lead' | 'Principal Architect' | 'Echma AI';
   readonly avatar: string;
   readonly isSpeaking?: boolean;
   readonly isMuted?: boolean;
@@ -46,8 +46,8 @@ export function MeetingBar({
     ...remoteParticipants,
     {
       id: 'ai-sre',
-      name: 'Meta AI SRE',
-      role: 'Meta AI SRE',
+      name: 'Echma',
+      role: 'Echma AI',
       avatar: 'AI',
       isSpeaking: aiRaisedHand,
       isMuted: false,
@@ -149,14 +149,14 @@ export function MeetingBar({
         </div>
       </div>
 
-      {/* Meta AI SRE Architectural Risk Badge */}
+      {/* Echma Architectural Risk Badge */}
       <div className="huddle-sre-status">
         {aiRaisedHand ? (
           <button
             type="button"
             className="btn-sre-callout pulse-alert"
             onClick={onYieldFloor}
-            title="Meta AI SRE has raised a Sev-1 architectural risk"
+            title="Echma has raised a Sev-1 architectural risk"
           >
             <span className="ai-icon-shield">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor">
@@ -164,12 +164,12 @@ export function MeetingBar({
                 <path d="M12 7v5l3 3" />
               </svg>
             </span>
-            <span>Meta AI SRE Raised Hand ({hazards.length})</span>
+            <span>Echma Raised Hand ({hazards.length})</span>
           </button>
         ) : (
           <div className="sre-idle-pill">
             <span className="sre-scan-dot" />
-            <span>AI SRE Sentinel: Monitoring Active</span>
+            <span>Echma: Active SRE Review</span>
           </div>
         )}
       </div>

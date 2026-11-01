@@ -5,7 +5,7 @@ export function AiSreSection() {
     <section id="ai-copilot" className="landing-section alt-bg">
       <div className="section-header">
         <span className="section-eyebrow">YOUR AUTONOMOUS MEETING PARTICIPANT</span>
-        <h2 className="section-title">An AI SRE Sitting at the Table with Your Team</h2>
+        <h2 className="section-title">An SRE AI Agent Sitting at the Table with Your Team</h2>
         <p className="section-desc">
           EchmaMeet&apos;s Meta AI agent doesn&apos;t just generate text. It sits in your review
           call like a principal reliability engineer—listening, stress-testing hypotheses, and

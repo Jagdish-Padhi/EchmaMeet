@@ -1,8 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useToast } from '../toast';
 import { LeaveMeetingModal } from './LeaveMeetingModal';
 import { useMeetingMediaStream } from './useMeetingMediaStream';
 import type { RemoteReviewer } from './useCollaborationPresence';
+import type { MeetingChatMessage } from './agentTypes';
+import type { SreHazard } from './types';
 import { MeetingBubble } from './components/MeetingBubble';
 import { MeetingFullscreenStage } from './components/MeetingFullscreenStage';
 import { MeetingFloatingWindow } from './components/MeetingFloatingWindow';
@@ -11,15 +13,19 @@ export interface FloatingMeetingPiPProps {
   readonly isActive: boolean;
   readonly roomCode: string;
   readonly aiRaisedHand: boolean;
+  readonly isEvaluatingAi?: boolean | undefined;
+  readonly onAskAiOpinion?: ((prompt?: string) => void) | undefined;
   readonly onOpenSreFinding: () => void;
   readonly onLeaveMeeting: () => void;
   readonly currentUser?: {
     readonly name: string;
     readonly role: string;
     readonly avatar: string;
-  };
-  readonly remoteReviewers?: readonly RemoteReviewer[];
-  readonly hazardsCount?: number;
+  } | undefined;
+  readonly remoteReviewers?: readonly RemoteReviewer[] | undefined;
+  readonly hazardsCount?: number | undefined;
+  readonly spokenOpinion?: string | undefined;
+  readonly hazards?: readonly SreHazard[] | undefined;
 }
 
 type WindowMode = 'minimized' | 'floating' | 'fullscreen';
@@ -28,18 +34,77 @@ export function FloatingMeetingPiP({
   isActive,
   roomCode,
   aiRaisedHand,
+  isEvaluatingAi,
+  onAskAiOpinion,
   onOpenSreFinding,
   onLeaveMeeting,
   currentUser = { name: 'Alex Chen', role: 'Staff SRE', avatar: 'AC' },
   remoteReviewers = [],
   hazardsCount = 0,
+  spokenOpinion,
+  hazards = [],
 }: FloatingMeetingPiPProps) {
   const toast = useToast();
   const [windowMode, setWindowMode] = useState<WindowMode>('floating');
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [activeSideDrawer, setActiveSideDrawer] = useState<'none' | 'people' | 'sre'>('none');
+  const [activeSideDrawer, setActiveSideDrawer] = useState<'none' | 'people' | 'chat'>('none');
   const [copied, setCopied] = useState(false);
+  const [chatMessages, setChatMessages] = useState<MeetingChatMessage[]>([]);
+  const lastRecordedSpokenRef = useRef<string | null>(null);
+
+  // Live-cast Echma opinions and identified architecture risks directly into the chat stream!
+  useEffect(() => {
+    if (spokenOpinion && spokenOpinion !== lastRecordedSpokenRef.current) {
+      lastRecordedSpokenRef.current = spokenOpinion;
+      const now = new Date();
+      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      
+      const primaryRisk = hazards.length > 0 ? hazards[0] : undefined;
+
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          sender: 'Echma',
+          role: 'AI Principal SRE',
+          text: spokenOpinion,
+          timestamp: timeStr,
+          isAi: true,
+          hazardBadge: primaryRisk
+            ? {
+                severity: primaryRisk.severity,
+                title: primaryRisk.title,
+                recommendation: primaryRisk.recommendation,
+              }
+            : undefined,
+        },
+      ]);
+    }
+  }, [spokenOpinion, hazards]);
+
+  const handleSendMessage = useCallback(
+    (text: string) => {
+      const now = new Date();
+      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      const userMsg: MeetingChatMessage = {
+        id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        sender: currentUser.name || 'You',
+        role: currentUser.role || 'Host',
+        text,
+        timestamp: timeStr,
+        isAi: false,
+      };
+
+      setChatMessages((prev) => [...prev, userMsg]);
+
+      // Echma actively monitors chat context and responds when queried
+      if (onAskAiOpinion) {
+        onAskAiOpinion(text);
+      }
+    },
+    [currentUser, onAskAiOpinion],
+  );
 
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const isDraggingRef = useRef(false);
@@ -228,10 +293,15 @@ export function FloatingMeetingPiP({
           audioLevel={audioLevel}
           currentUser={currentUser}
           aiRaisedHand={aiRaisedHand}
+          isEvaluatingAi={isEvaluatingAi}
+          onAskAiOpinion={onAskAiOpinion}
           hazardsCount={hazardsCount}
           onOpenSreFinding={onOpenSreFinding}
           remoteReviewers={remoteReviewers}
           activeSideDrawer={activeSideDrawer}
+          chatMessages={chatMessages}
+          onSendMessage={handleSendMessage}
+          isSendingChat={isEvaluatingAi}
           onCloseSideDrawer={() => setActiveSideDrawer('none')}
           onToggleSideDrawer={(drawer) =>
             setActiveSideDrawer((prev) => (prev === drawer ? 'none' : drawer))
@@ -285,6 +355,8 @@ export function FloatingMeetingPiP({
         selfVideoRef={selfVideoRef}
         currentUser={currentUser}
         aiRaisedHand={aiRaisedHand}
+        isEvaluatingAi={isEvaluatingAi}
+        onAskAiOpinion={onAskAiOpinion}
         onOpenSreFinding={onOpenSreFinding}
         remoteReviewers={remoteReviewers}
         copied={copied}

@@ -20,11 +20,11 @@ export function CanvasSreCallout({
   const cleanTitle = hazard.title.replace('Cascading ', '').replace(' Vulnerability', ' Risk');
 
   return (
-    <aside className="canvas-sre-callout" aria-label="Meta AI SRE Risk Finding" role="region">
+    <aside className="canvas-sre-callout" aria-label="Echma SRE Risk Finding" role="region">
       <div className="callout-header">
         <div className="callout-title-wrap" onClick={onOpenDetails} role="button" tabIndex={0}>
           <span className="callout-pulse-dot" aria-hidden="true" />
-          <span className="callout-title">Meta AI SRE &bull; {cleanTitle}</span>
+          <span className="callout-title">Echma &bull; {cleanTitle}</span>
         </div>
         <button
           type="button"

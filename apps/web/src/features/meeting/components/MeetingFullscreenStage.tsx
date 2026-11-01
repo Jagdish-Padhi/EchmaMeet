@@ -1,7 +1,9 @@
 import type React from 'react';
 import type { RemoteReviewer } from '../useCollaborationPresence';
+import type { MeetingChatMessage } from '../agentTypes';
 import { MeetingControlsDock } from './MeetingControlsDock';
 import { MeetingSideDrawer } from './MeetingSideDrawer';
+import { FemaleArchitectIcon } from '../../../components/ui/FemaleArchitectIcon';
 
 export interface MeetingFullscreenStageProps {
   readonly roomCode: string;
@@ -24,12 +26,17 @@ export interface MeetingFullscreenStageProps {
     readonly avatar: string;
   };
   readonly aiRaisedHand: boolean;
+  readonly isEvaluatingAi?: boolean | undefined;
+  readonly onAskAiOpinion?: (() => void) | undefined;
   readonly hazardsCount: number;
   readonly onOpenSreFinding: () => void;
   readonly remoteReviewers: readonly RemoteReviewer[];
-  readonly activeSideDrawer: 'none' | 'people' | 'sre';
+  readonly activeSideDrawer: 'none' | 'people' | 'chat';
+  readonly chatMessages?: readonly MeetingChatMessage[] | undefined;
+  readonly onSendMessage?: ((text: string) => void) | undefined;
+  readonly isSendingChat?: boolean | undefined;
   readonly onCloseSideDrawer: () => void;
-  readonly onToggleSideDrawer: (drawer: 'people' | 'sre') => void;
+  readonly onToggleSideDrawer: (drawer: 'people' | 'chat') => void;
   readonly onToggleAudio: () => void;
   readonly onToggleVideo: () => void;
   readonly onOpenLeaveModal: () => void;
@@ -53,10 +60,15 @@ export function MeetingFullscreenStage({
   audioLevel,
   currentUser,
   aiRaisedHand,
+  isEvaluatingAi,
+  onAskAiOpinion,
   hazardsCount,
   onOpenSreFinding,
   remoteReviewers,
   activeSideDrawer,
+  chatMessages,
+  onSendMessage,
+  isSendingChat,
   onCloseSideDrawer,
   onToggleSideDrawer,
   onToggleAudio,
@@ -126,7 +138,7 @@ export function MeetingFullscreenStage({
             >
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
-            <span>Encrypted Review</span>
+            <span>End-to-End Encrypted</span>
           </div>
         </div>
 
@@ -216,26 +228,16 @@ export function MeetingFullscreenStage({
             </div>
           </div>
 
-          {/* Meta AI SRE Watcher Tile */}
+          {/* Echma Watcher Tile */}
           <div className="meet-tile meet-tile-ai">
             <div className="meet-avatar-wrap large ai">
-              <svg
-                viewBox="0 0 24 24"
-                width="36"
-                height="36"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 7v5l3 3" />
-              </svg>
+              <FemaleArchitectIcon size={38} strokeWidth={1.8} />
               {aiRaisedHand && <span className="meet-ai-hazard-ping" />}
             </div>
 
             <div className="meet-ai-card-details">
-              <span className="meet-ai-title">Meta AI SRE</span>
-              <span className="meet-ai-desc">Autonomous Architecture Sentinel</span>
+              <span className="meet-ai-title">Echma</span>
+              <span className="meet-ai-desc">Principal SRE Partner</span>
 
               {hazardsCount > 0 ? (
                 <div
@@ -246,28 +248,10 @@ export function MeetingFullscreenStage({
                 >
                   <span className="hazard-alert-dot" />
                   <span>
-                    {hazardsCount} Architectural Risk{hazardsCount > 1 ? 's' : ''} Flagged &bull;
-                    Review
+                    {hazardsCount} Architectural Risk{hazardsCount > 1 ? 's' : ''} Flagged
                   </span>
                 </div>
-              ) : (
-                <div className="meet-hazard-clean-pill">
-                  <span className="status-clean-dot" />
-                  <span>Topology Resilient &bull; Live Watch</span>
-                </div>
-              )}
-            </div>
-
-            <div className="meet-tile-footer">
-              <span className="meet-tile-name ai">AI SRE Copilot</span>
-              <button
-                type="button"
-                className="meet-open-finding-btn"
-                onClick={onOpenSreFinding}
-                title="Open resilience analysis modal"
-              >
-                View Findings &rarr;
-              </button>
+              ) : null}
             </div>
           </div>
 
@@ -288,34 +272,6 @@ export function MeetingFullscreenStage({
               </div>
             </div>
           ))}
-
-          {/* Clean Empty Collaborator Prompt */}
-          {remoteReviewers.length === 0 && (
-            <div className="meet-tile meet-tile-invite">
-              <div className="meet-invite-icon">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="28"
-                  height="28"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="8.5" cy="7" r="4" />
-                  <line x1="20" y1="8" x2="20" y2="14" />
-                  <line x1="23" y1="11" x2="17" y2="11" />
-                </svg>
-              </div>
-              <div className="meet-invite-title">Invite Team to Architecture Review</div>
-              <p className="meet-invite-desc">
-                Share your room code with engineers to collaborate in real-time.
-              </p>
-              <button type="button" className="meet-copy-invite-action" onClick={onCopyLink}>
-                {copied ? 'Code Copied!' : `Copy Room Link (${roomCode})`}
-              </button>
-            </div>
-          )}
         </main>
 
         {/* Collapsible Right Side Drawer */}
@@ -325,9 +281,10 @@ export function MeetingFullscreenStage({
             currentUser={currentUser}
             remoteReviewers={remoteReviewers}
             isMuted={isMuted}
-            hazardsCount={hazardsCount}
+            chatMessages={chatMessages}
+            onSendMessage={onSendMessage}
+            isSendingChat={isSendingChat}
             onClose={onCloseSideDrawer}
-            onOpenSreFinding={onOpenSreFinding}
           />
         )}
       </div>
@@ -338,13 +295,14 @@ export function MeetingFullscreenStage({
         isVideoOn={isVideoOn}
         isScreenSharing={isScreenSharing}
         aiRaisedHand={aiRaisedHand}
+        isEvaluatingAi={isEvaluatingAi}
+        onAskAiOpinion={onAskAiOpinion}
         activeSideDrawer={activeSideDrawer}
         onToggleAudio={onToggleAudio}
         onToggleVideo={onToggleVideo}
         onToggleScreenShare={onToggleScreenShare}
         onOpenSreFinding={onOpenSreFinding}
         onToggleSideDrawer={onToggleSideDrawer}
-        onMinimizeToFloat={onExitFullscreen}
         onOpenLeaveModal={onOpenLeaveModal}
       />
     </div>

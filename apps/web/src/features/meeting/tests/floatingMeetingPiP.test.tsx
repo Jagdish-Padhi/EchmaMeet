@@ -22,7 +22,7 @@ describe('FloatingMeetingPiP & LeaveMeetingModal', () => {
       </ToastProvider>,
     );
     expect(html).toContain('#test-room');
-    expect(html).toContain('Meta AI SRE');
+    expect(html).toContain('Echma');
     expect(html).toContain('pip-window-header');
     expect(html).toContain('pip-controls-bar');
   });

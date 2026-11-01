@@ -1,5 +1,7 @@
-import { useState, type SyntheticEvent } from 'react';
+import { useState, useEffect, type SyntheticEvent } from 'react';
 import { Button } from '../../components/ui/Button';
+import { useMicrophonePreflight } from './useMicrophonePreflight';
+import { MicrophonePreflightBanner } from './components/MicrophonePreflightBanner';
 
 export interface CreateMeetingModalProps {
   readonly isOpen: boolean;
@@ -12,6 +14,16 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
   const [topic, setTopic] = useState('Architecture Review');
   const [role, setRole] = useState<'Staff SRE' | 'Tech Lead' | 'Principal Architect'>('Staff SRE');
 
+  const micPreflight = useMicrophonePreflight();
+
+  useEffect(() => {
+    if (isOpen) {
+      void micPreflight.startMicTest();
+    } else {
+      micPreflight.stopMicTest();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleGenerateCode = () => {
@@ -22,6 +34,7 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
     e.preventDefault();
     if (!roomCode.trim()) return;
     onCreate(roomCode.trim(), topic.trim(), role);
+    micPreflight.stopMicTest();
     onClose();
   };
 
@@ -61,6 +74,7 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
         </div>
 
         <form onSubmit={handleSubmit} className="meeting-dialog-form">
+          <MicrophonePreflightBanner preflight={micPreflight} />
           <div className="meeting-form-field">
             <label htmlFor="create-room-code" className="meeting-form-label">
               Room Code
@@ -119,10 +133,21 @@ export function CreateMeetingModal({ isOpen, onClose, onCreate }: CreateMeetingM
           </div>
 
           <div className="meeting-dialog-actions">
-            <Button variant="secondary" onClick={onClose} type="button">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                micPreflight.stopMicTest();
+                onClose();
+              }}
+              type="button"
+            >
               Cancel
             </Button>
-            <Button variant="primary" type="submit">
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={micPreflight.status === 'failed' || micPreflight.status === 'denied'}
+            >
               Create Room
             </Button>
           </div>

@@ -1,117 +1,32 @@
 export interface MeetingBubbleProps {
   readonly roomCode: string;
-  readonly totalParticipants: number;
-  readonly isSpeaking: boolean;
-  readonly isMuted: boolean;
+  readonly totalParticipants?: number | undefined;
+  readonly isSpeaking?: boolean | undefined;
+  readonly isMuted?: boolean | undefined;
   readonly onExpandFloating: () => void;
-  readonly onExpandFullscreen: () => void;
+  readonly onExpandFullscreen?: (() => void) | undefined;
   readonly onOpenLeaveModal: () => void;
 }
 
 export function MeetingBubble({
   roomCode,
-  totalParticipants,
-  isSpeaking,
-  isMuted,
+  totalParticipants = 1,
   onExpandFloating,
-  onExpandFullscreen,
-  onOpenLeaveModal,
 }: MeetingBubbleProps) {
   return (
     <aside
-      className="meeting-pip-bubble"
+      className="meeting-pip-bubble-call-btn"
       onClick={onExpandFloating}
       role="button"
       tabIndex={0}
-      aria-label="Expand Google Meet review window"
-      title="Click to expand architecture review call"
+      aria-label="Restore review meeting window"
+      title={`Meeting Active: ${roomCode} (${totalParticipants} in call). Click to restore.`}
     >
-      <span className="pip-live-pulse" />
-      <span className="pip-bubble-title">{roomCode || '#rfc-checkout-v2'}</span>
-
-      {/* Real Audio Volume Wave Indicator in Bubble */}
-      {isSpeaking && !isMuted ? (
-        <span className="pip-audio-speaking-dot" title="Speaking..." />
-      ) : isMuted ? (
-        <span className="pip-bubble-muted-tag" title="Microphone muted">
-          <svg
-            viewBox="0 0 24 24"
-            width="10"
-            height="10"
-            fill="none"
-            stroke="#f43f5e"
-            strokeWidth="2.5"
-          >
-            <line x1="1" y1="1" x2="23" y2="23" />
-            <path d="M9 9v3a3 3 0 0 0 5.12 2.12" />
-          </svg>
-        </span>
-      ) : null}
-
-      <span className="pip-badge-count">{totalParticipants}</span>
-
-      {/* Quick Expand Button */}
-      <button
-        type="button"
-        className="pip-expand-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          onExpandFloating();
-        }}
-        title="Expand to floating window"
-        aria-label="Expand"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          width="12"
-          height="12"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-        >
-          <polyline points="15 3 21 3 21 9" />
-          <polyline points="9 21 3 21 3 15" />
-          <line x1="21" y1="3" x2="14" y2="10" />
-          <line x1="3" y1="21" x2="10" y2="14" />
+      <div className="pip-call-circle-pulse">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+          <path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
         </svg>
-      </button>
-
-      {/* Quick Enlarge Fullscreen Button */}
-      <button
-        type="button"
-        className="pip-expand-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          onExpandFullscreen();
-        }}
-        title="Enlarge to full screen (Google Meet)"
-        aria-label="Full screen"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          width="12"
-          height="12"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-        >
-          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-        </svg>
-      </button>
-
-      {/* Quick Leave Button */}
-      <button
-        type="button"
-        className="pip-bubble-end-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          onOpenLeaveModal();
-        }}
-        title="End / Leave Call"
-        aria-label="Leave call"
-      >
-        &times;
-      </button>
+      </div>
     </aside>
   );
 }

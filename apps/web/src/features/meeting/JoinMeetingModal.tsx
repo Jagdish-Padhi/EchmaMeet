@@ -1,5 +1,7 @@
-import { useState, type SyntheticEvent } from 'react';
+import { useState, useEffect, type SyntheticEvent } from 'react';
 import { Button } from '../../components/ui/Button';
+import { useMicrophonePreflight } from './useMicrophonePreflight';
+import { MicrophonePreflightBanner } from './components/MicrophonePreflightBanner';
 
 export interface JoinMeetingModalProps {
   readonly isOpen: boolean;
@@ -17,6 +19,16 @@ export function JoinMeetingModal({
   const [roomCode, setRoomCode] = useState('');
   const [activeTab, setActiveTab] = useState<'code' | 'solo'>('code');
 
+  const micPreflight = useMicrophonePreflight();
+
+  useEffect(() => {
+    if (isOpen) {
+      void micPreflight.startMicTest();
+    } else {
+      micPreflight.stopMicTest();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmitCode = (e: SyntheticEvent) => {
@@ -24,11 +36,13 @@ export function JoinMeetingModal({
     const cleanCode = roomCode.trim();
     if (!cleanCode) return;
     onJoinWithCode(cleanCode.startsWith('#') ? cleanCode : `#${cleanCode}`);
+    micPreflight.stopMicTest();
     onClose();
   };
 
   const handleStartSolo = () => {
     onJoinSoloAi();
+    micPreflight.stopMicTest();
     onClose();
   };
 
@@ -116,6 +130,7 @@ export function JoinMeetingModal({
         {/* Tab 1: Enter Code */}
         {activeTab === 'code' && (
           <form onSubmit={handleSubmitCode} className="meeting-dialog-form">
+            <MicrophonePreflightBanner preflight={micPreflight} />
             <div className="meeting-form-field">
               <label htmlFor="join-room-code" className="meeting-form-label">
                 Room Code
@@ -133,10 +148,21 @@ export function JoinMeetingModal({
             </div>
 
             <div className="meeting-dialog-actions">
-              <Button variant="secondary" onClick={onClose} type="button">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  micPreflight.stopMicTest();
+                  onClose();
+                }}
+                type="button"
+              >
                 Cancel
               </Button>
-              <Button variant="primary" type="submit" disabled={!roomCode.trim()}>
+              <Button
+                variant="primary"
+                type="submit"
+                disabled={!roomCode.trim() || micPreflight.status === 'failed' || micPreflight.status === 'denied'}
+              >
                 Join Room
               </Button>
             </div>
@@ -146,6 +172,7 @@ export function JoinMeetingModal({
         {/* Tab 2: Solo with AI */}
         {activeTab === 'solo' && (
           <div className="meeting-solo-panel">
+            <MicrophonePreflightBanner preflight={micPreflight} />
             <div className="solo-ai-card">
               <div className="solo-ai-header">
                 <div className="solo-ai-emblem">
@@ -162,10 +189,22 @@ export function JoinMeetingModal({
             </div>
 
             <div className="meeting-dialog-actions">
-              <Button variant="secondary" onClick={onClose} type="button">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  micPreflight.stopMicTest();
+                  onClose();
+                }}
+                type="button"
+              >
                 Cancel
               </Button>
-              <Button variant="primary" onClick={handleStartSolo} type="button">
+              <Button
+                variant="primary"
+                onClick={handleStartSolo}
+                type="button"
+                disabled={micPreflight.status === 'failed' || micPreflight.status === 'denied'}
+              >
                 Start Solo Review
               </Button>
             </div>

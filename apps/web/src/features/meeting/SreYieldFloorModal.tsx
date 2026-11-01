@@ -48,8 +48,8 @@ export function SreYieldFloorModal({
               </svg>
             </div>
             <div>
-              <div className="sre-agent-name">AI Architecture Reviewer</div>
-              <div className="sre-agent-subtitle">Live Architecture Risk Detection</div>
+              <div className="sre-agent-name">Echma</div>
+              <div className="sre-agent-subtitle">AI Principal SRE &bull; Meta Llama 3</div>
             </div>
           </div>
           <button

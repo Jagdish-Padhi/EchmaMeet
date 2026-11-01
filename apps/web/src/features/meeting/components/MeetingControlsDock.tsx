@@ -1,15 +1,18 @@
+import { FemaleArchitectIcon } from '../../../components/ui/FemaleArchitectIcon';
+
 export interface MeetingControlsDockProps {
   readonly isMuted: boolean;
   readonly isVideoOn: boolean;
   readonly isScreenSharing: boolean;
   readonly aiRaisedHand: boolean;
-  readonly activeSideDrawer: 'none' | 'people' | 'sre';
+  readonly isEvaluatingAi?: boolean | undefined;
+  readonly onAskAiOpinion?: (() => void) | undefined;
+  readonly activeSideDrawer: 'none' | 'people' | 'chat';
   readonly onToggleAudio: () => void;
   readonly onToggleVideo: () => void;
   readonly onToggleScreenShare: () => void;
-  readonly onOpenSreFinding: () => void;
-  readonly onToggleSideDrawer: (drawer: 'people' | 'sre') => void;
-  readonly onMinimizeToFloat: () => void;
+  readonly onOpenSreFinding?: (() => void) | undefined;
+  readonly onToggleSideDrawer: (drawer: 'people' | 'chat') => void;
   readonly onOpenLeaveModal: () => void;
 }
 
@@ -17,14 +20,13 @@ export function MeetingControlsDock({
   isMuted,
   isVideoOn,
   isScreenSharing,
-  aiRaisedHand,
+  isEvaluatingAi,
+  onAskAiOpinion,
   activeSideDrawer,
   onToggleAudio,
   onToggleVideo,
   onToggleScreenShare,
-  onOpenSreFinding,
   onToggleSideDrawer,
-  onMinimizeToFloat,
   onOpenLeaveModal,
 }: MeetingControlsDockProps) {
   return (
@@ -128,28 +130,21 @@ export function MeetingControlsDock({
           </svg>
         </button>
 
-        {/* 4. Hand Raise / SRE Alert Trigger */}
-        <button
-          type="button"
-          className={`meet-ctrl-btn ${aiRaisedHand ? 'alert-highlight' : ''}`}
-          onClick={onOpenSreFinding}
-          title="Review Meta AI SRE findings"
-          aria-label="SRE Findings"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="18"
-            height="18"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
+        {/* 4. Ask Echma Trigger */}
+        {onAskAiOpinion && (
+          <button
+            type="button"
+            className={`meet-ctrl-btn ask-echma-btn ${isEvaluatingAi ? 'active-highlight' : ''}`}
+            onClick={onAskAiOpinion}
+            title="Ask Echma for live architecture opinion"
+            aria-label="Ask Echma"
           >
-            <path d="M18 11V6a2 2 0 0 0-4 0v5" />
-            <path d="M14 10V4a2 2 0 0 0-4 0v7" />
-            <path d="M10 10.5V6a2 2 0 0 0-4 0v8" />
-            <path d="M6 14v-1a2 2 0 0 0-4 0v6a6 6 0 0 0 6 6h4a6 6 0 0 0 6-6v-4a2 2 0 0 0-4 0" />
-          </svg>
-        </button>
+            <span className="ask-echma-label">
+              <FemaleArchitectIcon size={16} strokeWidth={2} />
+              <span>{isEvaluatingAi ? 'Analyzing...' : 'Ask Echma'}</span>
+            </span>
+          </button>
+        )}
 
         <div className="meet-ctrl-divider" />
 
@@ -176,13 +171,13 @@ export function MeetingControlsDock({
           </svg>
         </button>
 
-        {/* 6. SRE Findings Drawer */}
+        {/* 6. In-call Chat Drawer */}
         <button
           type="button"
-          className={`meet-ctrl-btn ${activeSideDrawer === 'sre' ? 'selected' : ''}`}
-          onClick={() => onToggleSideDrawer('sre')}
-          title="Show architectural findings"
-          aria-label="Findings drawer"
+          className={`meet-ctrl-btn ${activeSideDrawer === 'chat' ? 'selected' : ''}`}
+          onClick={() => onToggleSideDrawer('chat')}
+          title="Chat with everyone and Echma"
+          aria-label="In-call chat"
         >
           <svg
             viewBox="0 0 24 24"
@@ -196,30 +191,7 @@ export function MeetingControlsDock({
           </svg>
         </button>
 
-        {/* 7. Exit Fullscreen to Float */}
-        <button
-          type="button"
-          className="meet-ctrl-btn"
-          onClick={onMinimizeToFloat}
-          title="Minimize back to float window"
-          aria-label="Exit fullscreen"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="18"
-            height="18"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <polyline points="4 14 10 14 10 20" />
-            <polyline points="20 10 14 10 14 4" />
-            <line x1="14" y1="10" x2="21" y2="3" />
-            <line x1="3" y1="21" x2="10" y2="14" />
-          </svg>
-        </button>
-
-        {/* 8. Call End Button */}
+        {/* 7. Call End Button */}
         <button
           type="button"
           className="meet-ctrl-btn end-call"
