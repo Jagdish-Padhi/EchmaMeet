@@ -390,7 +390,7 @@ export function App() {
 
   const handleExportRfc = () => {
     const rfcMarkdown = [
-      `# ChaosBoard Architecture Resilience RFC`,
+      `# EchmaMeet Architecture Resilience RFC`,
       `**Room / Topology**: ${board.name} (\`${board.id}\`)`,
       `**Date**: ${new Date().toISOString().slice(0, 10)}`,
       `**Entry Node**: \`${board.entryNodeId}\``,
@@ -417,7 +417,7 @@ export function App() {
             .join('\n'),
       '',
       `## Verification & Proof`,
-      `Generated via ChaosBoard Autonomous Resilience Engine (Meta Global AI Hackathon).`,
+      `Generated via EchmaMeet Autonomous Resilience Engine (Meta Global AI Hackathon).`,
     ].join('\n');
 
     void navigator.clipboard.writeText(rfcMarkdown);
