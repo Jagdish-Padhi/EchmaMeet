@@ -40,6 +40,7 @@ async function main(): Promise<void> {
     partnerBaseUrl: settings.partnerBaseUrl,
     partnerApiKey: settings.partnerApiKey,
     partnerModelId: settings.partnerModelId,
+    aiProvider: settings.aiProvider,
     authConfig: {
       jwtSecret: settings.jwtSecret,
       jwtExpiresIn: settings.jwtExpiresIn,

@@ -16,6 +16,7 @@ describe('loadSettings', () => {
       partnerBaseUrl: 'http://127.0.0.1:8000/v1',
       partnerApiKey: '',
       partnerModelId: 'meta-models/muse-spark-open-1026',
+      aiProvider: 'mock',
       jwtSecret: 'chaosboard-default-jwt-secret-replace-in-production-2026',
       jwtExpiresIn: 1209600,
       googleClientId: '',
@@ -60,5 +61,21 @@ describe('loadSettings', () => {
 
   it('ignores unrelated environment variables', () => {
     expect(() => loadSettings({ PATH: '/usr/bin', HOME: '/root' })).not.toThrow();
+  });
+
+  it('rejects inconsistent AI provider and endpoint combinations', () => {
+    expect(() =>
+      loadSettings({
+        AI_PROVIDER: 'meta',
+        PARTNER_BASE_URL: 'https://api.groq.com/openai/v1',
+      }),
+    ).toThrow(ConfigError);
+
+    expect(() =>
+      loadSettings({
+        AI_PROVIDER: 'groq',
+        PARTNER_BASE_URL: 'https://api.meta.ai/v1',
+      }),
+    ).toThrow(ConfigError);
   });
 });

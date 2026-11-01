@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, it, expect, afterEach } from 'vitest';
 import { buildApp } from '../src/app';
 import { moduleMigrations } from '../src/module-migrations';
+import { DEMO_AUTH_TOKEN } from '../src/platform/auth';
 import { IN_MEMORY, openDatabase, type SqlDatabase } from '../src/platform/db';
 import { createLogger } from '../src/platform/logging';
 import { runMigrations } from '../src/platform/migrations';
@@ -53,6 +54,16 @@ describe('Repair agent and orchestration integration', { timeout: 180_000 }, () 
       database: db,
       model: options?.model,
     });
+    const origInject = app.inject.bind(app);
+    app.inject = ((opt: unknown) => {
+      const opts: Record<string, unknown> =
+        typeof opt === 'string' ? { url: opt } : { ...(opt as Record<string, unknown>) };
+      opts['headers'] = {
+        authorization: `Bearer ${DEMO_AUTH_TOKEN}`,
+        ...((opts['headers'] as Record<string, string>) || {}),
+      };
+      return origInject(opts as any);
+    }) as any;
     closers.push(() => app.close());
     closers.push(() => {
       try {

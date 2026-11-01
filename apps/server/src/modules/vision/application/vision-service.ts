@@ -27,76 +27,31 @@ export class VisionService {
     const header = this.ports.imageDecoder.inspectHeader(buffer);
     const mimeType = request.mimeType ?? `image/${header.format}`;
 
-    // Attempt vision model call if available
-    if (this.ports.visionModel) {
-      try {
-        const result = await this.ports.visionModel.extractTopologyFromImage(
-          request.imageBase64,
-          mimeType,
-        );
-        // Verify extracted draft through topology normalization
-        this.validateDraftThroughTopology(result.data);
-        return result.data;
-      } catch {
-        // Fall back to deterministic architectural extraction if model is unavailable
-      }
+    if (!this.ports.visionModel) {
+      throw new AppError(
+        'unavailable',
+        'vision_model_not_configured',
+        'Vision extraction requires an active vision model provider (e.g. Meta Llama 3.2 Vision). Please configure PARTNER_API_KEY.',
+      );
     }
 
-    // Deterministic fallback extractor for hand-drawn architecture diagrams
-    const fallbackDraft: VisionExtraction = {
-      nodes: [
-        {
-          id: 'client',
-          label: 'Client Gateway',
-          kind: 'service',
-          confidence: 0.92,
-          box: { x: 0.1, y: 0.35, width: 0.22, height: 0.16 },
-        },
-        {
-          id: 'backend',
-          label: 'Backend Service',
-          kind: 'service',
-          confidence: 0.85,
-          box: { x: 0.45, y: 0.35, width: 0.22, height: 0.16 },
-        },
-        {
-          id: 'database',
-          label: 'Database Ledger',
-          kind: 'ledger_sink',
-          confidence: 0.78,
-          box: { x: 0.75, y: 0.35, width: 0.2, height: 0.16 },
-        },
-      ],
-      edges: [
-        {
-          id: 'edge-client-backend',
-          sourceLabel: 'Client Gateway',
-          targetLabel: 'Backend Service',
-          confidence: 0.89,
-          polyline: [
-            [0.32, 0.43],
-            [0.45, 0.43],
-          ],
-        },
-        {
-          id: 'edge-backend-database',
-          sourceLabel: 'Backend Service',
-          targetLabel: 'Database Ledger',
-          confidence: 0.84,
-          polyline: [
-            [0.67, 0.43],
-            [0.75, 0.43],
-          ],
-        },
-      ],
-      ambiguities: ['Backend Service queue policy inferred from box annotation.'],
-      warnings: [
-        'Extracted via deterministic fallback detector; confirm topology before starting experiment.',
-      ],
-    };
-
-    this.validateDraftThroughTopology(fallbackDraft);
-    return fallbackDraft;
+    try {
+      const result = await this.ports.visionModel.extractTopologyFromImage(
+        request.imageBase64,
+        mimeType,
+      );
+      this.validateDraftThroughTopology(result.data);
+      return result.data;
+    } catch (err) {
+      if (err instanceof AppError) {
+        throw err;
+      }
+      throw new AppError(
+        'internal',
+        'vision_extraction_failed',
+        `Vision extraction failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 
   confirmDraft(draft: TopologyDraft): Topology {

@@ -185,6 +185,7 @@ export function App() {
   const { remoteReviewers, broadcastCursor } = useCollaborationPresence(
     currentReviewer,
     board.selectedNodeId,
+    meetingRoomCode,
   );
 
   // Meeting Room SRE Watcher

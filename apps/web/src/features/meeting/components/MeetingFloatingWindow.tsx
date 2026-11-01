@@ -193,9 +193,22 @@ export function MeetingFloatingWindow({
         {remoteReviewers.length > 0 ? (
           remoteReviewers.slice(0, 1).map((peer) => (
             <div key={peer.userId} className="pip-tile tile-peer">
-              <div className="pip-avatar-wrap">
-                <span className="pip-avatar-text">{peer.avatar || 'SRE'}</span>
-              </div>
+              {peer.stream ? (
+                <video
+                  ref={(el) => {
+                    if (el && peer.stream && el.srcObject !== peer.stream) {
+                      el.srcObject = peer.stream;
+                    }
+                  }}
+                  autoPlay
+                  playsInline
+                  className="pip-camera-video"
+                />
+              ) : (
+                <div className="pip-avatar-wrap">
+                  <span className="pip-avatar-text">{peer.avatar || 'SRE'}</span>
+                </div>
+              )}
               <div className="pip-tile-meta">
                 <span className="pip-tile-name">{peer.name}</span>
               </div>

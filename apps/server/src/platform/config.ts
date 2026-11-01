@@ -12,6 +12,7 @@ const settingsSchema = z.strictObject({
   PARTNER_BASE_URL: z.string().default('http://127.0.0.1:8000/v1'),
   PARTNER_API_KEY: z.string().default(''),
   PARTNER_MODEL_ID: z.string().default('meta-models/muse-spark-open-1026'),
+  AI_PROVIDER: z.enum(['meta', 'groq', 'openai', 'mock', 'auto']).default('auto'),
   JWT_SECRET: z.string().default('chaosboard-default-jwt-secret-replace-in-production-2026'),
   JWT_EXPIRES_IN: z.coerce.number().int().min(60).default(1209600),
   GOOGLE_CLIENT_ID: z.string().default(''),
@@ -32,6 +33,7 @@ export interface Settings {
   readonly partnerBaseUrl: string;
   readonly partnerApiKey: string;
   readonly partnerModelId: string;
+  readonly aiProvider: 'meta' | 'groq' | 'openai' | 'mock';
   readonly jwtSecret: string;
   readonly jwtExpiresIn: number;
   readonly googleClientId: string;
@@ -66,6 +68,20 @@ export function loadSettings(env: Readonly<Record<string, string | undefined>>):
     }
   }
 
+  // Support AI_* environment variable aliases
+  if (env['AI_PROVIDER'] && !picked['AI_PROVIDER']) {
+    picked['AI_PROVIDER'] = env['AI_PROVIDER'];
+  }
+  if (env['AI_BASE_URL'] && !picked['PARTNER_BASE_URL']) {
+    picked['PARTNER_BASE_URL'] = env['AI_BASE_URL'];
+  }
+  if (env['AI_API_KEY'] && !picked['PARTNER_API_KEY']) {
+    picked['PARTNER_API_KEY'] = env['AI_API_KEY'];
+  }
+  if (env['AI_MODEL_ID'] && !picked['PARTNER_MODEL_ID']) {
+    picked['PARTNER_MODEL_ID'] = env['AI_MODEL_ID'];
+  }
+
   // Smart auto-detection for free testing vs Meta production credits:
   const groqApiKey = env['GROQ_API_KEY']?.trim();
   const metaApiKey = env['META_API_KEY']?.trim();
@@ -84,6 +100,24 @@ export function loadSettings(env: Readonly<Record<string, string | undefined>>):
     }
   }
 
+  // Cross-validation for provider vs endpoint to prevent silent mismatched endpoints
+  const explicitProvider = picked['AI_PROVIDER'];
+  if (explicitProvider === 'meta') {
+    if (picked['PARTNER_BASE_URL']?.includes('groq.com')) {
+      throw new ConfigError(
+        'Inconsistent AI configuration: AI_PROVIDER is "meta" but PARTNER_BASE_URL points to groq.com.',
+        ['AI_PROVIDER', 'PARTNER_BASE_URL'],
+      );
+    }
+  } else if (explicitProvider === 'groq') {
+    if (picked['PARTNER_BASE_URL']?.includes('meta.ai') || picked['PARTNER_BASE_URL']?.includes('meta.com')) {
+      throw new ConfigError(
+        'Inconsistent AI configuration: AI_PROVIDER is "groq" but PARTNER_BASE_URL points to Meta endpoint.',
+        ['AI_PROVIDER', 'PARTNER_BASE_URL'],
+      );
+    }
+  }
+
   const parsed = settingsSchema.safeParse(picked);
   if (!parsed.success) {
     const variables = parsed.error.issues.map((issue) => String(issue.path[0] ?? 'unknown'));
@@ -92,6 +126,19 @@ export function loadSettings(env: Readonly<Record<string, string | undefined>>):
     );
     throw new ConfigError(`Invalid configuration. ${lines.join('; ')}`, variables);
   }
+
+  // Determine effective provider
+  let resolvedProvider: 'meta' | 'groq' | 'openai' | 'mock' = 'mock';
+  if (parsed.data.AI_PROVIDER !== 'auto') {
+    resolvedProvider = parsed.data.AI_PROVIDER;
+  } else if (parsed.data.PARTNER_BASE_URL.includes('groq.com') || (groqApiKey && !metaApiKey)) {
+    resolvedProvider = 'groq';
+  } else if (parsed.data.PARTNER_BASE_URL.includes('openai.com')) {
+    resolvedProvider = 'openai';
+  } else if (parsed.data.PARTNER_API_KEY) {
+    resolvedProvider = 'meta';
+  }
+
   return {
     nodeEnv: parsed.data.NODE_ENV,
     host: parsed.data.SERVER_HOST,
@@ -104,6 +151,7 @@ export function loadSettings(env: Readonly<Record<string, string | undefined>>):
     partnerBaseUrl: parsed.data.PARTNER_BASE_URL,
     partnerApiKey: parsed.data.PARTNER_API_KEY,
     partnerModelId: parsed.data.PARTNER_MODEL_ID,
+    aiProvider: resolvedProvider,
     jwtSecret: parsed.data.JWT_SECRET,
     jwtExpiresIn: parsed.data.JWT_EXPIRES_IN,
     googleClientId: parsed.data.GOOGLE_CLIENT_ID,

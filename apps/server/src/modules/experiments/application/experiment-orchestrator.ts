@@ -204,8 +204,6 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
       trials: request.trialConfig.trials,
     });
 
-    let terminalEvent: { type: RunEventType; payload: Record<string, unknown> } | null = null;
-
     try {
       const plan = this.sandbox.allocateNetworkPlan(request.topology, {
         baseNodePort: 24000,
@@ -421,6 +419,15 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
 
       const overallStatus = this.measurement.computeOverallStatus(verdicts);
 
+      emit('experiment_finished', {
+        overallStatus,
+        verdicts: verdicts.map((v) => ({
+          invariantId: v.invariantId,
+          status: v.status,
+          reason: v.reason,
+        })),
+      });
+
       this.runs.updateRunStatus(runId, 'completed', {
         finishedAt: new Date().toISOString(),
         baselineAggregate,
@@ -428,35 +435,23 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
         verdicts,
         overallStatus,
       });
-
-      terminalEvent = {
-        type: 'experiment_finished',
-        payload: {
-          overallStatus,
-          verdicts: verdicts.map((v) => ({
-            invariantId: v.invariantId,
-            status: v.status,
-            reason: v.reason,
-          })),
-        },
-      };
     } catch (err: unknown) {
       const isCancelled = exec.isCancelled() || err instanceof CancelledError;
 
       const finishedAt = new Date().toISOString();
       if (isCancelled) {
+        emit('experiment_cancelled', { reason: 'User cancellation' });
         this.runs.updateRunStatus(runId, 'cancelled', {
           finishedAt,
           errorMessage: 'Experiment was cancelled by user.',
         });
-        terminalEvent = { type: 'experiment_cancelled', payload: { reason: 'User cancellation' } };
       } else {
         const errorMsg = err instanceof Error ? err.message : String(err);
+        emit('experiment_failed', { error: errorMsg });
         this.runs.updateRunStatus(runId, 'failed', {
           finishedAt,
           errorMessage: errorMsg,
         });
-        terminalEvent = { type: 'experiment_failed', payload: { error: errorMsg } };
       }
     } finally {
       if (exec.activeLoadgen && exec.activeLoadgen.isRunning()) {
@@ -468,10 +463,6 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
       }
       this.lock.release(runId);
       this.activeExecutions.delete(runId);
-
-      if (terminalEvent) {
-        emit(terminalEvent.type, terminalEvent.payload);
-      }
     }
   }
 }

@@ -19,13 +19,47 @@ describe('VisionService application', () => {
     normalizeTopologyDraft,
   });
 
-  it('extracts draft via fallback detector when model is not provided', async () => {
+  it('throws vision_model_not_configured when vision model is not provided', async () => {
     const fakeBase64 = Buffer.from('fake-image-bytes-header-89PNG').toString('base64');
-    const extraction = await service.extractDraft({ imageBase64: fakeBase64 });
+    await expect(service.extractDraft({ imageBase64: fakeBase64 })).rejects.toThrow(
+      /Vision extraction requires an active vision model provider/,
+    );
+  });
 
-    expect(extraction.nodes.length).toBeGreaterThanOrEqual(2);
-    expect(extraction.edges.length).toBeGreaterThanOrEqual(1);
-    expect(extraction.warnings.length).toBeGreaterThanOrEqual(1);
+  it('extracts draft via vision model when provided', async () => {
+    const mockModelService = new VisionService({
+      imageDecoder: fakeDecoder,
+      normalizeTopologyDraft,
+      visionModel: {
+        extractTopologyFromImage: async () => ({
+          data: {
+            nodes: [
+              { id: 'web-gateway', label: 'Web Gateway', kind: 'service', confidence: 0.95 },
+              { id: 'auth-service', label: 'Auth Service', kind: 'service', confidence: 0.9 },
+            ],
+            edges: [
+              { id: 'e1', sourceLabel: 'Web Gateway', targetLabel: 'Auth Service', confidence: 0.88 },
+            ],
+            ambiguities: [],
+            warnings: [],
+          },
+          rawOutput: '{}',
+          metadata: {
+            provider: 'meta_vision',
+            modelId: 'llama-3.2-11b-vision',
+            promptVersion: 'v1',
+            latencyMs: 120,
+          },
+        }),
+      },
+    });
+
+    const fakeBase64 = Buffer.from('fake-image-bytes-header-89PNG').toString('base64');
+    const extraction = await mockModelService.extractDraft({ imageBase64: fakeBase64 });
+
+    expect(extraction.nodes).toHaveLength(2);
+    expect(extraction.edges).toHaveLength(1);
+    expect(extraction.nodes[0]?.label).toBe('Web Gateway');
   });
 
   it('confirms draft through topology normalization', () => {

@@ -4,7 +4,12 @@ import { createRunsService, registerRunsRoutes } from './modules/runs';
 import { createChaosService } from './modules/chaos';
 import { createMeasurementService } from './modules/measurement';
 import { createExperimentOrchestrator, registerExperimentRoutes } from './modules/experiments';
-import { OpenAiCompatibleAdapter, type StructuredModelPort } from './modules/meta-ai';
+import {
+  OpenAiCompatibleAdapter,
+  OpenAiVisionAdapter,
+  registerMetaAiRoutes,
+  type StructuredModelPort,
+} from './modules/meta-ai';
 import { createRepairOrchestrator, registerRepairRoutes } from './modules/repair';
 import { createBenchmarkModule } from './modules/benchmarks';
 import {
@@ -31,6 +36,7 @@ export interface AppDependencies {
   readonly partnerBaseUrl?: string | undefined;
   readonly partnerApiKey?: string | undefined;
   readonly partnerModelId?: string | undefined;
+  readonly aiProvider?: string | undefined;
   readonly authConfig?: AuthConfig | undefined;
 }
 
@@ -46,6 +52,7 @@ export function buildApp({
   partnerBaseUrl = 'http://127.0.0.1:8000/v1',
   partnerApiKey = '',
   partnerModelId = 'meta-models/muse-spark-open-1026',
+  aiProvider,
   authConfig,
 }: AppDependencies): FastifyInstance {
   const baseLogger: FastifyBaseLogger = logger;
@@ -79,6 +86,14 @@ export function buildApp({
       modelId: partnerModelId,
     });
 
+  registerMetaAiRoutes(app, {
+    modelClient,
+    provider: aiProvider ?? 'auto',
+    modelId: partnerModelId,
+    baseUrl: partnerBaseUrl,
+    hasApiKey: Boolean(partnerApiKey),
+  });
+
   const repairOrchestrator = createRepairOrchestrator({
     experiments: experimentOrchestrator,
     runs: runsService,
@@ -94,12 +109,20 @@ export function buildApp({
   });
   benchmarks.registerRoutes(app);
 
+  const visionModel = partnerApiKey
+    ? new OpenAiVisionAdapter({
+        baseUrl: partnerBaseUrl,
+        apiKey: partnerApiKey,
+      })
+    : undefined;
+
   const visionService = new VisionService({
     imageDecoder: {
       inspectHeader: inspectImageHeader,
       decodePixels: decodePngRgba,
     },
     normalizeTopologyDraft,
+    visionModel,
   });
   registerVisionRoutes(app, visionService);
 

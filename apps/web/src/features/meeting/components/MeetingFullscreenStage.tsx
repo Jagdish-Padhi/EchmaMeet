@@ -261,9 +261,22 @@ export function MeetingFullscreenStage({
               key={reviewer.userId}
               className={`meet-tile meet-tile-peer ${reviewer.isSpeaking ? 'speaking' : ''}`}
             >
-              <div className="meet-avatar-wrap large peer">
-                <span className="meet-avatar-initials">{reviewer.avatar || 'SRE'}</span>
-              </div>
+              {reviewer.stream ? (
+                <video
+                  ref={(el) => {
+                    if (el && reviewer.stream && el.srcObject !== reviewer.stream) {
+                      el.srcObject = reviewer.stream;
+                    }
+                  }}
+                  autoPlay
+                  playsInline
+                  className="meet-camera-video"
+                />
+              ) : (
+                <div className="meet-avatar-wrap large peer">
+                  <span className="meet-avatar-initials">{reviewer.avatar || 'SRE'}</span>
+                </div>
+              )}
               <div className="meet-tile-footer">
                 <div className="meet-tile-user-info">
                   <span className="meet-tile-name">{reviewer.name}</span>

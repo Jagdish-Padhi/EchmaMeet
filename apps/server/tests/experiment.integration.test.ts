@@ -45,7 +45,8 @@ describe('Experiment orchestration and storage integration', () => {
     const app = buildApp({ logger, database });
     const origInject = app.inject.bind(app);
     app.inject = ((opt: unknown) => {
-      const opts = typeof opt === 'string' ? { url: opt } : { ...(opt as Record<string, unknown>) };
+      const opts: Record<string, unknown> =
+        typeof opt === 'string' ? { url: opt } : { ...(opt as Record<string, unknown>) };
       opts['headers'] = {
         authorization: `Bearer ${DEMO_AUTH_TOKEN}`,
         ...((opts['headers'] as Record<string, string>) || {}),

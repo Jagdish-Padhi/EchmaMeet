@@ -9,6 +9,7 @@ import {
 } from '@chaosboard/contracts';
 import { buildApp } from '../src/app';
 import { moduleMigrations } from '../src/module-migrations';
+import { DEMO_AUTH_TOKEN } from '../src/platform/auth';
 import { IN_MEMORY, openDatabase, type SqlDatabase } from '../src/platform/db';
 import { createLogger } from '../src/platform/logging';
 import { runMigrations } from '../src/platform/migrations';
@@ -33,6 +34,16 @@ describe('Reporting HTTP API Integration', () => {
     const database: SqlDatabase = openDatabase(IN_MEMORY);
     runMigrations(database, moduleMigrations, systemClock);
     const app = buildApp({ logger, database });
+    const origInject = app.inject.bind(app);
+    app.inject = ((opt: unknown) => {
+      const opts: Record<string, unknown> =
+        typeof opt === 'string' ? { url: opt } : { ...(opt as Record<string, unknown>) };
+      opts['headers'] = {
+        authorization: `Bearer ${DEMO_AUTH_TOKEN}`,
+        ...((opts['headers'] as Record<string, string>) || {}),
+      };
+      return origInject(opts as any);
+    }) as any;
     closers.push(() => app.close());
     closers.push(() => {
       try {

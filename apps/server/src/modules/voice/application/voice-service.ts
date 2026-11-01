@@ -32,13 +32,42 @@ export class VoiceService implements VoiceServiceContract {
           transcript = res.transcript;
           transcriptLatencyMs = res.latencyMs;
         } catch {
-          // If speech provider fails, proceed with empty or error transcript
+          // If speech provider fails, proceed with empty transcript
           transcript = '';
         }
       } else {
-        // Fallback for direct short audio utterance when model is not configured
-        transcript = 'run experiment';
-        transcriptLatencyMs = 120;
+        // Attempt live Whisper transcription if an API key is present
+        const partnerKey =
+          process.env['PARTNER_API_KEY'] ||
+          process.env['GROQ_API_KEY'] ||
+          process.env['OPENAI_API_KEY'];
+        const baseUrl = process.env['PARTNER_BASE_URL'] || 'https://api.groq.com/openai/v1';
+
+        if (partnerKey) {
+          const start = Date.now();
+          try {
+            const formData = new FormData();
+            const blob = new Blob([buffer], { type: 'audio/webm' });
+            formData.append('file', blob, 'audio.webm');
+            formData.append(
+              'model',
+              baseUrl.includes('groq') ? 'whisper-large-v3-turbo' : 'whisper-1',
+            );
+            const res = await fetch(`${baseUrl.replace(/\/$/, '')}/audio/transcriptions`, {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${partnerKey}` },
+              body: formData,
+              signal: AbortSignal.timeout(8000),
+            });
+            if (res.ok) {
+              const data = (await res.json()) as { text?: string };
+              transcript = data.text?.trim() ?? '';
+              transcriptLatencyMs = Date.now() - start;
+            }
+          } catch {
+            transcript = '';
+          }
+        }
       }
     }
 
