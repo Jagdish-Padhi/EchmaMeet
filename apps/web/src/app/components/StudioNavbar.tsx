@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { NodeKind, Topology } from '@chaosboard/contracts';
 import { Button } from '../../components/ui/Button';
+import { EchmaLogo } from '../../components/ui/EchmaLogo';
 import { MeetingsDropdown } from '../../features/meeting';
 import type { RemoteReviewer } from '../../features/meeting/useCollaborationPresence';
 import {
@@ -98,23 +99,9 @@ export function StudioNavbar({
           type="button"
           className="navbar-brand-btn"
           onClick={() => setView('landing')}
-          title="ChaosBoard Distributed Architecture Studio"
+          title="EchmaMeet Architecture Review & Resilience Studio"
         >
-          <svg
-            viewBox="0 0 24 24"
-            width="20"
-            height="20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <circle cx="12" cy="12" r="3" fill="#0082fb" />
-            <path d="M12 2v7m0 6v7M2 12h7m6 0h7" stroke="#0082fb" />
-            <circle cx="12" cy="2" r="1.5" fill="#38bdf8" />
-            <circle cx="12" cy="22" r="1.5" fill="#38bdf8" />
-            <circle cx="2" cy="12" r="1.5" fill="#38bdf8" />
-            <circle cx="22" cy="12" r="1.5" fill="#38bdf8" />
-          </svg>
+          <EchmaLogo size={22} />
         </button>
       </div>
 
