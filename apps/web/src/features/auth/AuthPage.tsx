@@ -313,7 +313,7 @@ export function AuthPage({
               <p className="auth-form-subtitle">
                 {isLogin
                   ? 'Enter your credentials to access your architecture workspace'
-                  : 'Join Resilio to design, chaos-test, and auto-repair systems'}
+                  : 'Join EchmaMeet to design, chaos-test, and auto-repair systems'}
               </p>
             </div>
 
