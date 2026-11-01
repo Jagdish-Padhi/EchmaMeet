@@ -86,8 +86,10 @@ export function ToastProvider({ children }: { readonly children: ReactNode }) {
       }
     };
 
+    window.addEventListener('echmameet:toast', handleGlobalToast);
     window.addEventListener('resilio:toast', handleGlobalToast);
     return () => {
+      window.removeEventListener('echmameet:toast', handleGlobalToast);
       window.removeEventListener('resilio:toast', handleGlobalToast);
     };
   }, [showToast]);

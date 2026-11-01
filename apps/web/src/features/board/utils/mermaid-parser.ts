@@ -152,7 +152,7 @@ function parseNodeDecl(token: string): RawNodeDef | null {
 }
 
 /**
- * Parse standard Mermaid architecture flowchart syntax into Resilio board topology
+ * Parse standard Mermaid architecture flowchart syntax into EchmaMeet board topology
  */
 export function parseMermaidArchitecture(mermaidCode: string): MermaidParseResult {
   const lines = mermaidCode
