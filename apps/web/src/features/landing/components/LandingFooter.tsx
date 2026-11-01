@@ -10,7 +10,6 @@ export function LandingFooter({ onLaunchStudio, onAuthAction }: LandingFooterPro
     <>
       <section className="landing-cta-banner-wrap">
         <div className="landing-cta-banner">
-          <div className="cta-ambient-glow" aria-hidden="true" />
           <h2 className="cta-banner-title">Stop Debating Architecture in the Dark.</h2>
           <p className="cta-banner-desc">
             Run your next architecture review in EchmaMeet. Join on voice, test live chaos, and let
@@ -27,13 +26,6 @@ export function LandingFooter({ onLaunchStudio, onAuthAction }: LandingFooterPro
             >
               Sign Up for Free
             </button>
-          </div>
-          <div className="cta-sub-assurance">
-            <span>Zero credit card required</span>
-            <span>&bull;</span>
-            <span>Instant browser access</span>
-            <span>&bull;</span>
-            <span>SOC-2 Type II Certified</span>
           </div>
         </div>
       </section>
@@ -111,10 +103,10 @@ export function LandingFooter({ onLaunchStudio, onAuthAction }: LandingFooterPro
               <h4 className="footer-col-title">Trust &amp; Legal</h4>
               <ul className="footer-col-links">
                 <li>
-                  <a href="#pricing">Security &amp; Privacy</a>
+                  <a href="#pricing">Security Architecture</a>
                 </li>
                 <li>
-                  <a href="#pricing">SOC-2 Type II Certified</a>
+                  <a href="#pricing">Compliance Standards</a>
                 </li>
                 <li>
                   <a href="#pricing">Privacy Policy</a>
@@ -131,9 +123,7 @@ export function LandingFooter({ onLaunchStudio, onAuthAction }: LandingFooterPro
               &copy; 2026 EchmaMeet Technologies Inc. All rights reserved.
             </span>
             <div className="footer-compliance-badges">
-              <span>SOC-2 Type II Certified</span>
-              <span>&bull;</span>
-              <span>Encrypted TLS 1.3</span>
+              <span>End-to-End Encrypted (TLS 1.3)</span>
             </div>
           </div>
         </div>

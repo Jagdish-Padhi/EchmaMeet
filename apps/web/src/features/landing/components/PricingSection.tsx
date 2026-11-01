@@ -81,7 +81,7 @@ export function PricingSection({
                 <span>&#10003;</span> Dark and light theme support
               </li>
               <li>
-                <span>&#10003;</span> Free forever, no credit card required
+                <span>&#10003;</span> Community support &amp; templates
               </li>
             </ul>
           </div>

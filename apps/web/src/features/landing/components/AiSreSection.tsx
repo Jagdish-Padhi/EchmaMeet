@@ -15,7 +15,6 @@ export function AiSreSection() {
 
       <div className="features-split-grid">
         <div className="feature-interactive-card">
-          <div className="card-ambient-aura" aria-hidden="true" />
           <div className="agentic-bubble-header">
             <div className="agentic-avatar">
               <span className="ai-agent-pulse-ring" />
