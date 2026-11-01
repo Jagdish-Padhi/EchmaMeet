@@ -151,6 +151,15 @@ export function useExperimentSession(api: ApiClient, currentTopology: Topology |
 
   const startExperiment = useCallback(
     async (topology: Topology) => {
+      if (!topology || !topology.nodes || topology.nodes.length === 0) {
+        setState((prev) => ({
+          ...prev,
+          status: 'failed',
+          errorMessage: 'Cannot simulate an empty canvas. Add at least one service to start testing.',
+        }));
+        return;
+      }
+
       if (sseSubRef.current) {
         sseSubRef.current.close();
       }

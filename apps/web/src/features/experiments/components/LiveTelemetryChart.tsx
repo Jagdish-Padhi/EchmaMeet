@@ -18,25 +18,28 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
   if (telemetry.length === 0) {
     const isSimulating = currentTrial > 0;
     return (
-      <Card title="Live Telemetry">
+      <Card title="Live Telemetry: Tail Latency & Error Rate" className="telemetry-card">
         <div className="empty-chart-state">
           {isSimulating ? (
             <>
               <div className="telemetry-measuring-row">
                 <span className="agentic-pulse-spinner" />
-                <p style={{ margin: 0 }}>Collecting trial measurements...</p>
+                <p style={{ margin: 0, fontWeight: 600 }}>Collecting trial measurements...</p>
               </div>
               <span className="subtext">
-                Executing trial {String(currentTrial)} of {String(totalTrials)}. Latency and error
-                curves will plot as trials complete.
+                Executing trial {String(currentTrial)} of {String(totalTrials)}. Real-time tail latency and error curves will plot as trials complete.
               </span>
             </>
           ) : (
             <>
-              <p>Ready to measure latency and throughput.</p>
+              <div className="empty-chart-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--color-text-dim)" strokeWidth="1.8">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+              </div>
+              <p style={{ fontWeight: 600, margin: '6px 0 2px' }}>Awaiting Simulation Run</p>
               <span className="subtext">
-                Click &ldquo;Run Simulation&rdquo; above to benchmark this architecture under
-                traffic.
+                Start a resilience simulation to stream live p99 tail latency and error metrics over baseline and fault trials.
               </span>
             </>
           )}
@@ -52,11 +55,11 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
   const maxLatency = Math.max(100, ...p99Values, 200);
 
   const width = 540;
-  const height = 200;
-  const paddingLeft = 45;
-  const paddingRight = 45;
-  const paddingTop = 25;
-  const paddingBottom = 35;
+  const height = 190;
+  const paddingLeft = 46;
+  const paddingRight = 46;
+  const paddingTop = 20;
+  const paddingBottom = 32;
 
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
@@ -69,7 +72,7 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
     const latencyVal = pt.p99LatencyMs ?? 0;
     const yLatency = paddingTop + chartHeight - (latencyVal / maxLatency) * chartHeight;
 
-    const errorRateVal = pt.errorRate ?? 0; // 0.0 to 1.0 (0% to 100%)
+    const errorRateVal = pt.errorRate ?? 0;
     const yError = paddingTop + chartHeight - Math.min(1, Math.max(0, errorRateVal)) * chartHeight;
 
     return {
@@ -93,53 +96,59 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
 
   const hoveredPoint = hoveredIdx !== null ? points[hoveredIdx] : null;
 
+  // KPI Quick Stats
+  const latestPt = points[points.length - 1];
+  const peakLatency = p99Values.length > 0 ? Math.max(...p99Values) : 0;
+  const peakError = Math.max(...telemetry.map((t) => (t.errorRate ?? 0) * 100));
+
   return (
     <Card
       title="Live Telemetry: Tail Latency & Error Rate"
       actions={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span className="metric-pill">
             Trial {String(currentTrial)}/{String(totalTrials)}
           </span>
         </div>
       }
+      className="telemetry-card"
     >
-      {/* Chart Legend */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          fontSize: 11,
-          marginBottom: 8,
-          color: 'var(--color-text-muted)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span
-            style={{
-              width: 12,
-              height: 3,
-              background: 'var(--color-accent)',
-              borderRadius: 2,
-            }}
-          />
-          <span style={{ color: 'var(--color-accent)', fontWeight: 600 }}>p99 Latency (ms)</span>
+      {/* 1. High-Density Telemetry KPI Stat Strip */}
+      <div className="telemetry-stats-bar">
+        <div className="telemetry-stat-box">
+          <span className="stat-label">Latest p99</span>
+          <span className="stat-value cyan">{latestPt ? `${Math.round(latestPt.latency)}ms` : '—'}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span
-            style={{
-              width: 12,
-              height: 2,
-              background: '#f43f5e',
-              borderTop: '2px dashed #f43f5e',
-            }}
-          />
-          <span style={{ color: '#f87171', fontWeight: 600 }}>Error Rate (%)</span>
+        <div className="telemetry-stat-box">
+          <span className="stat-label">Peak p99</span>
+          <span className="stat-value">{peakLatency > 0 ? `${Math.round(peakLatency)}ms` : '—'}</span>
+        </div>
+        <div className="telemetry-stat-box">
+          <span className="stat-label">Peak Error</span>
+          <span className={`stat-value ${peakError > 0 ? 'rose' : ''}`}>
+            {peakError.toFixed(1)}%
+          </span>
+        </div>
+        <div className="telemetry-stat-box">
+          <span className="stat-label">Evaluated</span>
+          <span className="stat-value">{String(telemetry.length)} / {String(totalTrials)}</span>
         </div>
       </div>
 
-      <div className="chart-wrapper" style={{ position: 'relative' }}>
+      {/* 2. Chart Legend */}
+      <div className="telemetry-legend-row">
+        <div className="legend-item">
+          <span className="legend-indicator-line cyan" />
+          <span className="legend-text cyan">p99 Latency (ms)</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-indicator-line rose dashed" />
+          <span className="legend-text rose">Error Rate (%)</span>
+        </div>
+      </div>
+
+      {/* 3. Responsive SVG Chart */}
+      <div className="chart-wrapper">
         <svg
           viewBox={`0 0 ${String(width)} ${String(height)}`}
           className="telemetry-svg"
@@ -246,10 +255,8 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
           {/* Data Points */}
           {points.map((pt, i) => (
             <g key={String(i)} onMouseEnter={() => setHoveredIdx(i)} style={{ cursor: 'pointer' }}>
-              {/* Invisible wide hit area */}
               <circle cx={pt.x} cy={pt.yLatency} r={14} fill="transparent" />
 
-              {/* Latency Point */}
               <circle
                 cx={pt.x}
                 cy={pt.yLatency}
@@ -259,7 +266,6 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
                 strokeWidth={2}
               />
 
-              {/* Error Rate Point */}
               <circle
                 cx={pt.x}
                 cy={pt.yError}
@@ -269,7 +275,6 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
                 strokeWidth={1.5}
               />
 
-              {/* Trial number on X-axis */}
               <text
                 x={pt.x}
                 y={paddingTop + chartHeight + 18}
@@ -302,33 +307,14 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
         {/* Floating Tooltip */}
         {hoveredPoint && (
           <div
+            className="chart-hover-tooltip"
             style={{
-              position: 'absolute',
-              top: 8,
-              left: Math.min(hoveredPoint.x + 10, width - 160),
-              background: 'rgba(15, 23, 42, 0.95)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-sm)',
-              padding: '6px 10px',
-              fontSize: 11,
-              fontFamily: 'var(--font-mono)',
-              pointerEvents: 'none',
-              boxShadow: 'var(--shadow-md)',
-              zIndex: 10,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
+              left: Math.min(Math.max(10, hoveredPoint.x - 60), width - 150),
             }}
           >
-            <div style={{ color: 'var(--color-text-muted)', fontWeight: 700 }}>
-              Trial #{hoveredPoint.trialNum}
-            </div>
-            <div style={{ color: 'var(--color-accent)', fontWeight: 600 }}>
-              p99: {Math.round(hoveredPoint.latency)}ms
-            </div>
-            <div style={{ color: '#f87171', fontWeight: 600 }}>
-              Error: {hoveredPoint.errorRatePct.toFixed(1)}%
-            </div>
+            <div className="tooltip-title">Trial #{String(hoveredPoint.trialNum)}</div>
+            <div className="tooltip-row cyan">p99: {Math.round(hoveredPoint.latency)}ms</div>
+            <div className="tooltip-row rose">Error: {hoveredPoint.errorRatePct.toFixed(1)}%</div>
           </div>
         )}
       </div>

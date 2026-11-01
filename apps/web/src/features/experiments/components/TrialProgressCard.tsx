@@ -1,3 +1,4 @@
+import type { TrialConfig } from '@chaosboard/contracts';
 import { Card } from '../../../components/ui/Card';
 import { StatusPill } from '../../../components/ui/StatusPill';
 
@@ -7,6 +8,7 @@ export interface TrialProgressCardProps {
   readonly totalTrials: number;
   readonly errorMessage: string | null;
   readonly runId: string | null;
+  readonly config?: TrialConfig;
 }
 
 export function TrialProgressCard({
@@ -14,136 +16,134 @@ export function TrialProgressCard({
   currentTrial,
   totalTrials,
   errorMessage,
-  runId: _runId,
+  runId,
+  config,
 }: TrialProgressCardProps) {
-  // Agentic progress calculations
   const effectiveTrial = currentTrial === 0 && status === 'running' ? 1 : currentTrial;
   const progressPercent =
     totalTrials > 0 && status === 'running'
-      ? Math.min(100, Math.max(10, Math.round((effectiveTrial / totalTrials) * 100)))
+      ? Math.min(100, Math.max(5, Math.round((effectiveTrial / totalTrials) * 100)))
       : status === 'completed'
         ? 100
         : 0;
 
   const halfTrials = Math.ceil(totalTrials / 2);
-
-  // Dynamic agentic status phrases like top AI coding engines
-  const getAgenticDetails = () => {
-    switch (status) {
-      case 'starting':
-        return {
-          title: 'Preparing simulation environment...',
-          description: 'Spawning virtual service workers and isolated network sockets.',
-        };
-      case 'running':
-        if (currentTrial === 0) {
-          return {
-            title: 'Warming up traffic generator...',
-            description: 'Establishing socket connections and pre-heating ingress route handlers.',
-          };
-        }
-        if (currentTrial <= halfTrials) {
-          return {
-            title: `Simulating baseline load (${String(currentTrial)} of ${String(totalTrials)})...`,
-            description:
-              'Measuring steady-state throughput, error rates, and p99 latency without faults.',
-          };
-        }
-        return {
-          title: `Injecting chaos fault (${String(currentTrial)} of ${String(totalTrials)})...`,
-          description:
-            'Simulating downstream latency spikes to test timeout and circuit breaker policies.',
-        };
-      case 'completed':
-        return {
-          title: 'Simulation completed',
-          description:
-            'All baseline and failure trials finished. Real-time telemetry and verdicts recorded below.',
-        };
-      case 'cancelled':
-        return {
-          title: 'Simulation cancelled',
-          description: 'Worker processes and synthetic traffic generators cleanly torn down.',
-        };
-      case 'failed':
-        return {
-          title: 'Simulation stopped',
-          description:
-            errorMessage ?? 'An unexpected runtime error occurred during sandbox execution.',
-        };
-      case 'busy':
-        return {
-          title: 'Worker host busy',
-          description:
-            errorMessage ?? 'Another simulation is active on this host. Please wait a moment.',
-        };
-      case 'idle':
-      default:
-        return {
-          title: 'Ready for simulation',
-          description:
-            'Click "Run Simulation" in the navbar to test this architecture under load and failure.',
-        };
-    }
-  };
-
-  const agentic = getAgenticDetails();
+  const isBaselinePhase = currentTrial <= halfTrials;
 
   return (
-    <Card title="Resilience Simulation" className="agentic-simulation-card">
-      {/* Top Status & Agentic Activity Header */}
-      <div className="agentic-status-header">
-        <StatusPill status={status} />
-        <div className="agentic-action-badge">
-          {(status === 'running' || status === 'starting') && (
-            <span className="agentic-pulse-spinner" />
-          )}
-          {status === 'completed' && <span className="agentic-done-check">✓</span>}
-          <span className="agentic-action-title">{agentic.title}</span>
+    <Card
+      title="Resilience Execution"
+      actions={
+        <div className="simulation-header-actions">
+          {runId && <span className="cell-mono run-id-tag">run:{runId.slice(0, 8)}</span>}
+          <StatusPill status={status} />
         </div>
-      </div>
-
-      {/* Agentic Description Note */}
-      <p className="agentic-action-description">{agentic.description}</p>
-
-      {/* Progress Bar (Visible while running or starting) */}
+      }
+      className="agentic-simulation-card"
+    >
+      {/* 1. Active Running State */}
       {(status === 'running' || status === 'starting') && (
-        <div className="agentic-progress-container">
-          <div className="agentic-progress-meta">
-            <span className="agentic-progress-phase">
-              Phase {String(effectiveTrial)} of {String(totalTrials)}
+        <div className="execution-running-container">
+          <div className="execution-phase-banner">
+            <span className="agentic-pulse-spinner" />
+            <span className="execution-phase-title">
+              {status === 'starting'
+                ? 'Initializing Execution Sandbox...'
+                : isBaselinePhase
+                  ? `Phase 1: Baseline Calibration (Trial ${String(currentTrial)}/${String(totalTrials)})`
+                  : `Phase 2: Chaos Fault Injection (Trial ${String(currentTrial)}/${String(totalTrials)})`}
             </span>
-            <span className="agentic-progress-pct">{String(progressPercent)}%</span>
-          </div>
-          <div className="agentic-progress-track">
-            <div
-              className="agentic-progress-fill"
-              style={{ width: `${String(progressPercent)}%` }}
-            />
           </div>
 
-          {/* Stepper Pipeline */}
-          <div className="agentic-step-pipeline">
-            <span
-              className={`step-chip ${status === 'running' || status === 'starting' ? 'active' : ''}`}
-            >
-              1. Setup
-            </span>
-            <span
-              className={`step-chip ${
-                currentTrial > 0 && currentTrial <= halfTrials
-                  ? 'active'
-                  : currentTrial > halfTrials
-                    ? 'completed'
-                    : ''
-              }`}
-            >
-              2. Baseline Load
-            </span>
-            <span className={`step-chip ${currentTrial > halfTrials ? 'active' : ''}`}>
-              3. Chaos Fault
-            </span>
-            <span className="step-chip">4. Invariants</span>
+          <div className="agentic-progress-container">
+            <div className="agentic-progress-meta">
+              <span>Overall Progress</span>
+              <span className="agentic-progress-pct">{String(progressPercent)}%</span>
+            </div>
+            <div className="agentic-progress-track">
+              <div
+                className="agentic-progress-fill"
+                style={{ width: `${String(progressPercent)}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="execution-kpi-grid">
+            <div className="execution-kpi-cell">
+              <span className="kpi-label">Target Rate</span>
+              <span className="kpi-value">{String(config?.arrivalRateRps ?? 10)} RPS</span>
+            </div>
+            <div className="execution-kpi-cell">
+              <span className="kpi-label">Sample Window</span>
+              <span className="kpi-value">{String(config?.measurementMs ?? 5000)}ms</span>
+            </div>
+            <div className="execution-kpi-cell">
+              <span className="kpi-label">Current Phase</span>
+              <span className="kpi-value highlight">
+                {isBaselinePhase ? 'Steady State' : 'Fault Active'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Completed State */}
+      {status === 'completed' && (
+        <div className="execution-completed-container">
+          <div className="execution-completed-badge">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" strokeWidth="2.5">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <span>Simulation Completed</span>
+          </div>
+          <p className="execution-completed-text">
+            All {String(totalTrials)} trials recorded. Baseline steady-state and fault injection tail metrics are plotted below.
+          </p>
+          <div className="execution-kpi-grid">
+            <div className="execution-kpi-cell">
+              <span className="kpi-label">Total Trials</span>
+              <span className="kpi-value">{String(totalTrials)}</span>
+            </div>
+            <div className="execution-kpi-cell">
+              <span className="kpi-label">Load Rate</span>
+              <span className="kpi-value">{String(config?.arrivalRateRps ?? 10)} RPS</span>
+            </div>
+            <div className="execution-kpi-cell">
+              <span className="kpi-label">Window</span>
+              <span className="kpi-value">{String(config?.measurementMs ?? 5000)}ms</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Failed or Cancelled State */}
+      {(status === 'failed' || status === 'cancelled') && (
+        <div className="execution-halted-container">
+          <span className="execution-halted-title">
+            {status === 'failed' ? 'Execution Error' : 'Simulation Cancelled'}
+          </span>
+          <p className="execution-halted-message">
+            {errorMessage ?? (status === 'cancelled' ? 'Simulation stopped by user.' : 'An error occurred during execution.')}
+          </p>
+        </div>
+      )}
+
+      {/* 4. Idle Ready State */}
+      {status === 'idle' && (
+        <div className="execution-idle-container">
+          <p className="execution-idle-title">Ready for resilience simulation</p>
+          <p className="execution-idle-subtext">
+            Executes baseline calibration followed by chaos fault injection to measure p99 latency regressions and invariant violations.
+          </p>
+          <div className="execution-kpi-grid">
+            <div className="execution-kpi-cell">
+              <span className="kpi-label">Planned Trials</span>
+              <span className="kpi-value">{String(totalTrials || 6)} ({String(Math.ceil((totalTrials || 6) / 2))} base / {String(Math.floor((totalTrials || 6) / 2))} fault)</span>
+            </div>
+            <div className="execution-kpi-cell">
+              <span className="kpi-label">Configured Load</span>
+              <span className="kpi-value">{String(config?.arrivalRateRps ?? 10)} RPS</span>
+            </div>
           </div>
         </div>
       )}

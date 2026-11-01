@@ -4,6 +4,8 @@ import { Card } from '../../../components/ui/Card';
 export interface FaultConfigFormProps {
   readonly fault: Fault;
   readonly availableEdges: readonly EdgeId[];
+  readonly edges?: readonly { id: string; source: string; target: string }[];
+  readonly nodes?: readonly { id: string; label: string }[];
   readonly onChange: (fault: Fault) => void;
   readonly disabled?: boolean;
 }
@@ -11,6 +13,8 @@ export interface FaultConfigFormProps {
 export function FaultConfigForm({
   fault,
   availableEdges,
+  edges,
+  nodes,
   onChange,
   disabled = false,
 }: FaultConfigFormProps) {
@@ -68,11 +72,25 @@ export function FaultConfigForm({
     }
   };
 
+  const getEdgeLabel = (edgeId: string) => {
+    if (edges && nodes) {
+      const edge = edges.find((e) => e.id === edgeId);
+      if (edge) {
+        const src = nodes.find((n) => n.id === edge.source);
+        const tgt = nodes.find((n) => n.id === edge.target);
+        if (src && tgt) {
+          return `${src.label} → ${tgt.label} (${edgeId})`;
+        }
+      }
+    }
+    return edgeId;
+  };
+
   return (
     <Card title="Chaos Fault Injection" className="config-card">
       <div className="form-grid">
         <label className="field-group">
-          <span className="field-label">Fault Type</span>
+          <span className="field-label">Fault Profile</span>
           <select
             className="input-select"
             value={fault.type}
@@ -83,33 +101,37 @@ export function FaultConfigForm({
               )
             }
           >
-            <option value="latency">Latency / Jitter</option>
-            <option value="bandwidth_limit">Bandwidth Limitation</option>
+            <option value="latency">Tail Latency &amp; Jitter (TCP Delay)</option>
+            <option value="bandwidth_limit">Bandwidth Throttling (Rate Limit)</option>
             <option value="connection_reset">Connection Reset (TCP RST)</option>
-            <option value="stall">Connection Stall / Blackhole</option>
+            <option value="stall">Connection Blackhole / Stall (Timeout)</option>
           </select>
         </label>
 
         <label className="field-group">
-          <span className="field-label">Target Edge</span>
+          <span className="field-label">Target Network Link</span>
           <select
             className="input-select"
             value={fault.edgeId}
-            disabled={disabled}
+            disabled={disabled || availableEdges.length === 0}
             onChange={(e) => onChange({ ...fault, edgeId: e.target.value as EdgeId })}
           >
-            {availableEdges.map((e) => (
-              <option key={e} value={e}>
-                {e}
-              </option>
-            ))}
+            {availableEdges.length === 0 ? (
+              <option value="">No network connections available</option>
+            ) : (
+              availableEdges.map((e) => (
+                <option key={e} value={e}>
+                  {getEdgeLabel(e)}
+                </option>
+              ))
+            )}
           </select>
         </label>
 
         {fault.type === 'latency' && (
-          <>
+          <div className="fields-split-row">
             <label className="field-group">
-              <span className="field-label">Latency (ms)</span>
+              <span className="field-label">Added Latency (ms)</span>
               <input
                 type="number"
                 className="input-number"
@@ -126,7 +148,7 @@ export function FaultConfigForm({
               />
             </label>
             <label className="field-group">
-              <span className="field-label">Jitter (ms)</span>
+              <span className="field-label">Jitter Spread (ms)</span>
               <input
                 type="number"
                 className="input-number"
@@ -142,12 +164,12 @@ export function FaultConfigForm({
                 }
               />
             </label>
-          </>
+          </div>
         )}
 
         {fault.type === 'bandwidth_limit' && (
           <label className="field-group">
-            <span className="field-label">Rate (kb/sec)</span>
+            <span className="field-label">Bandwidth Cap (kb/sec)</span>
             <input
               type="number"
               className="input-number"
@@ -184,6 +206,25 @@ export function FaultConfigForm({
             />
           </label>
         )}
+
+        <label className="field-group">
+          <span className="field-label">Fault Toxicity (Traffic Ratio: 1.0 = 100%)</span>
+          <input
+            type="number"
+            className="input-number"
+            min={0.1}
+            max={1.0}
+            step={0.1}
+            value={fault.toxicity ?? 1}
+            disabled={disabled}
+            onChange={(e) =>
+              onChange({
+                ...fault,
+                toxicity: Math.min(1, Math.max(0.1, parseFloat(e.target.value) || 1)),
+              })
+            }
+          />
+        </label>
       </div>
     </Card>
   );

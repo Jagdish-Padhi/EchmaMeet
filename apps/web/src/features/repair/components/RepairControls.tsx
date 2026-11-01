@@ -28,26 +28,31 @@ export function RepairControls({
 
   return (
     <Card
-      title="Autonomous Resilience Repair Loop"
+      title="Autonomous Resilience Repair"
       actions={<StatusPill status={status} />}
       className="repair-controls-card"
     >
       <div className="repair-controls-grid">
         <label className="field-group">
-          <span className="field-label">Repair Strategy Proposer</span>
+          <span className="field-label">Policy Proposer Strategy</span>
           <select
             className="input-select"
             value={proposerKind}
             disabled={isRunning}
             onChange={(e) => onProposerChange(e.target.value as RepairProposerKind)}
           >
-            <option value="rule_based">Rule-Based Deterministic Baseline</option>
-            <option value="model">Partner Model Agent (meta-models/muse-spark-open-1026)</option>
+            <option value="model">Partner Model Agent (Meta Llama 3.3 / Muse)</option>
+            <option value="rule_based">Deterministic SRE Rules (Local Heuristic)</option>
           </select>
+          <span className="field-help-text">
+            {proposerKind === 'model'
+              ? 'LLM agent evaluates simulation traces and proposes targeted policy patches (timeouts, retries, circuit breakers).'
+              : 'Deterministic expert rules analyze queue depths and latency spikes without model inference.'}
+          </span>
         </label>
 
         <label className="field-group">
-          <span className="field-label">Maximum Iterations</span>
+          <span className="field-label">Max Iteration Depth</span>
           <input
             type="number"
             className="input-number"
@@ -57,15 +62,24 @@ export function RepairControls({
             disabled={isRunning}
             onChange={(e) => onMaxIterationsChange(parseInt(e.target.value, 10) || 3)}
           />
+          <span className="field-help-text">
+            Stops as soon as all invariants pass or search space reaches {String(maxIterations)} iterations.
+          </span>
         </label>
 
         <div className="repair-actions">
           {isRunning ? (
-            <Button variant="danger" onClick={onCancel}>
+            <Button variant="danger" onClick={onCancel} className="btn-full-width">
               Cancel Repair Session
             </Button>
           ) : (
-            <Button variant="primary" disabled={!canStart} onClick={onStart}>
+            <Button
+              variant="primary"
+              disabled={!canStart}
+              onClick={onStart}
+              className="btn-full-width"
+              title={!canStart ? 'Resolve topology incompatibilities before running repair' : 'Start autonomous repair loop'}
+            >
               Start Autonomous Repair Loop
             </Button>
           )}

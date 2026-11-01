@@ -39,7 +39,7 @@ function getMetricAggregate(
 export function VerdictsSummary({ verdicts, overallStatus, finalRecord }: VerdictsSummaryProps) {
   if (!verdicts) {
     return (
-      <Card title="Resilience Invariant Verdicts">
+      <Card title="Resilience Invariant Verdicts" className="verdicts-card">
         <p className="state-message">
           Verdicts evaluate automatically once all simulation trials complete.
         </p>
@@ -50,14 +50,27 @@ export function VerdictsSummary({ verdicts, overallStatus, finalRecord }: Verdic
   const baselineAgg = finalRecord?.baselineAggregate;
   const faultedAgg = finalRecord?.faultedAggregate;
 
+  const passedCount = verdicts.filter((v) => v.status === 'PASS').length;
+  const violatedCount = verdicts.filter((v) => v.status === 'VIOLATED').length;
+
   return (
     <Card
       title="Invariant Verdicts"
       actions={<StatusPill status={overallStatus ?? 'INCONCLUSIVE'} />}
       className="verdicts-card"
     >
+      {/* Verdict Summary Strip */}
+      <div className="verdict-summary-banner">
+        <span className={`summary-status-pill ${overallStatus === 'PASS' ? 'pass' : 'violated'}`}>
+          {overallStatus === 'PASS' ? 'All Invariants Satisfied' : `${String(violatedCount)} Invariant(s) Violated`}
+        </span>
+        <span className="summary-counts">
+          {String(passedCount)} Passed · {String(violatedCount)} Violated
+        </span>
+      </div>
+
       <div className="verdicts-table-wrapper">
-        <table className="data-table">
+        <table className="data-table verdicts-data-table">
           <thead>
             <tr>
               <th>Invariant ID</th>
@@ -76,7 +89,7 @@ export function VerdictsSummary({ verdicts, overallStatus, finalRecord }: Verdic
 
               return (
                 <tr key={v.invariantId} className={`verdict-row verdict-${v.status.toLowerCase()}`}>
-                  <td className="cell-mono">{v.invariantId}</td>
+                  <td className="cell-mono verdict-id-cell">{v.invariantId}</td>
                   <td>
                     <StatusPill status={v.status} />
                   </td>
@@ -92,7 +105,7 @@ export function VerdictsSummary({ verdicts, overallStatus, finalRecord }: Verdic
                       ? `${baselineMetric.median.toFixed(1)} (IQR ${baselineMetric.iqr.toFixed(1)})`
                       : 'N/A'}
                   </td>
-                  <td>{v.reason ?? 'Threshold check verified'}</td>
+                  <td className="verdict-reason-cell">{v.reason ?? 'Threshold check verified'}</td>
                 </tr>
               );
             })}

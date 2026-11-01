@@ -22,10 +22,10 @@ export function TrialControls({
   const isRunning = status === 'running' || status === 'starting';
 
   return (
-    <Card title="Experiment Execution" className="config-card">
+    <Card title="Simulation Load Profile" className="config-card">
       <div className="trial-controls-grid">
         <label className="field-group">
-          <span className="field-label">Trials per condition</span>
+          <span className="field-label">Trials per Condition</span>
           <input
             type="number"
             className="input-number"
@@ -40,52 +40,64 @@ export function TrialControls({
               })
             }
           />
+          <span className="field-help-text">
+            Executes {String(config.trials)} baseline trials + {String(config.trials)} faulted trials ({String(config.trials * 2)} total)
+          </span>
         </label>
 
-        <label className="field-group">
-          <span className="field-label">Measurement Duration (ms)</span>
-          <input
-            type="number"
-            className="input-number"
-            min={1000}
-            max={60000}
-            value={config.measurementMs}
-            disabled={isRunning}
-            onChange={(e) =>
-              onConfigChange({
-                ...config,
-                measurementMs: parseInt(e.target.value, 10) || 5000,
-              })
-            }
-          />
-        </label>
+        <div className="fields-split-row">
+          <label className="field-group">
+            <span className="field-label">Duration / Trial (ms)</span>
+            <input
+              type="number"
+              className="input-number"
+              min={1000}
+              max={60000}
+              step={1000}
+              value={config.measurementMs}
+              disabled={isRunning}
+              onChange={(e) =>
+                onConfigChange({
+                  ...config,
+                  measurementMs: parseInt(e.target.value, 10) || 5000,
+                })
+              }
+            />
+          </label>
 
-        <label className="field-group">
-          <span className="field-label">Arrival Rate (RPS)</span>
-          <input
-            type="number"
-            className="input-number"
-            min={1}
-            max={500}
-            value={config.arrivalRateRps}
-            disabled={isRunning}
-            onChange={(e) =>
-              onConfigChange({
-                ...config,
-                arrivalRateRps: parseInt(e.target.value, 10) || 10,
-              })
-            }
-          />
-        </label>
+          <label className="field-group">
+            <span className="field-label">Arrival Rate (RPS)</span>
+            <input
+              type="number"
+              className="input-number"
+              min={1}
+              max={500}
+              value={config.arrivalRateRps}
+              disabled={isRunning}
+              onChange={(e) =>
+                onConfigChange({
+                  ...config,
+                  arrivalRateRps: parseInt(e.target.value, 10) || 10,
+                })
+              }
+            />
+          </label>
+        </div>
 
         <div className="trial-actions">
           {isRunning ? (
-            <Button variant="danger" onClick={onCancel}>
-              Cancel Experiment
+            <Button variant="danger" onClick={onCancel} className="btn-full-width">
+              Halt Resilience Simulation
             </Button>
           ) : (
-            <Button variant="primary" disabled={!canStart} onClick={onStart}>
-              Run Chaos Experiment
+            <Button
+              variant="primary"
+              disabled={!canStart}
+              onClick={onStart}
+              className="btn-full-width"
+              title={!canStart ? 'Resolve topology incompatibilities before running simulation' : 'Start resilience test'}
+            >
+              Execute Resilience Simulation
             </Button>
           )}
         </div>
