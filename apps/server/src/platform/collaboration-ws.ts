@@ -19,12 +19,39 @@ export interface PresenceUser {
   readonly isSpeaking?: boolean | undefined;
 }
 
+export interface CanvasOperation {
+  readonly opId: string;
+  readonly op: string;
+  readonly payload: unknown;
+  readonly actorId: string;
+  readonly roomId: string;
+  readonly sequence: number;
+  readonly timestamp: number;
+}
+
 export type CollaborationMessage =
   | { readonly type: 'sync_user'; readonly user: PresenceUser }
   | { readonly type: 'user_left'; readonly userId: string }
   | { readonly type: 'node_moved'; readonly nodeId: string; readonly x: number; readonly y: number }
   | { readonly type: 'edge_selected'; readonly edgeId: string | null }
-  | { readonly type: 'canvas_op'; readonly op: string; readonly payload: unknown; readonly opId?: string }
+  | {
+      readonly type: 'canvas_op';
+      readonly opId: string;
+      readonly op: string;
+      readonly payload: unknown;
+      readonly actorId?: string;
+      readonly roomId?: string;
+      readonly sequence?: number;
+      readonly timestamp?: number;
+    }
+  | { readonly type: 'canvas_ack'; readonly opId: string; readonly sequence: number }
+  | {
+      readonly type: 'canvas_sync';
+      readonly sequence: number;
+      readonly operations: readonly CanvasOperation[];
+      readonly snapshot?: unknown;
+    }
+  | { readonly type: 'canvas_replay_request'; readonly afterSequence: number }
   | { readonly type: 'canvas_snapshot'; readonly topology: unknown }
   | { readonly type: 'chat_message'; readonly message: unknown }
   | { readonly type: 'webrtc_offer'; readonly fromUserId: string; readonly toUserId: string; readonly offer?: unknown; readonly sdp?: unknown }
@@ -69,9 +96,17 @@ const incomingMessageSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('canvas_op'),
+    opId: z.string().min(1),
     op: z.string().min(1),
     payload: z.unknown(),
-    opId: z.string().optional(),
+    actorId: z.string().optional(),
+    roomId: z.string().optional(),
+    sequence: z.number().optional(),
+    timestamp: z.number().optional(),
+  }),
+  z.object({
+    type: z.literal('canvas_replay_request'),
+    afterSequence: z.number().int().min(0),
   }),
   z.object({
     type: z.literal('canvas_snapshot'),
@@ -111,6 +146,15 @@ interface ClientSession {
   isAlive: boolean;
 }
 
+interface RoomState {
+  readonly roomId: string;
+  readonly clients: Set<ClientSession>;
+  sequence: number;
+  readonly operations: CanvasOperation[];
+  readonly processedOpIds: Set<string>;
+  latestSnapshot?: unknown;
+}
+
 export interface CollaborationBridgeOptions {
   readonly db?: SqlDatabase;
   readonly jwtSecret?: string;
@@ -134,8 +178,23 @@ export function attachCollaborationWebSocketBridge(
 ): WebSocketServer {
   const maxPayload = options?.maxPayloadBytes ?? DEFAULT_MAX_PAYLOAD_BYTES;
   const wss = new WebSocketServer({ noServer: true, maxPayload });
-  const rooms = new Map<string, Set<ClientSession>>();
+  const rooms = new Map<string, RoomState>();
   const socketSessionMap = new Map<WebSocket, ClientSession>();
+
+  const getOrCreateRoom = (roomId: string): RoomState => {
+    let room = rooms.get(roomId);
+    if (!room) {
+      room = {
+        roomId,
+        clients: new Set<ClientSession>(),
+        sequence: 0,
+        operations: [],
+        processedOpIds: new Set<string>(),
+      };
+      rooms.set(roomId, room);
+    }
+    return room;
+  };
 
   httpServer.on('upgrade', async (request: IncomingMessage, socket, head) => {
     const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
@@ -205,10 +264,10 @@ export function attachCollaborationWebSocketBridge(
   });
 
   const broadcastToRoom = (roomId: string, sender: WebSocket, message: CollaborationMessage) => {
-    const roomClients = rooms.get(roomId);
-    if (!roomClients) return;
+    const room = rooms.get(roomId);
+    if (!room) return;
     const payload = JSON.stringify(message);
-    for (const session of roomClients) {
+    for (const session of room.clients) {
       if (session.ws !== sender && session.ws.readyState === session.ws.OPEN) {
         session.ws.send(payload);
       }
@@ -220,10 +279,10 @@ export function attachCollaborationWebSocketBridge(
     targetUserId: string,
     message: CollaborationMessage,
   ) => {
-    const roomClients = rooms.get(roomId);
-    if (!roomClients) return;
+    const room = rooms.get(roomId);
+    if (!room) return;
     const payload = JSON.stringify(message);
-    for (const session of roomClients) {
+    for (const session of room.clients) {
       if (
         session.authenticatedUser.userId === targetUserId &&
         session.ws.readyState === session.ws.OPEN
@@ -242,21 +301,17 @@ export function attachCollaborationWebSocketBridge(
     const authenticatedUser = (ws as unknown as { authenticatedUser: UserSessionProfile })
       .authenticatedUser;
 
-    let roomSet = rooms.get(roomId);
-    if (!roomSet) {
-      roomSet = new Set<ClientSession>();
-      rooms.set(roomId, roomSet);
-    }
+    const room = getOrCreateRoom(roomId);
 
     // Handle reconnects / duplicate sessions for the same user in this room
-    for (const existing of roomSet) {
+    for (const existing of room.clients) {
       if (existing.authenticatedUser.userId === authenticatedUser.userId) {
         try {
           existing.ws.terminate();
         } catch {
           // ignore
         }
-        roomSet.delete(existing);
+        room.clients.delete(existing);
         socketSessionMap.delete(existing.ws);
         break;
       }
@@ -279,7 +334,7 @@ export function attachCollaborationWebSocketBridge(
       isAlive: true,
     };
     socketSessionMap.set(ws, session);
-    roomSet.add(session);
+    room.clients.add(session);
 
     // Heartbeat listener
     ws.on('pong', () => {
@@ -288,12 +343,21 @@ export function attachCollaborationWebSocketBridge(
 
     // Send active roster of this room to newcomer
     const activeUsers: PresenceUser[] = [];
-    for (const s of roomSet) {
+    for (const s of room.clients) {
       activeUsers.push(s.user);
     }
     if (ws.readyState === ws.OPEN) {
       ws.send(
         JSON.stringify({ type: 'roster', users: activeUsers } satisfies CollaborationMessage),
+      );
+      // Send canvas sync (sequence, operations log, latest snapshot)
+      ws.send(
+        JSON.stringify({
+          type: 'canvas_sync',
+          sequence: room.sequence,
+          operations: room.operations,
+          snapshot: room.latestSnapshot,
+        } satisfies CollaborationMessage),
       );
     }
 
@@ -383,11 +447,75 @@ export function attachCollaborationWebSocketBridge(
           type: 'sync_user',
           user: session.user,
         });
+      } else if (msg.type === 'canvas_op') {
+        const currentRoom = getOrCreateRoom(roomId);
+
+        // Duplicate operation prevention
+        if (currentRoom.processedOpIds.has(msg.opId)) {
+          ws.send(
+            JSON.stringify({
+              type: 'canvas_ack',
+              opId: msg.opId,
+              sequence: currentRoom.sequence,
+            } satisfies CollaborationMessage),
+          );
+          return;
+        }
+
+        currentRoom.sequence += 1;
+        currentRoom.processedOpIds.add(msg.opId);
+        if (currentRoom.processedOpIds.size > 5000) {
+          const first = currentRoom.processedOpIds.values().next().value;
+          if (first) currentRoom.processedOpIds.delete(first);
+        }
+
+        const sequencedOp: CanvasOperation = {
+          opId: msg.opId,
+          op: msg.op,
+          payload: msg.payload,
+          actorId: session.authenticatedUser.userId,
+          roomId,
+          sequence: currentRoom.sequence,
+          timestamp: Date.now(),
+        };
+
+        currentRoom.operations.push(sequencedOp);
+        if (currentRoom.operations.length > 500) {
+          currentRoom.operations.shift();
+        }
+
+        // Acknowledge operation to actor
+        ws.send(
+          JSON.stringify({
+            type: 'canvas_ack',
+            opId: sequencedOp.opId,
+            sequence: sequencedOp.sequence,
+          } satisfies CollaborationMessage),
+        );
+
+        // Broadcast sequenced operation to peers
+        broadcastToRoom(roomId, ws, {
+          type: 'canvas_op',
+          ...sequencedOp,
+        });
+      } else if (msg.type === 'canvas_replay_request') {
+        const currentRoom = getOrCreateRoom(roomId);
+        const ops = currentRoom.operations.filter((op) => op.sequence > msg.afterSequence);
+        ws.send(
+          JSON.stringify({
+            type: 'canvas_sync',
+            sequence: currentRoom.sequence,
+            operations: ops,
+            snapshot: currentRoom.latestSnapshot,
+          } satisfies CollaborationMessage),
+        );
+      } else if (msg.type === 'canvas_snapshot') {
+        const currentRoom = getOrCreateRoom(roomId);
+        currentRoom.latestSnapshot = msg.topology;
+        broadcastToRoom(roomId, ws, msg as CollaborationMessage);
       } else if (
         msg.type === 'node_moved' ||
         msg.type === 'edge_selected' ||
-        msg.type === 'canvas_op' ||
-        msg.type === 'canvas_snapshot' ||
         msg.type === 'chat_message'
       ) {
         broadcastToRoom(roomId, ws, msg as CollaborationMessage);
@@ -412,10 +540,10 @@ export function attachCollaborationWebSocketBridge(
           type: 'user_left',
           userId: current.authenticatedUser.userId,
         });
-        const set = rooms.get(current.roomId);
-        if (set) {
-          set.delete(current);
-          if (set.size === 0) {
+        const currentRoom = rooms.get(current.roomId);
+        if (currentRoom) {
+          currentRoom.clients.delete(current);
+          if (currentRoom.clients.size === 0) {
             rooms.delete(current.roomId);
           }
         }
@@ -426,11 +554,11 @@ export function attachCollaborationWebSocketBridge(
 
   // Keep-alive heartbeat interval to clean up stale connections
   const heartbeatInterval = setInterval(() => {
-    for (const [, roomSet] of rooms) {
-      for (const session of roomSet) {
+    for (const [, room] of rooms) {
+      for (const session of room.clients) {
         if (!session.isAlive) {
           session.ws.terminate();
-          roomSet.delete(session);
+          room.clients.delete(session);
           socketSessionMap.delete(session.ws);
           continue;
         }

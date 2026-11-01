@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   edgeIdSchema,
   faultIdSchema,
@@ -116,6 +116,8 @@ export function App() {
   const scenariosState = useScenarios(api);
 
   // Board canvas state
+  const broadcastCanvasOpRef = useRef<((op: unknown) => void) | null>(null);
+
   const {
     board,
     loadTopology,
@@ -144,7 +146,12 @@ export function App() {
     undo,
     redo,
     recordActionBeforeChange,
-  } = useBoardState(null, api);
+    applyRemoteCanvasOp,
+  } = useBoardState(null, api, {
+    onLocalOperation: (op) => {
+      broadcastCanvasOpRef.current?.(op);
+    },
+  });
 
   // Live Review Collaboration Room state
   const [isMeetingLive, setIsMeetingLive] = useState(false);
@@ -182,11 +189,14 @@ export function App() {
 
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [pendingScenarioId, setPendingScenarioId] = useState<string | null>(null);
-  const { remoteReviewers, broadcastCursor } = useCollaborationPresence(
+  const { remoteReviewers, broadcastCursor, broadcastCanvasOp } = useCollaborationPresence(
     currentReviewer,
     board.selectedNodeId,
     meetingRoomCode,
+    null,
+    applyRemoteCanvasOp,
   );
+  broadcastCanvasOpRef.current = broadcastCanvasOp;
 
   // Meeting Room SRE Watcher
   const [isSreModalOpen, setIsSreModalOpen] = useState(false);

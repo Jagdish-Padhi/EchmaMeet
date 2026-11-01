@@ -205,7 +205,13 @@ export function useCollaborationPresence(
             await pc.addIceCandidate(new RTCIceCandidate(candidate));
           }
         } else if (type === 'canvas_op') {
-          onCanvasOpRef.current?.(msg['op']);
+          onCanvasOpRef.current?.(msg);
+        } else if (type === 'canvas_sync') {
+          if (Array.isArray(msg['operations'])) {
+            for (const singleOp of msg['operations'] as unknown[]) {
+              onCanvasOpRef.current?.(singleOp);
+            }
+          }
         }
       } catch {
         // Non-JSON or malformed packet
@@ -266,14 +272,19 @@ export function useCollaborationPresence(
   }, []);
 
   // Broadcast canvas operation
-  const broadcastCanvasOp = useCallback((op: unknown) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(
-        JSON.stringify({
-          type: 'canvas_op',
-          op,
-        }),
-      );
+  const broadcastCanvasOp = useCallback((canvasOp: unknown) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN && canvasOp && typeof canvasOp === 'object') {
+      const opObj = canvasOp as { opId?: string; op?: string; payload?: unknown };
+      if (opObj.opId && opObj.op) {
+        wsRef.current.send(
+          JSON.stringify({
+            type: 'canvas_op',
+            opId: opObj.opId,
+            op: opObj.op,
+            payload: opObj.payload,
+          }),
+        );
+      }
     }
   }, []);
 
