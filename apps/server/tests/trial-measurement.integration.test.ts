@@ -14,7 +14,6 @@ import {
   faultIdSchema,
   nodeIdSchema,
   topologySchema,
-  type EventLoopDelaySummary,
   type Fault,
   type LoadgenConfig,
   type Topology,
@@ -193,18 +192,7 @@ describe('Trial measurement and fault injection integration', () => {
     const baselineLoadResult = await loadgen.waitForCompletion();
     const baselineEndCounters = await sandbox.readCounters();
     const baselineSeries = await sandbox.readSeries();
-
-    const baselineDelays = new Map<string, EventLoopDelaySummary>();
-    for (const [nodeId] of sandbox.configs) {
-      baselineDelays.set(nodeId, {
-        minMs: 0,
-        maxMs: 1,
-        meanMs: 0.2,
-        p50Ms: 0.2,
-        p90Ms: 0.5,
-        p99Ms: 0.8,
-      });
-    }
+    const baselineDelays = await sandbox.readDelays();
 
     const baselineTrial = measurement.buildTrialResult({
       trialIndex: 0,
@@ -252,6 +240,7 @@ describe('Trial measurement and fault injection integration', () => {
     const faultedLoadResult = await loadgen.waitForCompletion();
     const faultedEndCounters = await sandbox.readCounters();
     const faultedSeries = await sandbox.readSeries();
+    const faultedDelays = await sandbox.readDelays();
 
     const faultedTrial = measurement.buildTrialResult({
       trialIndex: 1,
@@ -260,7 +249,7 @@ describe('Trial measurement and fault injection integration', () => {
       startCounters: faultedStartCounters,
       endCounters: faultedEndCounters,
       workerSeries: faultedSeries,
-      workerEventLoopDelays: baselineDelays,
+      workerEventLoopDelays: faultedDelays,
       nodeMaxWorkers: new Map([
         ['entry', 10],
         ['mid', 10],
@@ -296,6 +285,7 @@ describe('Trial measurement and fault injection integration', () => {
     const restoredLoadResult = await loadgen.waitForCompletion();
     const restoredEndCounters = await sandbox.readCounters();
     const restoredSeries = await sandbox.readSeries();
+    const restoredDelays = await sandbox.readDelays();
 
     const restoredTrial = measurement.buildTrialResult({
       trialIndex: 2,
@@ -304,7 +294,7 @@ describe('Trial measurement and fault injection integration', () => {
       startCounters: restoredStartCounters,
       endCounters: restoredEndCounters,
       workerSeries: restoredSeries,
-      workerEventLoopDelays: baselineDelays,
+      workerEventLoopDelays: restoredDelays,
       nodeMaxWorkers: new Map([
         ['entry', 10],
         ['mid', 10],
@@ -353,17 +343,6 @@ describe('Trial measurement and fault injection integration', () => {
     const targetUrl = `http://${gatewayConfig.listenHost}:${String(gatewayConfig.listenPort)}/request`;
     const measurement = createMeasurementService();
 
-    const delays = new Map<string, EventLoopDelaySummary>();
-    for (const [nodeId] of sandbox.configs) {
-      delays.set(nodeId, {
-        minMs: 0,
-        maxMs: 1,
-        meanMs: 0.2,
-        p50Ms: 0.2,
-        p90Ms: 0.5,
-        p99Ms: 0.8,
-      });
-    }
     const maxWorkers = new Map([
       ['gateway', 50],
       ['checkout', 30],
@@ -392,6 +371,7 @@ describe('Trial measurement and fault injection integration', () => {
       const loadResult = await loadgen.waitForCompletion();
       const endCounters = await sandbox.readCounters();
       const series = await sandbox.readSeries();
+      const delays = await sandbox.readDelays();
 
       const trial = measurement.buildTrialResult({
         trialIndex: i,
@@ -453,6 +433,7 @@ describe('Trial measurement and fault injection integration', () => {
       const loadResult = await loadgen.waitForCompletion();
       const endCounters = await sandbox.readCounters();
       const series = await sandbox.readSeries();
+      const faultedDelays = await sandbox.readDelays();
 
       const trial = measurement.buildTrialResult({
         trialIndex: i,
@@ -461,7 +442,7 @@ describe('Trial measurement and fault injection integration', () => {
         startCounters,
         endCounters,
         workerSeries: series,
-        workerEventLoopDelays: delays,
+        workerEventLoopDelays: faultedDelays,
         nodeMaxWorkers: maxWorkers,
         edgeIds,
         loadgenSummary: loadResult.summary,

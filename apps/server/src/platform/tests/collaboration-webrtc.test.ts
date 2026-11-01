@@ -88,8 +88,8 @@ describe('WebRTC Peer Signaling & Room Routing (Task 3)', () => {
     const clientCMessages: any[] = [];
 
     const wsA = await connectClient(url, 'webrtc-room-1', tokenA);
-    const _wsB = await connectClient(url, 'webrtc-room-1', tokenB, (msg) => clientBMessages.push(msg));
-    const _wsC = await connectClient(url, 'webrtc-room-1', tokenC, (msg) => clientCMessages.push(msg));
+    await connectClient(url, 'webrtc-room-1', tokenB, (msg) => clientBMessages.push(msg));
+    await connectClient(url, 'webrtc-room-1', tokenC, (msg) => clientCMessages.push(msg));
 
     // Alice sends offer targeted strictly to Bob, claiming fake fromUserId 'attacker'
     wsA.send(
@@ -120,7 +120,7 @@ describe('WebRTC Peer Signaling & Room Routing (Task 3)', () => {
     const tokenB = signJwt({ userId: 'bob', name: 'Bob', role: 'engineer' }, DEFAULT_JWT_SECRET);
 
     const clientAMessages: any[] = [];
-    const wsA = await connectClient(url, 'webrtc-room-2', tokenA, (msg) => clientAMessages.push(msg));
+    await connectClient(url, 'webrtc-room-2', tokenA, (msg) => clientAMessages.push(msg));
     const wsB = await connectClient(url, 'webrtc-room-2', tokenB);
 
     // Bob sends answer back to Alice
@@ -162,7 +162,7 @@ describe('WebRTC Peer Signaling & Room Routing (Task 3)', () => {
     const clientBMessages: any[] = [];
     // Alice in room-X, Bob in room-Y
     const wsA = await connectClient(url, 'room-x', tokenA);
-    const _wsB = await connectClient(url, 'room-y', tokenB, (msg) => clientBMessages.push(msg));
+    await connectClient(url, 'room-y', tokenB, (msg) => clientBMessages.push(msg));
 
     wsA.send(
       JSON.stringify({

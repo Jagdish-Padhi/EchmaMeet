@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import {
   runIdSchema,
-  type EventLoopDelaySummary,
   type LoadgenConfig,
   type RunEvent,
   type RunEventType,
@@ -247,18 +246,6 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
       }
       const edgeIds = request.topology.edges.map((e) => e.id);
 
-      const baselineDelays = new Map<string, EventLoopDelaySummary>();
-      for (const [nodeId] of sandbox.configs) {
-        baselineDelays.set(nodeId, {
-          minMs: 0,
-          maxMs: 1,
-          meanMs: 0.2,
-          p50Ms: 0.2,
-          p90Ms: 0.5,
-          p99Ms: 0.8,
-        });
-      }
-
       // --- 1. Baseline Trials ---
       const baselineTrials: TrialResult[] = [];
       for (let i = 0; i < request.trialConfig.trials; i += 1) {
@@ -290,6 +277,7 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
 
         const endCounters = await sandbox.readCounters();
         const series = await sandbox.readSeries();
+        const baselineDelays = await sandbox.readDelays();
 
         const trial = this.measurement.buildTrialResult({
           trialIndex: i,
@@ -303,6 +291,8 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
           edgeIds,
           loadgenSummary: loadResult.summary,
         });
+
+        await sandbox.resetCounters();
 
         this.runs.appendTrial(runId, 'baseline', trial);
         baselineTrials.push(trial);
@@ -371,6 +361,7 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
 
         const endCounters = await sandbox.readCounters();
         const series = await sandbox.readSeries();
+        const faultedDelays = await sandbox.readDelays();
 
         const trial = this.measurement.buildTrialResult({
           trialIndex: i,
@@ -379,11 +370,13 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
           startCounters,
           endCounters,
           workerSeries: series,
-          workerEventLoopDelays: baselineDelays,
+          workerEventLoopDelays: faultedDelays,
           nodeMaxWorkers,
           edgeIds,
           loadgenSummary: loadResult.summary,
         });
+
+        await sandbox.resetCounters();
 
         this.runs.appendTrial(runId, 'faulted', trial);
         faultedTrials.push(trial);

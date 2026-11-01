@@ -87,7 +87,7 @@ describe('Collaborative Canvas Protocol & Synchronization (Task 2)', () => {
     const clientBMessages: any[] = [];
 
     const wsA = await connectClient(url, 'canvas-room-1', tokenA, (msg) => clientAMessages.push(msg));
-    const _wsB = await connectClient(url, 'canvas-room-1', tokenB, (msg) => clientBMessages.push(msg));
+    await connectClient(url, 'canvas-room-1', tokenB, (msg) => clientBMessages.push(msg));
 
     // Client A creates node
     const createOp = {
@@ -139,7 +139,7 @@ describe('Collaborative Canvas Protocol & Synchronization (Task 2)', () => {
 
     const clientBMessages: any[] = [];
     const wsA = await connectClient(url, 'canvas-room-move', tokenA);
-    const _wsB = await connectClient(url, 'canvas-room-move', tokenB, (msg) => clientBMessages.push(msg));
+    await connectClient(url, 'canvas-room-move', tokenB, (msg) => clientBMessages.push(msg));
 
     const moveOp = {
       type: 'canvas_op',
@@ -165,7 +165,7 @@ describe('Collaborative Canvas Protocol & Synchronization (Task 2)', () => {
 
     const clientBMessages: any[] = [];
     const wsA = await connectClient(url, 'canvas-room-edge', tokenA);
-    const _wsB = await connectClient(url, 'canvas-room-edge', tokenB, (msg) => clientBMessages.push(msg));
+    await connectClient(url, 'canvas-room-edge', tokenB, (msg) => clientBMessages.push(msg));
 
     // Create edge
     wsA.send(
