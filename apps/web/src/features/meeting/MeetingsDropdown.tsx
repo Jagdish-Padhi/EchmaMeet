@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { useToast } from '../toast';
 import { AlreadyInCallModal } from './AlreadyInCallModal';
 
 export interface MeetingsDropdownProps {
@@ -34,7 +33,6 @@ export function MeetingsDropdown({
   const [isAlreadyInCallOpen, setIsAlreadyInCallOpen] = useState(false);
   const [attemptedAction, setAttemptedAction] = useState<'create' | 'join'>('create');
   const menuRef = useRef<HTMLDivElement>(null);
-  const toast = useToast();
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -56,7 +54,6 @@ export function MeetingsDropdown({
     if (isMeetingActive) {
       setAttemptedAction(action);
       setIsAlreadyInCallOpen(true);
-      toast.warning('You are already in a call!', 'Active Session');
       return;
     }
     if (action === 'create') {
