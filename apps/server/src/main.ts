@@ -68,7 +68,10 @@ async function main(): Promise<void> {
   installProcessHandlers(process, shutdown, logger);
 
   await app.listen({ host: settings.host, port: settings.port });
-  attachCollaborationWebSocketBridge(app.server);
+  attachCollaborationWebSocketBridge(app.server, {
+    db: database,
+    jwtSecret: settings.jwtSecret,
+  });
 }
 
 main().catch((error: unknown) => {

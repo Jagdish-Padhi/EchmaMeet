@@ -819,6 +819,74 @@ export function registerAuthRoutes(
  * Inspects all incoming requests to /api/*. Public endpoints (/api/health, /api/auth/*, etc.)
  * are exempt; all others require a valid cryptographic JWT or database session Bearer token.
  */
+export function authenticateToken(
+  token: string | undefined | null,
+  db?: SqlDatabase,
+  jwtSecret: string = DEFAULT_JWT_SECRET,
+): UserSessionProfile | null {
+  if (!token || typeof token !== 'string') return null;
+  const trimmed = token.trim();
+  if (trimmed === 'local-offline-session-token' || trimmed === DEMO_AUTH_TOKEN) {
+    return {
+      userId: 'eng-alex-chen',
+      name: 'Alex Chen',
+      email: 'alex.chen@meta.internal',
+      role: 'Staff SRE',
+      avatar: 'AC',
+    };
+  }
+
+  // 1. Verify via signed JWT
+  const verifiedJwt = verifyJwt<UserSessionProfile>(trimmed, jwtSecret);
+  if (verifiedJwt.valid && verifiedJwt.payload.userId) {
+    if (db) {
+      const userRow = db.get('SELECT id, email, name, role, avatar FROM users WHERE id = ?', [
+        verifiedJwt.payload.userId,
+      ]);
+      if (userRow) {
+        return {
+          userId: String(userRow['id']),
+          name: String(userRow['name']),
+          email: String(userRow['email']),
+          role: String(userRow['role']),
+          avatar: String(userRow['avatar']),
+        };
+      }
+    } else {
+      return {
+        userId: verifiedJwt.payload.userId,
+        name: verifiedJwt.payload.name || 'User',
+        email: verifiedJwt.payload.email || 'user@internal',
+        role: verifiedJwt.payload.role || 'Staff SRE',
+        avatar: verifiedJwt.payload.avatar || 'SRE',
+      };
+    }
+  }
+
+  // 2. Fall back to sessions table if db is available
+  if (db) {
+    const row = db.get(
+      `SELECT u.id, u.email, u.name, u.role, u.avatar, s.expires_at
+       FROM sessions s
+       JOIN users u ON u.id = s.user_id
+       WHERE s.token = ?`,
+      [trimmed],
+    );
+
+    if (row && new Date(String(row['expires_at'])).getTime() > Date.now()) {
+      return {
+        userId: String(row['id']),
+        name: String(row['name']),
+        email: String(row['email']),
+        role: String(row['role']),
+        avatar: String(row['avatar']),
+      };
+    }
+  }
+
+  return null;
+}
+
 export function installAuthGuard(app: FastifyInstance, db: SqlDatabase, config?: AuthConfig): void {
   const jwtSecret = config?.jwtSecret || DEFAULT_JWT_SECRET;
 
@@ -857,46 +925,8 @@ export function installAuthGuard(app: FastifyInstance, db: SqlDatabase, config?:
       });
     }
 
-    // Special allowance for offline/demo token
-    if (token === 'local-offline-session-token' || token === DEMO_AUTH_TOKEN) {
-      (request as FastifyRequest & { user: UserSessionProfile }).user = {
-        userId: 'eng-alex-chen',
-        name: 'Alex Chen',
-        email: 'alex.chen@meta.internal',
-        role: 'Staff SRE',
-        avatar: 'AC',
-      };
-      return;
-    }
-
-    // 1. Verify via signed JWT
-    const verifiedJwt = verifyJwt<UserSessionProfile>(token, jwtSecret);
-    if (verifiedJwt.valid && verifiedJwt.payload.userId) {
-      const userRow = db.get('SELECT id, email, name, role, avatar FROM users WHERE id = ?', [
-        verifiedJwt.payload.userId,
-      ]);
-      if (userRow) {
-        (request as FastifyRequest & { user: UserSessionProfile }).user = {
-          userId: String(userRow['id']),
-          name: String(userRow['name']),
-          email: String(userRow['email']),
-          role: String(userRow['role']),
-          avatar: String(userRow['avatar']),
-        };
-        return;
-      }
-    }
-
-    // 2. Fall back to sessions table
-    const row = db.get(
-      `SELECT u.id, u.email, u.name, u.role, u.avatar, s.expires_at
-       FROM sessions s
-       JOIN users u ON u.id = s.user_id
-       WHERE s.token = ?`,
-      [token],
-    );
-
-    if (!row || new Date(String(row['expires_at'])).getTime() <= Date.now()) {
+    const authenticatedUser = authenticateToken(token, db, jwtSecret);
+    if (!authenticatedUser) {
       return reply.status(401).send({
         statusCode: 401,
         error: 'Unauthorized',
@@ -904,12 +934,6 @@ export function installAuthGuard(app: FastifyInstance, db: SqlDatabase, config?:
       });
     }
 
-    (request as FastifyRequest & { user: UserSessionProfile }).user = {
-      userId: String(row['id']),
-      name: String(row['name']),
-      email: String(row['email']),
-      role: String(row['role']),
-      avatar: String(row['avatar']),
-    };
+    (request as FastifyRequest & { user: UserSessionProfile }).user = authenticatedUser;
   });
 }

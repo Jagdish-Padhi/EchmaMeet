@@ -1,5 +1,8 @@
 import type { IncomingMessage, Server } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
+import { z } from 'zod';
+import { authenticateToken, type UserSessionProfile } from './auth';
+import type { SqlDatabase } from './db';
 
 export interface PresenceCursor {
   readonly x: number;
@@ -12,8 +15,8 @@ export interface PresenceUser {
   readonly role: string;
   readonly avatar: string;
   readonly cursor: PresenceCursor;
-  readonly selectedNodeId?: string | null;
-  readonly isSpeaking?: boolean;
+  readonly selectedNodeId?: string | null | undefined;
+  readonly isSpeaking?: boolean | undefined;
 }
 
 export type CollaborationMessage =
@@ -21,38 +24,184 @@ export type CollaborationMessage =
   | { readonly type: 'user_left'; readonly userId: string }
   | { readonly type: 'node_moved'; readonly nodeId: string; readonly x: number; readonly y: number }
   | { readonly type: 'edge_selected'; readonly edgeId: string | null }
-  | { readonly type: 'canvas_op'; readonly op: string; readonly payload: unknown }
+  | { readonly type: 'canvas_op'; readonly op: string; readonly payload: unknown; readonly opId?: string }
   | { readonly type: 'canvas_snapshot'; readonly topology: unknown }
   | { readonly type: 'chat_message'; readonly message: unknown }
-  | { readonly type: 'webrtc_offer'; readonly fromUserId: string; readonly toUserId: string; readonly sdp: unknown }
-  | { readonly type: 'webrtc_answer'; readonly fromUserId: string; readonly toUserId: string; readonly sdp: unknown }
+  | { readonly type: 'webrtc_offer'; readonly fromUserId: string; readonly toUserId: string; readonly offer?: unknown; readonly sdp?: unknown }
+  | { readonly type: 'webrtc_answer'; readonly fromUserId: string; readonly toUserId: string; readonly answer?: unknown; readonly sdp?: unknown }
   | { readonly type: 'webrtc_ice_candidate'; readonly fromUserId: string; readonly toUserId: string; readonly candidate: unknown }
-  | { readonly type: 'roster'; readonly users: readonly PresenceUser[] };
+  | { readonly type: 'roster'; readonly users: readonly PresenceUser[] }
+  | { readonly type: 'error'; readonly code: string; readonly message: string };
+
+const cursorSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+});
+
+const presenceUserPartialSchema = z.object({
+  userId: z.string().optional(),
+  name: z.string().optional(),
+  role: z.string().optional(),
+  avatar: z.string().optional(),
+  cursor: cursorSchema.optional(),
+  selectedNodeId: z.string().nullable().optional(),
+  isSpeaking: z.boolean().optional(),
+});
+
+const incomingMessageSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('sync_user'),
+    user: presenceUserPartialSchema,
+  }),
+  z.object({
+    type: z.literal('user_left'),
+    userId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal('node_moved'),
+    nodeId: z.string().min(1),
+    x: z.number(),
+    y: z.number(),
+  }),
+  z.object({
+    type: z.literal('edge_selected'),
+    edgeId: z.string().nullable(),
+  }),
+  z.object({
+    type: z.literal('canvas_op'),
+    op: z.string().min(1),
+    payload: z.unknown(),
+    opId: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('canvas_snapshot'),
+    topology: z.unknown(),
+  }),
+  z.object({
+    type: z.literal('chat_message'),
+    message: z.unknown(),
+  }),
+  z.object({
+    type: z.literal('webrtc_offer'),
+    fromUserId: z.string().optional(),
+    toUserId: z.string().min(1),
+    offer: z.unknown().optional(),
+    sdp: z.unknown().optional(),
+  }),
+  z.object({
+    type: z.literal('webrtc_answer'),
+    fromUserId: z.string().optional(),
+    toUserId: z.string().min(1),
+    answer: z.unknown().optional(),
+    sdp: z.unknown().optional(),
+  }),
+  z.object({
+    type: z.literal('webrtc_ice_candidate'),
+    fromUserId: z.string().optional(),
+    toUserId: z.string().min(1),
+    candidate: z.unknown(),
+  }),
+]);
 
 interface ClientSession {
   readonly ws: WebSocket;
   readonly roomId: string;
-  user?: PresenceUser;
+  readonly authenticatedUser: UserSessionProfile;
+  user: PresenceUser;
+  isAlive: boolean;
 }
+
+export interface CollaborationBridgeOptions {
+  readonly db?: SqlDatabase;
+  readonly jwtSecret?: string;
+  readonly validateRoomAccess?: (
+    userId: string,
+    roomId: string,
+  ) => boolean | Promise<boolean>;
+  readonly maxPayloadBytes?: number;
+}
+
+const DEFAULT_MAX_PAYLOAD_BYTES = 65_536; // 64 KB
 
 /**
  * Real-Time Distributed Collaboration & Multi-Cursor WebSocket Bridge with Room Isolation.
  * Synchronizes reviewer cursors, active selections, canvas operations, chat, and WebRTC media signaling
- * strictly isolated per room.
+ * strictly isolated per room, with authenticated upgrade and participant identity derivation.
  */
-export function attachCollaborationWebSocketBridge(httpServer: Server): WebSocketServer {
-  const wss = new WebSocketServer({ noServer: true });
-  // Map of roomId -> Set of active client sessions in that room
+export function attachCollaborationWebSocketBridge(
+  httpServer: Server,
+  options?: CollaborationBridgeOptions,
+): WebSocketServer {
+  const maxPayload = options?.maxPayloadBytes ?? DEFAULT_MAX_PAYLOAD_BYTES;
+  const wss = new WebSocketServer({ noServer: true, maxPayload });
   const rooms = new Map<string, Set<ClientSession>>();
   const socketSessionMap = new Map<WebSocket, ClientSession>();
 
-  httpServer.on('upgrade', (request: IncomingMessage, socket, head) => {
+  httpServer.on('upgrade', async (request: IncomingMessage, socket, head) => {
     const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
-    if (url.pathname === '/ws/collaboration') {
-      wss.handleUpgrade(request, socket, head, (ws) => {
-        wss.emit('connection', ws, request);
-      });
+    if (url.pathname !== '/ws/collaboration') {
+      return;
     }
+
+    // 1. Authenticate WebSocket upgrade
+    const authHeader = request.headers.authorization;
+    let token = url.searchParams.get('token');
+    if (!token && authHeader?.startsWith('Bearer ')) {
+      token = authHeader.slice(7).trim();
+    }
+    if (!token && request.headers.cookie) {
+      const match = /(?:^|;\s*)session_token=([^;]+)/.exec(request.headers.cookie);
+      if (match && match[1]) {
+        token = decodeURIComponent(match[1]);
+      }
+    }
+
+    const authenticatedUser = authenticateToken(token, options?.db, options?.jwtSecret);
+    if (!authenticatedUser) {
+      socket.write(
+        'HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nUnauthorized\n',
+      );
+      socket.destroy();
+      return;
+    }
+
+    // 2. Validate room identifier
+    const rawRoom = url.searchParams.get('room') ?? url.searchParams.get('roomId');
+    const roomId = rawRoom?.trim();
+    if (!roomId || roomId.length === 0 || roomId.length > 64 || !/^[#a-zA-Z0-9_\-\.]+$/.test(roomId)) {
+      socket.write(
+        'HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nInvalid room identifier\n',
+      );
+      socket.destroy();
+      return;
+    }
+
+    // 3. Validate room membership & permissions
+    if (options?.validateRoomAccess) {
+      try {
+        const hasAccess = options.validateRoomAccess(authenticatedUser.userId, roomId);
+        const allowed = typeof hasAccess === 'boolean' ? hasAccess : await hasAccess;
+        if (!allowed) {
+          socket.write(
+            'HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nForbidden\n',
+          );
+          socket.destroy();
+          return;
+        }
+      } catch {
+        socket.write(
+          'HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nForbidden\n',
+        );
+        socket.destroy();
+        return;
+      }
+    }
+
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      (ws as unknown as { authenticatedUser: UserSessionProfile }).authenticatedUser =
+        authenticatedUser;
+      wss.emit('connection', ws, request);
+    });
   });
 
   const broadcastToRoom = (roomId: string, sender: WebSocket, message: CollaborationMessage) => {
@@ -75,7 +224,10 @@ export function attachCollaborationWebSocketBridge(httpServer: Server): WebSocke
     if (!roomClients) return;
     const payload = JSON.stringify(message);
     for (const session of roomClients) {
-      if (session.user?.userId === targetUserId && session.ws.readyState === session.ws.OPEN) {
+      if (
+        session.authenticatedUser.userId === targetUserId &&
+        session.ws.readyState === session.ws.OPEN
+      ) {
         session.ws.send(payload);
         break;
       }
@@ -85,24 +237,59 @@ export function attachCollaborationWebSocketBridge(httpServer: Server): WebSocke
   wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
     const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
     const rawRoom = url.searchParams.get('room') ?? url.searchParams.get('roomId') ?? 'default';
-    const roomId = rawRoom.trim() || 'default';
+    const roomId = rawRoom.trim();
 
-    const session: ClientSession = { ws, roomId };
-    socketSessionMap.set(ws, session);
+    const authenticatedUser = (ws as unknown as { authenticatedUser: UserSessionProfile })
+      .authenticatedUser;
 
     let roomSet = rooms.get(roomId);
     if (!roomSet) {
       roomSet = new Set<ClientSession>();
       rooms.set(roomId, roomSet);
     }
+
+    // Handle reconnects / duplicate sessions for the same user in this room
+    for (const existing of roomSet) {
+      if (existing.authenticatedUser.userId === authenticatedUser.userId) {
+        try {
+          existing.ws.terminate();
+        } catch {
+          // ignore
+        }
+        roomSet.delete(existing);
+        socketSessionMap.delete(existing.ws);
+        break;
+      }
+    }
+
+    const initialUser: PresenceUser = {
+      userId: authenticatedUser.userId,
+      name: authenticatedUser.name,
+      role: authenticatedUser.role,
+      avatar: authenticatedUser.avatar,
+      cursor: { x: 0, y: 0 },
+      selectedNodeId: null,
+    };
+
+    const session: ClientSession = {
+      ws,
+      roomId,
+      authenticatedUser,
+      user: initialUser,
+      isAlive: true,
+    };
+    socketSessionMap.set(ws, session);
     roomSet.add(session);
+
+    // Heartbeat listener
+    ws.on('pong', () => {
+      session.isAlive = true;
+    });
 
     // Send active roster of this room to newcomer
     const activeUsers: PresenceUser[] = [];
     for (const s of roomSet) {
-      if (s.user) {
-        activeUsers.push(s.user);
-      }
+      activeUsers.push(s.user);
     }
     if (ws.readyState === ws.OPEN) {
       ws.send(
@@ -110,50 +297,121 @@ export function attachCollaborationWebSocketBridge(httpServer: Server): WebSocke
       );
     }
 
-    ws.on('message', (raw) => {
-      try {
-        let text = '';
-        if (typeof raw === 'string') {
-          text = raw;
-        } else if (Buffer.isBuffer(raw)) {
-          text = raw.toString('utf8');
-        } else if (raw instanceof ArrayBuffer) {
-          text = Buffer.from(raw).toString('utf8');
-        } else if (Array.isArray(raw)) {
-          text = Buffer.concat(raw).toString('utf8');
-        }
-        const msg = JSON.parse(text) as CollaborationMessage;
+    ws.on('message', (raw, isBinary) => {
+      if (isBinary) {
+        ws.send(
+          JSON.stringify({
+            type: 'error',
+            code: 'invalid_format',
+            message: 'Binary frames not supported on collaboration channel',
+          } satisfies CollaborationMessage),
+        );
+        return;
+      }
 
-        if (msg.type === 'sync_user') {
-          session.user = msg.user;
-          broadcastToRoom(roomId, ws, msg);
-        } else if (
-          msg.type === 'node_moved' ||
-          msg.type === 'edge_selected' ||
-          msg.type === 'canvas_op' ||
-          msg.type === 'canvas_snapshot' ||
-          msg.type === 'chat_message'
-        ) {
-          broadcastToRoom(roomId, ws, msg);
-        } else if (
-          msg.type === 'webrtc_offer' ||
-          msg.type === 'webrtc_answer' ||
-          msg.type === 'webrtc_ice_candidate'
-        ) {
-          // Direct peer-to-peer signaling inside this room
-          sendDirectToUser(roomId, msg.toUserId, msg);
+      let text = '';
+      if (typeof raw === 'string') {
+        text = raw;
+      } else if (Buffer.isBuffer(raw)) {
+        if (raw.length > maxPayload) {
+          ws.close(1009, 'Message exceeds maximum allowed payload size');
+          return;
         }
+        text = raw.toString('utf8');
+      } else if (raw instanceof ArrayBuffer) {
+        text = Buffer.from(raw).toString('utf8');
+      } else if (Array.isArray(raw)) {
+        text = Buffer.concat(raw).toString('utf8');
+      }
+
+      let parsedJson: unknown;
+      try {
+        parsedJson = JSON.parse(text);
       } catch {
-        // Discard malformed frames safely
+        ws.send(
+          JSON.stringify({
+            type: 'error',
+            code: 'malformed_json',
+            message: 'Message must be valid JSON',
+          } satisfies CollaborationMessage),
+        );
+        return;
+      }
+
+      const validation = incomingMessageSchema.safeParse(parsedJson);
+      if (!validation.success) {
+        ws.send(
+          JSON.stringify({
+            type: 'error',
+            code: 'schema_validation_failed',
+            message: validation.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '),
+          } satisfies CollaborationMessage),
+        );
+        return;
+      }
+
+      const msg = validation.data;
+
+      if (msg.type === 'sync_user') {
+        // Enforce participant identity derivation: reject impersonation attempts
+        if (msg.user.userId && msg.user.userId !== session.authenticatedUser.userId) {
+          ws.send(
+            JSON.stringify({
+              type: 'error',
+              code: 'forbidden_impersonation',
+              message: 'Participant impersonation is rejected: userId does not match session',
+            } satisfies CollaborationMessage),
+          );
+          return;
+        }
+
+        // Apply state with authenticated identity preserved
+        session.user = {
+          userId: session.authenticatedUser.userId,
+          name: msg.user.name || session.authenticatedUser.name,
+          role: msg.user.role || session.authenticatedUser.role,
+          avatar: msg.user.avatar || session.authenticatedUser.avatar,
+          cursor: msg.user.cursor || session.user.cursor,
+          selectedNodeId:
+            msg.user.selectedNodeId !== undefined
+              ? msg.user.selectedNodeId
+              : session.user.selectedNodeId,
+          isSpeaking: msg.user.isSpeaking ?? session.user.isSpeaking,
+        };
+
+        broadcastToRoom(roomId, ws, {
+          type: 'sync_user',
+          user: session.user,
+        });
+      } else if (
+        msg.type === 'node_moved' ||
+        msg.type === 'edge_selected' ||
+        msg.type === 'canvas_op' ||
+        msg.type === 'canvas_snapshot' ||
+        msg.type === 'chat_message'
+      ) {
+        broadcastToRoom(roomId, ws, msg as CollaborationMessage);
+      } else if (
+        msg.type === 'webrtc_offer' ||
+        msg.type === 'webrtc_answer' ||
+        msg.type === 'webrtc_ice_candidate'
+      ) {
+        // Direct peer-to-peer signaling inside this room with forced verified fromUserId
+        const signalingMsg: CollaborationMessage = {
+          ...msg,
+          fromUserId: session.authenticatedUser.userId,
+        };
+        sendDirectToUser(roomId, msg.toUserId, signalingMsg);
       }
     });
 
     ws.on('close', () => {
       const current = socketSessionMap.get(ws);
       if (current) {
-        if (current.user) {
-          broadcastToRoom(current.roomId, ws, { type: 'user_left', userId: current.user.userId });
-        }
+        broadcastToRoom(current.roomId, ws, {
+          type: 'user_left',
+          userId: current.authenticatedUser.userId,
+        });
         const set = rooms.get(current.roomId);
         if (set) {
           set.delete(current);
@@ -164,6 +422,28 @@ export function attachCollaborationWebSocketBridge(httpServer: Server): WebSocke
         socketSessionMap.delete(ws);
       }
     });
+  });
+
+  // Keep-alive heartbeat interval to clean up stale connections
+  const heartbeatInterval = setInterval(() => {
+    for (const [, roomSet] of rooms) {
+      for (const session of roomSet) {
+        if (!session.isAlive) {
+          session.ws.terminate();
+          roomSet.delete(session);
+          socketSessionMap.delete(session.ws);
+          continue;
+        }
+        session.isAlive = false;
+        if (session.ws.readyState === session.ws.OPEN) {
+          session.ws.ping();
+        }
+      }
+    }
+  }, 30_000);
+
+  wss.on('close', () => {
+    clearInterval(heartbeatInterval);
   });
 
   return wss;

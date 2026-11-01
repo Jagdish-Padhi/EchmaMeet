@@ -123,8 +123,15 @@ export function useCollaborationPresence(
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
-    const roomQuery = roomCode ? `?room=${encodeURIComponent(roomCode)}` : '';
-    const ws = new WebSocket(`${protocol}//${host}/ws/collaboration${roomQuery}`);
+    const token =
+      (typeof window !== 'undefined' &&
+        (window.localStorage.getItem('chaosboard_auth_token') ||
+          window.sessionStorage.getItem('chaosboard_auth_token'))) ||
+      'sre-session-demo-token-2026';
+    const params = new URLSearchParams();
+    if (roomCode) params.set('room', roomCode);
+    if (token) params.set('token', token);
+    const ws = new WebSocket(`${protocol}//${host}/ws/collaboration?${params.toString()}`);
     wsRef.current = ws;
 
     ws.onopen = () => {
