@@ -832,7 +832,8 @@ export function installAuthGuard(app: FastifyInstance, db: SqlDatabase, config?:
       url.startsWith('/api/auth/') ||
       url.startsWith('/api/scenarios') ||
       url.startsWith('/api/benchmarks/results') ||
-      url.startsWith('/api/topologies/scenarios')
+      url.startsWith('/api/topologies/scenarios') ||
+      url.startsWith('/api/meeting/ai-opinion')
     ) {
       return;
     }

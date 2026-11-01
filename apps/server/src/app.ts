@@ -15,6 +15,7 @@ import {
 } from './modules/vision';
 import { registerVoiceRoutes, VoiceService } from './modules/voice';
 import { registerReportingRoutes, ReportingService } from './modules/reporting';
+import { MeetingAgentService, registerMeetingRoutes } from './modules/meeting';
 import type { RunId } from '@chaosboard/contracts';
 import type { SqlDatabase } from './platform/db';
 import { registerHealthRoute } from './platform/health';
@@ -109,6 +110,9 @@ export function buildApp({
     getRunRecord: (runId) => Promise.resolve(runsService.getRun(runId as RunId) ?? null),
   });
   registerReportingRoutes(app, reportingService);
+
+  const meetingAgentService = new MeetingAgentService(modelClient);
+  registerMeetingRoutes(app, meetingAgentService);
 
   return app;
 }

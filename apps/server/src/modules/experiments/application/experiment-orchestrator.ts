@@ -19,6 +19,7 @@ class CancelledError extends Error {
   }
 }
 import type { ExperimentLock } from '../domain/experiment-lock';
+import { validateTopologyInput } from '../../topology/application/validate-topology';
 import type {
   ChaosPort,
   EventBroadcasterPort,
@@ -50,6 +51,26 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
   ) {}
 
   start(request: StartExperimentRequest): Promise<RunId> {
+    // 0. Preflight Architecture Validation: Reject invalid or incomplete topologies before acquiring host lock
+    if (!request.topology || !request.topology.nodes || request.topology.nodes.length === 0) {
+      throw new AppError(
+        'validation',
+        'topology_empty',
+        'Cannot simulate an empty canvas. Add at least one service to start resilience testing.',
+      );
+    }
+
+    const validation = validateTopologyInput(request.topology);
+    if (!validation.valid) {
+      const topProblem = validation.problems[0];
+      const message = topProblem ? topProblem.message : 'Invalid topology structure.';
+      throw new AppError(
+        'validation',
+        topProblem?.code ?? 'topology_invalid',
+        `Preflight validation failed: ${message}`,
+      );
+    }
+
     const rawId = `run-${randomUUID()}`;
     const runId = runIdSchema.parse(rawId);
 

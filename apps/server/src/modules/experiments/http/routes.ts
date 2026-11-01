@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { runIdSchema, startExperimentRequestSchema } from '@chaosboard/contracts';
+import { AppError } from '@chaosboard/shared';
 import { openEventStream, parseWith } from '../../../platform/http-kit';
 import type { ExperimentOrchestratorPort, RunsPort } from '../application/ports';
 
@@ -12,6 +13,16 @@ export function registerExperimentRoutes(
     const input = parseWith(startExperimentRequestSchema, request.body, 'experiment request');
     const runId = await orchestrator.start(input);
     return reply.status(201).send({ runId });
+  });
+
+  app.get('/api/experiments/:id', async (request) => {
+    const params = request.params as { id: string };
+    const runId = runIdSchema.parse(params.id);
+    const run = runs.getRun(runId);
+    if (!run) {
+      throw new AppError('not_found', 'run_not_found', `Run ${runId} was not found.`);
+    }
+    return run;
   });
 
   app.post('/api/experiments/:id/cancel', async (request) => {

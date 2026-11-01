@@ -18,26 +18,27 @@ export interface OpenAiAdapterConfig {
   readonly providerName?: string | undefined;
 }
 
-const openAiChatResponseSchema = z.strictObject({
+const openAiChatResponseSchema = z.object({
   id: z.string().optional(),
   choices: z.array(
-    z.strictObject({
+    z.object({
       index: z.number().optional(),
-      message: z.strictObject({
+      message: z.object({
         role: z.string().optional(),
-        content: z.string().nullable(),
-      }),
+        content: z.string().nullable().optional(),
+      }).passthrough(),
       finish_reason: z.string().nullable().optional(),
-    }),
+    }).passthrough(),
   ),
   usage: z
-    .strictObject({
+    .object({
       prompt_tokens: z.number().int().optional(),
       completion_tokens: z.number().int().optional(),
       total_tokens: z.number().int().optional(),
     })
+    .passthrough()
     .optional(),
-});
+}).passthrough();
 
 function extractJsonText(raw: string): string {
   const trimmed = raw.trim();

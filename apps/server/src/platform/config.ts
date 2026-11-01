@@ -77,7 +77,7 @@ export function loadSettings(env: Readonly<Record<string, string | undefined>>):
         picked['PARTNER_BASE_URL'] = 'https://api.groq.com/openai/v1';
       }
       if (!picked['PARTNER_MODEL_ID'] || picked['PARTNER_MODEL_ID'].includes('muse')) {
-        picked['PARTNER_MODEL_ID'] = 'llama-3.3-70b-versatile';
+        picked['PARTNER_MODEL_ID'] = 'openai/gpt-oss-120b';
       }
     } else if (metaApiKey) {
       picked['PARTNER_API_KEY'] = metaApiKey;
