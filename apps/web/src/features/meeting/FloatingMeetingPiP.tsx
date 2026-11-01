@@ -26,6 +26,7 @@ export interface FloatingMeetingPiPProps {
   readonly hazardsCount?: number | undefined;
   readonly spokenOpinion?: string | undefined;
   readonly hazards?: readonly SreHazard[] | undefined;
+  readonly externalMedia?: ReturnType<typeof useMeetingMediaStream> | undefined;
 }
 
 type WindowMode = 'minimized' | 'floating' | 'fullscreen';
@@ -43,6 +44,7 @@ export function FloatingMeetingPiP({
   hazardsCount = 0,
   spokenOpinion,
   hazards = [],
+  externalMedia,
 }: FloatingMeetingPiPProps) {
   const toast = useToast();
   const [windowMode, setWindowMode] = useState<WindowMode>('floating');
@@ -116,6 +118,13 @@ export function FloatingMeetingPiP({
   });
   const windowRef = useRef<HTMLDivElement>(null);
 
+  const internalMedia = useMeetingMediaStream({
+    autoStart: isActive && !externalMedia,
+    onPermissionError: (msg) => {
+      toast.warning(msg, 'Media Devices');
+    },
+  });
+
   const {
     localStream,
     screenStream,
@@ -128,12 +137,7 @@ export function FloatingMeetingPiP({
     toggleVideo,
     toggleScreenShare,
     stopAllMedia,
-  } = useMeetingMediaStream({
-    autoStart: isActive,
-    onPermissionError: (msg) => {
-      toast.warning(msg, 'Media Devices');
-    },
-  });
+  } = externalMedia ?? internalMedia;
 
   const selfVideoRef = useRef<HTMLVideoElement>(null);
   const screenVideoRef = useRef<HTMLVideoElement>(null);

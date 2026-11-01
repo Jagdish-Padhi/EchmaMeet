@@ -34,6 +34,7 @@ import {
   SreYieldFloorModal,
   useCollaborationPresence,
   useMeetingAgent,
+  useMeetingMediaStream,
   MetaAgentSettingsModal,
 } from '../features/meeting';
 import { IacExportModal } from '../features/repair';
@@ -189,11 +190,19 @@ export function App() {
 
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [pendingScenarioId, setPendingScenarioId] = useState<string | null>(null);
+
+  const meetingMedia = useMeetingMediaStream({
+    autoStart: isMeetingLive,
+    onPermissionError: (msg) => {
+      toast.warning(msg, 'Media Devices');
+    },
+  });
+
   const { remoteReviewers, broadcastCursor, broadcastCanvasOp } = useCollaborationPresence(
     currentReviewer,
     board.selectedNodeId,
     meetingRoomCode,
-    null,
+    meetingMedia.screenStream ?? meetingMedia.localStream,
     applyRemoteCanvasOp,
   );
   broadcastCanvasOpRef.current = broadcastCanvasOp;
@@ -656,6 +665,7 @@ export function App() {
             hazardsCount={sreWatcher.hazards.length}
             spokenOpinion={sreWatcher.spokenOpinion}
             hazards={sreWatcher.hazards}
+            externalMedia={meetingMedia}
           />
         </main>
 

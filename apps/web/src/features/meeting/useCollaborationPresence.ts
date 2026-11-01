@@ -28,6 +28,8 @@ export function useCollaborationPresence(
   const [remoteReviewers, setRemoteReviewers] = useState<readonly RemoteReviewer[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
+  const candidateQueueRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
+  const isMakingOfferRef = useRef<Map<string, boolean>>(new Map());
   const currentUserRef = useRef(currentUser);
   currentUserRef.current = currentUser;
   const activeNodeIdRef = useRef(activeNodeId);
@@ -38,7 +40,7 @@ export function useCollaborationPresence(
   const onCanvasOpRef = useRef(onCanvasOp);
   onCanvasOpRef.current = onCanvasOp;
 
-  // Clean up peer connection
+  // Clean up peer connection and associated candidate buffers
   const cleanupPeer = useCallback((peerUserId: string) => {
     const pc = peerConnectionsRef.current.get(peerUserId);
     if (pc) {
@@ -49,13 +51,29 @@ export function useCollaborationPresence(
       }
       peerConnectionsRef.current.delete(peerUserId);
     }
+    candidateQueueRef.current.delete(peerUserId);
+    isMakingOfferRef.current.delete(peerUserId);
+  }, []);
+
+  // Drain pending ICE candidates once remote description is set
+  const drainCandidateQueue = useCallback(async (peerUserId: string, pc: RTCPeerConnection) => {
+    const queue = candidateQueueRef.current.get(peerUserId);
+    if (!queue || queue.length === 0) return;
+    candidateQueueRef.current.delete(peerUserId);
+    for (const cand of queue) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(cand));
+      } catch {
+        // Non-fatal ICE candidate processing
+      }
+    }
   }, []);
 
   // Helper to create or get peer connection
   const getOrCreatePeerConnection = useCallback(
     (targetUserId: string, ws: WebSocket): RTCPeerConnection => {
       let pc = peerConnectionsRef.current.get(targetUserId);
-      if (pc) return pc;
+      if (pc && pc.signalingState !== 'closed') return pc;
 
       pc = new RTCPeerConnection(RTC_CONFIG);
       peerConnectionsRef.current.set(targetUserId, pc);
@@ -73,7 +91,9 @@ export function useCollaborationPresence(
       };
 
       pc.ontrack = (event) => {
-        const stream = event.streams[0];
+        const stream =
+          event.streams[0] ??
+          (typeof MediaStream !== 'undefined' ? new MediaStream([event.track]) : null);
         if (stream) {
           setRemoteReviewers((prev) =>
             prev.map((u) => (u.userId === targetUserId ? { ...u, stream } : u)),
@@ -81,27 +101,43 @@ export function useCollaborationPresence(
         }
       };
 
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'failed') {
+          if ('restartIce' in pc && typeof pc.restartIce === 'function') {
+            pc.restartIce();
+          }
+        } else if (pc.connectionState === 'closed') {
+          cleanupPeer(targetUserId);
+        }
+      };
+
       // Add local stream tracks if available
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach((track) => {
           if (localStreamRef.current) {
-            pc?.addTrack(track, localStreamRef.current);
+            try {
+              pc?.addTrack(track, localStreamRef.current);
+            } catch {
+              // ignore
+            }
           }
         });
       }
 
       return pc;
     },
-    [],
+    [cleanupPeer],
   );
 
-  // Initiate WebRTC call to remote peer
+  // Initiate WebRTC call to remote peer with collision tracking
   const initiateCallToPeer = useCallback(
     async (targetUserId: string, ws: WebSocket) => {
       if (typeof RTCPeerConnection === 'undefined') return;
       try {
+        isMakingOfferRef.current.set(targetUserId, true);
         const pc = getOrCreatePeerConnection(targetUserId, ws);
         const offer = await pc.createOffer();
+        if (pc.signalingState !== 'stable') return;
         await pc.setLocalDescription(offer);
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(
@@ -114,10 +150,48 @@ export function useCollaborationPresence(
         }
       } catch {
         // WebRTC call initiation non-fatal
+      } finally {
+        isMakingOfferRef.current.set(targetUserId, false);
       }
     },
     [getOrCreatePeerConnection],
   );
+
+  // Synchronize dynamic local stream tracks across existing peer connections
+  useEffect(() => {
+    localStreamRef.current = localStream;
+    if (typeof RTCPeerConnection === 'undefined') return;
+
+    for (const [, pc] of peerConnectionsRef.current.entries()) {
+      if (pc.signalingState === 'closed') continue;
+
+      const senders = pc.getSenders();
+      const currentTracks = localStream ? localStream.getTracks() : [];
+
+      for (const sender of senders) {
+        if (!sender.track) continue;
+        const matchingTrack = currentTracks.find((t) => t.kind === sender.track?.kind);
+        if (matchingTrack) {
+          if (sender.track !== matchingTrack) {
+            void sender.replaceTrack(matchingTrack);
+          }
+        } else {
+          void sender.replaceTrack(null);
+        }
+      }
+
+      for (const track of currentTracks) {
+        const hasSender = senders.some((s) => s.track?.kind === track.kind);
+        if (!hasSender && localStream) {
+          try {
+            pc.addTrack(track, localStream);
+          } catch {
+            // ignore
+          }
+        }
+      }
+    }
+  }, [localStream]);
 
   // Main WebSocket connection effect - only reconnects when room or user ID changes
   useEffect(() => {
@@ -175,9 +249,24 @@ export function useCollaborationPresence(
         } else if (type === 'webrtc_offer') {
           const fromUserId = msg['fromUserId'] as string;
           const offer = msg['offer'] as RTCSessionDescriptionInit;
-          if (typeof RTCPeerConnection !== 'undefined') {
+          if (typeof RTCPeerConnection !== 'undefined' && fromUserId) {
             const pc = getOrCreatePeerConnection(fromUserId, ws);
+            const isPolite = currentUserRef.current.userId < fromUserId;
+            const offerCollision =
+              pc.signalingState !== 'stable' || (isMakingOfferRef.current.get(fromUserId) ?? false);
+
+            if (offerCollision) {
+              if (!isPolite) {
+                // Impolite peer discards offer during collision
+                return;
+              }
+              // Polite peer rolls back local offer
+              await pc.setLocalDescription({ type: 'rollback' });
+            }
+
             await pc.setRemoteDescription(new RTCSessionDescription(offer));
+            await drainCandidateQueue(fromUserId, pc);
+
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
             if (ws.readyState === WebSocket.OPEN) {
@@ -194,15 +283,28 @@ export function useCollaborationPresence(
           const fromUserId = msg['fromUserId'] as string;
           const answer = msg['answer'] as RTCSessionDescriptionInit;
           const pc = peerConnectionsRef.current.get(fromUserId);
-          if (pc) {
+          if (pc && pc.signalingState === 'have-local-offer') {
             await pc.setRemoteDescription(new RTCSessionDescription(answer));
+            await drainCandidateQueue(fromUserId, pc);
           }
         } else if (type === 'webrtc_ice_candidate') {
           const fromUserId = msg['fromUserId'] as string;
           const candidate = msg['candidate'] as RTCIceCandidateInit;
           const pc = peerConnectionsRef.current.get(fromUserId);
-          if (pc) {
-            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          if (pc && pc.remoteDescription && pc.remoteDescription.type) {
+            try {
+              await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch {
+              // Ignore invalid ICE candidate error
+            }
+          } else if (fromUserId) {
+            // Buffer candidate until remote description is applied
+            let queue = candidateQueueRef.current.get(fromUserId);
+            if (!queue) {
+              queue = [];
+              candidateQueueRef.current.set(fromUserId, queue);
+            }
+            queue.push(candidate);
           }
         } else if (type === 'canvas_op') {
           onCanvasOpRef.current?.(msg);
@@ -232,7 +334,14 @@ export function useCollaborationPresence(
       ws.close();
       wsRef.current = null;
     };
-  }, [roomCode, currentUser.userId, cleanupPeer, getOrCreatePeerConnection, initiateCallToPeer]);
+  }, [
+    roomCode,
+    currentUser.userId,
+    cleanupPeer,
+    getOrCreatePeerConnection,
+    initiateCallToPeer,
+    drainCandidateQueue,
+  ]);
 
   // Separate effect for activeNodeId updates: sends message without reconnecting
   useEffect(() => {
