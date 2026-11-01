@@ -8,18 +8,9 @@ import {
   type Topology,
 } from '@chaosboard/contracts';
 import { createApiClient } from '../api/client';
-import { Alert } from '../components/ui/Alert';
-import { Button } from '../components/ui/Button';
 import {
-  AnalysisDropdown,
   BoardCanvas,
-  EdgeInspector,
   ImportDiagramModal,
-  ImportDropdown,
-  NodeInspector,
-  UserProfileMenu,
-  ValidationBanner,
-  resolveNodeNumber,
   toTopology,
   useBoardState,
   type DrawTool,
@@ -27,62 +18,31 @@ import {
 } from '../features/board';
 import { AuthPage } from '../features/auth';
 import { useToast } from '../features/toast';
-import {
-  FaultConfigForm,
-  InvariantConfigForm,
-  LiveTelemetryChart,
-  TrialControls,
-  TrialProgressCard,
-  VerdictsSummary,
-  useExperimentSession,
-} from '../features/experiments';
-import {
-  IterationTimeline,
-  RepairControls,
-  TradeOffCard,
-  useRepairSession,
-} from '../features/repair';
-import { ReplayModal, RunDetailView, RunHistoryTable, useRunsHistory } from '../features/runs';
-import {
-  ComparisonTable,
-  ExecutiveSummaryCard,
-  RepairComparisonCard,
-  SurprisesSection,
-  useBenchmarks,
-} from '../features/benchmarks';
+import { useExperimentSession } from '../features/experiments';
+import { useRepairSession } from '../features/repair';
+import { useRunsHistory } from '../features/runs';
+import { useBenchmarks } from '../features/benchmarks';
 import { useScenarios } from '../features/scenarios';
-import {
-  GestureResultBanner,
-  ImageUploader,
-  RedStrokeCanvas,
-  useVisionFlow,
-  VisionDraftOverlay,
-} from '../features/vision';
-import {
-  ParsedCommandCard,
-  PushToTalkButton,
-  useVoiceSession,
-  VoiceQuickCommands,
-  VoiceTranscriptStream,
-} from '../features/voice';
-import { ReportViewer } from '../features/reports';
+import { useVisionFlow } from '../features/vision';
+import { useVoiceSession } from '../features/voice';
 import { LandingPage } from '../features/landing/LandingPage';
 import {
   CreateMeetingModal,
   FloatingMeetingPiP,
   JoinMeetingModal,
-  MeetingsDropdown,
   SreYieldFloorModal,
   useCollaborationPresence,
   useMeetingSreWatcher,
 } from '../features/meeting';
-import { ExportDropdown, IacExportModal } from '../features/repair';
+import { IacExportModal } from '../features/repair';
 import {
   loadSettingsFromStorage,
   saveSettingsToStorage,
   SettingsPage,
   type AppSettings,
 } from '../features/settings';
+import { StudioNavbar } from './components/StudioNavbar';
+import { StudioDrawers } from './components/StudioDrawers';
 
 type StudioDrawerTab =
   | 'none'
@@ -132,7 +92,6 @@ export function App() {
   const [activeTool, setActiveTool] = useState<DrawTool>('select');
   const [penColor, setPenColor] = useState<string>('#38bdf8');
   const [penWidth, setPenWidth] = useState<number>(3);
-  const [isMorePrimitivesOpen, setIsMorePrimitivesOpen] = useState(false);
 
   const handleOpenSettings = () => {
     setPreviousView(view === 'landing' ? 'landing' : 'studio');
@@ -525,402 +484,37 @@ export function App() {
   // 2. Studio Workspace View
   return (
     <div className="studio-root">
-      {/* Minimalist Studio Topbar (Single-Row Industry Grade Layout) */}
-      <header className="studio-topbar">
-        {/* Left: Brand Logo (Minimalist Icon Only) */}
-        <div className="navbar-brand-section">
-          <button
-            type="button"
-            className="navbar-brand-btn"
-            onClick={() => setView('landing')}
-            title="ChaosBoard Distributed Architecture Studio"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="12" r="3" fill="#0082fb" />
-              <path d="M12 2v7m0 6v7M2 12h7m6 0h7" stroke="#0082fb" />
-              <circle cx="12" cy="2" r="1.5" fill="#38bdf8" />
-              <circle cx="12" cy="22" r="1.5" fill="#38bdf8" />
-              <circle cx="2" cy="12" r="1.5" fill="#38bdf8" />
-              <circle cx="22" cy="12" r="1.5" fill="#38bdf8" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Center: Clean Architecture Primitives Shelf */}
-        <div className="navbar-center-shelf" role="toolbar" aria-label="Architecture Primitives">
-          {/* Architecture Components 1-Click Primitives */}
-          <div className="navbar-primitives-group">
-            <button
-              type="button"
-              className="navbar-prim-btn"
-              onClick={() =>
-                addNode('service', { label: 'Microservice', processingMs: 15, maxWorkers: 15 })
-              }
-              title="Add Stateless Microservice (Key: 1)"
-            >
-              <span className="palette-dot blue" />
-              <span>+ Service</span>
-            </button>
-            <button
-              type="button"
-              className="navbar-prim-btn"
-              onClick={() =>
-                addNode('service', { label: 'API Gateway', processingMs: 5, maxWorkers: 20 })
-              }
-              title="Add Ingress API Gateway"
-            >
-              <span className="palette-dot blue" />
-              <span>+ Gateway</span>
-            </button>
-            <button
-              type="button"
-              className="navbar-prim-btn"
-              onClick={() =>
-                addNode('cache', {
-                  label: 'Redis Cache',
-                  processingMs: 2,
-                  maxWorkers: 25,
-                  ttlMs: 60000,
-                })
-              }
-              title="Add Redis In-Memory Cache (Key: 2)"
-            >
-              <span className="palette-dot yellow" />
-              <span>+ Cache</span>
-            </button>
-            <button
-              type="button"
-              className="navbar-prim-btn"
-              onClick={() =>
-                addNode('queue_consumer', {
-                  label: 'Kafka Stream',
-                  processingMs: 10,
-                  maxWorkers: 30,
-                  consumeRateRps: 100,
-                })
-              }
-              title="Add Kafka / Queue Consumer (Key: 3)"
-            >
-              <span className="palette-dot cyan" />
-              <span>+ Queue</span>
-            </button>
-            <button
-              type="button"
-              className="navbar-prim-btn"
-              onClick={() =>
-                addNode('service', { label: 'Postgres DB', processingMs: 35, maxWorkers: 5 })
-              }
-              title="Add Stateful Database Store"
-            >
-              <span className="palette-dot blue" />
-              <span>+ DB</span>
-            </button>
-
-            {/* Specialized Presets Popover Dropdown */}
-            <div className="navbar-dropdown-relative">
-              <button
-                type="button"
-                className={`navbar-prim-btn more ${isMorePrimitivesOpen ? 'active' : ''}`}
-                onClick={() => setIsMorePrimitivesOpen((v) => !v)}
-                title="More architecture components"
-              >
-                <span>+ More</span>
-                <svg viewBox="0 0 24 24" width="9" height="9" fill="currentColor">
-                  <path d="M7 10l5 5 5-5z" />
-                </svg>
-              </button>
-
-              {isMorePrimitivesOpen && (
-                <div
-                  className="navbar-more-menu"
-                  onMouseLeave={() => setIsMorePrimitivesOpen(false)}
-                >
-                  <button
-                    type="button"
-                    className="navbar-more-item"
-                    onClick={() => {
-                      addNode('service', {
-                        label: 'Auth Service',
-                        processingMs: 10,
-                        maxWorkers: 10,
-                      });
-                      setIsMorePrimitivesOpen(false);
-                    }}
-                  >
-                    <span className="palette-dot blue" />
-                    <span>Auth Service (OAuth/JWT)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="navbar-more-item"
-                    onClick={() => {
-                      addNode('service', {
-                        label: 'External API',
-                        processingMs: 85,
-                        maxWorkers: 5,
-                      });
-                      setIsMorePrimitivesOpen(false);
-                    }}
-                  >
-                    <span className="palette-dot amber" />
-                    <span>3rd-Party External API</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="navbar-more-item"
-                    onClick={() => {
-                      addNode('cache', {
-                        label: 'CDN Edge',
-                        processingMs: 1,
-                        maxWorkers: 50,
-                        ttlMs: 300000,
-                      });
-                      setIsMorePrimitivesOpen(false);
-                    }}
-                  >
-                    <span className="palette-dot yellow" />
-                    <span>CDN Edge (Cloudflare/Fastly)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="navbar-more-item"
-                    onClick={() => {
-                      addNode('ledger_sink', {
-                        label: 'Financial Ledger',
-                        processingMs: 50,
-                        maxWorkers: 5,
-                        dedupeByKey: true,
-                      });
-                      setIsMorePrimitivesOpen(false);
-                    }}
-                  >
-                    <span className="palette-dot green" />
-                    <span>Ledger Sink (Idempotent: Key 4)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="navbar-more-item"
-                    onClick={() => {
-                      addNode('ledger_sink', {
-                        label: 'Object Store',
-                        processingMs: 35,
-                        maxWorkers: 10,
-                        dedupeByKey: false,
-                      });
-                      setIsMorePrimitivesOpen(false);
-                    }}
-                  >
-                    <span className="palette-dot green" />
-                    <span>S3 / Object Store Sink</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="navbar-shelf-divider" />
-
-          {/* Quick Element Duplicate & Delete Actions */}
-          <div className="navbar-actions-group">
-            <button
-              type="button"
-              className="navbar-action-btn"
-              disabled={
-                !board.selectedNodeId &&
-                (!board.selectedNodeIds || board.selectedNodeIds.length === 0)
-              }
-              onClick={duplicateSelected}
-              title="Duplicate selected element(s) (Cmd+D)"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="11"
-                height="11"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
-              <span>Duplicate</span>
-            </button>
-
-            <button
-              type="button"
-              className="navbar-action-btn danger"
-              disabled={
-                !board.selectedNodeId &&
-                (!board.selectedNodeIds || board.selectedNodeIds.length === 0) &&
-                !board.selectedEdgeId
-              }
-              onClick={() => {
-                deleteSelected();
-                if (activeDrawer === 'inspect') setActiveDrawer('none');
-              }}
-              title="Delete selected element(s) (Del / Backspace)"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="11"
-                height="11"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              </svg>
-              <span>Delete</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Right: Operational Actions (Meetings, Proof, Telemetry, Import, Export, Theme, User) */}
-        <div className="studio-topbar-actions">
-          {/* Clean Enterprise Meetings Dropdown (Create, Join, Active Session) */}
-          <MeetingsDropdown
-            isMeetingActive={isMeetingLive}
-            roomCode={meetingRoomCode}
-            onOpenCreate={() => setIsCreateMeetingOpen(true)}
-            onOpenJoin={() => setIsJoinMeetingOpen(true)}
-            onLeaveMeeting={() => {
-              setIsMeetingLive(false);
-              toast.info('You have left the meeting.', 'Session Ended');
-            }}
-            onShareRoom={() => {
-              const url = window.location.href;
-              void navigator.clipboard.writeText(url);
-              toast.success('Meeting link copied to clipboard!', 'Share Meeting');
-            }}
-            currentUser={currentReviewer}
-            remoteReviewers={remoteReviewers}
-            onFocusMeeting={() => setIsMeetingLive(true)}
-          />
-
-          {/* Primary Quick Run Action */}
-          {experimentSession.status === 'running' || experimentSession.status === 'starting' ? (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => {
-                toast.info('Stopping simulation...', 'Simulation');
-                void experimentSession.cancelExperiment();
-              }}
-              title="Halt active resilience simulation"
-            >
-              Cancel Simulation
-            </Button>
-          ) : (
-            <Button
-              variant="primary"
-              size="sm"
-              className={!canStartExperiment ? 'btn-simulation-blocked' : ''}
-              onClick={() => {
-                setActiveDrawer('telemetry');
-                if (!canStartExperiment) {
-                  toast.warning(
-                    board.nodes.length === 0
-                      ? 'Add at least one service to canvas first.'
-                      : `Architecture has ${String(board.validationProblems.length)} issue(s). Check the panel to resolve them.`,
-                    'Cannot Simulate',
-                  );
-                  return;
-                }
-                void experimentSession.startExperiment(currentTopology);
-              }}
-              title={
-                !canStartExperiment
-                  ? board.nodes.length === 0
-                    ? 'Add at least one service to canvas to simulate'
-                    : `Cannot simulate: ${String(board.validationProblems.length)} architecture issue(s) detected`
-                  : 'Run real-time resilience simulation (5s)'
-              }
-            >
-              Run Simulation
-            </Button>
-          )}
-
-          {/* Analysis & Drawer Tools Dropdown */}
-          <AnalysisDropdown activeTab={activeDrawer} onSelectTab={setActiveDrawer} />
-
-          {/* Import Dropdown: Diagram (Mermaid/JSON), Scenarios, or Whiteboard Camera Vision */}
-          <ImportDropdown
-            onImportDiagram={() => setIsImportModalOpen(true)}
-            onScanWhiteboard={() => setActiveDrawer('vision')}
-            scenarios={scenariosState.scenarios}
-            onSelectScenario={(sc) => {
-              scenariosState.selectScenario(sc.id);
-              loadTopology(sc.topology);
-              const fault = sc.faults[0];
-              if (fault) experimentSession.updateFault(fault);
-              experimentSession.updateInvariants(sc.invariants);
-              experimentSession.updateTrialConfig(sc.trialConfig);
-            }}
-          />
-
-          {/* Export Artifacts Dropdown (IaC & RFC) */}
-          <ExportDropdown
-            onExportIac={() => setIsIacModalOpen(true)}
-            onExportRfc={handleExportRfc}
-          />
-
-          <div className="studio-topbar-divider" />
-
-          {/* Theme Toggle Button */}
-          <button
-            type="button"
-            className="btn-icon-toggle"
-            onClick={handleToggleTheme}
-            title={`Switch to ${settings.theme === 'dark' ? 'Light' : 'Dark'} Theme`}
-            aria-label="Toggle visual theme"
-          >
-            {settings.theme === 'dark' ? (
-              <svg
-                viewBox="0 0 24 24"
-                width="15"
-                height="15"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="5" />
-                <line x1="12" y1="1" x2="12" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="23" />
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                <line x1="1" y1="12" x2="3" y2="12" />
-                <line x1="21" y1="12" x2="23" y2="12" />
-              </svg>
-            ) : (
-              <svg
-                viewBox="0 0 24 24"
-                width="15"
-                height="15"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-              </svg>
-            )}
-          </button>
-
-          {/* Authenticated Staff User Profile Avatar with Hover Menu (Settings & Logout) */}
-          <UserProfileMenu
-            user={currentReviewer}
-            onOpenSettings={handleOpenSettings}
-            onSignOut={handleSignOut}
-          />
-        </div>
-      </header>
+      <StudioNavbar
+        board={board}
+        activeDrawer={activeDrawer}
+        setActiveDrawer={setActiveDrawer}
+        setView={setView}
+        addNode={addNode}
+        duplicateSelected={duplicateSelected}
+        deleteSelected={deleteSelected}
+        isMeetingLive={isMeetingLive}
+        meetingRoomCode={meetingRoomCode}
+        currentReviewer={currentReviewer}
+        remoteReviewers={remoteReviewers}
+        setIsCreateMeetingOpen={setIsCreateMeetingOpen}
+        setIsJoinMeetingOpen={setIsJoinMeetingOpen}
+        setIsMeetingLive={setIsMeetingLive}
+        experimentSession={experimentSession}
+        canStartExperiment={canStartExperiment}
+        currentTopology={currentTopology}
+        scenariosState={scenariosState}
+        loadTopology={loadTopology}
+        setIsImportModalOpen={setIsImportModalOpen}
+        setIsIacModalOpen={setIsIacModalOpen}
+        handleExportRfc={handleExportRfc}
+        settings={settings}
+        handleToggleTheme={handleToggleTheme}
+        handleOpenSettings={handleOpenSettings}
+        handleSignOut={handleSignOut}
+        onToastInfo={(msg, title) => toast.info(msg, title)}
+        onToastSuccess={(msg, title) => toast.success(msg, title)}
+        onToastWarning={(msg, title) => toast.warning(msg, title)}
+      />
 
       {/* Main Studio Canvas Layout */}
       <div className="studio-canvas-layout">
@@ -988,461 +582,31 @@ export function App() {
         </main>
 
         {/* Collapsible Right Dock / Inspector Panel */}
-        {activeDrawer !== 'none' && (
-          <aside className="studio-side-drawer" aria-label="Control and inspection panel">
-            <div className="studio-drawer-header">
-              <div className="studio-drawer-title-group">
-                <div className="studio-drawer-title">
-                  {activeDrawer === 'inspect' &&
-                    (selectedNode
-                      ? 'Node Inspector'
-                      : selectedEdge
-                        ? 'Edge Inspector'
-                        : 'Inspector')}
-                  {activeDrawer === 'chaos' && 'Chaos Fault & Invariants'}
-                  {activeDrawer === 'telemetry' && 'Live Telemetry & Verdicts'}
-                  {activeDrawer === 'repair' && 'Autonomous AI Repair'}
-                  {activeDrawer === 'voice' && 'Spoken Push-to-Talk'}
-                  {activeDrawer === 'vision' && 'Whiteboard Vision'}
-                  {activeDrawer === 'reports' && 'Export & Blueprint Card'}
-                  {activeDrawer === 'benchmarks' && 'Benchmark Suite'}
-                  {activeDrawer === 'runs' && 'Execution History'}
-                </div>
-                {activeDrawer === 'inspect' && selectedNode && (
-                  <button
-                    type="button"
-                    className={`inspector-entry-btn ${board.entryNodeId === selectedNode.id ? 'active' : ''}`}
-                    onClick={() => setEntryNode(selectedNode.id)}
-                    title={
-                      board.entryNodeId === selectedNode.id
-                        ? 'Current traffic entry point'
-                        : 'Designate as traffic entry point'
-                    }
-                  >
-                    {board.entryNodeId === selectedNode.id ? 'Ingress Entry' : 'Set as Ingress'}
-                  </button>
-                )}
-              </div>
-
-              <button
-                type="button"
-                className="btn-close-drawer"
-                onClick={() => {
-                  selectNode(null);
-                  selectEdge(null);
-                  setActiveDrawer('none');
-                }}
-                title="Close drawer (Esc)"
-                aria-label="Close drawer"
-              >
-                &times;
-              </button>
-            </div>
-
-            <div className="studio-drawer-content">
-              {/* Validation Status */}
-              <ValidationBanner
-                problems={board.validationProblems}
-                isValidating={board.isValidating}
-                nodes={board.nodes}
-                onSelectNode={handleSelectNode}
-              />
-
-              {/* 1. Inspector Tab */}
-              {activeDrawer === 'inspect' && (
-                <>
-                  {selectedNode && (
-                    <NodeInspector
-                      node={selectedNode}
-                      onUpdate={(patch) => updateNode(selectedNode.id, patch)}
-                    />
-                  )}
-                  {selectedEdge && (
-                    <EdgeInspector
-                      edge={selectedEdge}
-                      hasCustomRoute={Boolean(board.edgeControlPoints?.[selectedEdge.id])}
-                      onResetRoute={() => updateEdgeControlPoint(selectedEdge.id, null)}
-                      onUpdatePolicy={(p) => updateEdgePolicy(selectedEdge.id, p)}
-                      onDelete={() => {
-                        removeEdge(selectedEdge.id);
-                        setActiveDrawer('none');
-                      }}
-                      onClose={() => selectEdge(null)}
-                    />
-                  )}
-                  {!selectedNode && !selectedEdge && (
-                    <p style={{ color: 'var(--color-text-dim)', fontSize: 13 }}>
-                      Click on any node or edge on the canvas to inspect and configure its
-                      parameters.
-                    </p>
-                  )}
-                </>
-              )}
-
-              {/* 2. Chaos & Invariants Tab */}
-              {activeDrawer === 'chaos' && (
-                <>
-                  <FaultConfigForm
-                    fault={experimentSession.fault}
-                    availableEdges={board.edges.map((e) => e.id)}
-                    onChange={experimentSession.updateFault}
-                    disabled={experimentSession.status === 'running'}
-                  />
-
-                  <InvariantConfigForm
-                    invariants={experimentSession.invariants}
-                    onChange={experimentSession.updateInvariants}
-                    disabled={experimentSession.status === 'running'}
-                  />
-
-                  <TrialControls
-                    config={experimentSession.trialConfig}
-                    status={experimentSession.status}
-                    onConfigChange={experimentSession.updateTrialConfig}
-                    onStart={() => {
-                      setActiveDrawer('telemetry');
-                      void experimentSession.startExperiment(currentTopology);
-                    }}
-                    onCancel={() => {
-                      void experimentSession.cancelExperiment();
-                    }}
-                    canStart={canStartExperiment}
-                  />
-                </>
-              )}
-
-              {/* 3. Telemetry & Verdicts Tab */}
-              {activeDrawer === 'telemetry' && (
-                <>
-                  {/* Architecture Compatibility Diagnostics */}
-                  {board.validationProblems.length > 0 && (
-                    <div className="telemetry-compatibility-warning">
-                      <div className="compatibility-warning-header">
-                        <svg
-                          viewBox="0 0 24 24"
-                          width="16"
-                          height="16"
-                          fill="none"
-                          stroke="#f59e0b"
-                          strokeWidth="2"
-                        >
-                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                          <line x1="12" y1="9" x2="12" y2="13" />
-                          <line x1="12" y1="17" x2="12.01" y2="17" />
-                        </svg>
-                        <span className="compatibility-warning-title">
-                          Architecture Incompatibilities ({String(board.validationProblems.length)})
-                        </span>
-                      </div>
-                      <p className="compatibility-warning-text">
-                        The simulation cannot run until the topology issues below are resolved:
-                      </p>
-                      <ul className="compatibility-issues-list">
-                        {board.validationProblems.map((prob, i) => {
-                          const nodeNum = prob.nodeId
-                            ? resolveNodeNumber(prob.nodeId, board.nodes)
-                            : null;
-                          return (
-                            <li key={i} className="compatibility-issue-item">
-                              <span className="issue-bullet">•</span>
-                              <span className="compatibility-issue-message">{prob.message}</span>
-                              {prob.nodeId && nodeNum !== null && (
-                                <button
-                                  type="button"
-                                  className="validation-target-chip"
-                                  onClick={() => handleSelectNode(prob.nodeId as NodeId)}
-                                  title={`Focus Node #${String(nodeNum)} on canvas`}
-                                >
-                                  <span className="target-chip-type">Node</span>
-                                  <span className="target-chip-id">{nodeNum}</span>
-                                </button>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                      {!board.entryNodeId && board.nodes.length > 0 && (
-                        <button
-                          type="button"
-                          className="btn-compatibility-fix"
-                          onClick={() => {
-                            const firstNode = board.nodes[0];
-                            if (firstNode) setEntryNode(firstNode.id);
-                          }}
-                        >
-                          Designate &ldquo;{board.nodes[0]?.label}&rdquo; as Ingress Entry
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  <TrialProgressCard
-                    status={experimentSession.status}
-                    currentTrial={experimentSession.currentTrialIndex}
-                    totalTrials={experimentSession.totalTrials}
-                    errorMessage={experimentSession.errorMessage}
-                    runId={experimentSession.runId}
-                  />
-
-                  <LiveTelemetryChart
-                    telemetry={experimentSession.telemetry}
-                    currentTrial={experimentSession.currentTrialIndex}
-                    totalTrials={experimentSession.totalTrials}
-                  />
-
-                  <VerdictsSummary
-                    verdicts={experimentSession.verdicts}
-                    overallStatus={experimentSession.overallStatus}
-                    finalRecord={experimentSession.finalRecord}
-                  />
-                </>
-              )}
-
-              {/* 4. Autonomous Repair Tab */}
-              {activeDrawer === 'repair' && (
-                <>
-                  <RepairControls
-                    status={repairSession.status}
-                    proposerKind={repairSession.proposerKind}
-                    maxIterations={repairSession.maxIterations}
-                    onProposerChange={repairSession.setProposerKind}
-                    onMaxIterationsChange={repairSession.setMaxIterations}
-                    onStart={() => {
-                      void repairSession.startRepair(
-                        currentTopology,
-                        experimentSession.fault,
-                        experimentSession.invariants,
-                        experimentSession.trialConfig,
-                      );
-                    }}
-                    onCancel={() => {
-                      void repairSession.cancelRepair();
-                    }}
-                    canStart={canStartExperiment}
-                  />
-
-                  <TradeOffCard report={repairSession.tradeOffReport} />
-
-                  <IterationTimeline iterations={repairSession.iterations} />
-                </>
-              )}
-
-              {/* 5. Voice Tab */}
-              {activeDrawer === 'voice' && (
-                <>
-                  {voiceSession.error && <Alert variant="error">{voiceSession.error}</Alert>}
-
-                  <PushToTalkButton
-                    isRecording={voiceSession.isRecording}
-                    isProcessing={voiceSession.isProcessing}
-                    onStartRecording={() => {
-                      void voiceSession.startRecording();
-                    }}
-                    onStopRecording={() => {
-                      voiceSession.stopRecording();
-                    }}
-                  />
-
-                  <VoiceTranscriptStream
-                    partialTranscript={voiceSession.partialTranscript}
-                    finalTranscript={voiceSession.finalTranscript}
-                    isRecording={voiceSession.isRecording}
-                    isProcessing={voiceSession.isProcessing}
-                    timings={voiceSession.timings}
-                  />
-
-                  <VoiceQuickCommands
-                    onSelectPhrase={(phrase) => {
-                      void voiceSession.submitTranscript(phrase);
-                    }}
-                    isProcessing={voiceSession.isProcessing}
-                  />
-
-                  <ParsedCommandCard
-                    result={voiceSession.parseResult}
-                    autoConfirm={voiceSession.autoConfirm}
-                    onToggleAutoConfirm={voiceSession.toggleAutoConfirm}
-                    onConfirmAndExecute={() => {
-                      void voiceSession.confirmAndExecute();
-                    }}
-                    onClear={voiceSession.clearSession}
-                    onSelectCandidate={(cand) => {
-                      const match = currentTopology.edges.find((e) => e.id === cand);
-                      if (match) {
-                        void voiceSession.submitTranscript(
-                          `inject latency 300ms from ${match.source} to ${match.target}`,
-                        );
-                      }
-                    }}
-                  />
-                </>
-              )}
-
-              {/* 6. Vision Tab */}
-              {activeDrawer === 'vision' && (
-                <>
-                  {visionFlow.error && <Alert variant="error">{visionFlow.error}</Alert>}
-
-                  {visionFlow.imagePreviewUrl && visionFlow.extraction ? (
-                    <VisionDraftOverlay
-                      previewUrl={visionFlow.imagePreviewUrl}
-                      extraction={visionFlow.extraction}
-                      onConfirm={(draft) => {
-                        void visionFlow.confirmDraft(draft);
-                      }}
-                      onCancel={visionFlow.reset}
-                    />
-                  ) : (
-                    <ImageUploader
-                      onImageSelected={(file) => {
-                        void visionFlow.uploadImage(file);
-                      }}
-                      isExtracting={visionFlow.isExtracting}
-                    />
-                  )}
-
-                  <div style={{ marginTop: 16 }}>
-                    <p
-                      style={{
-                        margin: '0 0 8px 0',
-                        fontSize: 12,
-                        color: 'var(--color-text-muted)',
-                      }}
-                    >
-                      Draw a red stroke cutting across a link to target it for chaos fault
-                      injection:
-                    </p>
-                    <RedStrokeCanvas
-                      candidateEdges={currentTopology.edges.map((e, idx) => ({
-                        id: e.id,
-                        source: e.source,
-                        target: e.target,
-                        polyline: [
-                          [0.2 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
-                          [0.4 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
-                        ],
-                      }))}
-                      onDetect={(stroke) => {
-                        const candidates = currentTopology.edges.map((e, idx) => ({
-                          id: e.id,
-                          source: e.source,
-                          target: e.target,
-                          polyline: [
-                            [0.2 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
-                            [0.4 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
-                          ],
-                        }));
-                        void visionFlow.triggerGestureDetection(stroke, candidates);
-                      }}
-                      isDetecting={visionFlow.isDetectingGesture}
-                    />
-
-                    {visionFlow.gestureResult && (
-                      <GestureResultBanner
-                        result={visionFlow.gestureResult}
-                        onApplyFault={(fault) => {
-                          experimentSession.updateFault(fault);
-                          setActiveDrawer('chaos');
-                        }}
-                      />
-                    )}
-                  </div>
-                </>
-              )}
-
-              {/* 7. Reports Tab */}
-              {activeDrawer === 'reports' &&
-                (() => {
-                  const firstRun = runsHistory.runs[0];
-                  const activeReportRunId: RunId | null =
-                    selectedReportRunId ??
-                    experimentSession.runId ??
-                    runsHistory.selectedRunId ??
-                    (firstRun ? firstRun.id : null);
-
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      {runsHistory.runs.length > 0 && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <label style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
-                            Run:
-                          </label>
-                          <select
-                            value={activeReportRunId ?? ''}
-                            onChange={(e) => setSelectedReportRunId(e.target.value as RunId)}
-                            className="input-select"
-                            style={{ padding: '4px 8px', fontSize: 12 }}
-                          >
-                            {runsHistory.runs.map((r) => (
-                              <option key={r.id} value={r.id}>
-                                {r.id} ({r.topology.name} - {r.status})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-
-                      {activeReportRunId ? (
-                        <ReportViewer api={api} runId={activeReportRunId} />
-                      ) : (
-                        <p style={{ color: 'var(--color-text-dim)', fontSize: 13 }}>
-                          No runs recorded yet. Execute a chaos run to generate reports.
-                        </p>
-                      )}
-                    </div>
-                  );
-                })()}
-
-              {/* 8. Benchmarks Tab */}
-              {activeDrawer === 'benchmarks' && (
-                <>
-                  {benchmarksState.isLoading && (
-                    <p style={{ color: 'var(--color-text-dim)' }}>Loading benchmark summary...</p>
-                  )}
-                  {benchmarksState.error && <Alert variant="error">{benchmarksState.error}</Alert>}
-                  {benchmarksState.summary && (
-                    <>
-                      <ExecutiveSummaryCard summary={benchmarksState.summary} />
-                      <ComparisonTable results={benchmarksState.summary.results} />
-                      <RepairComparisonCard results={benchmarksState.summary.results} />
-                      <SurprisesSection />
-                    </>
-                  )}
-                </>
-              )}
-
-              {/* 9. Execution History Tab */}
-              {activeDrawer === 'runs' && (
-                <>
-                  <RunHistoryTable
-                    runs={runsHistory.runs}
-                    isLoading={runsHistory.isLoading}
-                    error={runsHistory.error}
-                    onRefresh={runsHistory.refreshRuns}
-                    onView={runsHistory.viewRun}
-                    onReplay={runsHistory.startReplay}
-                    onExport={runsHistory.exportRunJson}
-                  />
-
-                  {runsHistory.selectedRunRecord && (
-                    <RunDetailView
-                      record={runsHistory.selectedRunRecord}
-                      onClose={runsHistory.closeDetail}
-                    />
-                  )}
-
-                  {runsHistory.replayingEvents && runsHistory.selectedRunId && (
-                    <ReplayModal
-                      runId={runsHistory.selectedRunId}
-                      events={runsHistory.replayingEvents}
-                      onClose={runsHistory.closeReplay}
-                    />
-                  )}
-                </>
-              )}
-            </div>
-          </aside>
-        )}
+        <StudioDrawers
+          activeDrawer={activeDrawer}
+          setActiveDrawer={setActiveDrawer}
+          board={board}
+          selectedNode={selectedNode}
+          selectedEdge={selectedEdge}
+          currentTopology={currentTopology}
+          canStartExperiment={canStartExperiment}
+          api={api}
+          experimentSession={experimentSession}
+          repairSession={repairSession}
+          voiceSession={voiceSession}
+          visionFlow={visionFlow}
+          benchmarksState={benchmarksState}
+          runsHistory={runsHistory}
+          selectedReportRunId={selectedReportRunId}
+          setSelectedReportRunId={setSelectedReportRunId}
+          handleSelectNode={handleSelectNode}
+          selectEdge={selectEdge}
+          setEntryNode={setEntryNode}
+          updateNode={updateNode}
+          updateEdgeControlPoint={updateEdgeControlPoint}
+          updateEdgePolicy={updateEdgePolicy}
+          removeEdge={removeEdge}
+        />
       </div>
 
       {/* Import Architecture Diagram Modal */}

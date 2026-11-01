@@ -105,8 +105,7 @@ export function useExperimentSession(api: ApiClient, currentTopology: Topology |
         const p95 = (metrics['p95LatencyMs'] ?? metrics['p95_latency_ms']) as number | undefined;
         const p50 = (metrics['p50LatencyMs'] ?? metrics['p50_latency_ms']) as number | undefined;
         const completionRate = (metrics['completionRate'] ?? metrics['completion_rate']) as
-          | number
-          | undefined;
+          number | undefined;
         const errorRate = (metrics['errorRate'] ??
           metrics['error_rate'] ??
           (completionRate !== undefined ? 1 - completionRate : undefined)) as number | undefined;

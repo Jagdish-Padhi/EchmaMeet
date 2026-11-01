@@ -55,19 +55,10 @@ export function LeaveMeetingModal({
         </p>
 
         <div className="leave-modal-actions">
-          <button
-            type="button"
-            className="btn-leave-cancel"
-            onClick={onCancel}
-            autoFocus
-          >
+          <button type="button" className="btn-leave-cancel" onClick={onCancel} autoFocus>
             Stay in Meeting
           </button>
-          <button
-            type="button"
-            className="btn-leave-danger"
-            onClick={onConfirmLeave}
-          >
+          <button type="button" className="btn-leave-danger" onClick={onConfirmLeave}>
             Leave Meeting
           </button>
         </div>

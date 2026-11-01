@@ -235,7 +235,9 @@ export function useMeetingMediaStream(
           setIsVideoOn(true);
         }
       } catch {
-        onPermissionError?.('Could not activate camera. Please check your browser device permissions.');
+        onPermissionError?.(
+          'Could not activate camera. Please check your browser device permissions.',
+        );
       }
     }
   }, [isVideoOn, onPermissionError]);

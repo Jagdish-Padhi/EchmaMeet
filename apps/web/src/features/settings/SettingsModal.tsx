@@ -27,13 +27,19 @@ export function SettingsModal({ isOpen, onClose, onSave, currentSettings }: Sett
           <div className="settings-header-title">
             <span>Settings Configuration</span>
           </div>
-          <button type="button" className="btn-close-modal" onClick={onClose} aria-label="Close settings">
+          <button
+            type="button"
+            className="btn-close-modal"
+            onClick={onClose}
+            aria-label="Close settings"
+          >
             &times;
           </button>
         </div>
         <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>
-            Full system settings are now displayed in full-page mode. Click below to apply your current settings.
+            Full system settings are now displayed in full-page mode. Click below to apply your
+            current settings.
           </p>
           <button
             type="button"

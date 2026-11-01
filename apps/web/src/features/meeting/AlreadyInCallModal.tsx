@@ -63,25 +63,16 @@ export function AlreadyInCallModal({
         </h3>
 
         <p className="leave-modal-text">
-          You are currently in meeting <strong className="cell-mono">{roomCode}</strong>.
-          Please leave your active session before {actionText} review room.
+          You are currently in meeting <strong className="cell-mono">{roomCode}</strong>. Please
+          leave your active session before {actionText} review room.
         </p>
 
         <div className="leave-modal-actions">
-          <button
-            type="button"
-            className="btn-leave-cancel"
-            onClick={onClose}
-            autoFocus
-          >
+          <button type="button" className="btn-leave-cancel" onClick={onClose} autoFocus>
             Stay in Meeting
           </button>
           {onLeaveAndProceed && (
-            <button
-              type="button"
-              className="btn-leave-danger"
-              onClick={onLeaveAndProceed}
-            >
+            <button type="button" className="btn-leave-danger" onClick={onLeaveAndProceed}>
               Leave &amp; {attemptedAction === 'create' ? 'Create' : 'Join'}
             </button>
           )}

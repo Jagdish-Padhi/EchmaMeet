@@ -132,7 +132,10 @@ export function computeEdgeRoute(
         (sourcePort.x + (targetPort.x - sourcePort.x) / 2 + bidirectionalOffset * 0.5).toFixed(1),
       );
       const corridorX =
-        controlPoint && typeof controlPoint.x === 'number'
+        controlPoint &&
+        typeof controlPoint.x === 'number' &&
+        Number.isFinite(controlPoint.x) &&
+        controlPoint.x > 0
           ? Number(controlPoint.x.toFixed(1))
           : defaultCorridorX;
 
@@ -157,7 +160,10 @@ export function computeEdgeRoute(
         (sourcePort.x + (targetPort.x - sourcePort.x) / 2 + bidirectionalOffset * 0.5).toFixed(1),
       );
       const corridorX =
-        controlPoint && typeof controlPoint.x === 'number'
+        controlPoint &&
+        typeof controlPoint.x === 'number' &&
+        Number.isFinite(controlPoint.x) &&
+        controlPoint.x > 0
           ? Number(controlPoint.x.toFixed(1))
           : defaultCorridorX;
 
@@ -185,7 +191,10 @@ export function computeEdgeRoute(
         (sourcePort.y + (targetPort.y - sourcePort.y) / 2 + bidirectionalOffset * 0.5).toFixed(1),
       );
       const corridorY =
-        controlPoint && typeof controlPoint.y === 'number'
+        controlPoint &&
+        typeof controlPoint.y === 'number' &&
+        Number.isFinite(controlPoint.y) &&
+        controlPoint.y > 0
           ? Number(controlPoint.y.toFixed(1))
           : defaultCorridorY;
 
@@ -210,7 +219,10 @@ export function computeEdgeRoute(
         (sourcePort.y + (targetPort.y - sourcePort.y) / 2 + bidirectionalOffset * 0.5).toFixed(1),
       );
       const corridorY =
-        controlPoint && typeof controlPoint.y === 'number'
+        controlPoint &&
+        typeof controlPoint.y === 'number' &&
+        Number.isFinite(controlPoint.y) &&
+        controlPoint.y > 0
           ? Number(controlPoint.y.toFixed(1))
           : defaultCorridorY;
 
@@ -280,8 +292,12 @@ export function computeEdgeRoute(
   }
 
   const middleSegment = segments[Math.floor(segments.length / 2)] ?? segments[0];
-  const midX = middleSegment ? middleSegment.handle.x : Number(((sourcePort.x + targetPort.x) / 2).toFixed(1));
-  const midY = middleSegment ? middleSegment.handle.y : Number(((sourcePort.y + targetPort.y) / 2).toFixed(1));
+  const midX = middleSegment
+    ? middleSegment.handle.x
+    : Number(((sourcePort.x + targetPort.x) / 2).toFixed(1));
+  const midY = middleSegment
+    ? middleSegment.handle.y
+    : Number(((sourcePort.y + targetPort.y) / 2).toFixed(1));
 
   const pathData = renderRoundedOrthogonalPath(points, CORNER_RADIUS);
 

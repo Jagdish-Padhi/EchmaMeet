@@ -18,6 +18,7 @@ export interface EdgeLinkProps {
     e: React.MouseEvent,
     isVertical: boolean,
     segmentIndex: number,
+    handlePoint: Point,
   ) => void;
   readonly onResetControlPoint?: (id: EdgeId) => void;
 }
@@ -146,7 +147,7 @@ export const EdgeLink = memo(function EdgeLink({
               }}
               onMouseDown={(e) => {
                 e.stopPropagation();
-                onDragControlPointStart?.(edge.id, e, seg.isVertical, seg.index);
+                onDragControlPointStart?.(edge.id, e, seg.isVertical, seg.index, seg.handle);
               }}
               onDoubleClick={(e) => {
                 e.stopPropagation();

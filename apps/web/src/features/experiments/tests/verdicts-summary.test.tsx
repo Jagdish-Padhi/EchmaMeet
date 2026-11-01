@@ -8,9 +8,7 @@ describe('VerdictsSummary component', () => {
     const html = renderToStaticMarkup(
       <VerdictsSummary verdicts={null} overallStatus={null} finalRecord={null} />,
     );
-    expect(html).toContain(
-      'Verdicts evaluate automatically once all simulation trials complete.',
-    );
+    expect(html).toContain('Verdicts evaluate automatically once all simulation trials complete.');
   });
 
   it('renders all invariant verdicts with medians, thresholds, and reasons', () => {

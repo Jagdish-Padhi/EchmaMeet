@@ -10,7 +10,7 @@ import type { EdgeId, NodeId, NodeKind } from '@chaosboard/contracts';
 import type { BoardNode, BoardState, CanvasPosition, CanvasStroke, DrawTool } from '../types';
 import { EdgeLink } from './EdgeLink';
 import { NodeCard } from './NodeCard';
-import { computeRubberbandRoute } from '../utils/edge-router';
+import { computeRubberbandRoute, type Point } from '../utils/edge-router';
 
 export interface RemoteCursor {
   readonly userId: string;
@@ -166,6 +166,7 @@ export function BoardCanvas({
     edgeId: EdgeId;
     isVertical: boolean;
     segmentIndex: number;
+    initialHandle: Point;
   } | null>(null);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
 
@@ -434,11 +435,22 @@ export function BoardCanvas({
 
   // Start dragging edge control point handle (Excalidraw-grade arrow sliding & curving)
   const handleEdgeControlPointDragStart = useCallback(
-    (edgeId: EdgeId, e: ReactMouseEvent, isVertical: boolean, segmentIndex: number) => {
+    (
+      edgeId: EdgeId,
+      e: ReactMouseEvent,
+      isVertical: boolean,
+      segmentIndex: number,
+      handlePoint: Point,
+    ) => {
       if (e.button !== 0) return;
       e.stopPropagation();
       onSelectEdge(edgeId);
-      draggingEdgeControlRef.current = { edgeId, isVertical, segmentIndex };
+      draggingEdgeControlRef.current = {
+        edgeId,
+        isVertical,
+        segmentIndex,
+        initialHandle: handlePoint,
+      };
     },
     [onSelectEdge],
   );
@@ -500,11 +512,12 @@ export function BoardCanvas({
 
     // 0. Dragging Edge Bend / Control Point (Excalidraw-Grade Sliding & Curving)
     if (draggingEdgeControlRef.current) {
-      const { edgeId, isVertical } = draggingEdgeControlRef.current;
+      const { edgeId, isVertical, initialHandle } = draggingEdgeControlRef.current;
       const currentControl = board.edgeControlPoints?.[edgeId] ?? null;
+      const basePoint = currentControl ?? initialHandle;
       const updatedPoint: CanvasPosition = {
-        x: isVertical ? Math.round(coords.x) : (currentControl?.x ?? 0),
-        y: !isVertical ? Math.round(coords.y) : (currentControl?.y ?? 0),
+        x: isVertical ? Math.round(coords.x) : basePoint.x,
+        y: !isVertical ? Math.round(coords.y) : basePoint.y,
       };
       onUpdateEdgeControlPoint?.(edgeId, updatedPoint);
       return;
@@ -581,11 +594,12 @@ export function BoardCanvas({
       }
 
       if (draggingEdgeControlRef.current) {
-        const { edgeId, isVertical } = draggingEdgeControlRef.current;
+        const { edgeId, isVertical, initialHandle } = draggingEdgeControlRef.current;
         const currentControl = board.edgeControlPoints?.[edgeId] ?? null;
+        const basePoint = currentControl ?? initialHandle;
         const updatedPoint: CanvasPosition = {
-          x: isVertical ? Math.round(coords.x) : (currentControl?.x ?? Math.round(coords.x)),
-          y: !isVertical ? Math.round(coords.y) : (currentControl?.y ?? Math.round(coords.y)),
+          x: isVertical ? Math.round(coords.x) : basePoint.x,
+          y: !isVertical ? Math.round(coords.y) : basePoint.y,
         };
         onUpdateEdgeControlPoint?.(edgeId, updatedPoint);
         return;

@@ -154,7 +154,8 @@ export function JoinMeetingModal({
                 <div>
                   <div className="solo-ai-title">Solo Architecture Review</div>
                   <div className="solo-ai-desc">
-                    Review your architecture 1-on-1 with the AI. It flags bottlenecks, circular loops, and single points of failure in real time.
+                    Review your architecture 1-on-1 with the AI. It flags bottlenecks, circular
+                    loops, and single points of failure in real time.
                   </div>
                 </div>
               </div>

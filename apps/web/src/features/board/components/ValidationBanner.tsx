@@ -104,8 +104,14 @@ export function ValidationBanner({
               {(p.nodeId || p.edgeId) && (
                 <span
                   className="validation-target-chip"
-                  onClick={p.nodeId && onSelectNode ? () => onSelectNode(p.nodeId as NodeId) : undefined}
-                  title={p.nodeId ? `Highlight Node #${String(resolveNodeNumber(p.nodeId, nodes))} on canvas` : undefined}
+                  onClick={
+                    p.nodeId && onSelectNode ? () => onSelectNode(p.nodeId as NodeId) : undefined
+                  }
+                  title={
+                    p.nodeId
+                      ? `Highlight Node #${String(resolveNodeNumber(p.nodeId, nodes))} on canvas`
+                      : undefined
+                  }
                   role={p.nodeId && onSelectNode ? 'button' : undefined}
                   tabIndex={p.nodeId && onSelectNode ? 0 : undefined}
                   onKeyDown={

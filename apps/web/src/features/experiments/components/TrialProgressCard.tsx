@@ -45,17 +45,20 @@ export function TrialProgressCard({
         if (currentTrial <= halfTrials) {
           return {
             title: `Simulating baseline load (${String(currentTrial)} of ${String(totalTrials)})...`,
-            description: 'Measuring steady-state throughput, error rates, and p99 latency without faults.',
+            description:
+              'Measuring steady-state throughput, error rates, and p99 latency without faults.',
           };
         }
         return {
           title: `Injecting chaos fault (${String(currentTrial)} of ${String(totalTrials)})...`,
-          description: 'Simulating downstream latency spikes to test timeout and circuit breaker policies.',
+          description:
+            'Simulating downstream latency spikes to test timeout and circuit breaker policies.',
         };
       case 'completed':
         return {
           title: 'Simulation completed',
-          description: 'All baseline and failure trials finished. Real-time telemetry and verdicts recorded below.',
+          description:
+            'All baseline and failure trials finished. Real-time telemetry and verdicts recorded below.',
         };
       case 'cancelled':
         return {
@@ -65,18 +68,21 @@ export function TrialProgressCard({
       case 'failed':
         return {
           title: 'Simulation stopped',
-          description: errorMessage ?? 'An unexpected runtime error occurred during sandbox execution.',
+          description:
+            errorMessage ?? 'An unexpected runtime error occurred during sandbox execution.',
         };
       case 'busy':
         return {
           title: 'Worker host busy',
-          description: errorMessage ?? 'Another simulation is active on this host. Please wait a moment.',
+          description:
+            errorMessage ?? 'Another simulation is active on this host. Please wait a moment.',
         };
       case 'idle':
       default:
         return {
           title: 'Ready for simulation',
-          description: 'Click "Run Simulation" in the navbar to test this architecture under load and failure.',
+          description:
+            'Click "Run Simulation" in the navbar to test this architecture under load and failure.',
         };
     }
   };
@@ -84,10 +90,7 @@ export function TrialProgressCard({
   const agentic = getAgenticDetails();
 
   return (
-    <Card
-      title="Resilience Simulation"
-      className="agentic-simulation-card"
-    >
+    <Card title="Resilience Simulation" className="agentic-simulation-card">
       {/* Top Status & Agentic Activity Header */}
       <div className="agentic-status-header">
         <StatusPill status={status} />
@@ -121,7 +124,9 @@ export function TrialProgressCard({
 
           {/* Stepper Pipeline */}
           <div className="agentic-step-pipeline">
-            <span className={`step-chip ${status === 'running' || status === 'starting' ? 'active' : ''}`}>
+            <span
+              className={`step-chip ${status === 'running' || status === 'starting' ? 'active' : ''}`}
+            >
               1. Setup
             </span>
             <span
@@ -138,9 +143,7 @@ export function TrialProgressCard({
             <span className={`step-chip ${currentTrial > halfTrials ? 'active' : ''}`}>
               3. Chaos Fault
             </span>
-            <span className="step-chip">
-              4. Invariants
-            </span>
+            <span className="step-chip">4. Invariants</span>
           </div>
         </div>
       )}

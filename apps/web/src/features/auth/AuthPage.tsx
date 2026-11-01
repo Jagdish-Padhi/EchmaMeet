@@ -3,6 +3,7 @@ import type { UserProfile } from '../board';
 import { ApiError, type ApiClient, type AuthConfigResponse } from '../../api/client';
 import { isFirebaseConfigured, signInWithGoogleFirebase } from './firebase';
 import { useToast } from '../toast';
+import { EchmaLogo } from '../../components/ui/EchmaLogo';
 
 export interface AuthPageProps {
   readonly onAuthenticate: (user: UserProfile) => void;
@@ -288,40 +289,15 @@ export function AuthPage({
           <div className="auth-glow-bottom-right" aria-hidden="true" />
 
           <div className="auth-brand-content">
-            {/* Resilio Logo Emblem */}
+            {/* EchmaMeet Logo Emblem */}
             <div className="auth-brand-logo-wrap">
-              <svg viewBox="0 0 32 32" width="60" height="60" fill="none">
-                <defs>
-                  <linearGradient id="brandHexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#38bdf8" />
-                    <stop offset="50%" stopColor="#818cf8" />
-                    <stop offset="100%" stopColor="#c084fc" />
-                  </linearGradient>
-                </defs>
-                <rect width="32" height="32" rx="8" fill="#0b0f19" />
-                <polygon
-                  points="16,4 28,11 28,25 16,30 4,25 4,11"
-                  fill="none"
-                  stroke="url(#brandHexGrad)"
-                  strokeWidth="2.2"
-                />
-                <circle cx="16" cy="17" r="4" fill="#38bdf8" />
-                <circle
-                  cx="16"
-                  cy="17"
-                  r="7"
-                  fill="none"
-                  stroke="#818cf8"
-                  strokeWidth="1.5"
-                  strokeDasharray="3 2"
-                />
-              </svg>
+              <EchmaLogo size={68} />
             </div>
 
             {/* Brand Title */}
             <div className="auth-brand-title">
-              <span className="auth-brand-white">Resil</span>
-              <span className="auth-brand-gradient">io</span>
+              <span className="auth-brand-white">Echma</span>
+              <span className="auth-brand-gradient">Meet</span>
             </div>
 
             <p className="auth-clean-tagline">Ready to break it before production does?</p>

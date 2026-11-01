@@ -85,7 +85,9 @@ export function ExportDropdown({ onExportIac, onExportRfc }: ExportDropdownProps
             </div>
             <div className="menu-item-content">
               <div className="menu-item-title">Kubernetes &amp; Istio YAML</div>
-              <div className="menu-item-subtitle">Export VirtualService &amp; DestinationRule configs</div>
+              <div className="menu-item-subtitle">
+                Export VirtualService &amp; DestinationRule configs
+              </div>
             </div>
           </button>
 
@@ -116,7 +118,9 @@ export function ExportDropdown({ onExportIac, onExportRfc }: ExportDropdownProps
             </div>
             <div className="menu-item-content">
               <div className="menu-item-title">Markdown Architecture Doc (ADR)</div>
-              <div className="menu-item-subtitle">Export summary document for engineering review</div>
+              <div className="menu-item-subtitle">
+                Export summary document for engineering review
+              </div>
             </div>
           </button>
         </div>

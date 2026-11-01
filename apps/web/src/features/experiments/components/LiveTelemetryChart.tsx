@@ -27,14 +27,16 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
                 <p style={{ margin: 0 }}>Collecting trial measurements...</p>
               </div>
               <span className="subtext">
-                Executing trial {String(currentTrial)} of {String(totalTrials)}. Latency and error curves will plot as trials complete.
+                Executing trial {String(currentTrial)} of {String(totalTrials)}. Latency and error
+                curves will plot as trials complete.
               </span>
             </>
           ) : (
             <>
               <p>Ready to measure latency and throughput.</p>
               <span className="subtext">
-                Click &ldquo;Run Simulation&rdquo; above to benchmark this architecture under traffic.
+                Click &ldquo;Run Simulation&rdquo; above to benchmark this architecture under
+                traffic.
               </span>
             </>
           )}

@@ -117,25 +117,53 @@ export function ToastProvider({ children }: { readonly children: ReactNode }) {
           >
             <div className={`toast-indicator toast-dot-${toast.kind}`} aria-hidden="true">
               {toast.kind === 'success' && (
-                <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg
+                  viewBox="0 0 20 20"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
                   <polyline points="4 11 8 15 16 6" />
                 </svg>
               )}
               {toast.kind === 'error' && (
-                <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg
+                  viewBox="0 0 20 20"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
                   <line x1="5" y1="5" x2="15" y2="15" />
                   <line x1="15" y1="5" x2="5" y2="15" />
                 </svg>
               )}
               {toast.kind === 'info' && (
-                <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg
+                  viewBox="0 0 20 20"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
                   <circle cx="10" cy="10" r="8" />
                   <line x1="10" y1="9" x2="10" y2="14" />
                   <circle cx="10" cy="6" r="0.5" fill="currentColor" />
                 </svg>
               )}
               {toast.kind === 'warning' && (
-                <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg
+                  viewBox="0 0 20 20"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
                   <polygon points="10 3 18 17 2 17" />
                   <line x1="10" y1="8" x2="10" y2="12" />
                   <circle cx="10" cy="15" r="0.5" fill="currentColor" />
