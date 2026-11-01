@@ -20,7 +20,7 @@ export function LandingHeader({
       <div className="landing-header-inner">
         <div className="landing-brand">
           <div className="brand-emblem" aria-hidden="true">
-            <EchmaLogo size={26} />
+            <EchmaLogo size={32} />
           </div>
           <div className="brand-title-wrap">
             <span className="landing-title">EchmaMeet</span>

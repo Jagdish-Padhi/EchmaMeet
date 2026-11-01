@@ -101,7 +101,7 @@ export function StudioNavbar({
           onClick={() => setView('landing')}
           title="EchmaMeet Architecture Review & Resilience Studio"
         >
-          <EchmaLogo size={22} />
+          <EchmaLogo size={26} />
         </button>
       </div>
 

@@ -1,3 +1,5 @@
+import { EchmaLogo } from '../../../components/ui/EchmaLogo';
+
 interface SettingsHeaderProps {
   readonly onBack: () => void;
   readonly shortTitle: string;
@@ -46,7 +48,8 @@ export function SettingsHeader({
         </div>
 
         <div className="settings-brand-pill">
-          <span className="settings-brand-name">Resilio</span>
+          <EchmaLogo size={20} />
+          <span className="settings-brand-name">EchmaMeet</span>
           <span className="settings-breadcrumb-sub">Settings</span>
         </div>
 

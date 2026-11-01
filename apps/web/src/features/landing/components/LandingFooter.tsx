@@ -44,7 +44,7 @@ export function LandingFooter({ onLaunchStudio, onAuthAction }: LandingFooterPro
             <div className="footer-brand-col">
               <div className="landing-brand">
                 <div className="brand-emblem" aria-hidden="true">
-                  <EchmaLogo size={24} />
+                  <EchmaLogo size={30} />
                 </div>
                 <span className="landing-title">EchmaMeet</span>
               </div>

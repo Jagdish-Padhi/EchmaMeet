@@ -64,7 +64,7 @@ export function IacCloudSection({
                 className="input-text"
                 value={form.neonDatabaseUrl}
                 onChange={(e) => onChange({ neonDatabaseUrl: e.target.value })}
-                placeholder="postgresql://resilio_owner:...@ep-morning-moon-...neon.tech/neondb?sslmode=require"
+                placeholder="postgresql://echmameet_owner:...@ep-morning-moon-...neon.tech/neondb?sslmode=require"
               />
               <button type="button" className="btn-input-action" onClick={onToggleDbUrl}>
                 {showDbUrl ? 'Hide' : 'Show'}

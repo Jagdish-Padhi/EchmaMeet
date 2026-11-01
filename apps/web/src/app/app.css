@@ -20,8 +20,7 @@
   --color-focus: #0866ff;
 
   --echma-logo-grad-start: #38bdf8;
-  --echma-logo-grad-mid: #818cf8;
-  --echma-logo-grad-end: #c084fc;
+  --echma-logo-grad-end: #0082fb;
 
   --color-success: #10b981;
   --color-danger: #f43f5e;
@@ -82,8 +81,7 @@
   --color-focus: #0284c7;
 
   --echma-logo-grad-start: #0284c7;
-  --echma-logo-grad-mid: #6366f1;
-  --echma-logo-grad-end: #9333ea;
+  --echma-logo-grad-end: #0056df;
 
   --color-success: #15803d;
   --color-danger: #b91c1c;
@@ -240,15 +238,32 @@ body:has(.studio-root) {
 }
 
 .landing-brand {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 12px;
+  user-select: none;
+}
+
+.brand-emblem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.brand-title-wrap {
+  display: inline-flex;
+  align-items: center;
 }
 
 .landing-title {
-  font-size: 20px;
+  font-size: 21px;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
   background: linear-gradient(135deg, var(--color-text) 0%, var(--color-accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -690,6 +705,7 @@ body:has(.studio-root) {
   background: rgba(18, 12, 14, 0.5);
 }
 
+.comparison-card.active-echmameet,
 .comparison-card.active-resilio {
   border-color: rgba(8, 102, 255, 0.5);
   background: rgba(10, 22, 42, 0.6);
@@ -1442,6 +1458,7 @@ body:has(.studio-root) {
   --card-ambient-shadow: rgba(239, 68, 68, 0.08);
 }
 
+.comparison-card.active-echmameet,
 .comparison-card.active-resilio {
   --card-border-glow: #38bdf8;
   --card-glow-subtle: rgba(56, 189, 248, 0.5);
@@ -1819,7 +1836,8 @@ body:has(.studio-root) {
   border-color: #fecaca;
 }
 
-[data-theme='light'] .comparison-card.active-resilio {
+[data-theme='light'] .comparison-card.active-echmameet,
+.comparison-card.active-resilio {
   background: #f8fbff;
   border-color: rgba(8, 102, 255, 0.35);
   box-shadow: 0 4px 20px rgba(8, 102, 255, 0.08);
@@ -2002,7 +2020,8 @@ body:has(.studio-root) {
   border-color: #fecaca;
 }
 
-[data-theme='light'] .comparison-card.active-resilio {
+[data-theme='light'] .comparison-card.active-echmameet,
+.comparison-card.active-resilio {
   background: #f8fbff;
   border-color: rgba(8, 102, 255, 0.35);
   box-shadow: 0 4px 20px rgba(8, 102, 255, 0.08);
@@ -7947,7 +7966,7 @@ button.validation-target-chip {
 }
 
 .auth-brand-gradient {
-  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+  background: linear-gradient(135deg, #38bdf8 0%, #0082fb 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

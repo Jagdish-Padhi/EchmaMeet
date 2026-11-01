@@ -291,7 +291,7 @@ export function AuthPage({
           <div className="auth-brand-content">
             {/* EchmaMeet Logo Emblem */}
             <div className="auth-brand-logo-wrap">
-              <EchmaLogo size={68} />
+              <EchmaLogo size={76} />
             </div>
 
             {/* Brand Title */}

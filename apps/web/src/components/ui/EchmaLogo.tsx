@@ -16,7 +16,7 @@ export interface EchmaLogoProps {
  * and lower continuous E ribbon with theme-aware gradient fills.
  */
 export const EchmaLogo = memo(function EchmaLogo({
-  size = 28,
+  size = 32,
   width,
   height,
   className = '',
@@ -32,20 +32,20 @@ export const EchmaLogo = memo(function EchmaLogo({
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 128 128"
+      viewBox="18 16 92 89"
       width={renderWidth}
       height={renderHeight}
       fill="none"
       className={`echma-brand-logo ${className}`.trim()}
       role="img"
       aria-label={ariaLabel}
+      style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}
     >
       {useGradient && (
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="var(--echma-logo-grad-start, #38bdf8)" />
-            <stop offset="50%" stopColor="var(--echma-logo-grad-mid, #818cf8)" />
-            <stop offset="100%" stopColor="var(--echma-logo-grad-end, #c084fc)" />
+            <stop offset="100%" stopColor="var(--echma-logo-grad-end, #0082fb)" />
           </linearGradient>
         </defs>
       )}
