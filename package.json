@@ -2,7 +2,7 @@
   "name": "chaosboard",
   "version": "0.0.0",
   "private": true,
-  "description": "Design-time chaos testing: draw a system, break it on purpose, measure it, repair it.",
+  "description": "EchmaMeet: Design-time collaborative architecture review and chaos engineering platform.",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@12.13.0",

@@ -1,13 +1,13 @@
-# ChaosBoard Machine Learning Subsystem
+# EchmaMeet Machine Learning Subsystem
 ## Autonomous Distributed Failure Root-Cause Diagnosis using Random Forest Ensemble
 
 ---
 
 ## 1. Executive Summary & Syllabus Alignment
 
-This subsystem integrates **Supervised Machine Learning (Ensemble Learning & Classification)** directly into ChaosBoard's resilience engineering pipeline. 
+This subsystem integrates **Supervised Machine Learning (Ensemble Learning & Classification)** directly into EchmaMeet's resilience engineering pipeline. 
 
-Instead of relying solely on heuristic rules or non-deterministic large language models, ChaosBoard trains and executes an empirical **Random Forest Classifier (100 Decision Tree Estimators)** to diagnose distributed system failure modes in real time from quantitative chaos telemetry.
+Instead of relying solely on heuristic rules or non-deterministic large language models, EchmaMeet trains and executes an empirical **Random Forest Classifier (100 Decision Tree Estimators)** to diagnose distributed system failure modes in real time from quantitative chaos telemetry.
 
 ### College Syllabus Mapping:
 * **ML Problem Type:** Multi-Class Supervised Classification on Real Telemetry Data.
@@ -21,7 +21,7 @@ Instead of relying solely on heuristic rules or non-deterministic large language
 
 ## 2. Problem Formulation
 
-During a chaos experiment or stress test, ChaosBoard's load generator and Toxiproxy proxy collect 9 high-dimensional metrics. The machine learning model maps this vector $\mathbf{x} \in \mathbb{R}^9$ into one of 7 distinct failure states $y \in \mathcal{Y}$:
+During a chaos experiment or stress test, EchmaMeet's load generator and Toxiproxy proxy collect 9 high-dimensional metrics. The machine learning model maps this vector $\mathbf{x} \in \mathbb{R}^9$ into one of 7 distinct failure states $y \in \mathcal{Y}$:
 
 ### Input Feature Space ($\mathbf{x}$):
 1. `p50_latency_ms`: Median request-response time (milliseconds).
@@ -143,5 +143,5 @@ When your professor asks:
 **Q3: How do you know which metric caused the failure?**
 > *"Random Forest provides Gini Impurity Feature Importance (Mean Decrease in Impurity). In our system, `retry_amplification` (15.13%), `duplicate_write_rate` (14.81%), and `p99_latency_ms` (14.56%) were the top three statistical predictors."*
 
-**Q4: Is the model actually integrated into ChaosBoard or just a separate script?**
-> *"It is fully integrated. Our Python pipeline trains and validates the scikit-learn model, outputs the `.joblib` binary, and exports the serialized tree weights into the server's diagnosis engine (`apps/server/src/modules/repair/domain/ml-diagnostics.ts`). In ChaosBoard, the model runs directly during experiment analysis to generate automated repair patches with confidence scores."*
+**Q4: Is the model actually integrated into EchmaMeet or just a separate script?**
+> *"It is fully integrated. Our Python pipeline trains and validates the scikit-learn model, outputs the `.joblib` binary, and exports the serialized tree weights into the server's diagnosis engine (`apps/server/src/modules/repair/domain/ml-diagnostics.ts`). In EchmaMeet, the model runs directly during experiment analysis to generate automated repair patches with confidence scores."*

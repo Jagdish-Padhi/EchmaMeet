@@ -1,10 +1,10 @@
 <div align="center">
 
-# Resilio (ChaosBoard)
+# EchmaMeet
 
-**Autonomous Design-Time Chaos Engineering & Architecture Resilience Platform**
+**Autonomous Collaborative Architecture Review & Design-Time Chaos Engineering Platform**
 
-_Draw distributed systems, inject real physical network chaos, verify declarative invariants under open-loop synthetic load, and autonomously heal architectural vulnerabilities using Meta AI._
+_Draw distributed systems, inject real physical network chaos, verify declarative invariants under open-loop synthetic load, and autonomously heal architectural vulnerabilities in live review meetings using Meta AI._
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x%20%7C%206.x%20Strict-blue?logo=typescript&logoColor=white)](tsconfig.base.json)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.13.0-green?logo=node.js&logoColor=white)](package.json)
@@ -28,14 +28,14 @@ _Draw distributed systems, inject real physical network chaos, verify declarativ
 
 Distributed system failure modes—such as cascading retry storms, thread exhaustion under latency spikes, queue memory bloat, and premature circuit breaker trips—are notoriously difficult to detect before production. Static linters cannot capture runtime socket dynamics, while staging environments are high-friction, costly, and rarely subjected to destructive chaos testing.
 
-**Resilio** bridges this gap by bringing **physical chaos engineering directly into design time**:
+**EchmaMeet** bridges this gap by bringing **physical chaos engineering directly into design time**:
 
 1. **Draw or Scan**: Architects design system topologies on an interactive SVG canvas or ingest napkin sketches and whiteboard photos via Meta SAM 3.1 computer vision.
-2. **Materialize**: Resilio provisions standalone Node.js operating-system processes (`apps/worker`) communicating over real loopback TCP/HTTP sockets with Shopify Toxiproxy inline on every edge.
+2. **Materialize**: EchmaMeet provisions standalone Node.js operating-system processes (`apps/worker`) communicating over real loopback TCP/HTTP sockets with Shopify Toxiproxy inline on every edge.
 3. **Stress & Break**: An open-loop synthetic load generator (`apps/loadgen`) dishes monotonic drift-corrected Poisson/constant request schedules, while Toxiproxy injects latency, jitter, connection drops, and bandwidth throttling.
 4. **Evaluate Invariants**: Declarative architectural contracts (e.g., end-to-end $p_{99} \le 500\text{ ms}$, completion rate $\ge 99\%$, zero duplicate commits) are evaluated across repeated trials with statistical medians and interquartile ranges (IQR).
 5. **Autonomously Heal**: When an invariant is violated, Meta AI models (Muse Wonder 1.0, Muse Spark 1.3) analyze raw telemetry, diagnose root causes, and propose targeted resilience repairs from a bounded, typed catalog (adaptive timeouts, exponential backoff with jitter, half-open circuit breakers, queue high-water marks, idempotency tokens).
-6. **Empirically Verify**: Resilio re-executes the chaos experiment in the real sandbox. A repair is accepted **only if** empirical measurements improve and no secondary invariants break.
+6. **Empirically Verify**: EchmaMeet re-executes the chaos experiment in the real sandbox. A repair is accepted **only if** empirical measurements improve and no secondary invariants break.
 
 ---
 
@@ -43,28 +43,28 @@ Distributed system failure modes—such as cascading retry storms, thread exhaus
 
 ### ⚡ Physical Sockets & Real Operating System Processes
 
-Resilio is **not a discrete-event mathematical simulation**. It spawns real Node.js processes on the operating system. Inter-service traffic traverses physical TCP sockets, exercises Node's HTTP networking stacks (powered by pinned `undici`), allocates real memory buffers, and experiences true operating system scheduling and garbage collection.
+EchmaMeet is **not a discrete-event mathematical simulation**. It spawns real Node.js processes on the operating system. Inter-service traffic traverses physical TCP sockets, exercises Node's HTTP networking stacks (powered by pinned `undici`), allocates real memory buffers, and experiences true operating system scheduling and garbage collection.
 
 ### 🎯 Open-Loop Load Generation (Zero Coordinated Omission)
 
-Traditional closed-loop benchmarking tools artificially under-report tail latency by waiting for prior responses before dispatching the next request ("coordinated omission"). Resilio's `apps/loadgen` uses a high-resolution monotonic timer loop (`process.hrtime.bigint()`) with drift compensation. It calculates duration from scheduled offset ($\text{completedNs} - \text{targetNs}$), capturing authentic queue bloat and latency cascades.
+Traditional closed-loop benchmarking tools artificially under-report tail latency by waiting for prior responses before dispatching the next request ("coordinated omission"). EchmaMeet's `apps/loadgen` uses a high-resolution monotonic timer loop (`process.hrtime.bigint()`) with drift compensation. It calculates duration from scheduled offset ($\text{completedNs} - \text{targetNs}$), capturing authentic queue bloat and latency cascades.
 
 ### 🤖 Autonomous Meta AI SRE Copilot & Empirical Repair Loop
 
 - **Multi-Turn Diagnosis**: Ingests telemetry, error codes, and invariant metrics to hypothesize root-cause failure mechanisms.
 - **Typed Catalog Bounds**: Proposals strictly conform to `packages/contracts/src/catalog.ts` (e.g., maximum backoff $\le 30{,}000\text{ ms}$, circuit breaker trip thresholds $1\text{--}100$). The model cannot inject arbitrary code.
-- **Re-Measurement Verification**: Before/after differential reports prove whether an invariant was restored. If the trade-off is insurmountable (e.g. CAP theorem partition), Resilio provides an honest trade-off analysis.
+- **Re-Measurement Verification**: Before/after differential reports prove whether an invariant was restored. If the trade-off is insurmountable (e.g. CAP theorem partition), EchmaMeet provides an honest trade-off analysis.
 
 ### 👁️ Whiteboard & Diagram Computer Vision (Meta SAM 3.1)
 
-Architectural reviews frequently start on physical whiteboards. Resilio allows uploading or photographing sketches:
+Architectural reviews frequently start on physical whiteboards. EchmaMeet allows uploading or photographing sketches:
 
 - Meta SAM 3.1 (Segment Anything) extracts service boundaries, queues, databases, and directional arrows.
 - Automatic fallback: Built-in deterministic color-threshold detection and contour clustering for air-gapped or offline environments.
 
 ### 🎙️ Live Architecture Review Voice Bridge
 
-Resilio includes an active meeting copilot. Engineering teams can conduct live architecture reviews while the streaming audio bridge transcribes discussion, detects anti-patterns (e.g., "we will just retry immediately on failure"), triggers real-time visual hazard warnings on canvas edges, and allows voice-driven chaos execution.
+EchmaMeet includes an active meeting copilot. Engineering teams can conduct live architecture reviews while the streaming audio bridge transcribes discussion, detects anti-patterns (e.g., "we will just retry immediately on failure"), triggers real-time visual hazard warnings on canvas edges, and allows voice-driven chaos execution.
 
 ### 🗄️ Pluggable Enterprise Storage & Distributed Tasks
 
@@ -76,7 +76,7 @@ Resilio includes an active meeting copilot. Engineering teams can conduct live a
 
 ## System Architecture
 
-Resilio implements a clean separation between an **orchestrating control plane** and an **isolated data plane**, enforced continuously by Dependency Cruiser rules with zero exceptions.
+EchmaMeet implements a clean separation between an **orchestrating control plane** and an **isolated data plane**, enforced continuously by Dependency Cruiser rules with zero exceptions.
 
 ```mermaid
 flowchart TB
@@ -155,7 +155,7 @@ flowchart TB
 
 ## Meta AI SRE & Multimodal Integration
 
-Resilio utilizes Meta's frontier models across vision, voice, and autonomous reasoning, backed by deterministic fallbacks ensuring offline and self-hosted functionality:
+EchmaMeet utilizes Meta's frontier models across vision, voice, and autonomous reasoning, backed by deterministic fallbacks ensuring offline and self-hosted functionality:
 
 | Capability                          | Model                                                                                                    | Endpoint / Provider                                           | Fallback When Unconfigured                                                    |
 | :---------------------------------- | :------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------ | :---------------------------------------------------------------------------- |
@@ -168,7 +168,7 @@ Resilio utilizes Meta's frontier models across vision, voice, and autonomous rea
 
 ## Benchmark Suite
 
-Resilio includes an automated empirical benchmark suite (`benchmarks/scenarios/`) validating 6 canonical distributed systems failure archetypes:
+EchmaMeet includes an automated empirical benchmark suite (`benchmarks/scenarios/`) validating 6 canonical distributed systems failure archetypes:
 
 ```bash
 pnpm benchmark
@@ -195,10 +195,10 @@ Run the full stack (Web UI, API Control Plane, and Shopify Toxiproxy) with a sin
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/chaosboard.git
-cd chaosboard/infra
+git clone https://github.com/your-username/echmameet.git
+cd echmameet/infra
 
-# Launch Toxiproxy and Resilio
+# Launch Toxiproxy and EchmaMeet
 docker compose up
 ```
 
@@ -301,7 +301,7 @@ JWT_SECRET=your-secure-jwt-signing-key-here
 ## Project Structure
 
 ```text
-chaosboard/
+echmameet/
 ├── apps/
 │   ├── web/                     # React 19 SPA, SVG canvas, audio recorder, Firebase auth
 │   ├── server/                  # Control Plane: Fastify modular monolith (12 hexagonal modules)
@@ -319,7 +319,7 @@ chaosboard/
 │   ├── DECISIONS.md             # Formal architectural decision log (ADR)
 │   └── limitations.md           # Product charter and scientific boundary disclosures
 ├── infra/
-│   └── docker-compose.yml       # Production Docker Compose stack (Toxiproxy + Resilio)
+│   └── docker-compose.yml       # Production Docker Compose stack (Toxiproxy + EchmaMeet)
 ├── tools/
 │   ├── architecture/            # Boundary enforcement and Mermaid graph generator
 │   └── docs/                    # Automated catalog-to-markdown sync utilities
@@ -330,11 +330,11 @@ chaosboard/
 
 ## Limitations & Soundness
 
-Resilio is committed to **scientific honesty** regarding what design-time chaos testing can and cannot prove:
+EchmaMeet is committed to **scientific honesty** regarding what design-time chaos testing can and cannot prove:
 
-- **Empirical, Not Proof of Correctness**: Resilio does not mathematically verify arbitrary business logic. It reports empirical measurements across repeated trials with medians and interquartile ranges (IQR).
+- **Empirical, Not Proof of Correctness**: EchmaMeet does not mathematically verify arbitrary business logic. It reports empirical measurements across repeated trials with medians and interquartile ranges (IQR).
 - **Stand-In Network Services**: Sandboxed worker nodes faithfully exercise network dynamics (retries, timeouts, jitter, circuit breakers, queues, connection pools). They do not replicate proprietary database storage engines, kernel interrupts, or multi-datacenter fiber routing.
-- **Single-Host Event Loop Guard**: Data plane processes execute on the host machine. To prevent false positives from CPU saturation or event-loop stalls, Resilio continuously monitors event-loop lag and marks trials with excessive noise as `INVALID` or `INCONCLUSIVE`.
+- **Single-Host Event Loop Guard**: Data plane processes execute on the host machine. To prevent false positives from CPU saturation or event-loop stalls, EchmaMeet continuously monitors event-loop lag and marks trials with excessive noise as `INVALID` or `INCONCLUSIVE`.
 - **Bounded Autonomous Scope**: Meta AI models are strictly constrained to proposing parameter modifications within the typed bounds catalog. They cannot rewrite application source code or install unverified packages.
 
 See [`docs/limitations.md`](docs/limitations.md) for the complete charter.

@@ -1,4 +1,4 @@
-# Multi-stage production build for ChaosBoard
+# Multi-stage production build for EchmaMeet
 FROM node:22-bookworm-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
