@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface AlreadyInCallModalProps {
   readonly isOpen: boolean;
@@ -15,6 +16,12 @@ export function AlreadyInCallModal({
   onClose,
   onLeaveAndProceed,
 }: AlreadyInCallModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -32,14 +39,29 @@ export function AlreadyInCallModal({
 
   const actionText = attemptedAction === 'create' ? 'create a new' : 'join another';
 
-  return (
-    <div className="modal-backdrop" onClick={onClose} style={{ zIndex: 10000 }}>
+  const modalContent = (
+    <div
+      className="modal-backdrop already-in-call-backdrop"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 100000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(5, 7, 12, 0.85)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+      }}
+    >
       <div
         className="meeting-leave-confirm-card"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="already-in-call-title"
+        style={{ margin: 'auto' }}
       >
         <div className="already-in-call-icon-badge">
           <svg
@@ -80,4 +102,11 @@ export function AlreadyInCallModal({
       </div>
     </div>
   );
+
+  // When rendered on client, portal to document.body so topbar CSS transforms/filters cannot offset centering
+  if (mounted && typeof document !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return modalContent;
 }
