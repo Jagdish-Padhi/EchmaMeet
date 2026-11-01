@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-30T12:07:41.934Z",
+  "generatedAt": "2026-11-01T08:04:07.841Z",
   "gitCommit": "test-commit",
   "hostDescription": "test-environment",
   "nodeVersion": "v22.14.0",
@@ -90,8 +90,12 @@
                 "p75": 1050,
                 "iqr": 100
               },
-              "baselineValues": [100],
-              "faultedValues": [1000]
+              "baselineValues": [
+                100
+              ],
+              "faultedValues": [
+                1000
+              ]
             }
           },
           {
@@ -117,8 +121,12 @@
                 "p75": 0.99,
                 "iqr": 0.02
               },
-              "baselineValues": [1],
-              "faultedValues": [0.98]
+              "baselineValues": [
+                1
+              ],
+              "faultedValues": [
+                0.98
+              ]
             }
           }
         ],
