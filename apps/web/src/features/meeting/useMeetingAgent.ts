@@ -9,6 +9,9 @@ export interface UseMeetingAgentProps {
   readonly api: ApiClient;
   readonly hostName: string;
   readonly isMeetingActive: boolean;
+  readonly roomId?: string | undefined;
+  readonly transcripts?: readonly { speakerName: string; text: string; timestampMs?: number }[] | undefined;
+  readonly experimentSummary?: unknown | undefined;
 }
 
 export function useMeetingAgent({
@@ -16,11 +19,22 @@ export function useMeetingAgent({
   api,
   hostName,
   isMeetingActive,
+  roomId,
+  transcripts,
+  experimentSummary,
 }: UseMeetingAgentProps) {
   const [hazards, setHazards] = useState<SreHazard[]>([]);
   const [aiRaisedHand, setAiRaisedHand] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [spokenOpinion, setSpokenOpinion] = useState<string>('');
+  const [identifiedRisk, setIdentifiedRisk] = useState<string | undefined>();
+  const [supportingReferences, setSupportingReferences] = useState<readonly any[]>([]);
+  const [affectedNodeIds, setAffectedNodeIds] = useState<readonly string[]>([]);
+  const [affectedEdgeIds, setAffectedEdgeIds] = useState<readonly string[]>([]);
+  const [facts, setFacts] = useState<readonly string[]>([]);
+  const [assumptions, setAssumptions] = useState<readonly string[]>([]);
+  const [confidence, setConfidence] = useState<number>(0.85);
+  const [proposedExperiment, setProposedExperiment] = useState<any | undefined>();
   const [lastEvaluatedHash, setLastEvaluatedHash] = useState<string>('');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [tokenUsage, setTokenUsage] = useState<{
@@ -72,6 +86,9 @@ export function useMeetingAgent({
             topology: topologyPayload,
             hostName: hostName || 'Engineer',
             userPrompt: manualPrompt,
+            roomId,
+            transcriptSegments: transcripts,
+            experimentSummary,
           },
           abortControllerRef.current.signal,
         );
@@ -79,6 +96,14 @@ export function useMeetingAgent({
         setHazards(res.hazards as SreHazard[]);
         setAiRaisedHand(res.handRaised);
         setSpokenOpinion(res.spokenOpinion);
+        setIdentifiedRisk(res.identifiedRisk);
+        setSupportingReferences(res.supportingTranscriptReferences ?? []);
+        setAffectedNodeIds(res.affectedNodeIds ?? []);
+        setAffectedEdgeIds(res.affectedEdgeIds ?? []);
+        setFacts(res.facts ?? []);
+        setAssumptions(res.assumptions ?? []);
+        setConfidence(res.confidence ?? 0.85);
+        setProposedExperiment(res.proposedExperiment);
         if (res.tokenUsage) {
           setTokenUsage(res.tokenUsage);
         }
@@ -113,7 +138,7 @@ export function useMeetingAgent({
         setIsEvaluating(false);
       }
     },
-    [api, board, currentHash, hostName],
+    [api, board, currentHash, experimentSummary, hostName, roomId, transcripts],
   );
 
   // Allow handler: Host/engineer clicks "Allow" on Echma's request
@@ -165,6 +190,14 @@ export function useMeetingAgent({
     hazardCount: hazards.length,
     isEvaluating,
     spokenOpinion,
+    identifiedRisk,
+    supportingReferences,
+    affectedNodeIds,
+    affectedEdgeIds,
+    facts,
+    assumptions,
+    confidence,
+    proposedExperiment,
     isSpeaking,
     tokenUsage,
     permissionRequested,

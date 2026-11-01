@@ -233,16 +233,60 @@ export interface ApiClient {
   getReportJson(runId: RunId, signal?: AbortSignal): Promise<ReportExport>;
   getReportDiagramSvg(runId: RunId, signal?: AbortSignal): Promise<string>;
   getBlueprintCard(runId: RunId, signal?: AbortSignal): Promise<BlueprintCard>;
+  sendMeetingTranscriptChunk(
+    roomId: string,
+    body: {
+      chunkId: string;
+      audioBase64: string;
+      speakerId: string;
+      speakerName: string;
+      timestampMs: number;
+      recordingConsent: boolean;
+    },
+    signal?: AbortSignal,
+  ): Promise<{
+    id: string;
+    text: string;
+    speakerName?: string | undefined;
+    timestampMs?: number | undefined;
+    latencyMs?: number | undefined;
+  }>;
+  getMeetingTranscripts(
+    roomId: string,
+    signal?: AbortSignal,
+  ): Promise<{
+    roomId: string;
+    segments: readonly {
+      id: string;
+      roomId: string;
+      speakerId: string;
+      speakerName: string;
+      text: string;
+      timestampMs: number;
+      durationMs: number;
+    }[];
+  }>;
   getMeetingAiOpinion(
     body: {
       topology: unknown;
       hostName?: string | undefined;
       userPrompt?: string | undefined;
+      roomId?: string | undefined;
+      transcriptSegments?: readonly unknown[] | undefined;
+      experimentSummary?: unknown;
     },
     signal?: AbortSignal,
   ): Promise<{
     handRaised: boolean;
     spokenOpinion: string;
+    identifiedRisk?: string | undefined;
+    supportingTranscriptReferences?: readonly any[] | undefined;
+    affectedNodeIds?: readonly string[] | undefined;
+    affectedEdgeIds?: readonly string[] | undefined;
+    facts?: readonly string[] | undefined;
+    assumptions?: readonly string[] | undefined;
+    confidence?: number | undefined;
+    proposedExperiment?: any | undefined;
     hazards: readonly any[];
     tokenUsage?: { promptTokens?: number | undefined; completionTokens?: number | undefined; totalTokens?: number | undefined } | undefined;
   }>;
@@ -595,21 +639,64 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
     getBlueprintCard: (runId, signal) =>
       request(`/api/reports/${runId}/card`, blueprintCardSchema, withSignal('GET', signal)),
 
+    sendMeetingTranscriptChunk: (roomId, body, signal) =>
+      request(
+        `/api/rooms/${encodeURIComponent(roomId)}/transcript`,
+        z.object({
+          id: z.string(),
+          text: z.string(),
+          speakerName: z.string().optional(),
+          timestampMs: z.number().optional(),
+          latencyMs: z.number().optional(),
+        }),
+        withSignal('POST', signal, JSON.stringify(body)),
+      ),
+
+    getMeetingTranscripts: (roomId, signal) =>
+      request(
+        `/api/rooms/${encodeURIComponent(roomId)}/transcripts`,
+        z.object({
+          roomId: z.string(),
+          segments: z.array(
+            z.object({
+              id: z.string(),
+              roomId: z.string(),
+              speakerId: z.string(),
+              speakerName: z.string(),
+              text: z.string(),
+              timestampMs: z.number(),
+              durationMs: z.number(),
+            }),
+          ),
+        }),
+        withSignal('GET', signal),
+      ),
+
     getMeetingAiOpinion: (body, signal) =>
       request(
         '/api/meeting/ai-opinion',
-        z.object({
-          handRaised: z.boolean(),
-          spokenOpinion: z.string(),
-          hazards: z.array(z.any()),
-          tokenUsage: z
-            .object({
-              promptTokens: z.number().optional(),
-              completionTokens: z.number().optional(),
-              totalTokens: z.number().optional(),
-            })
-            .optional(),
-        }),
+        z
+          .object({
+            handRaised: z.boolean(),
+            spokenOpinion: z.string(),
+            identifiedRisk: z.string().optional(),
+            supportingTranscriptReferences: z.array(z.any()).optional(),
+            affectedNodeIds: z.array(z.string()).optional(),
+            affectedEdgeIds: z.array(z.string()).optional(),
+            facts: z.array(z.string()).optional(),
+            assumptions: z.array(z.string()).optional(),
+            confidence: z.number().optional(),
+            proposedExperiment: z.any().optional(),
+            hazards: z.array(z.any()),
+            tokenUsage: z
+              .object({
+                promptTokens: z.number().optional(),
+                completionTokens: z.number().optional(),
+                totalTokens: z.number().optional(),
+              })
+              .optional(),
+          })
+          .passthrough(),
         withSignal('POST', signal, JSON.stringify(body)),
       ),
   };

@@ -35,6 +35,7 @@ import {
   useCollaborationPresence,
   useMeetingAgent,
   useMeetingMediaStream,
+  useMeetingTranscription,
   MetaAgentSettingsModal,
 } from '../features/meeting';
 import { IacExportModal } from '../features/repair';
@@ -210,11 +211,22 @@ export function App() {
   // Meeting Room SRE Watcher
   const [isSreModalOpen, setIsSreModalOpen] = useState(false);
   const [isAgentSettingsOpen, setIsAgentSettingsOpen] = useState(false);
+
+  const meetingTranscription = useMeetingTranscription({
+    roomId: meetingRoomCode,
+    localStream: meetingMedia.localStream,
+    isMeetingActive: isMeetingLive,
+    currentUser: currentReviewer,
+    api,
+  });
+
   const sreWatcher = useMeetingAgent({
     board,
     api,
     hostName: currentReviewer?.name || 'Engineer',
     isMeetingActive: isMeetingLive,
+    roomId: meetingRoomCode,
+    transcripts: meetingTranscription.transcripts,
   });
 
   // Experiments state
