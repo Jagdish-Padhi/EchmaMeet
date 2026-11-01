@@ -19,7 +19,10 @@ export function resolveNodeNumber(nodeId: string, nodes?: readonly { id: string 
   return match ? parseInt(match[0], 10) : 1;
 }
 
-function resolveNodeLabel(nodeId: string, nodes?: readonly { id: string; label?: string | undefined }[] | undefined): string | null {
+function resolveNodeLabel(
+  nodeId: string,
+  nodes?: readonly { id: string; label?: string | undefined }[] | undefined,
+): string | null {
   if (nodes && nodes.length > 0) {
     const node = nodes.find((n) => n.id === nodeId);
     if (node?.label) return node.label;
@@ -27,11 +30,15 @@ function resolveNodeLabel(nodeId: string, nodes?: readonly { id: string; label?:
   return null;
 }
 
-function humanizeProblem(problem: TopologyProblem, nodes?: readonly { id: string; label?: string | undefined }[] | undefined): string {
+function humanizeProblem(
+  problem: TopologyProblem,
+  nodes?: readonly { id: string; label?: string | undefined }[] | undefined,
+): string {
   const { code, message, nodeId, edgeId } = problem;
   const num = nodeId ? resolveNodeNumber(nodeId, nodes) : null;
   const label = nodeId ? resolveNodeLabel(nodeId, nodes) : null;
-  const nodeRef = num !== null ? (label ? `Node ${String(num)} (${label})` : `Node ${String(num)}`) : 'Component';
+  const nodeRef =
+    num !== null ? (label ? `Node ${String(num)} (${label})` : `Node ${String(num)}`) : 'Component';
 
   switch (code) {
     case 'schema_violation': {
@@ -116,7 +123,8 @@ export function ValidationBanner({
       </div>
 
       <p className="validation-advisory-subtext">
-        Simulation and resilience verification require a valid acyclic topology without role violations.
+        Simulation and resilience verification require a valid acyclic topology without role
+        violations.
       </p>
 
       <ul className="validation-advisory-list">
@@ -144,7 +152,9 @@ export function ValidationBanner({
                   >
                     <span className="target-chip-type">{p.nodeId ? 'Node' : 'Edge'}</span>
                     <span className="target-chip-id">
-                      {nodeNum !== null ? `${String(nodeNum)}${nodeLabel ? ` · ${nodeLabel}` : ''}` : String(p.edgeId)}
+                      {nodeNum !== null
+                        ? `${String(nodeNum)}${nodeLabel ? ` · ${nodeLabel}` : ''}`
+                        : String(p.edgeId)}
                     </span>
                   </button>
                 )}
@@ -156,11 +166,7 @@ export function ValidationBanner({
 
       {isEntryMissing && onFixEntryNode && entryNodeCandidateLabel && (
         <div className="validation-quick-fix-row">
-          <button
-            type="button"
-            className="btn-compatibility-fix"
-            onClick={onFixEntryNode}
-          >
+          <button type="button" className="btn-compatibility-fix" onClick={onFixEntryNode}>
             Designate &ldquo;{entryNodeCandidateLabel}&rdquo; as Ingress Entry
           </button>
         </div>

@@ -59,11 +59,11 @@ export interface MeetingChatMessage {
   readonly text: string;
   readonly timestamp: string;
   readonly isAi: boolean;
-  readonly hazardBadge?: {
-    readonly severity: 'low' | 'medium' | 'high' | 'critical' | 'warning';
-    readonly title: string;
-    readonly recommendation?: string | undefined;
-  } | undefined;
+  readonly hazardBadge?:
+    | {
+        readonly severity: 'low' | 'medium' | 'high' | 'critical' | 'warning';
+        readonly title: string;
+        readonly recommendation?: string | undefined;
+      }
+    | undefined;
 }
-
-

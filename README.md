@@ -157,12 +157,12 @@ flowchart TB
 
 EchmaMeet utilizes Meta frontier models across vision, meeting reasoning, and autonomous repair, backed by deterministic fallbacks ensuring offline and self-hosted functionality:
 
-| Capability                          | Model                                                                                                    | Endpoint / Provider                                           | Fallback When Unconfigured                                                    |
-| :---------------------------------- | :------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------ | :---------------------------------------------------------------------------- |
-| **Autonomous SRE Copilot & Repair** | **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026`) / Llama 3<br/>_Bounded catalog proposal engine_ | Dev Meta AI (`https://api.meta.ai/v1`) or vLLM / Hugging Face | Local Random Forest ML classifier + deterministic heuristics                  |
-| **Real-Time Meeting Voice Copilot** | **Meta SRE Meeting Reviewer** (`meta-models/muse-spark-open-1026`)<br/>_Live transcript-grounded risk advisor_ | Meta WebSocket API or compatible inference provider           | Deterministic regex and tokenized architectural keyword extractor             |
-| **Whiteboard Diagram Ingestion**    | **Meta Llama 3.2 11B Vision** (`meta-models/llama-3.2-11b-vision`)<br/>_Zero-shot diagram-to-graph extraction_  | Meta Multimodal Vision API / Groq API                         | Pure TypeScript contour analysis & color thresholding ($R>130, G<110, B<110$) |
-| **Physical Whiteboard Fault Gesture**| **Deterministic Color-Threshold Intersector**<br/>_Polyline segment intersection for red markers_       | Pure domain geometry (`modules/vision/domain`)               | Manual edge selection via SVG UI canvas                                       |
+| Capability                            | Model                                                                                                          | Endpoint / Provider                                           | Fallback When Unconfigured                                                    |
+| :------------------------------------ | :------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------ | :---------------------------------------------------------------------------- |
+| **Autonomous SRE Copilot & Repair**   | **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026`) / Llama 3<br/>_Bounded catalog proposal engine_  | Dev Meta AI (`https://api.meta.ai/v1`) or vLLM / Hugging Face | Local Random Forest ML classifier + deterministic heuristics                  |
+| **Real-Time Meeting Voice Copilot**   | **Meta SRE Meeting Reviewer** (`meta-models/muse-spark-open-1026`)<br/>_Live transcript-grounded risk advisor_ | Meta WebSocket API or compatible inference provider           | Deterministic regex and tokenized architectural keyword extractor             |
+| **Whiteboard Diagram Ingestion**      | **Meta Llama 3.2 11B Vision** (`meta-models/llama-3.2-11b-vision`)<br/>_Zero-shot diagram-to-graph extraction_ | Meta Multimodal Vision API / Groq API                         | Pure TypeScript contour analysis & color thresholding ($R>130, G<110, B<110$) |
+| **Physical Whiteboard Fault Gesture** | **Deterministic Color-Threshold Intersector**<br/>_Polyline segment intersection for red markers_              | Pure domain geometry (`modules/vision/domain`)                | Manual edge selection via SVG UI canvas                                       |
 
 ---
 

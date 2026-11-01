@@ -354,7 +354,16 @@ export function MeetingFloatingWindow({
             title="Ask Echma for live architecture opinion"
             aria-label="Ask Echma"
           >
-            <span style={{ fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', padding: '0 4px' }}>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '0 4px',
+              }}
+            >
               <FemaleArchitectIcon size={14} strokeWidth={2} />
               <span>{isEvaluatingAi ? '...' : 'Ask Echma'}</span>
             </span>

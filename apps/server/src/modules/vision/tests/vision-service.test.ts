@@ -38,7 +38,12 @@ describe('VisionService application', () => {
               { id: 'auth-service', label: 'Auth Service', kind: 'service', confidence: 0.9 },
             ],
             edges: [
-              { id: 'e1', sourceLabel: 'Web Gateway', targetLabel: 'Auth Service', confidence: 0.88 },
+              {
+                id: 'e1',
+                sourceLabel: 'Web Gateway',
+                targetLabel: 'Auth Service',
+                confidence: 0.88,
+              },
             ],
             ambiguities: [],
             warnings: [],

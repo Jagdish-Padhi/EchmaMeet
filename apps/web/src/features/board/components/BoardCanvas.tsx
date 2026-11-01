@@ -64,12 +64,14 @@ export interface BoardCanvasProps {
   readonly onUpdateEdgeControlPoint?: (edgeId: EdgeId, point: CanvasPosition | null) => void;
   readonly hazardEdgeId?: EdgeId | null;
   readonly hazardNodeId?: NodeId | null;
-  readonly echmaSpeakingRequest?: {
-    readonly isRequested: boolean;
-    readonly hostName: string;
-    readonly onAllow: () => void;
-    readonly onDismiss: () => void;
-  } | undefined;
+  readonly echmaSpeakingRequest?:
+    | {
+        readonly isRequested: boolean;
+        readonly hostName: string;
+        readonly onAllow: () => void;
+        readonly onDismiss: () => void;
+      }
+    | undefined;
 }
 
 function pointsToSmoothPath(points: readonly CanvasPosition[]): string {
@@ -259,7 +261,9 @@ export function BoardCanvas({
   const [connectingTarget, setConnectingTarget] = useState<NodeId | null>(null);
   const [reconnectingEdgeId, setReconnectingEdgeId] = useState<EdgeId | null>(null);
   const [reconnectingSide, setReconnectingSide] = useState<'source' | 'target'>('target');
-  const [connectingPort, setConnectingPort] = useState<'top' | 'right' | 'bottom' | 'left'>('right');
+  const [connectingPort, setConnectingPort] = useState<'top' | 'right' | 'bottom' | 'left'>(
+    'right',
+  );
   const [connectingCursor, setConnectingCursor] = useState<{ x: number; y: number } | null>(null);
   const connectStartPosRef = useRef<{ clientX: number; clientY: number } | null>(null);
   const hasMovedWireRef = useRef(false);
@@ -477,11 +481,7 @@ export function BoardCanvas({
   };
 
   // Start reconnecting / detaching an existing edge source dot
-  const handleStartReconnectSource = (
-    edgeId: EdgeId,
-    targetId: NodeId,
-    e: ReactMouseEvent,
-  ) => {
+  const handleStartReconnectSource = (edgeId: EdgeId, targetId: NodeId, e: ReactMouseEvent) => {
     e.stopPropagation();
     setConnectingSource(null);
     setConnectingTarget(targetId);
@@ -494,11 +494,7 @@ export function BoardCanvas({
   };
 
   // Start reconnecting / detaching an existing edge arrowhead
-  const handleStartReconnectTarget = (
-    edgeId: EdgeId,
-    sourceId: NodeId,
-    e: ReactMouseEvent,
-  ) => {
+  const handleStartReconnectTarget = (edgeId: EdgeId, sourceId: NodeId, e: ReactMouseEvent) => {
     e.stopPropagation();
     setConnectingSource(sourceId);
     setConnectingTarget(null);
@@ -515,7 +511,11 @@ export function BoardCanvas({
     if (reconnectingEdgeId && onReconnectEdge) {
       if (reconnectingSide === 'source' && connectingTarget && connectingTarget !== targetId) {
         onReconnectEdge(reconnectingEdgeId, targetId, connectingTarget, targetPort, undefined);
-      } else if (reconnectingSide === 'target' && connectingSource && connectingSource !== targetId) {
+      } else if (
+        reconnectingSide === 'target' &&
+        connectingSource &&
+        connectingSource !== targetId
+      ) {
         onReconnectEdge(reconnectingEdgeId, connectingSource, targetId, undefined, targetPort);
       }
     } else if (connectingSource && connectingSource !== targetId) {

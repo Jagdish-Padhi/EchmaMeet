@@ -67,7 +67,11 @@ describe('Auth routes and OAuth integrations', () => {
       url: '/api/auth/config',
     });
     expect(response.statusCode).toBe(200);
-    const data = response.json<{ googleClientId: string; githubClientId: string; providers: string[] }>();
+    const data = response.json<{
+      googleClientId: string;
+      githubClientId: string;
+      providers: string[];
+    }>();
     expect(data.googleClientId).toBe('google-test-id.apps.googleusercontent.com');
     expect(data.githubClientId).toBe('gh_client_123');
     expect(data.providers).toContain('google');
@@ -157,7 +161,9 @@ describe('Auth routes and OAuth integrations', () => {
       },
     });
     expect(meResponse.statusCode).toBe(200);
-    expect(meResponse.json<{ user: { email: string } }>().user.email).toBe('google.engineer@meta.internal');
+    expect(meResponse.json<{ user: { email: string } }>().user.email).toBe(
+      'google.engineer@meta.internal',
+    );
   });
 
   it('authenticates via GitHub OAuth endpoint and issues valid JWT', async () => {

@@ -31,7 +31,7 @@ export function MeetingSideDrawer({
   const [inputText, setInputText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleSend = (e?: React.FormEvent) => {
+  const handleSend = (e?: React.SyntheticEvent) => {
     e?.preventDefault();
     const trimmed = inputText.trim();
     if (!trimmed || isSendingChat || !onSendMessage) return;
@@ -143,7 +143,9 @@ export function MeetingSideDrawer({
                 <button
                   type="button"
                   className={`chat-filter-pill ${searchQuery.toLowerCase() === '@echma' ? 'active' : ''}`}
-                  onClick={() => setSearchQuery((prev) => (prev.toLowerCase() === '@echma' ? '' : '@echma'))}
+                  onClick={() =>
+                    setSearchQuery((prev) => (prev.toLowerCase() === '@echma' ? '' : '@echma'))
+                  }
                 >
                   <FemaleArchitectIcon size={11} strokeWidth={2} />
                   <span>@echma</span>
@@ -151,7 +153,9 @@ export function MeetingSideDrawer({
                 <button
                   type="button"
                   className={`chat-filter-pill ${searchQuery.toLowerCase() === 'risk' ? 'active' : ''}`}
-                  onClick={() => setSearchQuery((prev) => (prev.toLowerCase() === 'risk' ? '' : 'risk'))}
+                  onClick={() =>
+                    setSearchQuery((prev) => (prev.toLowerCase() === 'risk' ? '' : 'risk'))
+                  }
                 >
                   <span>Risks</span>
                 </button>
@@ -165,8 +169,14 @@ export function MeetingSideDrawer({
                     <p>No messages match &ldquo;{searchQuery}&rdquo;.</p>
                   ) : (
                     <>
-                      <p>Messages can only be seen by people in the call and are deleted when the call ends.</p>
-                      <p className="meet-chat-hint">Echma is live-casting architectural observations and listening for your questions.</p>
+                      <p>
+                        Messages can only be seen by people in the call and are deleted when the
+                        call ends.
+                      </p>
+                      <p className="meet-chat-hint">
+                        Echma is live-casting architectural observations and listening for your
+                        questions.
+                      </p>
                     </>
                   )}
                 </div>

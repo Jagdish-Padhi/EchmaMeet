@@ -91,12 +91,11 @@ export function StudioNavbar({
   onToastInfo,
   onToastSuccess,
   onToastWarning,
-  onToastError,
+  _onToastError,
   onOpenPreflightBlocker,
   onOpenDiagnostics,
 }: StudioNavbarProps) {
   const [isMorePrimitivesOpen, setIsMorePrimitivesOpen] = useState(false);
-  void onToastError;
 
   return (
     <header className="studio-topbar">

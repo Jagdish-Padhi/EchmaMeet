@@ -97,7 +97,10 @@ export function useMeetingTranscription({
 
     const audioOnlyStream = new MediaStream([audioTracks[0] as MediaStreamTrack]);
     let mimeType = 'audio/webm';
-    if (!MediaRecorder.isTypeSupported('audio/webm') && MediaRecorder.isTypeSupported('audio/mp4')) {
+    if (
+      !MediaRecorder.isTypeSupported('audio/webm') &&
+      MediaRecorder.isTypeSupported('audio/mp4')
+    ) {
       mimeType = 'audio/mp4';
     }
 

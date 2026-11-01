@@ -51,7 +51,7 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
 
   start(request: StartExperimentRequest): Promise<RunId> {
     // 0. Preflight Architecture Validation: Reject invalid or incomplete topologies before acquiring host lock
-    if (!request.topology || !request.topology.nodes || request.topology.nodes.length === 0) {
+    if (request.topology.nodes.length === 0) {
       throw new AppError(
         'validation',
         'topology_empty',

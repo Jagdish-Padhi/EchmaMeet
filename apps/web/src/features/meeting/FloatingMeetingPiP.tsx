@@ -17,11 +17,13 @@ export interface FloatingMeetingPiPProps {
   readonly onAskAiOpinion?: ((prompt?: string) => void) | undefined;
   readonly onOpenSreFinding: () => void;
   readonly onLeaveMeeting: () => void;
-  readonly currentUser?: {
-    readonly name: string;
-    readonly role: string;
-    readonly avatar: string;
-  } | undefined;
+  readonly currentUser?:
+    | {
+        readonly name: string;
+        readonly role: string;
+        readonly avatar: string;
+      }
+    | undefined;
   readonly remoteReviewers?: readonly RemoteReviewer[] | undefined;
   readonly hazardsCount?: number | undefined;
   readonly spokenOpinion?: string | undefined;
@@ -61,7 +63,7 @@ export function FloatingMeetingPiP({
       lastRecordedSpokenRef.current = spokenOpinion;
       const now = new Date();
       const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-      
+
       const primaryRisk = hazards.length > 0 ? hazards[0] : undefined;
 
       setChatMessages((prev) => [

@@ -187,6 +187,7 @@ export function computeEdgeRoute(
       };
       break;
     case 'right':
+    case undefined:
     default:
       sourcePort = {
         x: Number(sRight.toFixed(1)),
@@ -216,6 +217,7 @@ export function computeEdgeRoute(
       };
       break;
     case 'right':
+    case undefined:
     default:
       targetPort = {
         x: Number(tRight.toFixed(1)),
@@ -246,7 +248,9 @@ export function computeEdgeRoute(
           ? Number(controlPoint.x.toFixed(1))
           : defaultCorridorX;
       const defaultCorridorY =
-        resolvedTargetSide === 'bottom' ? Math.max(sBottom, tBottom) + 36 : Math.min(sTop, tTop) - 36;
+        resolvedTargetSide === 'bottom'
+          ? Math.max(sBottom, tBottom) + 36
+          : Math.min(sTop, tTop) - 36;
       const corridorY =
         controlPoint && typeof controlPoint.y === 'number' && Number.isFinite(controlPoint.y)
           ? Number(controlPoint.y.toFixed(1))
@@ -279,7 +283,9 @@ export function computeEdgeRoute(
           ? Number(controlPoint.y.toFixed(1))
           : defaultCorridorY;
       const defaultCorridorX =
-        resolvedTargetSide === 'right' ? Math.max(sRight, tRight) + 36 : Math.min(sLeft, tLeft) - 36;
+        resolvedTargetSide === 'right'
+          ? Math.max(sRight, tRight) + 36
+          : Math.min(sLeft, tLeft) - 36;
       const corridorX =
         controlPoint && typeof controlPoint.x === 'number' && Number.isFinite(controlPoint.x)
           ? Number(controlPoint.x.toFixed(1))
@@ -468,6 +474,7 @@ export function computeRubberbandRoute(
       sy = source.y + nodeHeight / 2;
       break;
     case 'right':
+    case undefined:
     default:
       sx = source.x + nodeWidth;
       sy = source.y + nodeHeight / 2;

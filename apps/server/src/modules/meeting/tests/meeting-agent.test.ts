@@ -33,7 +33,8 @@ describe('MeetingAgentService', () => {
       generateStructured: vi.fn().mockResolvedValue({
         data: {
           handRaised: true,
-          spokenOpinion: 'Sarah, your Auth service has unbounded retries to the database which could trigger a cascading failure.',
+          spokenOpinion:
+            'Sarah, your Auth service has unbounded retries to the database which could trigger a cascading failure.',
           hazards: [
             {
               id: 'hazard-1',
@@ -84,4 +85,3 @@ describe('MeetingAgentService', () => {
     expect(res.spokenOpinion).toContain('Sarah');
   });
 });
-

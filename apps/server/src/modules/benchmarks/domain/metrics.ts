@@ -13,7 +13,7 @@ export interface AgreementMetrics {
 
 export function calculateAgreement(
   predictions: readonly StaticPrediction[],
-  empiricalRun: BenchmarkComparison['empiricalRun'],
+  empiricalRun: NonNullable<BenchmarkComparison['empiricalRun']>,
   designedFailureMode: string,
 ): AgreementMetrics {
   if (predictions.length === 0) {

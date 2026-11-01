@@ -118,7 +118,8 @@ describe('OpenAiVisionAdapter (Task 7 Vision Reliability)', () => {
             {
               message: {
                 role: 'assistant',
-                content: '```json\n{"nodes":[{"id":"cache-1","label":"Redis Cache","kind":"cache","confidence":0.9}],"edges":[],"ambiguities":[],"warnings":[]}\n```',
+                content:
+                  '```json\n{"nodes":[{"id":"cache-1","label":"Redis Cache","kind":"cache","confidence":0.9}],"edges":[],"ambiguities":[],"warnings":[]}\n```',
               },
             },
           ],
@@ -147,8 +148,8 @@ describe('OpenAiVisionAdapter (Task 7 Vision Reliability)', () => {
       apiKey: 'test-key',
     });
 
-    await expect(
-      adapter.extractTopologyFromImage('fake-bytes', 'image/png'),
-    ).rejects.toThrow(ModelCallError);
+    await expect(adapter.extractTopologyFromImage('fake-bytes', 'image/png')).rejects.toThrow(
+      ModelCallError,
+    );
   });
 });

@@ -23,8 +23,8 @@ if (apiKey && projectId) {
     }
     app = getApps().length === 0 ? initializeApp(config) : getApps()[0];
     auth = getAuth(app);
-  } catch (err) {
-    console.warn('Firebase initialization skipped:', err);
+  } catch {
+    // Firebase initialization optional in local offline dev
   }
 }
 

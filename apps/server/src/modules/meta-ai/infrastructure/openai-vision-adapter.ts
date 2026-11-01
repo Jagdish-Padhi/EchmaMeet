@@ -122,7 +122,7 @@ If no recognizable software architecture nodes exist, return empty nodes: [] and
       const json = (await response.json()) as {
         choices?: Array<{ message?: { content?: string } }>;
       };
-      const content = json?.choices?.[0]?.message?.content;
+      const content = json.choices?.[0]?.message?.content;
       if (!content || typeof content !== 'string') {
         throw new ModelCallError('refusal', 'Vision model returned empty response.');
       }
@@ -153,4 +153,3 @@ If no recognizable software architecture nodes exist, return empty nodes: [] and
     }
   }
 }
-

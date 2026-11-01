@@ -33,8 +33,11 @@ export const meetingAiRequestSchema = z.object({
 
 export type MeetingAiRequest = z.infer<typeof meetingAiRequestSchema>;
 
-export const sreHazardSchema = z.object({
-  id: z.string().optional().default(() => `hazard-${Math.random().toString(36).slice(2, 7)}`),
+export const sreHazardSchema = z.looseObject({
+  id: z
+    .string()
+    .optional()
+    .default(() => `hazard-${Math.random().toString(36).slice(2, 7)}`),
   title: z.string().optional().default('Architectural Risk'),
   severity: z.enum(['low', 'medium', 'high', 'critical']).optional().default('high'),
   risk: z.string().optional().default('Distributed systems hazard detected under sustained load.'),
@@ -68,7 +71,7 @@ export const sreHazardSchema = z.object({
       idempotency: z.object({ sendKey: z.boolean() }).optional(),
     })
     .optional(),
-}).passthrough();
+});
 
 export const supportingTranscriptReferenceSchema = z.object({
   speaker: z.string().optional(),
@@ -84,7 +87,7 @@ export const proposedExperimentSchema = z.object({
   verificationConditions: z.array(z.string()).default([]),
 });
 
-export const meetingAiResponseSchema = z.object({
+export const meetingAiResponseSchema = z.looseObject({
   handRaised: z.boolean().optional().default(false),
   spokenOpinion: z.string(),
   identifiedRisk: z.string().optional(),
@@ -99,7 +102,7 @@ export const meetingAiResponseSchema = z.object({
   confidence: z.number().min(0).max(1).optional(),
   proposedExperiment: proposedExperimentSchema.optional(),
   hazards: z.array(sreHazardSchema).optional().default([]),
-  remediation: z.any().optional(),
+  remediation: z.unknown().optional(),
   tokenUsage: z
     .object({
       promptTokens: z.number().optional(),
@@ -107,7 +110,7 @@ export const meetingAiResponseSchema = z.object({
       totalTokens: z.number().optional(),
     })
     .optional(),
-}).passthrough();
+});
 
 export type MeetingAiResponse = z.infer<typeof meetingAiResponseSchema>;
 
@@ -116,12 +119,15 @@ export interface EvaluateMeetingOptions {
   hostName: string;
   userPrompt?: string | null | undefined;
   roomId?: string | null | undefined;
-  transcriptSegments?: readonly { speakerName: string; text: string; timestampMs?: number | undefined }[] | undefined;
-  experimentSummary?: {
-    completionRate?: number | undefined;
-    p99LatencyMs?: number | undefined;
-    verdicts?: readonly unknown[] | undefined;
-  } | undefined;
+  transcriptSegments?:
+    readonly { speakerName: string; text: string; timestampMs?: number | undefined }[] | undefined;
+  experimentSummary?:
+    | {
+        completionRate?: number | undefined;
+        p99LatencyMs?: number | undefined;
+        verdicts?: readonly unknown[] | undefined;
+      }
+    | undefined;
   signal?: AbortSignal | undefined;
 }
 
@@ -149,7 +155,7 @@ export class MeetingAgentService {
 
     // Fast-path: When canvas is completely empty, don't burn tokens on complex reasoning.
     if (nodeCount === 0) {
-      const cleanHost = opts.hostName?.trim() || 'team';
+      const cleanHost = opts.hostName.trim() || 'team';
       return {
         handRaised: false,
         spokenOpinion: `Hey ${cleanHost}, you haven't drawn any services on the canvas yet. What system architecture are we designing today?`,
@@ -192,7 +198,8 @@ export class MeetingAgentService {
 
     const userContent = JSON.stringify({
       hostName: opts.hostName,
-      meetingQuestion: opts.userPrompt || 'What is your review of our current architecture topology?',
+      meetingQuestion:
+        opts.userPrompt || 'What is your review of our current architecture topology?',
       topology: topologySummary,
       liveMeetingTranscripts: recentTranscriptText || 'No verbal discussion recorded yet.',
       experimentMeasurements: opts.experimentSummary ?? 'No active chaos trial executed yet.',
@@ -210,7 +217,7 @@ export class MeetingAgentService {
     });
 
     // Grounded transcript verification: filter out fabricated transcript quotes that do not appear in actual transcript
-    const rawQuotes = llmResult.data.supportingTranscriptReferences ?? [];
+    const rawQuotes = llmResult.data.supportingTranscriptReferences;
     const groundedReferences = rawQuotes.filter((ref) => {
       if (!recentTranscriptText || recentTranscriptText.trim().length === 0) return false;
       const lowerTranscript = recentTranscriptText.toLowerCase();
@@ -221,10 +228,10 @@ export class MeetingAgentService {
       return words.length > 0 && words.some((w) => lowerTranscript.includes(w));
     });
 
-    const parsedHazards = (llmResult.data.hazards ?? []).map((h) => ({
+    const parsedHazards = llmResult.data.hazards.map((h) => ({
       id: h.id || `hazard-${Math.random().toString(36).slice(2, 7)}`,
       title: h.title || h.issue || 'Identified Hazard',
-      severity: h.severity || 'medium',
+      severity: h.severity,
       risk: h.risk || h.issue || 'Resilience hazard identified.',
       recommendation: h.recommendation || 'Tune resilience policy parameters.',
       targetNodeId: h.targetNodeId || h.nodeId,
@@ -238,15 +245,18 @@ export class MeetingAgentService {
       identifiedRisk: llmResult.data.identifiedRisk ?? (parsedHazards[0]?.risk || undefined),
       supportingTranscriptReferences: groundedReferences,
       affectedNodeIds:
-        (llmResult.data.affectedNodeIds ?? []).length > 0
-          ? (llmResult.data.affectedNodeIds ?? [])
+        llmResult.data.affectedNodeIds.length > 0
+          ? llmResult.data.affectedNodeIds
           : parsedHazards.map((h) => h.targetNodeId).filter((id): id is string => Boolean(id)),
       affectedEdgeIds:
-        (llmResult.data.affectedEdgeIds ?? []).length > 0
-          ? (llmResult.data.affectedEdgeIds ?? [])
+        llmResult.data.affectedEdgeIds.length > 0
+          ? llmResult.data.affectedEdgeIds
           : parsedHazards.map((h) => h.targetEdgeId).filter((id): id is string => Boolean(id)),
-      facts: (llmResult.data.facts ?? []).length > 0 ? (llmResult.data.facts ?? []) : [`Topology has ${nodeCount} services and ${topology.edges.length} connections.`],
-      assumptions: llmResult.data.assumptions ?? [],
+      facts:
+        llmResult.data.facts.length > 0
+          ? llmResult.data.facts
+          : [`Topology has ${nodeCount} services and ${topology.edges.length} connections.`],
+      assumptions: llmResult.data.assumptions,
       confidence: llmResult.data.confidence ?? (groundedReferences.length > 0 ? 0.8 : 0.6),
       proposedExperiment: llmResult.data.proposedExperiment,
       hazards: parsedHazards,
@@ -260,4 +270,3 @@ export class MeetingAgentService {
     };
   }
 }
-

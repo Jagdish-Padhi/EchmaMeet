@@ -86,7 +86,9 @@ describe('Collaborative Canvas Protocol & Synchronization (Task 2)', () => {
     const clientAMessages: any[] = [];
     const clientBMessages: any[] = [];
 
-    const wsA = await connectClient(url, 'canvas-room-1', tokenA, (msg) => clientAMessages.push(msg));
+    const wsA = await connectClient(url, 'canvas-room-1', tokenA, (msg) =>
+      clientAMessages.push(msg),
+    );
     await connectClient(url, 'canvas-room-1', tokenB, (msg) => clientBMessages.push(msg));
 
     // Client A creates node
@@ -94,18 +96,29 @@ describe('Collaborative Canvas Protocol & Synchronization (Task 2)', () => {
       type: 'canvas_op',
       opId: 'op-node-create-1',
       op: 'create_node',
-      payload: { node: { id: 'node-auth', kind: 'service', label: 'Auth Service', position: { x: 100, y: 150 } } },
+      payload: {
+        node: {
+          id: 'node-auth',
+          kind: 'service',
+          label: 'Auth Service',
+          position: { x: 100, y: 150 },
+        },
+      },
     };
     wsA.send(JSON.stringify(createOp));
 
     // Wait for ack on Client A and broadcast on Client B
     await new Promise((res) => setTimeout(res, 100));
 
-    const ack1 = clientAMessages.find((m) => m.type === 'canvas_ack' && m.opId === 'op-node-create-1');
+    const ack1 = clientAMessages.find(
+      (m) => m.type === 'canvas_ack' && m.opId === 'op-node-create-1',
+    );
     expect(ack1).toBeDefined();
     expect(ack1.sequence).toBe(1);
 
-    const remoteOp1 = clientBMessages.find((m) => m.type === 'canvas_op' && m.opId === 'op-node-create-1');
+    const remoteOp1 = clientBMessages.find(
+      (m) => m.type === 'canvas_op' && m.opId === 'op-node-create-1',
+    );
     expect(remoteOp1).toBeDefined();
     expect(remoteOp1.sequence).toBe(1);
     expect(remoteOp1.actorId).toBe('alice');
@@ -122,11 +135,15 @@ describe('Collaborative Canvas Protocol & Synchronization (Task 2)', () => {
 
     await new Promise((res) => setTimeout(res, 100));
 
-    const ack2 = clientAMessages.find((m) => m.type === 'canvas_ack' && m.opId === 'op-node-delete-1');
+    const ack2 = clientAMessages.find(
+      (m) => m.type === 'canvas_ack' && m.opId === 'op-node-delete-1',
+    );
     expect(ack2).toBeDefined();
     expect(ack2.sequence).toBe(2);
 
-    const remoteOp2 = clientBMessages.find((m) => m.type === 'canvas_op' && m.opId === 'op-node-delete-1');
+    const remoteOp2 = clientBMessages.find(
+      (m) => m.type === 'canvas_op' && m.opId === 'op-node-delete-1',
+    );
     expect(remoteOp2).toBeDefined();
     expect(remoteOp2.sequence).toBe(2);
     expect(remoteOp2.payload.nodeId).toBe('node-auth');
@@ -151,7 +168,9 @@ describe('Collaborative Canvas Protocol & Synchronization (Task 2)', () => {
 
     await new Promise((res) => setTimeout(res, 100));
 
-    const remoteMove = clientBMessages.find((m) => m.type === 'canvas_op' && m.opId === 'op-move-101');
+    const remoteMove = clientBMessages.find(
+      (m) => m.type === 'canvas_op' && m.opId === 'op-move-101',
+    );
     expect(remoteMove).toBeDefined();
     expect(remoteMove.payload.nodeId).toBe('node-1');
     expect(remoteMove.payload.x).toBe(420);
@@ -199,8 +218,12 @@ describe('Collaborative Canvas Protocol & Synchronization (Task 2)', () => {
 
     await new Promise((res) => setTimeout(res, 100));
 
-    const edgeCreate = clientBMessages.find((m) => m.type === 'canvas_op' && m.opId === 'op-edge-create-1');
-    const edgeUpdate = clientBMessages.find((m) => m.type === 'canvas_op' && m.opId === 'op-edge-update-1');
+    const edgeCreate = clientBMessages.find(
+      (m) => m.type === 'canvas_op' && m.opId === 'op-edge-create-1',
+    );
+    const edgeUpdate = clientBMessages.find(
+      (m) => m.type === 'canvas_op' && m.opId === 'op-edge-update-1',
+    );
 
     expect(edgeCreate).toBeDefined();
     expect(edgeCreate.payload.edge.id).toBe('edge-1-to-2');
@@ -216,8 +239,12 @@ describe('Collaborative Canvas Protocol & Synchronization (Task 2)', () => {
     const clientAMessages: any[] = [];
     const clientBMessages: any[] = [];
 
-    const wsA = await connectClient(url, 'canvas-concurrent', tokenA, (msg) => clientAMessages.push(msg));
-    const wsB = await connectClient(url, 'canvas-concurrent', tokenB, (msg) => clientBMessages.push(msg));
+    const wsA = await connectClient(url, 'canvas-concurrent', tokenA, (msg) =>
+      clientAMessages.push(msg),
+    );
+    const wsB = await connectClient(url, 'canvas-concurrent', tokenB, (msg) =>
+      clientBMessages.push(msg),
+    );
 
     // Alice and Bob send ops concurrently
     wsA.send(
@@ -260,7 +287,10 @@ describe('Collaborative Canvas Protocol & Synchronization (Task 2)', () => {
   it('reconnection restores the latest graph via canvas_sync operations log', async () => {
     const { url } = await startServer();
     const tokenA = signJwt({ userId: 'alice', name: 'Alice', role: 'admin' }, DEFAULT_JWT_SECRET);
-    const tokenC = signJwt({ userId: 'charlie', name: 'Charlie', role: 'reviewer' }, DEFAULT_JWT_SECRET);
+    const tokenC = signJwt(
+      { userId: 'charlie', name: 'Charlie', role: 'reviewer' },
+      DEFAULT_JWT_SECRET,
+    );
 
     const wsA = await connectClient(url, 'canvas-sync-room', tokenA);
 

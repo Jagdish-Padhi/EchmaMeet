@@ -905,9 +905,18 @@ body:has(.studio-root) {
 }
 
 @keyframes agentPulse {
-  0% { transform: scale(0.95); opacity: 0.8; }
-  50% { transform: scale(1.25); opacity: 0; }
-  100% { transform: scale(0.95); opacity: 0; }
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
 }
 
 .agentic-title-group {
@@ -7628,7 +7637,9 @@ button.validation-target-chip:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s ease, opacity 0.15s ease;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .meet-chat-send-btn:hover:not(:disabled) {
@@ -10270,7 +10281,8 @@ input[type='range']::-moz-range-thumb,
 }
 
 @keyframes echmaAlertPulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(0.9);
     opacity: 0.8;
   }
@@ -10359,4 +10371,3 @@ input[type='range']::-moz-range-thumb,
     transform: translateX(0);
   }
 }
-

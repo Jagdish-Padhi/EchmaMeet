@@ -19,10 +19,7 @@ describe('MetaAgentSettingsModal', () => {
   });
 
   it('renders null when not open', () => {
-    const html = renderToStaticMarkup(
-      <MetaAgentSettingsModal isOpen={false} onClose={() => {}} />,
-    );
+    const html = renderToStaticMarkup(<MetaAgentSettingsModal isOpen={false} onClose={() => {}} />);
     expect(html).toBe('');
   });
 });
-

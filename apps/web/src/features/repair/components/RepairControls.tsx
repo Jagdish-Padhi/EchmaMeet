@@ -63,7 +63,8 @@ export function RepairControls({
             onChange={(e) => onMaxIterationsChange(parseInt(e.target.value, 10) || 3)}
           />
           <span className="field-help-text">
-            Stops as soon as all invariants pass or search space reaches {String(maxIterations)} iterations.
+            Stops as soon as all invariants pass or search space reaches {String(maxIterations)}{' '}
+            iterations.
           </span>
         </label>
 
@@ -78,7 +79,11 @@ export function RepairControls({
               disabled={!canStart}
               onClick={onStart}
               className="btn-full-width"
-              title={!canStart ? 'Resolve topology incompatibilities before running repair' : 'Start autonomous repair loop'}
+              title={
+                !canStart
+                  ? 'Resolve topology incompatibilities before running repair'
+                  : 'Start autonomous repair loop'
+              }
             >
               Start Autonomous Repair Loop
             </Button>

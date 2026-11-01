@@ -4,11 +4,14 @@ import { Button } from '../../../components/ui/Button';
 export interface MetaAgentSettingsModalProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
-  readonly tokenUsage?: {
-    promptTokens?: number | undefined;
-    completionTokens?: number | undefined;
-    totalTokens?: number | undefined;
-  } | null | undefined;
+  readonly tokenUsage?:
+    | {
+        promptTokens?: number | undefined;
+        completionTokens?: number | undefined;
+        totalTokens?: number | undefined;
+      }
+    | null
+    | undefined;
 }
 
 export function MetaAgentSettingsModal({
@@ -29,7 +32,14 @@ export function MetaAgentSettingsModal({
         role="dialog"
         aria-modal="true"
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '16px',
+          }}
+        >
           <div>
             <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#f8fafc', margin: 0 }}>
               Echma SRE Agent
@@ -38,12 +48,7 @@ export function MetaAgentSettingsModal({
               Real-time architecture analysis powered by Meta Llama 3
             </p>
           </div>
-          <button
-            type="button"
-            className="btn-close-drawer"
-            onClick={onClose}
-            aria-label="Close"
-          >
+          <button type="button" className="btn-close-drawer" onClick={onClose} aria-label="Close">
             &times;
           </button>
         </div>
@@ -83,7 +88,15 @@ export function MetaAgentSettingsModal({
           </div>
 
           <div>
-            <label style={{ fontSize: '12px', fontWeight: 600, color: '#cbd5e1', display: 'block', marginBottom: '6px' }}>
+            <label
+              style={{
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#cbd5e1',
+                display: 'block',
+                marginBottom: '6px',
+              }}
+            >
               Inference Provider
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>

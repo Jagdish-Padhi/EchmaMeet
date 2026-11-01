@@ -100,9 +100,7 @@ describe('Collaboration WebSocket Bridge with Security & Room Isolation', () => 
     });
 
     // Connecting to room-private should be rejected
-    await expect(
-      connectClient(url, 'room-private', DEMO_AUTH_TOKEN),
-    ).rejects.toThrow();
+    await expect(connectClient(url, 'room-private', DEMO_AUTH_TOKEN)).rejects.toThrow();
 
     // Connecting to room-public should succeed
     const ws = await connectClient(url, 'room-public', DEMO_AUTH_TOKEN);
@@ -181,16 +179,12 @@ describe('Collaboration WebSocket Bridge with Security & Room Isolation', () => 
     await new Promise((r) => setTimeout(r, 100));
 
     // Client A2 in room-alpha MUST receive sync_user with authenticated userId 'user-a1'
-    const a2Sync = receivedA2.find(
-      (m) => m.type === 'sync_user' && m.user?.userId === 'user-a1',
-    );
+    const a2Sync = receivedA2.find((m) => m.type === 'sync_user' && m.user?.userId === 'user-a1');
     expect(a2Sync).toBeDefined();
     expect(a2Sync.user.cursor.x).toBe(120);
 
     // Client B1 in room-beta MUST NOT receive room-alpha sync_user
-    const b1Sync = receivedB1.find(
-      (m) => m.type === 'sync_user' && m.user?.userId === 'user-a1',
-    );
+    const b1Sync = receivedB1.find((m) => m.type === 'sync_user' && m.user?.userId === 'user-a1');
     expect(b1Sync).toBeUndefined();
   });
 
@@ -222,7 +216,12 @@ describe('Collaboration WebSocket Bridge with Security & Room Isolation', () => 
 
   it('does not duplicate participants on reconnection', async () => {
     const { url } = await startServer();
-    const token = signJwt({ userId: 'reconnecting-user', name: 'Reconnecting User', role: 'Staff SRE', avatar: 'RU' });
+    const token = signJwt({
+      userId: 'reconnecting-user',
+      name: 'Reconnecting User',
+      role: 'Staff SRE',
+      avatar: 'RU',
+    });
 
     // Client 1 connects
     await connectClient(url, 'room-reconnect', token);

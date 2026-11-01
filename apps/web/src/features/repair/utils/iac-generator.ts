@@ -105,7 +105,8 @@ export function generateEnvoyMeshManifest(topology: Topology): string {
 
   for (const edge of topology.edges) {
     const targetNode = topology.nodes.find((n) => n.id === edge.target);
-    const targetName = targetNode?.label.toLowerCase().replace(/[^a-z0-9]/g, '_') ?? edge.target.replace(/-/g, '_');
+    const targetName =
+      targetNode?.label.toLowerCase().replace(/[^a-z0-9]/g, '_') ?? edge.target.replace(/-/g, '_');
     const clusterConfig = generateEnvoyClusterSnippet(edge.policy, targetName);
     const indented = clusterConfig
       .split('\n')
@@ -136,8 +137,10 @@ export function generateEnvoyMeshManifest(topology: Topology): string {
 ${topology.edges
   .map((e) => {
     const target = topology.nodes.find((n) => n.id === e.target);
-    const targetName = target?.label.toLowerCase().replace(/[^a-z0-9]/g, '_') ?? e.target.replace(/-/g, '_');
-    const timeoutSec = e.policy.timeoutMs !== null ? `${(e.policy.timeoutMs / 1000).toFixed(2)}s` : '2.00s';
+    const targetName =
+      target?.label.toLowerCase().replace(/[^a-z0-9]/g, '_') ?? e.target.replace(/-/g, '_');
+    const timeoutSec =
+      e.policy.timeoutMs !== null ? `${(e.policy.timeoutMs / 1000).toFixed(2)}s` : '2.00s';
     return `                        - match:
                             prefix: "/${e.source}-to-${e.target}"
                           route:
@@ -151,4 +154,3 @@ ${topology.edges
   clusters:
 ${clusters.length > 0 ? clusters.join('\n') : '    []'}`;
 }
-

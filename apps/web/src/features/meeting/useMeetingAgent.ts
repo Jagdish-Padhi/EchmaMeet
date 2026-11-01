@@ -10,7 +10,8 @@ export interface UseMeetingAgentProps {
   readonly hostName: string;
   readonly isMeetingActive: boolean;
   readonly roomId?: string | undefined;
-  readonly transcripts?: readonly { speakerName: string; text: string; timestampMs?: number }[] | undefined;
+  readonly transcripts?:
+    readonly { speakerName: string; text: string; timestampMs?: number }[] | undefined;
   readonly experimentSummary?: unknown | undefined;
 }
 
@@ -49,7 +50,9 @@ export function useMeetingAgent({
   // Compute lightweight deterministic signature of canvas topology to avoid redundant LLM calls
   const currentHash = `${board.nodes.length}-${board.edges.length}-${board.nodes
     .map((n) => `${n.id}:${n.queue.mode}`)
-    .join('|')}-${board.edges.map((e) => `${e.id}:${e.policy.retry.maxAttempts}:${e.policy.timeoutMs}`).join('|')}`;
+    .join(
+      '|',
+    )}-${board.edges.map((e) => `${e.id}:${e.policy.retry.maxAttempts}:${e.policy.timeoutMs}`).join('|')}`;
 
   // In-call permission state for Echma speaking up
   const [permissionRequested, setPermissionRequested] = useState(false);
@@ -207,4 +210,3 @@ export function useMeetingAgent({
     stopSpeaking,
   };
 }
-

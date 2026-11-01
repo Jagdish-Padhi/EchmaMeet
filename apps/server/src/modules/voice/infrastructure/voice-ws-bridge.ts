@@ -16,40 +16,48 @@ export function attachVoiceWebSocketBridge(
     noServer: true,
   });
 
-  httpServer.on('upgrade', async (request, socket, head) => {
-    const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
-    if (url.pathname !== '/ws/voice') {
-      return;
-    }
-
-    if (options?.authenticate) {
-      const authHeader = request.headers.authorization;
-      let token = url.searchParams.get('token');
-      if (!token && authHeader?.startsWith('Bearer ')) {
-        token = authHeader.slice(7).trim();
-      }
-      if (!token) {
-        socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nUnauthorized\n');
-        socket.destroy();
+  httpServer.on('upgrade', (request, socket, head) => {
+    void (async () => {
+      const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
+      if (url.pathname !== '/ws/voice') {
         return;
       }
-      try {
-        const authed = await options.authenticate(token);
-        if (!authed) {
-          socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nUnauthorized\n');
+
+      if (options?.authenticate) {
+        const authHeader = request.headers.authorization;
+        let token = url.searchParams.get('token');
+        if (!token && authHeader?.startsWith('Bearer ')) {
+          token = authHeader.slice(7).trim();
+        }
+        if (!token) {
+          socket.write(
+            'HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nUnauthorized\n',
+          );
           socket.destroy();
           return;
         }
-      } catch {
-        socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nUnauthorized\n');
-        socket.destroy();
-        return;
+        try {
+          const authed = await options.authenticate(token);
+          if (!authed) {
+            socket.write(
+              'HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nUnauthorized\n',
+            );
+            socket.destroy();
+            return;
+          }
+        } catch {
+          socket.write(
+            'HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nUnauthorized\n',
+          );
+          socket.destroy();
+          return;
+        }
       }
-    }
 
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      wss.emit('connection', ws, request);
-    });
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+      });
+    })();
   });
 
   wss.on('connection', (ws: WebSocket) => {

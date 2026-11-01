@@ -62,7 +62,9 @@ export function VerdictsSummary({ verdicts, overallStatus, finalRecord }: Verdic
       {/* Verdict Summary Strip */}
       <div className="verdict-summary-banner">
         <span className={`summary-status-pill ${overallStatus === 'PASS' ? 'pass' : 'violated'}`}>
-          {overallStatus === 'PASS' ? 'All Invariants Satisfied' : `${String(violatedCount)} Invariant(s) Violated`}
+          {overallStatus === 'PASS'
+            ? 'All Invariants Satisfied'
+            : `${String(violatedCount)} Invariant(s) Violated`}
         </span>
         <span className="summary-counts">
           {String(passedCount)} Passed · {String(violatedCount)} Violated

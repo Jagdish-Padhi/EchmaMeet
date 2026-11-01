@@ -54,9 +54,26 @@ export type CollaborationMessage =
   | { readonly type: 'canvas_replay_request'; readonly afterSequence: number }
   | { readonly type: 'canvas_snapshot'; readonly topology: unknown }
   | { readonly type: 'chat_message'; readonly message: unknown }
-  | { readonly type: 'webrtc_offer'; readonly fromUserId: string; readonly toUserId: string; readonly offer?: unknown; readonly sdp?: unknown }
-  | { readonly type: 'webrtc_answer'; readonly fromUserId: string; readonly toUserId: string; readonly answer?: unknown; readonly sdp?: unknown }
-  | { readonly type: 'webrtc_ice_candidate'; readonly fromUserId: string; readonly toUserId: string; readonly candidate: unknown }
+  | {
+      readonly type: 'webrtc_offer';
+      readonly fromUserId: string;
+      readonly toUserId: string;
+      readonly offer?: unknown;
+      readonly sdp?: unknown;
+    }
+  | {
+      readonly type: 'webrtc_answer';
+      readonly fromUserId: string;
+      readonly toUserId: string;
+      readonly answer?: unknown;
+      readonly sdp?: unknown;
+    }
+  | {
+      readonly type: 'webrtc_ice_candidate';
+      readonly fromUserId: string;
+      readonly toUserId: string;
+      readonly candidate: unknown;
+    }
   | { readonly type: 'roster'; readonly users: readonly PresenceUser[] }
   | { readonly type: 'error'; readonly code: string; readonly message: string };
 
@@ -158,10 +175,7 @@ interface RoomState {
 export interface CollaborationBridgeOptions {
   readonly db?: SqlDatabase;
   readonly jwtSecret?: string;
-  readonly validateRoomAccess?: (
-    userId: string,
-    roomId: string,
-  ) => boolean | Promise<boolean>;
+  readonly validateRoomAccess?: (userId: string, roomId: string) => boolean | Promise<boolean>;
   readonly maxPayloadBytes?: number;
 }
 
@@ -196,71 +210,78 @@ export function attachCollaborationWebSocketBridge(
     return room;
   };
 
-  httpServer.on('upgrade', async (request: IncomingMessage, socket, head) => {
-    const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
-    if (url.pathname !== '/ws/collaboration') {
-      return;
-    }
-
-    // 1. Authenticate WebSocket upgrade
-    const authHeader = request.headers.authorization;
-    let token = url.searchParams.get('token');
-    if (!token && authHeader?.startsWith('Bearer ')) {
-      token = authHeader.slice(7).trim();
-    }
-    if (!token && request.headers.cookie) {
-      const match = /(?:^|;\s*)session_token=([^;]+)/.exec(request.headers.cookie);
-      if (match && match[1]) {
-        token = decodeURIComponent(match[1]);
+  httpServer.on('upgrade', (request: IncomingMessage, socket, head) => {
+    void (async () => {
+      const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
+      if (url.pathname !== '/ws/collaboration') {
+        return;
       }
-    }
 
-    const authenticatedUser = authenticateToken(token, options?.db, options?.jwtSecret);
-    if (!authenticatedUser) {
-      socket.write(
-        'HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nUnauthorized\n',
-      );
-      socket.destroy();
-      return;
-    }
+      // 1. Authenticate WebSocket upgrade
+      const authHeader = request.headers.authorization;
+      let token = url.searchParams.get('token');
+      if (!token && authHeader?.startsWith('Bearer ')) {
+        token = authHeader.slice(7).trim();
+      }
+      if (!token && request.headers.cookie) {
+        const match = /(?:^|;\s*)session_token=([^;]+)/.exec(request.headers.cookie);
+        if (match && match[1]) {
+          token = decodeURIComponent(match[1]);
+        }
+      }
 
-    // 2. Validate room identifier
-    const rawRoom = url.searchParams.get('room') ?? url.searchParams.get('roomId');
-    const roomId = rawRoom?.trim();
-    if (!roomId || roomId.length === 0 || roomId.length > 64 || !/^[#a-zA-Z0-9_\-\.]+$/.test(roomId)) {
-      socket.write(
-        'HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nInvalid room identifier\n',
-      );
-      socket.destroy();
-      return;
-    }
+      const authenticatedUser = authenticateToken(token, options?.db, options?.jwtSecret);
+      if (!authenticatedUser) {
+        socket.write(
+          'HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nUnauthorized\n',
+        );
+        socket.destroy();
+        return;
+      }
 
-    // 3. Validate room membership & permissions
-    if (options?.validateRoomAccess) {
-      try {
-        const hasAccess = options.validateRoomAccess(authenticatedUser.userId, roomId);
-        const allowed = typeof hasAccess === 'boolean' ? hasAccess : await hasAccess;
-        if (!allowed) {
+      // 2. Validate room identifier
+      const rawRoom = url.searchParams.get('room') ?? url.searchParams.get('roomId');
+      const roomId = rawRoom?.trim();
+      if (
+        !roomId ||
+        roomId.length === 0 ||
+        roomId.length > 64 ||
+        !/^[#a-zA-Z0-9_\-.]+$/.test(roomId)
+      ) {
+        socket.write(
+          'HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nInvalid room identifier\n',
+        );
+        socket.destroy();
+        return;
+      }
+
+      // 3. Validate room membership & permissions
+      if (options?.validateRoomAccess) {
+        try {
+          const hasAccess = options.validateRoomAccess(authenticatedUser.userId, roomId);
+          const allowed = typeof hasAccess === 'boolean' ? hasAccess : await hasAccess;
+          if (!allowed) {
+            socket.write(
+              'HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nForbidden\n',
+            );
+            socket.destroy();
+            return;
+          }
+        } catch {
           socket.write(
             'HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nForbidden\n',
           );
           socket.destroy();
           return;
         }
-      } catch {
-        socket.write(
-          'HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nForbidden\n',
-        );
-        socket.destroy();
-        return;
       }
-    }
 
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      (ws as unknown as { authenticatedUser: UserSessionProfile }).authenticatedUser =
-        authenticatedUser;
-      wss.emit('connection', ws, request);
-    });
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        (ws as unknown as { authenticatedUser: UserSessionProfile }).authenticatedUser =
+          authenticatedUser;
+        wss.emit('connection', ws, request);
+      });
+    })();
   });
 
   const broadcastToRoom = (roomId: string, sender: WebSocket, message: CollaborationMessage) => {
@@ -397,7 +418,9 @@ export function attachCollaborationWebSocketBridge(
           JSON.stringify({
             type: 'error',
             code: 'schema_validation_failed',
-            message: validation.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '),
+            message: validation.error.issues
+              .map((i) => `${i.path.join('.')}: ${i.message}`)
+              .join('; '),
           } satisfies CollaborationMessage),
         );
         return;
@@ -501,9 +524,9 @@ export function attachCollaborationWebSocketBridge(
       } else if (msg.type === 'canvas_snapshot') {
         const currentRoom = getOrCreateRoom(roomId);
         currentRoom.latestSnapshot = msg.topology;
-        broadcastToRoom(roomId, ws, msg as CollaborationMessage);
+        broadcastToRoom(roomId, ws, msg);
       } else if (msg.type === 'node_moved' || msg.type === 'edge_selected') {
-        broadcastToRoom(roomId, ws, msg as CollaborationMessage);
+        broadcastToRoom(roomId, ws, msg);
       } else if (msg.type === 'chat_message') {
         // Anti-spoofing enforcement: enforce authenticated sender metadata
         const messagePayload =

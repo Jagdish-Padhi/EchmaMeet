@@ -48,15 +48,20 @@ export function generateBenchmarkReport(suite: BenchmarkSuiteSummary): string {
     const p99Measured = item.empiricalRun?.p99LatencyMs;
     const p99MeasuredStr =
       p99Measured !== null && p99Measured !== undefined ? `${String(p99Measured)} ms` : 'N/A';
+    const p99Ratio = item.agreement?.p99Ratio;
     const p99RatioStr =
-      item.agreement?.p99Ratio !== null && item.agreement?.p99Ratio !== undefined
-        ? `${String(item.agreement.p99Ratio)}x`
-        : 'N/A';
-    const modeMatchStr = item.agreement ? (item.agreement.failureModeMatched ? 'MATCH' : 'MISMATCH') : 'N/A';
+      p99Ratio !== null && p99Ratio !== undefined ? `${String(p99Ratio)}x` : 'N/A';
+    const modeMatchStr = item.agreement
+      ? item.agreement.failureModeMatched
+        ? 'MATCH'
+        : 'MISMATCH'
+      : 'N/A';
     const agreementPct = item.agreement
       ? `${String(Math.round(item.agreement.violationAccuracy * 100))}%`
       : 'N/A';
-    const empiricalStatus = item.empiricalRun ? `**${item.empiricalRun.overallStatus}**` : 'PENDING';
+    const empiricalStatus = item.empiricalRun
+      ? `**${item.empiricalRun.overallStatus}**`
+      : 'PENDING';
 
     lines.push(
       `| \`${item.scenarioId}\` | ${empiricalStatus} | ${agreementPct} | ${p99PredictedStr} | ${p99MeasuredStr} | ${p99RatioStr} | ${modeMatchStr} |`,

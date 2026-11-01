@@ -20,7 +20,8 @@ describe('Meeting Transcription & Grounded Meta SRE AI Reasoning (Tasks 5 & 6)',
         return {
           data: {
             handRaised: true,
-            spokenOpinion: 'The checkout service makes un-jittered retries to the inventory worker.',
+            spokenOpinion:
+              'The checkout service makes un-jittered retries to the inventory worker.',
             identifiedRisk: 'Cascading retry storm under database delay.',
             supportingTranscriptReferences: [
               {
@@ -148,7 +149,8 @@ describe('Meeting Transcription & Grounded Meta SRE AI Reasoning (Tasks 5 & 6)',
         return {
           data: {
             handRaised: true,
-            spokenOpinion: 'Alex mentioned inventory latency, and looking at the graph checkout will collapse.',
+            spokenOpinion:
+              'Alex mentioned inventory latency, and looking at the graph checkout will collapse.',
             identifiedRisk: 'Cascading retry storm under database delay.',
             supportingTranscriptReferences: [
               {
@@ -208,8 +210,20 @@ describe('Meeting Transcription & Grounded Meta SRE AI Reasoning (Tasks 5 & 6)',
           mode: 'sync_call',
           policy: {
             timeoutMs: 1000,
-            retry: { maxAttempts: 3, backoffBaseMs: 0, backoffMultiplier: 1, maxBackoffMs: 0, jitter: 'none' },
-            breaker: { enabled: false, failureThresholdPct: 50, windowRequests: 10, cooldownMs: 5000, halfOpenProbes: 3 },
+            retry: {
+              maxAttempts: 3,
+              backoffBaseMs: 0,
+              backoffMultiplier: 1,
+              maxBackoffMs: 0,
+              jitter: 'none',
+            },
+            breaker: {
+              enabled: false,
+              failureThresholdPct: 50,
+              windowRequests: 10,
+              cooldownMs: 5000,
+              halfOpenProbes: 3,
+            },
             fallback: 'fail_fast_503',
             idempotency: { sendKey: false },
             pool: { maxConnections: 10 },
@@ -226,7 +240,10 @@ describe('Meeting Transcription & Grounded Meta SRE AI Reasoning (Tasks 5 & 6)',
         hostName: 'Alex Chen',
         roomId: 'room-grounded-test',
         transcriptSegments: [
-          { speakerName: 'Alex Chen', text: 'Notice that the payment service is stalling downstream calls.' },
+          {
+            speakerName: 'Alex Chen',
+            text: 'Notice that the payment service is stalling downstream calls.',
+          },
         ],
         experimentSummary: { completionRate: 0.85, p99LatencyMs: 340 },
       },
@@ -237,7 +254,9 @@ describe('Meeting Transcription & Grounded Meta SRE AI Reasoning (Tasks 5 & 6)',
 
     // Verify context was passed to model
     expect(capturedUserContent).toBeDefined();
-    expect(capturedUserContent.liveMeetingTranscripts).toContain('Alex Chen: "Notice that the payment service is stalling');
+    expect(capturedUserContent.liveMeetingTranscripts).toContain(
+      'Alex Chen: "Notice that the payment service is stalling',
+    );
     expect(capturedUserContent.experimentMeasurements.completionRate).toBe(0.85);
 
     // Verify structured output properties

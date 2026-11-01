@@ -114,7 +114,10 @@ export function loadSettings(env: Readonly<Record<string, string | undefined>>):
       );
     }
   } else if (explicitProvider === 'groq') {
-    if (picked['PARTNER_BASE_URL']?.includes('meta.ai') || picked['PARTNER_BASE_URL']?.includes('meta.com')) {
+    if (
+      picked['PARTNER_BASE_URL']?.includes('meta.ai') ||
+      picked['PARTNER_BASE_URL']?.includes('meta.com')
+    ) {
       throw new ConfigError(
         'Inconsistent AI configuration: AI_PROVIDER is "groq" but PARTNER_BASE_URL points to Meta endpoint.',
         ['AI_PROVIDER', 'PARTNER_BASE_URL'],
@@ -171,7 +174,8 @@ export function loadSettings(env: Readonly<Record<string, string | undefined>>):
     aiProvider: resolvedProvider,
     jwtSecret: parsed.data.JWT_SECRET,
     jwtExpiresIn: parsed.data.JWT_EXPIRES_IN,
-    allowDevMockAuth: parsed.data.ALLOW_DEV_MOCK_AUTH === 'true' || parsed.data.ALLOW_DEV_MOCK_AUTH === '1',
+    allowDevMockAuth:
+      parsed.data.ALLOW_DEV_MOCK_AUTH === 'true' || parsed.data.ALLOW_DEV_MOCK_AUTH === '1',
     googleClientId: parsed.data.GOOGLE_CLIENT_ID,
     firebaseProjectId: parsed.data.FIREBASE_PROJECT_ID,
     githubClientId: parsed.data.GITHUB_CLIENT_ID,

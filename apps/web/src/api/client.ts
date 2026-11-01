@@ -280,15 +280,21 @@ export interface ApiClient {
     handRaised: boolean;
     spokenOpinion: string;
     identifiedRisk?: string | undefined;
-    supportingTranscriptReferences?: readonly any[] | undefined;
+    supportingTranscriptReferences?: readonly unknown[] | undefined;
     affectedNodeIds?: readonly string[] | undefined;
     affectedEdgeIds?: readonly string[] | undefined;
     facts?: readonly string[] | undefined;
     assumptions?: readonly string[] | undefined;
     confidence?: number | undefined;
-    proposedExperiment?: any | undefined;
-    hazards: readonly any[];
-    tokenUsage?: { promptTokens?: number | undefined; completionTokens?: number | undefined; totalTokens?: number | undefined } | undefined;
+    proposedExperiment?: unknown;
+    hazards: readonly unknown[];
+    tokenUsage?:
+      | {
+          promptTokens?: number | undefined;
+          completionTokens?: number | undefined;
+          totalTokens?: number | undefined;
+        }
+      | undefined;
   }>;
 }
 
@@ -675,28 +681,26 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
     getMeetingAiOpinion: (body, signal) =>
       request(
         '/api/meeting/ai-opinion',
-        z
-          .object({
-            handRaised: z.boolean(),
-            spokenOpinion: z.string(),
-            identifiedRisk: z.string().optional(),
-            supportingTranscriptReferences: z.array(z.any()).optional(),
-            affectedNodeIds: z.array(z.string()).optional(),
-            affectedEdgeIds: z.array(z.string()).optional(),
-            facts: z.array(z.string()).optional(),
-            assumptions: z.array(z.string()).optional(),
-            confidence: z.number().optional(),
-            proposedExperiment: z.any().optional(),
-            hazards: z.array(z.any()),
-            tokenUsage: z
-              .object({
-                promptTokens: z.number().optional(),
-                completionTokens: z.number().optional(),
-                totalTokens: z.number().optional(),
-              })
-              .optional(),
-          })
-          .passthrough(),
+        z.looseObject({
+          handRaised: z.boolean(),
+          spokenOpinion: z.string(),
+          identifiedRisk: z.string().optional(),
+          supportingTranscriptReferences: z.array(z.unknown()).optional(),
+          affectedNodeIds: z.array(z.string()).optional(),
+          affectedEdgeIds: z.array(z.string()).optional(),
+          facts: z.array(z.string()).optional(),
+          assumptions: z.array(z.string()).optional(),
+          confidence: z.number().optional(),
+          proposedExperiment: z.unknown().optional(),
+          hazards: z.array(z.unknown()),
+          tokenUsage: z
+            .object({
+              promptTokens: z.number().optional(),
+              completionTokens: z.number().optional(),
+              totalTokens: z.number().optional(),
+            })
+            .optional(),
+        }),
         withSignal('POST', signal, JSON.stringify(body)),
       ),
   };

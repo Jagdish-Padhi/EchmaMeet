@@ -98,6 +98,7 @@ export function signJwt(
 export function verifyJwt<T = Record<string, unknown>>(
   token: string,
   secret: string = DEFAULT_JWT_SECRET,
+  validator?: (payload: unknown) => payload is T,
 ): { valid: true; payload: T } | { valid: false; error: string } {
   try {
     const parts = token.split('.');
@@ -119,6 +120,10 @@ export function verifyJwt<T = Record<string, unknown>>(
     const payload = JSON.parse(base64UrlDecode(encodedPayload)) as T & { exp?: number };
     if (typeof payload.exp === 'number' && payload.exp < Math.floor(Date.now() / 1000)) {
       return { valid: false, error: 'Token has expired' };
+    }
+
+    if (validator && !validator(payload)) {
+      return { valid: false, error: 'Token payload failed validation' };
     }
 
     return { valid: true, payload };
@@ -309,11 +314,16 @@ export async function verifyGoogleToken(
   config?: AuthConfig,
 ): Promise<VerifiedOauthProfile | null> {
   // If running in development/test with explicit dev mock authorization enabled
-  if (config?.allowDevMockAuth && (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development')) {
-    const verified = verifyJwt<{ email?: string; name?: string; picture?: string; avatar?: string }>(
-      rawToken,
-      config.jwtSecret || DEFAULT_JWT_SECRET,
-    );
+  if (
+    config?.allowDevMockAuth &&
+    (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development')
+  ) {
+    const verified = verifyJwt<{
+      email?: string;
+      name?: string;
+      picture?: string;
+      avatar?: string;
+    }>(rawToken, config.jwtSecret || DEFAULT_JWT_SECRET);
     if (verified.valid && verified.payload.email) {
       return {
         email: verified.payload.email,
@@ -356,7 +366,7 @@ export async function verifyGithubToken(
   config?: AuthConfig,
 ): Promise<VerifiedOauthProfile | null> {
   let effectiveToken = accessToken;
-  if (code && config?.githubClientId && config?.githubClientSecret) {
+  if (code && config?.githubClientId && config.githubClientSecret) {
     try {
       const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
         method: 'POST',

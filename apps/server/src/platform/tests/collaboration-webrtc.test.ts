@@ -82,7 +82,10 @@ describe('WebRTC Peer Signaling & Room Routing (Task 3)', () => {
     const { url } = await startServer();
     const tokenA = signJwt({ userId: 'alice', name: 'Alice', role: 'admin' }, DEFAULT_JWT_SECRET);
     const tokenB = signJwt({ userId: 'bob', name: 'Bob', role: 'engineer' }, DEFAULT_JWT_SECRET);
-    const tokenC = signJwt({ userId: 'charlie', name: 'Charlie', role: 'reviewer' }, DEFAULT_JWT_SECRET);
+    const tokenC = signJwt(
+      { userId: 'charlie', name: 'Charlie', role: 'reviewer' },
+      DEFAULT_JWT_SECRET,
+    );
 
     const clientBMessages: any[] = [];
     const clientCMessages: any[] = [];
@@ -137,7 +140,10 @@ describe('WebRTC Peer Signaling & Room Routing (Task 3)', () => {
       JSON.stringify({
         type: 'webrtc_ice_candidate',
         toUserId: 'alice',
-        candidate: { candidate: 'candidate:1 1 UDP 2130706431 192.168.1.1 50000 typ host', sdpMid: '0' },
+        candidate: {
+          candidate: 'candidate:1 1 UDP 2130706431 192.168.1.1 50000 typ host',
+          sdpMid: '0',
+        },
       }),
     );
 

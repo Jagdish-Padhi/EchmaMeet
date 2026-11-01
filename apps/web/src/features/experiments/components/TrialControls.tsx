@@ -43,7 +43,8 @@ export function TrialControls({
             }
           />
           <span className="field-help-text">
-            Executes {String(config.trials)} baseline trials + {String(config.trials)} faulted trials ({String(config.trials * 2)} total)
+            Executes {String(config.trials)} baseline trials + {String(config.trials)} faulted
+            trials ({String(config.trials * 2)} total)
           </span>
         </label>
 
@@ -86,7 +87,10 @@ export function TrialControls({
           </label>
         </div>
 
-        <div className="trial-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div
+          className="trial-actions"
+          style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+        >
           {isRunning ? (
             <Button variant="danger" onClick={onCancel} className="btn-full-width">
               Halt Resilience Simulation
@@ -97,7 +101,11 @@ export function TrialControls({
               disabled={!canStart}
               onClick={onStart}
               className="btn-full-width"
-              title={!canStart ? 'Resolve topology incompatibilities before running simulation' : 'Start resilience test'}
+              title={
+                !canStart
+                  ? 'Resolve topology incompatibilities before running simulation'
+                  : 'Start resilience test'
+              }
             >
               Execute Resilience Simulation
             </Button>

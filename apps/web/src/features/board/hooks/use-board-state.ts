@@ -264,7 +264,9 @@ export function useBoardState(
         edges: [...prevSnapshot.edges],
         edgeSourcePorts: prevSnapshot.edgeSourcePorts ? { ...prevSnapshot.edgeSourcePorts } : {},
         edgeTargetPorts: prevSnapshot.edgeTargetPorts ? { ...prevSnapshot.edgeTargetPorts } : {},
-        edgeControlPoints: prevSnapshot.edgeControlPoints ? { ...prevSnapshot.edgeControlPoints } : {},
+        edgeControlPoints: prevSnapshot.edgeControlPoints
+          ? { ...prevSnapshot.edgeControlPoints }
+          : {},
         strokes: prevSnapshot.strokes ? [...prevSnapshot.strokes] : [],
         entryNodeId: prevSnapshot.entryNodeId,
         selectedNodeId: prevSnapshot.selectedNodeId,
@@ -291,7 +293,9 @@ export function useBoardState(
         edges: [...nextSnapshot.edges],
         edgeSourcePorts: nextSnapshot.edgeSourcePorts ? { ...nextSnapshot.edgeSourcePorts } : {},
         edgeTargetPorts: nextSnapshot.edgeTargetPorts ? { ...nextSnapshot.edgeTargetPorts } : {},
-        edgeControlPoints: nextSnapshot.edgeControlPoints ? { ...nextSnapshot.edgeControlPoints } : {},
+        edgeControlPoints: nextSnapshot.edgeControlPoints
+          ? { ...nextSnapshot.edgeControlPoints }
+          : {},
         strokes: nextSnapshot.strokes ? [...nextSnapshot.strokes] : [],
         entryNodeId: nextSnapshot.entryNodeId,
         selectedNodeId: nextSnapshot.selectedNodeId,
@@ -557,7 +561,9 @@ export function useBoardState(
         const remainingEdges = prev.edges.filter((e) => e.source !== nodeId && e.target !== nodeId);
         const validEdgeIds = new Set(remainingEdges.map((e) => e.id));
         const nextControlPoints = Object.fromEntries(
-          Object.entries(prev.edgeControlPoints ?? {}).filter(([k]) => validEdgeIds.has(k as EdgeId)),
+          Object.entries(prev.edgeControlPoints ?? {}).filter(([k]) =>
+            validEdgeIds.has(k as EdgeId),
+          ),
         );
         const nextSourcePorts = Object.fromEntries(
           Object.entries(prev.edgeSourcePorts ?? {}).filter(([k]) => validEdgeIds.has(k as EdgeId)),
@@ -765,69 +771,75 @@ export function useBoardState(
     });
   }, [pushHistory, triggerValidation]);
 
-  const alignSelected = useCallback((direction: 'left' | 'top' | 'distribute') => {
-    setBoard((prev) => {
-      const selectedIds = new Set(
-        prev.selectedNodeIds ?? (prev.selectedNodeId ? [prev.selectedNodeId] : []),
-      );
-      if (selectedIds.size < 2) return prev;
-      pushHistory(prev);
+  const alignSelected = useCallback(
+    (direction: 'left' | 'top' | 'distribute') => {
+      setBoard((prev) => {
+        const selectedIds = new Set(
+          prev.selectedNodeIds ?? (prev.selectedNodeId ? [prev.selectedNodeId] : []),
+        );
+        if (selectedIds.size < 2) return prev;
+        pushHistory(prev);
 
-      const selected = prev.nodes.filter((n) => selectedIds.has(n.id));
-      if (direction === 'left') {
-        const minX = Math.min(...selected.map((n) => n.position.x));
-        return {
-          ...prev,
-          isDirty: true,
-          nodes: prev.nodes.map((n) =>
-            selectedIds.has(n.id) ? { ...n, position: { ...n.position, x: minX } } : n,
-          ),
-        };
-      } else if (direction === 'top') {
-        const minY = Math.min(...selected.map((n) => n.position.y));
-        return {
-          ...prev,
-          isDirty: true,
-          nodes: prev.nodes.map((n) =>
-            selectedIds.has(n.id) ? { ...n, position: { ...n.position, y: minY } } : n,
-          ),
-        };
-      } else {
-        // Distribute horizontally
-        const sorted = [...selected].sort((a, b) => a.position.x - b.position.x);
-        const first = sorted[0];
-        const last = sorted[sorted.length - 1];
-        if (!first || !last) return prev;
-        const minX = first.position.x;
-        const maxX = last.position.x;
-        const step = (maxX - minX) / (sorted.length - 1 || 1);
-        const posMap = new Map<NodeId, number>();
-        sorted.forEach((node, i) => posMap.set(node.id, Math.round(minX + i * step)));
-        return {
-          ...prev,
-          isDirty: true,
-          nodes: prev.nodes.map((n) => {
-            const mappedX = posMap.get(n.id);
-            if (selectedIds.has(n.id) && mappedX !== undefined) {
-              return { ...n, position: { ...n.position, x: mappedX } };
-            }
-            return n;
-          }),
-        };
-      }
-    });
-  }, [pushHistory]);
+        const selected = prev.nodes.filter((n) => selectedIds.has(n.id));
+        if (direction === 'left') {
+          const minX = Math.min(...selected.map((n) => n.position.x));
+          return {
+            ...prev,
+            isDirty: true,
+            nodes: prev.nodes.map((n) =>
+              selectedIds.has(n.id) ? { ...n, position: { ...n.position, x: minX } } : n,
+            ),
+          };
+        } else if (direction === 'top') {
+          const minY = Math.min(...selected.map((n) => n.position.y));
+          return {
+            ...prev,
+            isDirty: true,
+            nodes: prev.nodes.map((n) =>
+              selectedIds.has(n.id) ? { ...n, position: { ...n.position, y: minY } } : n,
+            ),
+          };
+        } else {
+          // Distribute horizontally
+          const sorted = [...selected].sort((a, b) => a.position.x - b.position.x);
+          const first = sorted[0];
+          const last = sorted[sorted.length - 1];
+          if (!first || !last) return prev;
+          const minX = first.position.x;
+          const maxX = last.position.x;
+          const step = (maxX - minX) / (sorted.length - 1 || 1);
+          const posMap = new Map<NodeId, number>();
+          sorted.forEach((node, i) => posMap.set(node.id, Math.round(minX + i * step)));
+          return {
+            ...prev,
+            isDirty: true,
+            nodes: prev.nodes.map((n) => {
+              const mappedX = posMap.get(n.id);
+              if (selectedIds.has(n.id) && mappedX !== undefined) {
+                return { ...n, position: { ...n.position, x: mappedX } };
+              }
+              return n;
+            }),
+          };
+        }
+      });
+    },
+    [pushHistory],
+  );
 
-  const addStroke = useCallback((stroke: CanvasStroke) => {
-    setBoard((prev) => {
-      pushHistory(prev);
-      return {
-        ...prev,
-        isDirty: true,
-        strokes: [...(prev.strokes ?? []), stroke],
-      };
-    });
-  }, [pushHistory]);
+  const addStroke = useCallback(
+    (stroke: CanvasStroke) => {
+      setBoard((prev) => {
+        pushHistory(prev);
+        return {
+          ...prev,
+          isDirty: true,
+          strokes: [...(prev.strokes ?? []), stroke],
+        };
+      });
+    },
+    [pushHistory],
+  );
 
   const undoStroke = useCallback(() => {
     setBoard((prev) => {
@@ -853,24 +865,22 @@ export function useBoardState(
     });
   }, [pushHistory]);
 
-  const deleteStroke = useCallback((strokeId: string) => {
-    setBoard((prev) => {
-      pushHistory(prev);
-      return {
-        ...prev,
-        isDirty: true,
-        strokes: (prev.strokes ?? []).filter((s) => s.id !== strokeId),
-      };
-    });
-  }, [pushHistory]);
+  const deleteStroke = useCallback(
+    (strokeId: string) => {
+      setBoard((prev) => {
+        pushHistory(prev);
+        return {
+          ...prev,
+          isDirty: true,
+          strokes: (prev.strokes ?? []).filter((s) => s.id !== strokeId),
+        };
+      });
+    },
+    [pushHistory],
+  );
 
   const addEdge = useCallback(
-    (
-      source: NodeId,
-      target: NodeId,
-      sourcePort?: EdgePortSide,
-      targetPort?: EdgePortSide,
-    ) => {
+    (source: NodeId, target: NodeId, sourcePort?: EdgePortSide, targetPort?: EdgePortSide) => {
       setBoard((prev) => {
         const id = edgeIdSchema.parse(`${source}-to-${target}`);
         if (prev.edges.some((e) => e.id === id || (e.source === source && e.target === target))) {
@@ -945,7 +955,10 @@ export function useBoardState(
         const edgesWithoutOld = prev.edges.filter((e) => e.id !== edgeId);
 
         // Check if an edge between these two nodes already exists (different from the one being reconnected)
-        if (newId !== edgeId && edgesWithoutOld.some((e) => e.source === newSource && e.target === newTarget)) {
+        if (
+          newId !== edgeId &&
+          edgesWithoutOld.some((e) => e.source === newSource && e.target === newTarget)
+        ) {
           return prev;
         }
 
@@ -1147,7 +1160,11 @@ export function useBoardState(
             triggerValidation(next);
             return next;
           });
-        } else if (opData.op === 'update_edge' && opData.payload?.edgeId && opData.payload?.policy) {
+        } else if (
+          opData.op === 'update_edge' &&
+          opData.payload?.edgeId &&
+          opData.payload?.policy
+        ) {
           setBoard((prev) => {
             const next = {
               ...prev,

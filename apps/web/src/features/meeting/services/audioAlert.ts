@@ -84,7 +84,7 @@ class MeetingAudioAlertService {
 
       const getVoicesAndSpeak = () => {
         const voices = window.speechSynthesis.getVoices();
-        
+
         // Priority list of premium natural/neural female English voices
         const femaleVoiceNames = [
           'Samantha',
@@ -149,4 +149,3 @@ class MeetingAudioAlertService {
 }
 
 export const meetingAudio = new MeetingAudioAlertService();
-

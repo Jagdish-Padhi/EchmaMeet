@@ -82,7 +82,10 @@ export function SettingsPage({
 
   const handleResetToDefaults = () => {
     setForm(DEFAULT_SETTINGS);
-    toast.success('Settings reset to enterprise defaults. Click Save to persist.', 'Defaults Loaded');
+    toast.success(
+      'Settings reset to enterprise defaults. Click Save to persist.',
+      'Defaults Loaded',
+    );
   };
 
   const handleTestToxiproxy = () => {

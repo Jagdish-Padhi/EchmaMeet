@@ -14,13 +14,10 @@ const smokeResponseSchema = z.object({
   status: z.string(),
 });
 
-export function registerMetaAiRoutes(
-  app: FastifyInstance,
-  options: MetaAiRoutesOptions,
-): void {
+export function registerMetaAiRoutes(app: FastifyInstance, options: MetaAiRoutesOptions): void {
   app.get('/api/meta-ai/health', async (request, reply) => {
     const query = request.query as { smoke?: string };
-    const doSmoke = query?.smoke === 'true' || query?.smoke === '1';
+    const doSmoke = query.smoke === 'true' || query.smoke === '1';
 
     if (!options.hasApiKey) {
       return reply.code(200).send({
@@ -46,7 +43,7 @@ export function registerMetaAiRoutes(
           maxTokens: 50,
         });
         const latencyMs = Math.round(Number(process.hrtime.bigint() - startNs) / 1e6);
-        return reply.code(200).send({
+        return await reply.code(200).send({
           status: 'healthy',
           provider: options.provider,
           modelId: options.modelId,
@@ -80,4 +77,3 @@ export function registerMetaAiRoutes(
     });
   });
 }
-

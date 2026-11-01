@@ -455,7 +455,8 @@ export function App() {
       `| Source | Target | Timeout | Retries | Max Backoff | Circuit Breaker |`,
       `| :--- | :--- | :--- | :--- | :--- | :--- |`,
       ...board.edges.map((e) => {
-        const timeout = e.policy.timeoutMs !== null ? `${String(e.policy.timeoutMs)}ms` : 'Disabled';
+        const timeout =
+          e.policy.timeoutMs !== null ? `${String(e.policy.timeoutMs)}ms` : 'Disabled';
         const retries = `${String(e.policy.retry.maxAttempts)}x (${String(e.policy.retry.backoffBaseMs)}ms base)`;
         const maxBackoff = `${String(e.policy.retry.maxBackoffMs)}ms`;
         const cb = e.policy.breaker.enabled
