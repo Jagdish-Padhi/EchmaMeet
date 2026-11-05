@@ -1,0 +1,46 @@
+{
+  "name": "chaosboard",
+  "version": "0.0.0",
+  "private": true,
+  "description": "EchmaMeet: Design-time collaborative architecture review and chaos engineering platform.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@12.13.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @chaosboard/server --filter @chaosboard/web run dev",
+    "start": "pnpm --filter @chaosboard/server run start",
+    "typecheck": "pnpm -r --workspace-concurrency=1 run typecheck && tsc --noEmit -p tools/tsconfig.json",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "boundaries": "depcruise --config .dependency-cruiser.cjs apps packages scripts",
+    "graph": "tsx tools/architecture/graph.ts",
+    "graph:check": "tsx tools/architecture/graph.ts --check",
+    "docs:sync": "tsx tools/docs/catalog-table.ts",
+    "docs:check": "tsx tools/docs/catalog-table.ts --check",
+    "test": "pnpm -r --workspace-concurrency=1 run test && vitest run --config tools/vitest.config.ts",
+    "test:integration": "pnpm -r --if-present --workspace-concurrency=1 run test:integration",
+    "check": "pnpm typecheck && pnpm lint && pnpm boundaries && pnpm graph:check && pnpm docs:check && pnpm test",
+    "benchmark": "tsx apps/server/src/cli/benchmark.ts",
+    "smoke:spark-open": "pnpm --filter @chaosboard/scripts run spark-open",
+    "smoke:toxiproxy": "pnpm --filter @chaosboard/scripts run toxiproxy",
+    "smoke:probe": "pnpm --filter @chaosboard/scripts run probe",
+    "smoke:ws": "pnpm --filter @chaosboard/scripts run ws",
+    "smoke:meta": "pnpm --filter @chaosboard/scripts run meta"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.5",
+    "dependency-cruiser": "18.6.0",
+    "eslint": "10.12.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
+    "vitest": "5.0.4"
+  }
+}

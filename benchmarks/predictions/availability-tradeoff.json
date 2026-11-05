@@ -1,0 +1,53 @@
+[
+  {
+    "scenarioId": "availability-tradeoff",
+    "predictionIndex": 0,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-completion": true,
+      "inv-p99": false
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 150,
+      "errorRate": 1.0
+    },
+    "predictedFailureMode": "Irreconcilable availability-consistency trade-off when critical write downstream is down",
+    "rationale": "When downstream payments service is down and cannot be deferred or cached, complete failure of the transaction is mathematically inevitable.",
+    "timestamp": "2026-10-30T10:25:00.000Z"
+  },
+  {
+    "scenarioId": "availability-tradeoff",
+    "predictionIndex": 1,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-completion": true,
+      "inv-p99": false
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 180,
+      "errorRate": 1.0
+    },
+    "predictedFailureMode": "Hard dependency outage violating availability invariant",
+    "rationale": "No policy adjustment can complete a synchronous payment write when payments dependency is down.",
+    "timestamp": "2026-10-30T10:26:00.000Z"
+  },
+  {
+    "scenarioId": "availability-tradeoff",
+    "predictionIndex": 2,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-completion": true,
+      "inv-p99": false
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 120,
+      "errorRate": 1.0
+    },
+    "predictedFailureMode": "Unrecoverable availability collapse due to down critical dependency",
+    "rationale": "Fail fast policy will maintain low p99 latency but completion rate will drop to zero.",
+    "timestamp": "2026-10-30T10:27:00.000Z"
+  }
+]

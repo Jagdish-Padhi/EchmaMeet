@@ -1,0 +1,436 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-04T07:15:31.276Z",
+  "gitCommit": "hardening-pass-2 (source archive, no git)",
+  "hostDescription": "linux (Intel(R) Xeon(R) Processor @ 2.10GHz, 1 cores)",
+  "nodeVersion": "v22.22.2",
+  "results": [
+    {
+      "scenarioId": "availability-tradeoff",
+      "designedFailureMode": "Irreconcilable availability-consistency trade-off when critical write downstream is down",
+      "staticPredictions": [],
+      "empiricalRun": {
+        "runId": "run-293f723a-ad06-4dbd-b3f8-154663d1f933",
+        "verdicts": [
+          {
+            "invariantId": "inv-completion",
+            "status": "VIOLATED",
+            "reason": null,
+            "evidence": {
+              "metric": "completion_rate",
+              "scope": {
+                "kind": "system"
+              },
+              "comparator": "gte",
+              "threshold": 0.9,
+              "baselineAggregate": {
+                "median": 1,
+                "p25": 1,
+                "p75": 1,
+                "iqr": 0
+              },
+              "faultedAggregate": {
+                "median": 0,
+                "p25": 0,
+                "p75": 0,
+                "iqr": 0
+              },
+              "baselineValues": [1, 1, 1, 1, 1],
+              "faultedValues": [0, 0, 0, 0, 0]
+            }
+          },
+          {
+            "invariantId": "inv-p99",
+            "status": "PASS",
+            "reason": null,
+            "evidence": {
+              "metric": "e2e_p99_ms",
+              "scope": {
+                "kind": "system"
+              },
+              "comparator": "lte",
+              "threshold": 500,
+              "baselineAggregate": {
+                "median": 74.19,
+                "p25": 72.87,
+                "p75": 76.86,
+                "iqr": 3.99
+              },
+              "faultedAggregate": {
+                "median": 48.7,
+                "p25": 48.39,
+                "p75": 50.67,
+                "iqr": 2.28
+              },
+              "baselineValues": [76.86, 68.8, 85.02, 74.19, 72.87],
+              "faultedValues": [52.81, 50.67, 47.09, 48.39, 48.7]
+            }
+          }
+        ],
+        "overallStatus": "VIOLATED",
+        "p99LatencyMs": 48.7,
+        "errorRate": 1
+      },
+      "repairComparisons": {
+        "ruleBased": {
+          "status": "trade_off_reached",
+          "iterationsCount": 0,
+          "patchCount": 0
+        }
+      }
+    },
+    {
+      "scenarioId": "missing-timeout-cascade",
+      "designedFailureMode": "Workers pinned by stalled downstream connection with failure cascading upstream",
+      "staticPredictions": [],
+      "empiricalRun": {
+        "runId": "run-36ac006c-157e-46f4-a4c4-183ccc953b1b",
+        "verdicts": [
+          {
+            "invariantId": "inv-completion",
+            "status": "PASS",
+            "reason": null,
+            "evidence": {
+              "metric": "completion_rate",
+              "scope": {
+                "kind": "system"
+              },
+              "comparator": "gte",
+              "threshold": 0.9,
+              "baselineAggregate": {
+                "median": 1,
+                "p25": 1,
+                "p75": 1,
+                "iqr": 0
+              },
+              "faultedAggregate": {
+                "median": 1,
+                "p25": 0.93,
+                "p75": 1,
+                "iqr": 0.07
+              },
+              "baselineValues": [1, 1, 1, 1, 1],
+              "faultedValues": [0.4, 0.933, 1, 1, 1]
+            }
+          },
+          {
+            "invariantId": "inv-sat-gateway",
+            "status": "PASS",
+            "reason": null,
+            "evidence": {
+              "metric": "worker_saturation",
+              "scope": {
+                "kind": "node",
+                "nodeId": "gateway"
+              },
+              "comparator": "lte",
+              "threshold": 0.5,
+              "baselineAggregate": {
+                "median": 0,
+                "p25": 0,
+                "p75": 0,
+                "iqr": 0
+              },
+              "faultedAggregate": {
+                "median": 0,
+                "p25": 0,
+                "p75": 0,
+                "iqr": 0
+              },
+              "baselineValues": [0, 0, 0, 0, 0],
+              "faultedValues": [0, 0, 0, 0, 0]
+            }
+          }
+        ],
+        "overallStatus": "PASS",
+        "p99LatencyMs": 65.28,
+        "errorRate": 0
+      }
+    },
+    {
+      "scenarioId": "non-idempotent-retry",
+      "designedFailureMode": "Duplicate writes committed to downstream ledger due to uncoordinated retries",
+      "staticPredictions": [],
+      "empiricalRun": {
+        "runId": "run-34860753-a895-40ef-a99d-05799cbf5989",
+        "verdicts": [
+          {
+            "invariantId": "inv-duplicates",
+            "status": "INVALID",
+            "reason": "Baseline metric could not be evaluated",
+            "evidence": {
+              "metric": "duplicate_write_rate",
+              "scope": {
+                "kind": "node",
+                "nodeId": "ledger"
+              },
+              "comparator": "lte",
+              "threshold": 0.01,
+              "baselineAggregate": {
+                "median": null,
+                "p25": null,
+                "p75": null,
+                "iqr": null
+              },
+              "faultedAggregate": {
+                "median": null,
+                "p25": null,
+                "p75": null,
+                "iqr": null
+              },
+              "baselineValues": [],
+              "faultedValues": []
+            }
+          }
+        ],
+        "overallStatus": "INVALID",
+        "p99LatencyMs": 71.24,
+        "errorRate": 0
+      }
+    },
+    {
+      "scenarioId": "oversensitive-breaker",
+      "designedFailureMode": "Premature circuit breaker trips converting transient errors into extended full outage",
+      "staticPredictions": [],
+      "empiricalRun": {
+        "runId": "run-d85f6999-869c-4724-995b-e89ddf607af3",
+        "verdicts": [
+          {
+            "invariantId": "inv-completion",
+            "status": "PASS",
+            "reason": null,
+            "evidence": {
+              "metric": "completion_rate",
+              "scope": {
+                "kind": "system"
+              },
+              "comparator": "gte",
+              "threshold": 0.8,
+              "baselineAggregate": {
+                "median": 1,
+                "p25": 1,
+                "p75": 1,
+                "iqr": 0
+              },
+              "faultedAggregate": {
+                "median": 1,
+                "p25": 1,
+                "p75": 1,
+                "iqr": 0
+              },
+              "baselineValues": [1, 1, 1, 1, 1],
+              "faultedValues": [1, 1, 1, 1, 1]
+            }
+          },
+          {
+            "invariantId": "inv-breaker-open",
+            "status": "PASS",
+            "reason": null,
+            "evidence": {
+              "metric": "breaker_open_fraction",
+              "scope": {
+                "kind": "edge",
+                "edgeId": "profile-to-profile-db"
+              },
+              "comparator": "lte",
+              "threshold": 0.2,
+              "baselineAggregate": {
+                "median": 0,
+                "p25": 0,
+                "p75": 0,
+                "iqr": 0
+              },
+              "faultedAggregate": {
+                "median": 0,
+                "p25": 0,
+                "p75": 0,
+                "iqr": 0
+              },
+              "baselineValues": [0, 0, 0, 0, 0],
+              "faultedValues": [0, 0, 0, 0, 0]
+            }
+          }
+        ],
+        "overallStatus": "PASS",
+        "p99LatencyMs": 74.89,
+        "errorRate": 0
+      }
+    },
+    {
+      "scenarioId": "retry-storm",
+      "designedFailureMode": "Synchronous retry storm causing worker exhaustion downstream",
+      "staticPredictions": [],
+      "empiricalRun": {
+        "runId": "run-304f044c-ee43-425d-9391-39b9f04a8a60",
+        "verdicts": [
+          {
+            "invariantId": "inv-p99",
+            "status": "VIOLATED",
+            "reason": null,
+            "evidence": {
+              "metric": "e2e_p99_ms",
+              "scope": {
+                "kind": "system"
+              },
+              "comparator": "lte",
+              "threshold": 500,
+              "baselineAggregate": {
+                "median": 78.34,
+                "p25": 75.91,
+                "p75": 78.8,
+                "iqr": 2.89
+              },
+              "faultedAggregate": {
+                "median": 1061.57,
+                "p25": 1053.47,
+                "p75": 1069.42,
+                "iqr": 15.95
+              },
+              "baselineValues": [84.64, 78.34, 78.8, 75.29, 75.91],
+              "faultedValues": [1077.1, 1069.42, 1053.47, 1001.22, 1061.57]
+            }
+          },
+          {
+            "invariantId": "inv-completion",
+            "status": "PASS",
+            "reason": null,
+            "evidence": {
+              "metric": "completion_rate",
+              "scope": {
+                "kind": "system"
+              },
+              "comparator": "gte",
+              "threshold": 0.95,
+              "baselineAggregate": {
+                "median": 1,
+                "p25": 1,
+                "p75": 1,
+                "iqr": 0
+              },
+              "faultedAggregate": {
+                "median": 1,
+                "p25": 1,
+                "p75": 1,
+                "iqr": 0
+              },
+              "baselineValues": [1, 1, 1, 1, 1],
+              "faultedValues": [1, 1, 1, 1, 1]
+            }
+          },
+          {
+            "invariantId": "inv-retry",
+            "status": "PASS",
+            "reason": null,
+            "evidence": {
+              "metric": "retry_amplification",
+              "scope": {
+                "kind": "edge",
+                "edgeId": "checkout-to-inventory"
+              },
+              "comparator": "lte",
+              "threshold": 1.5,
+              "baselineAggregate": {
+                "median": 1,
+                "p25": 1,
+                "p75": 1,
+                "iqr": 0
+              },
+              "faultedAggregate": {
+                "median": 1,
+                "p25": 1,
+                "p75": 1,
+                "iqr": 0
+              },
+              "baselineValues": [1, 1, 1, 1, 1],
+              "faultedValues": [1, 1, 1, 1, 1]
+            }
+          }
+        ],
+        "overallStatus": "VIOLATED",
+        "p99LatencyMs": 1061.57,
+        "errorRate": 0
+      },
+      "repairComparisons": {
+        "ruleBased": {
+          "status": "trade_off_reached",
+          "iterationsCount": 4,
+          "patchCount": 4
+        }
+      }
+    },
+    {
+      "scenarioId": "unbounded-queue",
+      "designedFailureMode": "Uncontrolled queue growth and latency degradation from unthrottled producer",
+      "staticPredictions": [],
+      "empiricalRun": {
+        "runId": "run-71f78959-0810-4498-a2e8-4c27eae452e0",
+        "verdicts": [
+          {
+            "invariantId": "inv-queue-depth",
+            "status": "PASS",
+            "reason": null,
+            "evidence": {
+              "metric": "queue_depth_max",
+              "scope": {
+                "kind": "node",
+                "nodeId": "order-consumer"
+              },
+              "comparator": "lte",
+              "threshold": 50,
+              "baselineAggregate": {
+                "median": 0,
+                "p25": 0,
+                "p75": 0,
+                "iqr": 0
+              },
+              "faultedAggregate": {
+                "median": 0,
+                "p25": 0,
+                "p75": 0,
+                "iqr": 0
+              },
+              "baselineValues": [0, 0, 0, 0, 0],
+              "faultedValues": [0, 0, 0, 0, 0]
+            }
+          },
+          {
+            "invariantId": "inv-p99",
+            "status": "PASS",
+            "reason": null,
+            "evidence": {
+              "metric": "e2e_p99_ms",
+              "scope": {
+                "kind": "system"
+              },
+              "comparator": "lte",
+              "threshold": 1000,
+              "baselineAggregate": {
+                "median": 24.62,
+                "p25": 23.7,
+                "p75": 24.62,
+                "iqr": 0.92
+              },
+              "faultedAggregate": {
+                "median": 25.01,
+                "p25": 24.81,
+                "p75": 25.35,
+                "iqr": 0.54
+              },
+              "baselineValues": [23.7, 23.31, 29.38, 24.62, 24.62],
+              "faultedValues": [38.89, 25.01, 25.35, 24.81, 23.88]
+            }
+          }
+        ],
+        "overallStatus": "PASS",
+        "p99LatencyMs": 25.01,
+        "errorRate": 0
+      }
+    }
+  ],
+  "aggregateMetrics": {
+    "staticAccuracyPct": 0,
+    "modelRepairSuccessPct": 0,
+    "ruleBasedRepairSuccessPct": 0,
+    "unpredictedFailuresCount": 2
+  }
+}

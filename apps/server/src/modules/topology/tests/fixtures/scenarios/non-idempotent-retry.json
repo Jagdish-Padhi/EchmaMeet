@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "id": "non-idempotent-retry",
+  "name": "Non-idempotent retry",
+  "source": "scenario",
+  "entry": {
+    "nodeId": "gateway"
+  },
+  "nodes": [
+    {
+      "id": "gateway",
+      "label": "Gateway",
+      "kind": "service",
+      "processing": {
+        "distribution": "constant",
+        "ms": 20
+      },
+      "concurrency": {
+        "maxWorkers": 20
+      },
+      "queue": {
+        "mode": "bounded",
+        "maxDepth": 500
+      },
+      "ingressRateLimitRps": null
+    },
+    {
+      "id": "payments",
+      "label": "Payments",
+      "kind": "service",
+      "processing": {
+        "distribution": "constant",
+        "ms": 20
+      },
+      "concurrency": {
+        "maxWorkers": 20
+      },
+      "queue": {
+        "mode": "bounded",
+        "maxDepth": 500
+      },
+      "ingressRateLimitRps": null
+    },
+    {
+      "id": "ledger",
+      "label": "Payment ledger",
+      "kind": "ledger_sink",
+      "processing": {
+        "distribution": "constant",
+        "ms": 20
+      },
+      "concurrency": {
+        "maxWorkers": 20
+      },
+      "queue": {
+        "mode": "bounded",
+        "maxDepth": 500
+      },
+      "ingressRateLimitRps": null,
+      "dedupeByKey": false
+    }
+  ],
+  "edges": [
+    {
+      "id": "gateway-to-payments",
+      "source": "gateway",
+      "target": "payments",
+      "mode": "sync_call",
+      "policy": {
+        "timeoutMs": 200,
+        "retry": {
+          "maxAttempts": 3,
+          "backoffBaseMs": 0,
+          "backoffMultiplier": 1,
+          "maxBackoffMs": 0,
+          "jitter": "none"
+        },
+        "breaker": {
+          "enabled": false,
+          "failureThresholdPct": 50,
+          "windowRequests": 20,
+          "cooldownMs": 2000,
+          "halfOpenProbes": 2
+        },
+        "fallback": "fail_fast_503",
+        "idempotency": {
+          "sendKey": false
+        },
+        "pool": {
+          "maxConnections": 50
+        }
+      }
+    },
+    {
+      "id": "payments-to-ledger",
+      "source": "payments",
+      "target": "ledger",
+      "mode": "sync_call",
+      "policy": {
+        "timeoutMs": 5000,
+        "retry": {
+          "maxAttempts": 3,
+          "backoffBaseMs": 0,
+          "backoffMultiplier": 1,
+          "maxBackoffMs": 0,
+          "jitter": "none"
+        },
+        "breaker": {
+          "enabled": false,
+          "failureThresholdPct": 50,
+          "windowRequests": 20,
+          "cooldownMs": 2000,
+          "halfOpenProbes": 2
+        },
+        "fallback": "fail_fast_503",
+        "idempotency": {
+          "sendKey": false
+        },
+        "pool": {
+          "maxConnections": 50
+        }
+      }
+    }
+  ]
+}

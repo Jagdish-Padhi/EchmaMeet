@@ -1,0 +1,53 @@
+[
+  {
+    "scenarioId": "unbounded-queue",
+    "predictionIndex": 0,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-queue-depth": true,
+      "inv-p99": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 2400,
+      "errorRate": 0.02
+    },
+    "predictedFailureMode": "Uncontrolled queue growth and latency degradation from unthrottled producer",
+    "rationale": "Order API pushes asynchronous requests faster than the consumer can flush downstream, causing queue depth and queue delay to rise monotonically.",
+    "timestamp": "2026-10-30T10:10:00.000Z"
+  },
+  {
+    "scenarioId": "unbounded-queue",
+    "predictionIndex": 1,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-queue-depth": true,
+      "inv-p99": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 2800,
+      "errorRate": 0.03
+    },
+    "predictedFailureMode": "Unbounded consumer queue growth under downstream backpressure",
+    "rationale": "Downstream latency causes consumer processing rate to drop below arrival rate, violating queue depth threshold of 50.",
+    "timestamp": "2026-10-30T10:11:00.000Z"
+  },
+  {
+    "scenarioId": "unbounded-queue",
+    "predictionIndex": 2,
+    "modelId": "meta-models/muse-spark-open-1026",
+    "promptVersion": "prediction-v1",
+    "predictedViolations": {
+      "inv-queue-depth": true,
+      "inv-p99": true
+    },
+    "predictedMetrics": {
+      "p99LatencyMs": 2200,
+      "errorRate": 0.01
+    },
+    "predictedFailureMode": "Async queue depth accumulation and end-to-end latency spike",
+    "rationale": "Unbounded queue mode eliminates backpressure to producer, accumulating messages and inflating p99 latency beyond 1000ms.",
+    "timestamp": "2026-10-30T10:12:00.000Z"
+  }
+]

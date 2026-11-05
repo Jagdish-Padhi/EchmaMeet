@@ -1,0 +1,10 @@
+pnpm-lock.yaml
+docs/
+node_modules/
+dist/
+coverage/
+data/
+.smoke-output/
+.venv/
+ml/data/
+ml/models/

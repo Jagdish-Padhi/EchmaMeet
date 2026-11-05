@@ -1,0 +1,17 @@
+{
+  "comment": "For each server module, the other modules whose public API (index.ts) it may import. contracts and shared are always allowed. Mirrors section 5.6 of docs/plan.md; change both together.",
+  "modules": {
+    "topology": [],
+    "chaos": [],
+    "sandbox": ["topology"],
+    "measurement": [],
+    "runs": [],
+    "experiments": ["topology", "sandbox", "chaos", "measurement", "runs"],
+    "meta-ai": [],
+    "repair": ["topology", "experiments", "runs", "meta-ai"],
+    "vision": ["topology", "meta-ai"],
+    "voice": ["topology", "meta-ai"],
+    "reporting": ["runs", "meta-ai"],
+    "benchmarks": ["topology", "experiments", "repair", "runs", "meta-ai"]
+  }
+}

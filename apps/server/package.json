@@ -1,0 +1,32 @@
+{
+  "name": "@chaosboard/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../.env src/main.ts",
+    "start": "tsx --env-file-if-exists=../../.env src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "calibrate": "tsx src/cli/calibrate.ts"
+  },
+  "dependencies": {
+    "@chaosboard/contracts": "workspace:*",
+    "@chaosboard/shared": "workspace:*",
+    "@fastify/static": "^10.1.8",
+    "bullmq": "^6.5.1",
+    "fastify": "5.12.7",
+    "ioredis": "^6.0.0",
+    "pg": "^8.23.1",
+    "pino": "10.4.0",
+    "ws": "^8.22.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1",
+    "@types/ws": "^8.18.2",
+    "werift": "0.22.9",
+    "@chaosboard/webrtc-mesh": "workspace:*"
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "id": "retry-storm",
+  "name": "Synchronous retry storm",
+  "source": "scenario",
+  "entry": {
+    "nodeId": "gateway"
+  },
+  "nodes": [
+    {
+      "id": "gateway",
+      "label": "Gateway",
+      "kind": "service",
+      "processing": {
+        "distribution": "constant",
+        "ms": 20
+      },
+      "concurrency": {
+        "maxWorkers": 50
+      },
+      "queue": {
+        "mode": "bounded",
+        "maxDepth": 500
+      },
+      "ingressRateLimitRps": null
+    },
+    {
+      "id": "checkout",
+      "label": "Checkout",
+      "kind": "service",
+      "processing": {
+        "distribution": "constant",
+        "ms": 20
+      },
+      "concurrency": {
+        "maxWorkers": 30
+      },
+      "queue": {
+        "mode": "bounded",
+        "maxDepth": 500
+      },
+      "ingressRateLimitRps": null
+    },
+    {
+      "id": "inventory",
+      "label": "Inventory",
+      "kind": "service",
+      "processing": {
+        "distribution": "constant",
+        "ms": 25
+      },
+      "concurrency": {
+        "maxWorkers": 20
+      },
+      "queue": {
+        "mode": "bounded",
+        "maxDepth": 500
+      },
+      "ingressRateLimitRps": null
+    }
+  ],
+  "edges": [
+    {
+      "id": "gateway-to-checkout",
+      "source": "gateway",
+      "target": "checkout",
+      "mode": "sync_call",
+      "policy": {
+        "timeoutMs": 5000,
+        "retry": {
+          "maxAttempts": 3,
+          "backoffBaseMs": 0,
+          "backoffMultiplier": 1,
+          "maxBackoffMs": 0,
+          "jitter": "none"
+        },
+        "breaker": {
+          "enabled": false,
+          "failureThresholdPct": 50,
+          "windowRequests": 20,
+          "cooldownMs": 2000,
+          "halfOpenProbes": 2
+        },
+        "fallback": "fail_fast_503",
+        "idempotency": {
+          "sendKey": false
+        },
+        "pool": {
+          "maxConnections": 50
+        }
+      }
+    },
+    {
+      "id": "checkout-to-inventory",
+      "source": "checkout",
+      "target": "inventory",
+      "mode": "sync_call",
+      "policy": {
+        "timeoutMs": 3000,
+        "retry": {
+          "maxAttempts": 3,
+          "backoffBaseMs": 0,
+          "backoffMultiplier": 1,
+          "maxBackoffMs": 0,
+          "jitter": "none"
+        },
+        "breaker": {
+          "enabled": false,
+          "failureThresholdPct": 50,
+          "windowRequests": 20,
+          "cooldownMs": 2000,
+          "halfOpenProbes": 2
+        },
+        "fallback": "fail_fast_503",
+        "idempotency": {
+          "sendKey": false
+        },
+        "pool": {
+          "maxConnections": 50
+        }
+      }
+    }
+  ]
+}

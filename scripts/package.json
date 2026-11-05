@@ -1,0 +1,18 @@
+{
+  "name": "@chaosboard/scripts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "spark-open": "tsx --env-file-if-exists=../.env smoke/spark-open.ts",
+    "toxiproxy": "tsx --env-file-if-exists=../.env smoke/toxiproxy.ts",
+    "probe": "tsx --env-file-if-exists=../.env smoke/probe.ts",
+    "ws": "tsx --env-file-if-exists=../.env smoke/ws.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "meta": "tsx --env-file-if-exists=../.env smoke/meta-capabilities.ts"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}
