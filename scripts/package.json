@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "spark-open": "tsx --env-file-if-exists=../.env smoke/spark-open.ts",
+    "gnani": "tsx --env-file-if-exists=../.env smoke/gnani.ts",
     "toxiproxy": "tsx --env-file-if-exists=../.env smoke/toxiproxy.ts",
     "probe": "tsx --env-file-if-exists=../.env smoke/probe.ts",
     "ws": "tsx --env-file-if-exists=../.env smoke/ws.ts",

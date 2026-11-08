@@ -148,3 +148,17 @@ Otherwise, the orchestrator rolls back immediately to the previous best topology
 ## Open decisions
 
 **License.** A public repository is required. Choose a license before submission. This was left to the builder on purpose.
+
+## Gnani AI edition
+
+**Speech is Gnani, reasoning is deterministic.** Gnani's hosted API provides speech-to-text (Prisma), text-to-speech (Timbre) and voice cloning; it does not expose a chat/LLM endpoint (Evon is open-weight only). So the voice path uses Gnani end to end, while hazard analysis and repair diagnosis run on the rule engine and the trained random-forest model. An OpenAI-compatible `EVON_BASE_URL` is optional; when absent or failing, the rule engine answers. This removes a hard dependency on any hosted LLM and makes every claim reproducible.
+
+**Browser audio is 16 kHz mono WAV, not WebM.** Gnani REST accepts wav/mp3/ogg/flac/aac/m4a. Capturing through an AudioWorklet and encoding WAV in the browser avoids server-side transcoding (no ffmpeg dependency). The server sniffs the container and rejects unsupported audio before any paid call.
+
+**The server proxies the streaming socket.** Browsers cannot set the `x-api-key-id`, `x-model`, `lang_code` and VAD headers Gnani requires on a WebSocket, and the key must not reach the client. The bridge re-frames PCM into paced 1024-byte frames, pads silence to close a VAD segment on push-to-talk release, and ASCII-escapes Indic `x-keyterms`.
+
+**`transcribe` output format.** It keeps English technical words in Latin script and numbers as digits, which is what service-name resolution and numeric parameters need. A small Devanagari alias table and Hindi number-word parser cover the remaining gaps.
+
+**PostgreSQL is real, scoped, and honest.** The earlier code logged "Connecting to PostgreSQL" while always opening SQLite. The voice ledger now uses a real `pg` pool (TLS for non-local hosts, versioned migrations under an advisory lock) with a bounded in-memory fallback, and the startup log reports the backend actually in use. Experiment state intentionally stays in SQLite: the chaos engine needs synchronous, zero-latency access, and moving it would add network latency to measurements.
+
+**Whiteboard-photo ingestion is disabled.** It required a vision model that Gnani does not offer. Deterministic red-stroke gesture detection remains.

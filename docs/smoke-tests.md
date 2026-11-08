@@ -1,3 +1,5 @@
+> **Gnani AI edition.** This document was written for an earlier provider. References to a hosted LLM, whiteboard vision model or partner image adapter are historical: the current build uses Gnani Prisma/Timbre for speech and a deterministic rule engine plus trained ML model for reasoning (see README and `docs/DECISIONS.md`).
+
 # Provider smoke tests
 
 Phase 0 needs real facts about every external API before any feature code depends on it. These scripts make real calls and write what happened to `.smoke-output/` (git-ignored). You then copy the verified facts into `docs/api-notes.md`.

@@ -1,3 +1,5 @@
+> **Gnani AI edition.** This document was written for an earlier provider. References to a hosted LLM, whiteboard vision model or partner image adapter are historical: the current build uses Gnani Prisma/Timbre for speech and a deterministic rule engine plus trained ML model for reasoning (see README and `docs/DECISIONS.md`).
+
 # API Notes
 
 Purpose: the only source of truth for external API behavior in ChaosBoard. Filled during Phase 0 and amended whenever an API behaves differently than recorded.

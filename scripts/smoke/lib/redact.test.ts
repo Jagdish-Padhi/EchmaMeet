@@ -4,7 +4,7 @@ import { collectSecrets, createRedactor, truncate } from './redact';
 describe('collectSecrets', () => {
   it('picks values of credential-like variables and ignores short or unrelated ones', () => {
     const secrets = collectSecrets({
-      PARTNER_API_KEY: 'sk-live-1234567890',
+      GNANI_API_KEY: 'sk-live-1234567890',
       META_API_KEY: 'short',
       SERVER_PORT: '8787',
       SOME_TOKEN: 'tok_abcdefghijkl',

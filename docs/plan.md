@@ -1,3 +1,5 @@
+> **Gnani AI edition.** This document was written for an earlier provider. References to a hosted LLM, whiteboard vision model or partner image adapter are historical: the current build uses Gnani Prisma/Timbre for speech and a deterministic rule engine plus trained ML model for reasoning (see README and `docs/DECISIONS.md`).
+
 # ChaosBoard: Build Plan
 
 Status: authoritative build plan, revision 2 (TypeScript modular monolith). Last context check: Tuesday, October 27, 2026.

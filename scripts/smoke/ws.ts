@@ -1,6 +1,6 @@
 /**
  * WebSocket probe for protocols that must be learned from the provider docs and observed
- * (Muse Voice Transcribe). It connects, plays a script of steps, and records every message with
+ * (Gnani Prisma transcription). It connects, plays a script of steps, and records every message with
  * timestamps relative to the connection.
  *
  *   pnpm smoke:ws path/to/ws-probe.json

@@ -1,6 +1,6 @@
 /**
  * Generic HTTP probe for capabilities whose request shape must come from the provider docs
- * (SAM 3.1, Muse Image, Muse Wonder, any other endpoint). The request lives in a JSON file you
+ * (any HTTP endpoint). The request lives in a JSON file you
  * write from the docs; this script sends it, times it, and records the real response.
  *
  *   pnpm smoke:probe path/to/probe.json
