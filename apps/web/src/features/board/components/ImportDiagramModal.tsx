@@ -41,19 +41,13 @@ export function ImportDiagramModal({ isOpen, onClose, onImport }: ImportDiagramM
     setCode(template.code);
   };
 
-  const handleResetTemplate = () => {
-    if (activeTemplate) {
-      setCode(activeTemplate.code);
-    }
-  };
-
   const handleCopyCode = async () => {
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard write failed or unpermitted
+      // Fallback if clipboard unpermitted
     }
   };
 
@@ -69,8 +63,6 @@ export function ImportDiagramModal({ isOpen, onClose, onImport }: ImportDiagramM
     }
   };
 
-  const lineCount = code.split('\n').length;
-
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
@@ -80,33 +72,10 @@ export function ImportDiagramModal({ isOpen, onClose, onImport }: ImportDiagramM
         aria-modal="true"
         aria-labelledby="import-diagram-title"
       >
-        {/* Enterprise Modal Header */}
+        {/* Header */}
         <div className="import-modal-header">
-          <div className="import-modal-identity">
-            <div className="import-modal-emblem" aria-hidden="true">
-              <svg
-                viewBox="0 0 24 24"
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <path d="M3 9h18" />
-                <path d="M9 21V9" />
-              </svg>
-            </div>
-            <div>
-              <div className="import-modal-title" id="import-diagram-title">
-                Import Architecture Topology
-              </div>
-              <div className="import-modal-subtitle">
-                Select industry-standard reference designs or paste custom Mermaid.js flowchart definitions
-              </div>
-            </div>
+          <div className="import-modal-title" id="import-diagram-title">
+            Import Architecture
           </div>
           <button
             type="button"
@@ -118,72 +87,39 @@ export function ImportDiagramModal({ isOpen, onClose, onImport }: ImportDiagramM
           </button>
         </div>
 
-        {/* Template Catalog Section */}
-        <div className="import-templates-section">
-          <div className="import-templates-label-row">
-            <span className="import-section-heading">PRODUCTION ARCHITECTURE TEMPLATES</span>
-            <span className="import-section-counter">{MERMAID_TEMPLATES.length} PRE-CONFIGURED PATTERNS</span>
-          </div>
-
-          <div className="import-templates-scroll-row">
-            {MERMAID_TEMPLATES.map((tmpl) => {
-              const isSelected = tmpl.id === selectedTemplateId;
-              return (
-                <button
-                  key={tmpl.id}
-                  type="button"
-                  className={`import-template-chip ${isSelected ? 'active' : ''}`}
-                  onClick={() => handleSelectTemplate(tmpl)}
-                >
-                  <span className="import-template-category-tag">{tmpl.category}</span>
-                  <span className="import-template-name">{tmpl.name}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {activeTemplate && (
-            <div className="import-template-detail-box">
-              <div className="import-template-description-text">{activeTemplate.description}</div>
-              <div className="import-template-highlights-row">
-                <span className="import-highlights-label">Guaranteed Patterns:</span>
-                {activeTemplate.highlights.map((h) => (
-                  <span key={h} className="import-highlight-pill">
-                    {h}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+        {/* Clean Template Segmented Control */}
+        <div className="import-templates-bar">
+          {MERMAID_TEMPLATES.map((tmpl) => {
+            const isSelected = tmpl.id === selectedTemplateId && code.trim() === tmpl.code.trim();
+            return (
+              <button
+                key={tmpl.id}
+                type="button"
+                className={`import-template-tab ${isSelected ? 'active' : ''}`}
+                onClick={() => handleSelectTemplate(tmpl)}
+              >
+                {tmpl.name}
+              </button>
+            );
+          })}
         </div>
 
-        {/* High-Contrast Code Editor Section */}
-        <div className="import-editor-section">
-          <div className="import-editor-toolbar">
-            <div className="import-editor-meta-left">
-              <span className="import-syntax-badge">Mermaid v10 Flowchart</span>
-              <span className="import-editor-stat">{lineCount} lines</span>
-            </div>
-            <div className="import-editor-actions-right">
+        {/* Editor Body */}
+        <div className="import-editor-body">
+          <div className="import-editor-header">
+            <span className="import-editor-lang">Mermaid Flowchart</span>
+            <div className="import-editor-actions">
               <button
                 type="button"
-                className="import-editor-btn"
+                className="import-action-btn"
                 onClick={handleCopyCode}
-                title="Copy diagram code to clipboard"
+                title="Copy diagram code"
               >
-                {copied ? '✓ Copied' : 'Copy'}
+                {copied ? 'Copied' : 'Copy'}
               </button>
               <button
                 type="button"
-                className="import-editor-btn"
-                onClick={handleResetTemplate}
-                title="Reset code to current template default"
-              >
-                Reset
-              </button>
-              <button
-                type="button"
-                className="import-editor-btn"
+                className="import-action-btn"
                 onClick={() => setCode('')}
                 title="Clear editor"
               >
@@ -192,62 +128,38 @@ export function ImportDiagramModal({ isOpen, onClose, onImport }: ImportDiagramM
             </div>
           </div>
 
-          <div className="import-code-container">
-            <textarea
-              id={editorId}
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              rows={9}
-              className="import-code-textarea"
-              placeholder="graph TD&#10;  gateway[API Gateway] --> orders[Order Service]&#10;  orders --> db[(PostgreSQL Primary)]"
-              spellCheck={false}
-              aria-label="Mermaid diagram code"
-            />
-          </div>
+          <textarea
+            id={editorId}
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            rows={11}
+            className="import-code-editor"
+            placeholder="graph TD&#10;  gateway[API Gateway] --> orders[Order Service]&#10;  orders --> db[(PostgreSQL DB)]"
+            spellCheck={false}
+            aria-label="Mermaid diagram definition"
+          />
 
-          {/* Live Validation & Preflight Diagnostics Bar */}
-          {parseResult.success ? (
-            <div className="import-diagnostic-box success">
-              <div className="import-diagnostic-status">
-                <span className="import-status-dot success" />
-                <span className="import-status-title">Syntax Valid & Topology Ready</span>
-              </div>
-              <div className="import-diagnostic-metrics">
-                <span className="import-metric-chip">
-                  <strong>{parseResult.nodes.length}</strong> Nodes
-                </span>
-                <span className="import-metric-chip">
-                  <strong>{parseResult.edges.length}</strong> Edges
-                </span>
-                <span className="import-metric-chip">
-                  Entry: <code>{parseResult.entryNodeId}</code>
-                </span>
-                <span className="import-metric-chip preflight-chip">
-                  ✓ Preflight Compliant
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="import-diagnostic-box error">
-              <div className="import-diagnostic-status">
-                <span className="import-status-dot error" />
-                <span className="import-status-title">Mermaid Parse Error</span>
-              </div>
-              <div className="import-error-message">{parseResult.error}</div>
+          {!parseResult.success && (
+            <div className="import-error-banner">
+              <span className="import-error-dot" />
+              <span>{parseResult.error}</span>
             </div>
           )}
         </div>
 
-        {/* Enterprise Modal Footer */}
+        {/* Clean Footer */}
         <div className="import-modal-footer">
-          <div className="import-syntax-hints">
-            <span>Syntax:</span>
-            <code>node[Service]</code>
-            <code>queue&gt;Worker]</code>
-            <code>db[(Sink)]</code>
-            <code>redis[(Cache)]</code>
+          <div className="import-footer-status">
+            {parseResult.success ? (
+              <span className="import-status-valid">
+                <span className="import-status-indicator" />
+                {parseResult.nodes.length} nodes · {parseResult.edges.length} edges
+              </span>
+            ) : (
+              <span className="import-status-invalid">Invalid syntax</span>
+            )}
           </div>
-          <div className="import-modal-footer-actions">
+          <div className="import-footer-buttons">
             <Button variant="ghost" size="sm" onClick={onClose}>
               Cancel
             </Button>
@@ -257,7 +169,7 @@ export function ImportDiagramModal({ isOpen, onClose, onImport }: ImportDiagramM
               onClick={handleApply}
               disabled={!parseResult.success || parseResult.nodes.length === 0}
             >
-              Import to Canvas
+              Import Diagram
             </Button>
           </div>
         </div>

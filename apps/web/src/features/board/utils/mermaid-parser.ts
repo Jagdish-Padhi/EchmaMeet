@@ -417,91 +417,62 @@ export function parseMermaidArchitecture(mermaidCode: string): MermaidParseResul
 export interface ArchitectureTemplate {
   readonly id: string;
   readonly name: string;
-  readonly category: string;
-  readonly description: string;
-  readonly nodeCount: number;
-  readonly highlights: readonly string[];
   readonly code: string;
 }
 
 export const MERMAID_TEMPLATES: readonly ArchitectureTemplate[] = [
   {
     id: 'aws-microservices',
-    name: 'AWS Cloud-Native Microservices',
-    category: 'Cloud Native',
-    description:
-      'Multi-tier production architecture with Edge ALB ingress, Auth caching, Order microservice, PostgreSQL primary, and Payment Gateway with Financial Ledger.',
-    nodeCount: 7,
-    highlights: ['Redis Session Cache', 'PostgreSQL DB Sink', 'Financial Ledger Sink'],
+    name: 'AWS Microservices',
     code: `graph TD
-  alb[Edge Application Load Balancer] --> auth[Auth Service]
-  alb --> orders[Order Microservice]
-  auth --> session[(Redis Session Cache)]
-  orders --> catalog[Product Catalog Service]
+  alb[ALB Ingress] --> auth[Auth Service]
+  alb --> orders[Order Service]
+  auth --> session[(Redis Cache)]
+  orders --> catalog[Catalog Service]
   orders --> payment[Payment Service]
-  catalog --> db[(PostgreSQL Primary DB)]
-  payment --> ledger[(Financial Ledger Sink)]`,
+  catalog --> db[(PostgreSQL DB)]
+  payment --> ledger[(Ledger Sink)]`,
   },
   {
     id: 'event-driven-saga',
-    name: 'Event-Driven Saga with Kafka & DLQ',
-    category: 'Event-Driven',
-    description:
-      'Choreographed event-driven orchestration with an Ingress Dispatcher, Kafka Event Bus, async fulfillment workers, notification dispatchers, Redis state, and Immutable Audit Sink.',
-    nodeCount: 7,
-    highlights: ['Kafka Async Broker', 'Worker Pool Consumers', 'Immutable Audit Sink'],
+    name: 'Kafka Event Saga',
     code: `graph TD
-  gateway[API Gateway Ingress] --> dispatcher[Event Dispatcher]
-  dispatcher --> kafka>Kafka Event Broker]
+  gateway[API Gateway] --> dispatcher[Event Dispatcher]
+  dispatcher --> kafka>Kafka Broker]
   kafka --> fulfillment>Fulfillment Worker]
   kafka --> notifications>Notification Consumer]
-  fulfillment --> state[(Redis Cluster State)]
-  fulfillment --> audit[(Immutable Audit Sink)]`,
+  fulfillment --> state[(Redis State)]
+  fulfillment --> audit[(Audit Sink)]`,
   },
   {
     id: 'fintech-ledger',
-    name: 'FinTech Real-Time Payment Ledger',
-    category: 'FinTech & Banking',
-    description:
-      'Zero-loss transactional banking pipeline featuring ML Fraud Risk scoring, Redis Idempotency Deduplication, settlement routing, and immutable double-entry ledger sinks.',
-    nodeCount: 6,
-    highlights: ['Idempotency Store', 'Fraud & Risk Engine', 'Double-Entry Core Ledger'],
+    name: 'FinTech Payment Ledger',
     code: `graph TD
-  ingress[Payment API Gateway] --> fraud[Risk & Fraud Engine]
-  fraud --> dedup[(Redis Idempotency Store)]
+  ingress[Payment Gateway] --> fraud[Fraud Engine]
+  fraud --> dedup[(Redis Deduplication)]
   fraud --> settlement[Settlement Router]
-  settlement --> clearing>Clearing Queue Consumer]
-  settlement --> core[(Core Banking Ledger Sink)]`,
+  settlement --> clearing>Clearing Consumer]
+  settlement --> core[(Core Ledger Sink)]`,
   },
   {
     id: 'k8s-resilient-mesh',
-    name: 'Kubernetes Ingress & Resilient Mesh',
-    category: 'Kubernetes',
-    description:
-      'Decoupled cloud-native service mesh with Envoy Ingress routing, user service caching, transactional checkout, payment proxy, and persistent database sinks.',
-    nodeCount: 7,
-    highlights: ['Envoy Ingress Mesh', 'Redis Distributed Cache', 'Decoupled Microservices'],
+    name: 'Kubernetes Mesh',
     code: `graph LR
-  ingress[Envoy Ingress Controller] --> web[Web API Gateway]
-  web --> cache[(Redis Distributed Cache)]
-  web --> user[User Account Service]
+  ingress[Envoy Ingress] --> web[API Gateway]
+  web --> cache[(Redis Cache)]
+  web --> user[User Service]
   web --> checkout[Checkout Service]
-  user --> accounts[(PostgreSQL User DB)]
-  checkout --> payments[Payment Gateway Service]
-  payments --> records[(Transaction Ledger Sink)]`,
+  user --> accounts[(PostgreSQL DB)]
+  checkout --> payments[Payment Service]
+  payments --> records[(Transaction Sink)]`,
   },
   {
     id: 'streaming-telemetry',
-    name: 'High-Throughput Streaming & Telemetry',
-    category: 'Streaming & IoT',
-    description:
-      'Large-scale telemetry ingestion pipeline with bounded stream buffering, distributed aggregation worker pool, hot Redis metrics cache, and long-term object storage.',
-    nodeCount: 5,
-    highlights: ['Ingestion Buffer Queue', 'Aggregation Workers', 'TimeSeries Object Sink'],
+    name: 'Telemetry Stream',
     code: `graph TD
-  collector[Telemetry Ingress Collector] --> ingest>Ingestion Stream Buffer]
-  ingest --> aggregator>Stream Worker Pool]
-  aggregator --> hotcache[(Redis Metrics Cache)]
-  aggregator --> storage[(Long-term Object Storage Sink)]`,
+  collector[Telemetry Collector] --> ingest>Ingestion Buffer]
+  ingest --> aggregator>Stream Worker]
+  aggregator --> hotcache[(Redis Metrics)]
+  aggregator --> storage[(Object Storage Sink)]`,
   },
 ];

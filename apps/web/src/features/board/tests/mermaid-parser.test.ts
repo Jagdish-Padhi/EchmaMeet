@@ -82,7 +82,7 @@ describe('mermaid-parser', () => {
       const result = parseMermaidArchitecture(template.code);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.nodes.length).toBeGreaterThanOrEqual(template.nodeCount - 1);
+        expect(result.nodes.length).toBeGreaterThanOrEqual(4);
         expect(result.edges.length).toBeGreaterThan(0);
 
         // Entry node must not be a queue_consumer
