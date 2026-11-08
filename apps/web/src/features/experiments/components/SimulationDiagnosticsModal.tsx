@@ -95,7 +95,7 @@ export function SimulationDiagnosticsModal({
 
   return (
     <Modal
-      title="Resilience Simulation Diagnostics"
+      title="Simulation Diagnostics"
       isOpen={isOpen}
       onClose={onClose}
       actions={
@@ -259,7 +259,7 @@ export function SimulationDiagnosticsModal({
               }}
             >
               {isBusy
-                ? 'The simulation host lock is currently engaged by a running or recently finished trial. In multi-process architectures, mutual exclusion locks prevent port collisions and contaminated tail telemetry.'
+                ? 'The simulation host lock is currently engaged by an active or recently finished trial.'
                 : rawMsg ||
                   'Execution encountered an operational error during simulation initialization.'}
             </p>
@@ -337,8 +337,7 @@ export function SimulationDiagnosticsModal({
                 <span
                   style={{ display: 'block', fontSize: '11px', color: 'var(--color-text-muted)' }}
                 >
-                  Gnani Prisma + Timbre for speech; rule engine and ML diagnosis for repair
-                  (language: {settings.voiceLanguage})
+                  Gnani Voice ({settings.voiceLanguage}) &amp; Groq AI SRE reasoning
                 </span>
               </div>
               <span
@@ -351,7 +350,7 @@ export function SimulationDiagnosticsModal({
                   color: '#38bdf8',
                 }}
               >
-                OPTIONAL FOR RUN
+                READY
               </span>
             </div>
 
@@ -448,29 +447,24 @@ export function SimulationDiagnosticsModal({
             }}
           >
             {isBusy && (
-              <li>
-                Click <strong>Force Release Host Lock</strong> to immediately terminate any stalled
-                background child processes and clear the reservation.
-              </li>
+              <li>Click <strong>Force Release Host Lock</strong> to clear active execution reservation.</li>
             )}
             {board.nodes.length === 0 && (
               <li>Add at least one service from the top toolbar to the canvas.</li>
             )}
             {board.validationProblems.length > 0 && (
               <li>
-                Resolve the architecture validation issue(s) highlighted on the canvas before
-                re-running.
+                Resolve the architecture validation issue(s) highlighted on the canvas before re-running.
               </li>
             )}
-            <li>
-              If you plan to run <strong>Autonomous AI Repair</strong> or ask{' '}
-              <strong>SRE Copilot</strong> questions, set <code>GNANI_API_KEY</code> for voice and
-              optionally <code>EVON_BASE_URL</code> in the server <code>.env</code>.
-            </li>
+            {isApiKeyIssue && (
+              <li>
+                Verify <code>GNANI_API_KEY</code> and <code>GROQ_API_KEY</code> in server environment settings.
+              </li>
+            )}
             {isToxiproxyIssue && (
               <li>
-                Ensure Docker or the Toxiproxy daemon is listening on port <code>8474</code> (run{' '}
-                <code>docker compose up -d</code>).
+                Ensure Toxiproxy daemon is reachable on port <code>8474</code>.
               </li>
             )}
           </ul>

@@ -27,7 +27,7 @@ export function PreflightBlockerModal({
 
   return (
     <Modal
-      title="Preflight Validation Blocked"
+      title="Architecture Validation Blocked"
       isOpen={isOpen}
       onClose={onClose}
       actions={
@@ -45,7 +45,7 @@ export function PreflightBlockerModal({
             </Button>
           )}
           <Button variant="primary" size="sm" onClick={onClose}>
-            Got it, Return to Canvas
+            Dismiss
           </Button>
         </div>
       }
@@ -58,8 +58,8 @@ export function PreflightBlockerModal({
             gap: '12px',
             padding: '12px 14px',
             borderRadius: '8px',
-            background: 'rgba(239, 68, 68, 0.12)',
-            border: '1px solid rgba(239, 68, 68, 0.25)',
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.22)',
           }}
         >
           <svg
@@ -79,23 +79,23 @@ export function PreflightBlockerModal({
           </svg>
           <div>
             <h4
-              style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 600, color: '#f87171' }}
+              style={{ margin: '0 0 4px 0', fontSize: '13.5px', fontWeight: 600, color: '#f87171' }}
             >
               Simulation Cannot Dispatch
             </h4>
             <p
               style={{
                 margin: 0,
-                fontSize: '13px',
+                fontSize: '12.5px',
                 color: 'var(--color-text-dim)',
                 lineHeight: 1.5,
               }}
             >
               {hasMissingNodes
-                ? 'Your canvas is empty. Chaos simulation requires at least one ingress service and downstream connection.'
+                ? 'Canvas is empty. Resilience simulation requires at least one ingress service and downstream connection.'
                 : isSingleNode
-                  ? 'A standalone single node with no ingress or connection cannot be tested for resilience degradation. Connect services or designate ingress.'
-                  : `Detected ${String(problems.length)} structural architecture issue(s). The experiment host lock and toxiproxy workers cannot execute until these are resolved.`}
+                  ? 'A standalone single node cannot be tested for resilience degradation. Connect services or designate ingress.'
+                  : `Resolve the following ${String(problems.length)} architecture constraint(s) to run the simulation:`}
             </p>
           </div>
         </div>
@@ -104,14 +104,14 @@ export function PreflightBlockerModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <span
               style={{
-                fontSize: '12px',
-                fontWeight: 600,
+                fontSize: '11px',
+                fontWeight: 700,
                 color: 'var(--color-text-muted)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em',
+                letterSpacing: '0.06em',
               }}
             >
-              Structural Incompatibilities ({problems.length})
+              Validation Issues ({problems.length})
             </span>
             <div
               style={{
@@ -146,11 +146,11 @@ export function PreflightBlockerModal({
                           width: '6px',
                           height: '6px',
                           borderRadius: '50%',
-                          background: '#f59e0b',
+                          background: '#f43f5e',
                           flexShrink: 0,
                         }}
                       />
-                      <span style={{ fontSize: '13px', color: 'var(--color-text)' }}>
+                      <span style={{ fontSize: '12.5px', color: 'var(--color-text)' }}>
                         {p.message}
                       </span>
                     </div>
