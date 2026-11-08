@@ -18,8 +18,10 @@
   --color-accent-hover: #0284c7;
   --color-primary: #0866ff;
   --color-primary-hover: #0056df;
-  --color-meta-blue: #0866ff;
-  --color-meta-blue-hover: #0056df;
+  --color-brand-blue: #0866ff;
+  --color-brand-blue-hover: #0056df;
+  --color-meta-blue: var(--color-brand-blue);
+  --color-meta-blue-hover: var(--color-brand-blue-hover);
   --color-focus: #0866ff;
 
   --echma-logo-grad-start: #38bdf8;
@@ -83,7 +85,8 @@
   --color-accent-hover: #0369a1;
   --color-primary: #0866ff;
   --color-primary-hover: #0056df;
-  --color-meta-blue: #0866ff;
+  --color-brand-blue: #0866ff;
+  --color-meta-blue: var(--color-brand-blue);
   --color-focus: #0284c7;
 
   --echma-logo-grad-start: #0284c7;
@@ -4846,7 +4849,7 @@ button.validation-target-chip:hover {
 
 /* ============================================================================
    ENTERPRISE RESILIENCE EXECUTION & TELEMETRY
-   Meta/Datadog-grade high density SRE dashboard styling
+   Production high density SRE dashboard styling
    ============================================================================ */
 .agentic-simulation-card,
 .telemetry-card,

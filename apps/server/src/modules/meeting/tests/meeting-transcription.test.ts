@@ -6,7 +6,7 @@ import { globalTranscriptStore } from '../transcript-store';
 import type { StructuredModelPort } from '../../reasoning';
 import type { Topology } from '@chaosboard/contracts';
 
-describe('Meeting Transcription & Grounded Meta SRE AI Reasoning (Tasks 5 & 6)', () => {
+describe('Meeting Transcription & Grounded Echma SRE AI Reasoning (Tasks 5 & 6)', () => {
   function createTestServer(customModel?: StructuredModelPort) {
     const app = fastify();
     app.addHook('onRequest', async (req) => {
@@ -141,7 +141,7 @@ describe('Meeting Transcription & Grounded Meta SRE AI Reasoning (Tasks 5 & 6)',
     expect(body.segments[1].speakerName).toBe('Bob');
   });
 
-  it('grounds Meta SRE agent reasoning in transcripts, facts vs assumptions, and proposed experiments', async () => {
+  it('grounds Echma SRE agent reasoning in transcripts, facts vs assumptions, and proposed experiments', async () => {
     let capturedUserContent: any = null;
     const mockModel: StructuredModelPort = {
       async generateStructured<T>(params: any) {
