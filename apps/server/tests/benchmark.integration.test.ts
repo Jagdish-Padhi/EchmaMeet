@@ -185,8 +185,8 @@ describe('Benchmark suite and API integration', () => {
 
     expect(summary.results.length).toBe(1);
     expect(summary.results[0]?.scenarioId).toBe('retry-storm');
-    expect(summary.results[0]?.agreement.violationAccuracy).toBe(1.0);
-    expect(summary.results[0]?.agreement.failureModeMatched).toBe(true);
+    expect(summary.results[0]?.agreement?.violationAccuracy).toBe(1.0);
+    expect(summary.results[0]?.agreement?.failureModeMatched).toBe(true);
     expect(summary.aggregateMetrics.staticAccuracyPct).toBe(100);
 
     // Verify GET /api/benchmarks/results returns the stored summary

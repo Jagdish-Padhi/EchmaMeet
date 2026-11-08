@@ -15,7 +15,7 @@ describe('JWT engine', () => {
     const user: UserSessionProfile = {
       userId: 'eng-123',
       name: 'Test SRE',
-      email: 'sre@meta.internal',
+      email: 'sre@echmameet.dev',
       role: 'Staff SRE',
       avatar: 'TS',
     };
@@ -26,7 +26,7 @@ describe('JWT engine', () => {
     expect(verified.valid).toBe(true);
     if (verified.valid) {
       expect(verified.payload.userId).toBe('eng-123');
-      expect(verified.payload.email).toBe('sre@meta.internal');
+      expect(verified.payload.email).toBe('sre@echmameet.dev');
     }
   });
 
@@ -50,6 +50,7 @@ describe('Auth routes and OAuth integrations', () => {
   const authConfig: AuthConfig = {
     jwtSecret: 'test-secret-key-32-chars-long-abc',
     jwtExpiresIn: 3600,
+    allowDevMockAuth: true,
     googleClientId: 'google-test-id.apps.googleusercontent.com',
     firebaseProjectId: 'firebase-test-proj',
     githubClientId: 'gh_client_123',
@@ -66,11 +67,63 @@ describe('Auth routes and OAuth integrations', () => {
       url: '/api/auth/config',
     });
     expect(response.statusCode).toBe(200);
-    const data = response.json<{ googleClientId: string; githubClientId: string; providers: string[] }>();
+    const data = response.json<{
+      googleClientId: string;
+      githubClientId: string;
+      providers: string[];
+    }>();
     expect(data.googleClientId).toBe('google-test-id.apps.googleusercontent.com');
     expect(data.githubClientId).toBe('gh_client_123');
     expect(data.providers).toContain('google');
     expect(data.providers).toContain('github');
+  });
+
+  it('rejects forged login attempts without valid credentials', async () => {
+    const db = openDatabase(IN_MEMORY);
+    const app = Fastify();
+    registerAuthRoutes(app, db, { ...authConfig, allowDevMockAuth: false });
+
+    // Hostile attempt: forging victim email with no token
+    const forgedGoogle = await app.inject({
+      method: 'POST',
+      url: '/api/auth/google',
+      payload: {
+        profile: { email: 'victim@example.com' },
+      },
+    });
+    expect(forgedGoogle.statusCode).toBe(401);
+
+    // Hostile attempt: arbitrary fake id token without signature
+    const fakeToken = await app.inject({
+      method: 'POST',
+      url: '/api/auth/google',
+      payload: {
+        idToken: 'fake.unsigned.jwt',
+      },
+    });
+    expect(fakeToken.statusCode).toBe(401);
+  });
+
+  it('prevents query string auth bypass attacks like ?x=/events', async () => {
+    const db = openDatabase(IN_MEMORY);
+    const app = Fastify();
+    app.get('/api/runs', async () => ({ runs: [] }));
+    registerAuthRoutes(app, db, authConfig);
+    installAuthGuard(app, db, authConfig);
+
+    // Normal access without token is blocked
+    const directRes = await app.inject({
+      method: 'GET',
+      url: '/api/runs',
+    });
+    expect(directRes.statusCode).toBe(401);
+
+    // Malicious query string attempting to trigger url.includes('/events') bypass
+    const bypassRes = await app.inject({
+      method: 'GET',
+      url: '/api/runs?x=/events',
+    });
+    expect(bypassRes.statusCode).toBe(401);
   });
 
   it('authenticates via Google/Firebase endpoint and issues valid JWT', async () => {
@@ -79,22 +132,24 @@ describe('Auth routes and OAuth integrations', () => {
     registerAuthRoutes(app, db, authConfig);
     installAuthGuard(app, db, authConfig);
 
-    // Mock Google payload
+    // Valid signed token for dev/test
+    const validTestIdToken = signJwt(
+      { email: 'google.engineer@echmameet.dev', name: 'Sarah Chen (Google)', picture: 'SC' },
+      authConfig.jwtSecret,
+      3600,
+    );
+
     const response = await app.inject({
       method: 'POST',
       url: '/api/auth/google',
       payload: {
-        profile: {
-          email: 'google.engineer@meta.internal',
-          name: 'Sarah Chen (Google)',
-          avatar: 'SC',
-        },
+        idToken: validTestIdToken,
       },
     });
 
     expect(response.statusCode).toBe(200);
     const data = response.json<{ token: string; user: { email: string; name: string } }>();
-    expect(data.user.email).toBe('google.engineer@meta.internal');
+    expect(data.user.email).toBe('google.engineer@echmameet.dev');
     expect(data.token.split('.')).toHaveLength(3);
 
     // Verify token works with /api/auth/me
@@ -106,7 +161,9 @@ describe('Auth routes and OAuth integrations', () => {
       },
     });
     expect(meResponse.statusCode).toBe(200);
-    expect(meResponse.json<{ user: { email: string } }>().user.email).toBe('google.engineer@meta.internal');
+    expect(meResponse.json<{ user: { email: string } }>().user.email).toBe(
+      'google.engineer@echmameet.dev',
+    );
   });
 
   it('authenticates via GitHub OAuth endpoint and issues valid JWT', async () => {
@@ -116,21 +173,23 @@ describe('Auth routes and OAuth integrations', () => {
     registerAuthRoutes(app, db, authConfig);
     installAuthGuard(app, db, authConfig);
 
+    const validGhToken = signJwt(
+      { email: 'github.lead@echmameet.dev', name: 'Marcus Vance (GitHub)', avatar: 'MV' },
+      authConfig.jwtSecret,
+      3600,
+    );
+
     const response = await app.inject({
       method: 'POST',
       url: '/api/auth/github',
       payload: {
-        profile: {
-          email: 'github.lead@meta.internal',
-          name: 'Marcus Vance (GitHub)',
-          avatar: 'MV',
-        },
+        accessToken: validGhToken,
       },
     });
 
     expect(response.statusCode).toBe(200);
     const data = response.json<{ token: string; user: { email: string; name: string } }>();
-    expect(data.user.email).toBe('github.lead@meta.internal');
+    expect(data.user.email).toBe('github.lead@echmameet.dev');
 
     // Verify token works against protected endpoint
     const protectedRes = await app.inject({

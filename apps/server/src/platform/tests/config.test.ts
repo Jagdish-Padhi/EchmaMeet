@@ -13,11 +13,18 @@ describe('loadSettings', () => {
       databaseUrl: '',
       redisUrl: '',
       toxiproxyUrl: 'http://127.0.0.1:8474',
-      partnerBaseUrl: 'http://127.0.0.1:8000/v1',
-      partnerApiKey: '',
-      partnerModelId: 'meta-models/muse-spark-open-1026',
+      toxiproxyUpstreamHost: 'host.docker.internal',
+      gnaniApiKey: '',
+      gnaniBaseUrl: 'https://api.vachana.ai',
+      gnaniSttModel: 'prisma-v3.0',
+      gnaniTtsModel: 'timbre-v2.5',
+      gnaniTtsSampleRate: 48000,
+      evonBaseUrl: '',
+      evonApiKey: '',
+      evonModelId: 'gnani-evon-v3.3',
       jwtSecret: 'chaosboard-default-jwt-secret-replace-in-production-2026',
       jwtExpiresIn: 1209600,
+      allowDevMockAuth: false,
       googleClientId: '',
       firebaseProjectId: '',
       githubClientId: '',
@@ -32,10 +39,26 @@ describe('loadSettings', () => {
       SERVER_PORT: '9000',
       DATA_DIR: '/var/lib/chaosboard',
       LOG_LEVEL: 'debug',
+      JWT_SECRET: 'a-secure-production-jwt-secret-with-at-least-32-chars!',
     });
     expect(settings.port).toBe(9000);
     expect(settings.nodeEnv).toBe('production');
     expect(settings.logLevel).toBe('debug');
+  });
+
+  it('enforces secure non-default JWT_SECRET in production', () => {
+    expect(() =>
+      loadSettings({
+        NODE_ENV: 'production',
+      }),
+    ).toThrow(ConfigError);
+
+    expect(() =>
+      loadSettings({
+        NODE_ENV: 'production',
+        JWT_SECRET: 'short-secret',
+      }),
+    ).toThrow(ConfigError);
   });
 
   it('treats empty strings as unset', () => {
@@ -60,5 +83,23 @@ describe('loadSettings', () => {
 
   it('ignores unrelated environment variables', () => {
     expect(() => loadSettings({ PATH: '/usr/bin', HOME: '/root' })).not.toThrow();
+  });
+
+  it('reads Gnani settings and strips a trailing slash from the base URL', () => {
+    const settings = loadSettings({
+      GNANI_API_KEY: '  key-123  ',
+      GNANI_BASE_URL: 'https://api.vachana.ai/',
+      GNANI_STT_MODEL: 'prisma-v2.5',
+      GNANI_TTS_MODEL: 'timbre-v3.0',
+    });
+    expect(settings.gnaniApiKey).toBe('key-123');
+    expect(settings.gnaniBaseUrl).toBe('https://api.vachana.ai');
+    expect(settings.gnaniSttModel).toBe('prisma-v2.5');
+    expect(settings.gnaniTtsModel).toBe('timbre-v3.0');
+  });
+
+  it('rejects unknown Gnani model names', () => {
+    expect(() => loadSettings({ GNANI_STT_MODEL: 'whisper-1' })).toThrow(ConfigError);
+    expect(() => loadSettings({ GNANI_TTS_MODEL: 'timbre-v9' })).toThrow(ConfigError);
   });
 });

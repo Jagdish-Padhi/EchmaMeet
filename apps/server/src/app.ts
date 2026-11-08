@@ -4,7 +4,17 @@ import { createRunsService, registerRunsRoutes } from './modules/runs';
 import { createChaosService } from './modules/chaos';
 import { createMeasurementService } from './modules/measurement';
 import { createExperimentOrchestrator, registerExperimentRoutes } from './modules/experiments';
-import { OpenAiCompatibleAdapter, type StructuredModelPort } from './modules/meta-ai';
+import {
+  OpenAiCompatibleAdapter,
+  registerReasoningRoutes,
+  type StructuredModelPort,
+} from './modules/reasoning';
+import { registerGnaniRoutes, type GnaniRuntime } from './modules/gnani';
+import {
+  MemoryVoiceLedger,
+  registerVoiceLedgerRoutes,
+  type VoiceLedgerPort,
+} from './modules/voice-ledger';
 import { createRepairOrchestrator, registerRepairRoutes } from './modules/repair';
 import { createBenchmarkModule } from './modules/benchmarks';
 import {
@@ -19,7 +29,13 @@ import { MeetingAgentService, registerMeetingRoutes } from './modules/meeting';
 import type { RunId } from '@chaosboard/contracts';
 import type { SqlDatabase } from './platform/db';
 import { registerHealthRoute } from './platform/health';
-import { installAuthGuard, registerAuthRoutes, type AuthConfig } from './platform/auth';
+import {
+  DEFAULT_JWT_SECRET,
+  installAuthGuard,
+  registerAuthRoutes,
+  signJwt,
+  type AuthConfig,
+} from './platform/auth';
 import { registerProblemHandlers } from './platform/http-kit';
 import type { Logger } from './platform/logging';
 
@@ -28,9 +44,13 @@ export interface AppDependencies {
   readonly database: SqlDatabase;
   readonly toxiproxyUrl?: string | undefined;
   readonly model?: StructuredModelPort | undefined;
-  readonly partnerBaseUrl?: string | undefined;
-  readonly partnerApiKey?: string | undefined;
-  readonly partnerModelId?: string | undefined;
+  /** Gnani speech clients (Prisma STT, Timbre TTS). Absent capabilities degrade gracefully. */
+  readonly gnani?: GnaniRuntime | undefined;
+  readonly voiceLedger?: VoiceLedgerPort | undefined;
+  readonly gnaniModels?: { readonly stt: string; readonly tts: string } | undefined;
+  /** Optional OpenAI-compatible endpoint serving open-weight Gnani Evon. */
+  readonly evon?:
+    { readonly baseUrl: string; readonly apiKey: string; readonly modelId: string } | undefined;
   readonly authConfig?: AuthConfig | undefined;
 }
 
@@ -43,9 +63,10 @@ export function buildApp({
   database,
   toxiproxyUrl = 'http://127.0.0.1:8474',
   model,
-  partnerBaseUrl = 'http://127.0.0.1:8000/v1',
-  partnerApiKey = '',
-  partnerModelId = 'meta-models/muse-spark-open-1026',
+  gnani,
+  voiceLedger = new MemoryVoiceLedger(),
+  gnaniModels = { stt: 'prisma-v3.0', tts: 'timbre-v2.5' },
+  evon,
   authConfig,
 }: AppDependencies): FastifyInstance {
   const baseLogger: FastifyBaseLogger = logger;
@@ -71,13 +92,32 @@ export function buildApp({
   });
   registerExperimentRoutes(app, experimentOrchestrator, runsService);
 
-  const modelClient =
+  // The language model is optional. Without Evon every feature runs on the deterministic rule
+  // engine and the trained ML diagnosis model.
+  const modelClient: StructuredModelPort | undefined =
     model ??
-    new OpenAiCompatibleAdapter({
-      baseUrl: partnerBaseUrl,
-      apiKey: partnerApiKey,
-      modelId: partnerModelId,
-    });
+    (evon?.baseUrl
+      ? new OpenAiCompatibleAdapter({
+          baseUrl: evon.baseUrl,
+          apiKey: evon.apiKey,
+          modelId: evon.modelId,
+          providerName: 'evon',
+        })
+      : undefined);
+
+  registerReasoningRoutes(app, {
+    modelClient,
+    provider: modelClient ? 'evon' : 'deterministic',
+    modelId: evon?.modelId ?? '',
+    baseUrl: evon?.baseUrl ?? '',
+  });
+
+  registerGnaniRoutes(app, {
+    stt: gnani?.stt,
+    tts: gnani?.tts,
+    sttModel: gnaniModels.stt,
+    ttsModel: gnaniModels.tts,
+  });
 
   const repairOrchestrator = createRepairOrchestrator({
     experiments: experimentOrchestrator,
@@ -103,8 +143,9 @@ export function buildApp({
   });
   registerVisionRoutes(app, visionService);
 
-  const voiceService = new VoiceService({});
+  const voiceService = new VoiceService({ stt: gnani?.stt, tts: gnani?.tts, ledger: voiceLedger });
   registerVoiceRoutes(app, voiceService);
+  registerVoiceLedgerRoutes(app, voiceLedger);
 
   const reportingService = new ReportingService({
     getRunRecord: (runId) => Promise.resolve(runsService.getRun(runId as RunId) ?? null),
@@ -112,7 +153,17 @@ export function buildApp({
   registerReportingRoutes(app, reportingService);
 
   const meetingAgentService = new MeetingAgentService(modelClient);
-  registerMeetingRoutes(app, meetingAgentService);
+  registerMeetingRoutes(app, meetingAgentService, {
+    stt: gnani?.stt,
+    generateMediaToken: (userId, roomId) =>
+      signJwt(
+        { sub: userId, roomId, purpose: 'webrtc_media_signaling' },
+        authConfig?.jwtSecret ?? DEFAULT_JWT_SECRET,
+        7200,
+      ),
+  });
+
+  (app as unknown as { voiceService: VoiceService }).voiceService = voiceService;
 
   return app;
 }

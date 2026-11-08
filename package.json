@@ -24,7 +24,7 @@
     "test:integration": "pnpm -r --if-present --workspace-concurrency=1 run test:integration",
     "check": "pnpm typecheck && pnpm lint && pnpm boundaries && pnpm graph:check && pnpm docs:check && pnpm test",
     "benchmark": "tsx apps/server/src/cli/benchmark.ts",
-    "smoke:spark-open": "pnpm --filter @chaosboard/scripts run spark-open",
+    "smoke:gnani": "pnpm --filter @chaosboard/scripts run gnani",
     "smoke:toxiproxy": "pnpm --filter @chaosboard/scripts run toxiproxy",
     "smoke:probe": "pnpm --filter @chaosboard/scripts run probe",
     "smoke:ws": "pnpm --filter @chaosboard/scripts run ws"
@@ -41,9 +41,5 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.2",
     "vitest": "5.0.4"
-  },
-  "dependencies": {
-    "@neon/config": "^1.9.6",
-    "@neon/env": "^1.6.6"
   }
 }

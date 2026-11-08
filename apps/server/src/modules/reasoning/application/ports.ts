@@ -1,4 +1,3 @@
-import type { VisionExtraction } from '@chaosboard/contracts';
 import type { z } from 'zod';
 
 export interface ChatMessage {
@@ -36,31 +35,4 @@ export interface StructuredModelResult<T> {
 
 export interface StructuredModelPort {
   generateStructured<T>(options: StructuredModelCallOptions<T>): Promise<StructuredModelResult<T>>;
-}
-
-export interface VisionModelPort {
-  extractTopologyFromImage(
-    imageBase64: string,
-    mimeType: string,
-    options?: { signal?: AbortSignal },
-  ): Promise<StructuredModelResult<VisionExtraction>>;
-}
-
-export interface SamMaskItem {
-  readonly label: string;
-  readonly score: number;
-  readonly box: readonly [number, number, number, number]; // [x1, y1, x2, y2]
-  readonly points?: readonly (readonly [number, number])[] | undefined;
-}
-
-export interface SamSegmentationResult {
-  readonly masks: readonly SamMaskItem[];
-}
-
-export interface SamSegmentationPort {
-  segmentKeyframe(
-    imageBase64: string,
-    prompt: string,
-    options?: { signal?: AbortSignal },
-  ): Promise<SamSegmentationResult>;
 }

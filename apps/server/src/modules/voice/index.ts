@@ -1,7 +1,6 @@
-export { VoiceService } from './application/voice-service';
+export { VoiceService, buildKeyterms } from './application/voice-service';
 export type {
   ParseVoiceCommandRequest,
-  SpeechTranscriptionPort,
   VoiceServiceContract,
   VoiceServicePorts,
 } from './application/ports';

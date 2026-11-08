@@ -18,27 +18,26 @@ export interface OpenAiAdapterConfig {
   readonly providerName?: string | undefined;
 }
 
-const openAiChatResponseSchema = z.object({
+const openAiChatResponseSchema = z.looseObject({
   id: z.string().optional(),
   choices: z.array(
-    z.object({
+    z.looseObject({
       index: z.number().optional(),
-      message: z.object({
+      message: z.looseObject({
         role: z.string().optional(),
         content: z.string().nullable().optional(),
-      }).passthrough(),
+      }),
       finish_reason: z.string().nullable().optional(),
-    }).passthrough(),
+    }),
   ),
   usage: z
-    .object({
+    .looseObject({
       prompt_tokens: z.number().int().optional(),
       completion_tokens: z.number().int().optional(),
       total_tokens: z.number().int().optional(),
     })
-    .passthrough()
     .optional(),
-}).passthrough();
+});
 
 function extractJsonText(raw: string): string {
   const trimmed = raw.trim();
@@ -67,7 +66,7 @@ export class OpenAiCompatibleAdapter implements StructuredModelPort {
     this.endpointUrl = `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
     this.defaultTimeoutMs = config.defaultTimeoutMs ?? 60_000;
     this.maxTransportRetries = config.maxTransportRetries ?? 2;
-    this.providerName = config.providerName ?? 'spark_open';
+    this.providerName = config.providerName ?? 'evon';
   }
 
   async generateStructured<T>(
@@ -204,6 +203,7 @@ export class OpenAiCompatibleAdapter implements StructuredModelPort {
             messages,
             temperature,
             max_tokens: maxTokens,
+            response_format: { type: 'json_object' },
           }),
           signal: controller.signal,
         });

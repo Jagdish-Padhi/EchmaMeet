@@ -110,14 +110,14 @@ describe('application', () => {
       method: 'POST',
       url: '/api/auth/login',
       payload: {
-        email: 'alex.chen@meta.internal',
+        email: 'alex.chen@echmameet.dev',
         password: 'chaosboard123',
       },
     });
     expect(response.statusCode).toBe(200);
     const body = response.json<{ token: string; user: { email: string; name: string } }>();
     expect(body.token).toBeTruthy();
-    expect(body.user.email).toBe('alex.chen@meta.internal');
+    expect(body.user.email).toBe('alex.chen@echmameet.dev');
   });
 
   it('registers a new user and grants session token', async () => {
@@ -125,7 +125,7 @@ describe('application', () => {
       method: 'POST',
       url: '/api/auth/register',
       payload: {
-        email: 'jane.doe@meta.internal',
+        email: 'jane.doe@echmameet.dev',
         password: 'securepassword123',
         name: 'Jane Doe',
         role: 'Senior SRE',
