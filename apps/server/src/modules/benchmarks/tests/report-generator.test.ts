@@ -26,7 +26,7 @@ describe('benchmarks report generator', () => {
           {
             scenarioId,
             predictionIndex: 0,
-            modelId: 'meta-models/muse-spark-open-1026',
+            modelId: 'gnani-evon-v3.3',
             promptVersion: 'prediction-v1',
             predictedViolations: { 'inv-p99': true },
             predictedMetrics: { p99LatencyMs: 1500, errorRate: 0.05 },

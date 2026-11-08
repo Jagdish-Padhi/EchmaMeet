@@ -12,7 +12,6 @@ import {
 import { AppError } from '@chaosboard/shared';
 import { detectRedStrokePixels } from '../domain/color-threshold';
 import { findPolylineIntersections } from '../domain/geometry';
-import { parseSamSegmentation } from '../domain/sam-parser';
 import type { ExtractDraftRequest, GestureDetectionRequest, VisionServicePorts } from './ports';
 
 export class VisionService {
@@ -27,76 +26,31 @@ export class VisionService {
     const header = this.ports.imageDecoder.inspectHeader(buffer);
     const mimeType = request.mimeType ?? `image/${header.format}`;
 
-    // Attempt vision model call if available
-    if (this.ports.visionModel) {
-      try {
-        const result = await this.ports.visionModel.extractTopologyFromImage(
-          request.imageBase64,
-          mimeType,
-        );
-        // Verify extracted draft through topology normalization
-        this.validateDraftThroughTopology(result.data);
-        return result.data;
-      } catch {
-        // Fall back to deterministic architectural extraction if model is unavailable
-      }
+    if (!this.ports.visionModel) {
+      throw new AppError(
+        'unavailable',
+        'vision_model_not_configured',
+        'Whiteboard photo to topology needs a vision model, and Gnani AI provides speech models only. Draw the topology on the canvas or load a scenario; red-stroke gesture detection still works without a model.',
+      );
     }
 
-    // Deterministic fallback extractor for hand-drawn architecture diagrams
-    const fallbackDraft: VisionExtraction = {
-      nodes: [
-        {
-          id: 'client',
-          label: 'Client Gateway',
-          kind: 'service',
-          confidence: 0.92,
-          box: { x: 0.1, y: 0.35, width: 0.22, height: 0.16 },
-        },
-        {
-          id: 'backend',
-          label: 'Backend Service',
-          kind: 'service',
-          confidence: 0.85,
-          box: { x: 0.45, y: 0.35, width: 0.22, height: 0.16 },
-        },
-        {
-          id: 'database',
-          label: 'Database Ledger',
-          kind: 'ledger_sink',
-          confidence: 0.78,
-          box: { x: 0.75, y: 0.35, width: 0.2, height: 0.16 },
-        },
-      ],
-      edges: [
-        {
-          id: 'edge-client-backend',
-          sourceLabel: 'Client Gateway',
-          targetLabel: 'Backend Service',
-          confidence: 0.89,
-          polyline: [
-            [0.32, 0.43],
-            [0.45, 0.43],
-          ],
-        },
-        {
-          id: 'edge-backend-database',
-          sourceLabel: 'Backend Service',
-          targetLabel: 'Database Ledger',
-          confidence: 0.84,
-          polyline: [
-            [0.67, 0.43],
-            [0.75, 0.43],
-          ],
-        },
-      ],
-      ambiguities: ['Backend Service queue policy inferred from box annotation.'],
-      warnings: [
-        'Extracted via deterministic fallback detector; confirm topology before starting experiment.',
-      ],
-    };
-
-    this.validateDraftThroughTopology(fallbackDraft);
-    return fallbackDraft;
+    try {
+      const result = await this.ports.visionModel.extractTopologyFromImage(
+        request.imageBase64,
+        mimeType,
+      );
+      this.validateDraftThroughTopology(result.data);
+      return result.data;
+    } catch (err) {
+      if (err instanceof AppError) {
+        throw err;
+      }
+      throw new AppError(
+        'internal',
+        'vision_extraction_failed',
+        `Vision extraction failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 
   confirmDraft(draft: TopologyDraft): Topology {
@@ -119,37 +73,23 @@ export class VisionService {
     return result.value.topology;
   }
 
-  async detectGesture(request: GestureDetectionRequest): Promise<RedStrokeDetectionResult> {
-    let detector: 'sam' | 'color_threshold' = 'color_threshold';
+  detectGesture(request: GestureDetectionRequest): Promise<RedStrokeDetectionResult> {
+    return Promise.resolve(this.detectGestureSync(request));
+  }
+
+  private detectGestureSync(request: GestureDetectionRequest): RedStrokeDetectionResult {
+    const detector = 'color_threshold' as const;
     let strokePolyline: RedStrokePoint[] = [];
 
     // 1. If explicit stroke points are provided
     if (request.strokePolyline && request.strokePolyline.length >= 2) {
       strokePolyline = [...request.strokePolyline];
     } else if (request.imageKeyframe) {
-      // 2. Try SAM 3.1 if configured
-      if (this.ports.samModel) {
-        try {
-          const samRes = await this.ports.samModel.segmentKeyframe(
-            request.imageKeyframe,
-            'red marker stroke line',
-          );
-          const parsed = parseSamSegmentation(samRes);
-          if (parsed.strokePolyline && parsed.strokePolyline.length >= 2) {
-            detector = 'sam';
-            strokePolyline = [...parsed.strokePolyline];
-          }
-        } catch {
-          // Fall through to deterministic color-threshold detector
-        }
-      }
-
-      // 3. Deterministic color-threshold fallback
+      // 2. Deterministic colour-threshold detection
       if (strokePolyline.length < 2) {
         const buffer = Buffer.from(request.imageKeyframe, 'base64');
         const pixels = this.ports.imageDecoder.decodePixels(buffer);
         strokePolyline = detectRedStrokePixels(pixels);
-        detector = 'color_threshold';
       }
     }
 

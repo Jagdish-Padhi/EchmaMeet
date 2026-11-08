@@ -35,25 +35,29 @@ export const benchmarkComparisonSchema = z.strictObject({
   scenarioId: scenarioIdSchema,
   designedFailureMode: z.string().min(1),
   staticPredictions: z.array(staticPredictionSchema),
-  empiricalRun: z.strictObject({
-    runId: runIdSchema,
-    verdicts: z.array(invariantVerdictSchema),
-    overallStatus: verdictStatusSchema,
-    p99LatencyMs: z.number().min(0).nullable(),
-    errorRate: z.number().min(0).max(1).nullable(),
-  }),
+  empiricalRun: z
+    .strictObject({
+      runId: runIdSchema,
+      verdicts: z.array(invariantVerdictSchema),
+      overallStatus: verdictStatusSchema,
+      p99LatencyMs: z.number().min(0).nullable(),
+      errorRate: z.number().min(0).max(1).nullable(),
+    })
+    .optional(),
   repairComparisons: z
     .strictObject({
       ruleBased: repairOutcomeSummarySchema.optional(),
       model: repairOutcomeSummarySchema.optional(),
     })
     .optional(),
-  agreement: z.strictObject({
-    violationAccuracy: z.number().min(0).max(1),
-    p99Ratio: z.number().nullable(),
-    errorRateDelta: z.number().nullable(),
-    failureModeMatched: z.boolean(),
-  }),
+  agreement: z
+    .strictObject({
+      violationAccuracy: z.number().min(0).max(1),
+      p99Ratio: z.number().nullable(),
+      errorRateDelta: z.number().nullable(),
+      failureModeMatched: z.boolean(),
+    })
+    .optional(),
 });
 export type BenchmarkComparison = z.infer<typeof benchmarkComparisonSchema>;
 

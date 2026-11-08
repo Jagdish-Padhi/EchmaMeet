@@ -14,7 +14,7 @@ describe('benchmark contracts', () => {
   const validStaticPrediction = {
     scenarioId,
     predictionIndex: 0,
-    modelId: 'meta-models/muse-spark-open-1026',
+    modelId: 'gnani-evon-v3.3',
     promptVersion: 'prediction-v1',
     predictedViolations: {
       'inv-p99': true,
@@ -89,7 +89,7 @@ describe('benchmark contracts', () => {
   it('parses valid benchmark comparison', () => {
     const parsed = benchmarkComparisonSchema.parse(validComparison);
     expect(parsed.scenarioId).toBe(scenarioId);
-    expect(parsed.agreement.failureModeMatched).toBe(true);
+    expect(parsed.agreement?.failureModeMatched).toBe(true);
   });
 
   it('parses valid benchmark suite summary', () => {

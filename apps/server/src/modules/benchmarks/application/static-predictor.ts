@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { ScenarioSpec, StaticPrediction } from '@chaosboard/contracts';
-import type { StructuredModelPort } from '../../meta-ai';
+import type { StructuredModelPort } from '../../reasoning';
 import type { StaticPredictorPort } from './ports';
 
 export const PROMPT_VERSION = 'prediction-v1';
@@ -20,7 +20,7 @@ export type StaticPredictionOutput = z.infer<typeof staticPredictionOutputSchema
 export class StaticPredictor implements StaticPredictorPort {
   constructor(
     private readonly model: StructuredModelPort,
-    private readonly modelId: string = 'meta-models/muse-spark-open-1026',
+    private readonly modelId: string = 'gnani-evon-v3.3',
   ) {}
 
   async predict(scenario: ScenarioSpec, index: number): Promise<StaticPrediction> {

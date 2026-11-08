@@ -22,22 +22,6 @@ export interface VisionServicePorts {
         ): Promise<{ data: VisionExtraction }>;
       }
     | undefined;
-  readonly samModel?:
-    | {
-        segmentKeyframe(
-          imageBase64: string,
-          prompt: string,
-          options?: { signal?: AbortSignal },
-        ): Promise<{
-          masks: readonly {
-            label: string;
-            score: number;
-            box: readonly [number, number, number, number];
-            points?: readonly (readonly [number, number])[] | undefined;
-          }[];
-        }>;
-      }
-    | undefined;
 }
 
 export interface ExtractDraftRequest {

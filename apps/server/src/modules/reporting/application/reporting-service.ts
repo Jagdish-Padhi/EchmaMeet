@@ -98,8 +98,7 @@ export class ReportingService {
         content: fallbackSvg,
         promptSummary,
         authoritativeMetrics,
-        fallbackReason:
-          'Muse Image adapter not configured or unavailable; rendered deterministic SVG diagram',
+        fallbackReason: 'Rendered deterministic SVG diagram',
       };
     }
 

@@ -3,7 +3,7 @@ import { cpus, platform } from 'node:os';
 import { createChaosService } from '../modules/chaos';
 import { createExperimentOrchestrator } from '../modules/experiments';
 import { createMeasurementService } from '../modules/measurement';
-import { OpenAiCompatibleAdapter } from '../modules/meta-ai';
+import { OpenAiCompatibleAdapter } from '../modules/reasoning';
 import { createRepairOrchestrator } from '../modules/repair';
 import { createRunsService } from '../modules/runs';
 import { createBenchmarkModule } from '../modules/benchmarks';
@@ -55,11 +55,14 @@ async function main(): Promise<void> {
     measurement: measurementService,
   });
 
-  const modelClient = new OpenAiCompatibleAdapter({
-    baseUrl: settings.partnerBaseUrl,
-    apiKey: settings.partnerApiKey,
-    modelId: settings.partnerModelId,
-  });
+  const modelClient = settings.evonBaseUrl
+    ? new OpenAiCompatibleAdapter({
+        baseUrl: settings.evonBaseUrl,
+        apiKey: settings.evonApiKey,
+        modelId: settings.evonModelId,
+        providerName: 'evon',
+      })
+    : undefined;
 
   const repairOrchestrator = createRepairOrchestrator({
     experiments: experimentOrchestrator,
@@ -68,6 +71,7 @@ async function main(): Promise<void> {
   });
 
   const benchmarks = createBenchmarkModule({
+    workspaceRoot: process.cwd(),
     experiments: experimentOrchestrator,
     runs: runsService,
     model: modelClient,

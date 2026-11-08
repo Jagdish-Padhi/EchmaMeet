@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import type { ExperimentOrchestratorPort } from '../experiments';
-import type { StructuredModelPort } from '../meta-ai';
+import type { StructuredModelPort } from '../reasoning';
 import type { RepairOrchestrator } from '../repair';
 import type { RunsService } from '../runs';
 import { BenchmarkRunner, type RunSuiteOptions } from './application/benchmark-runner';

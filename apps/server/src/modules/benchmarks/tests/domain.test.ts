@@ -18,7 +18,7 @@ describe('benchmarks domain metrics', () => {
     {
       scenarioId,
       predictionIndex: 0,
-      modelId: 'meta-models/muse-spark-open-1026',
+      modelId: 'gnani-evon-v3.3',
       promptVersion: 'prediction-v1',
       predictedViolations: {
         'inv-p99': true,

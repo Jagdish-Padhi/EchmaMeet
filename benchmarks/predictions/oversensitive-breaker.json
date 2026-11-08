@@ -2,7 +2,7 @@
   {
     "scenarioId": "oversensitive-breaker",
     "predictionIndex": 0,
-    "modelId": "meta-models/muse-spark-open-1026",
+    "modelId": "static-predictor-fixture",
     "promptVersion": "prediction-v1",
     "predictedViolations": {
       "inv-completion": true,
@@ -19,7 +19,7 @@
   {
     "scenarioId": "oversensitive-breaker",
     "predictionIndex": 1,
-    "modelId": "meta-models/muse-spark-open-1026",
+    "modelId": "static-predictor-fixture",
     "promptVersion": "prediction-v1",
     "predictedViolations": {
       "inv-completion": true,
@@ -36,7 +36,7 @@
   {
     "scenarioId": "oversensitive-breaker",
     "predictionIndex": 2,
-    "modelId": "meta-models/muse-spark-open-1026",
+    "modelId": "static-predictor-fixture",
     "promptVersion": "prediction-v1",
     "predictedViolations": {
       "inv-completion": true,
