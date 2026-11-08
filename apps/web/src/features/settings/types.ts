@@ -1,10 +1,8 @@
 export interface AppSettings {
-  // 1. Meta AI & LLM Inference
-  partnerBaseUrl: string;
-  partnerApiKey: string;
-  partnerModelId: string;
-  modelTemperature: number;
-  maxTokens: number;
+  // 1. Voice & Language (Gnani Prisma / Timbre)
+  /** `indic-auto` or comma-separated BCP-47 codes, e.g. `hi-IN,en-IN`. */
+  voiceLanguage: string;
+  speakReplies: boolean;
   autonomousSreVoice: boolean;
   sreSeverityYieldFloor: 'medium' | 'high' | 'critical';
 
@@ -44,8 +42,6 @@ export interface AppSettings {
   adrExportFormat: 'markdown' | 'github_pr' | 'confluence';
 
   // 6. Cloud & Infrastructure as Code (IaC)
-  databaseProvider: 'neon' | 'sqlite';
-  neonDatabaseUrl: string;
   redisCacheUrl: string;
   defaultIacTarget: 'terraform' | 'kubernetes' | 'helm' | 'pulumi';
   gitOpsAutoCommit: boolean;
@@ -58,12 +54,9 @@ export interface AppSettings {
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  // 1. Meta AI & LLM Inference
-  partnerBaseUrl: 'http://127.0.0.1:8000/v1',
-  partnerApiKey: '',
-  partnerModelId: 'muse-wonder-1.0',
-  modelTemperature: 0.2,
-  maxTokens: 2048,
+  // 1. Voice & Language (Gnani Prisma / Timbre)
+  voiceLanguage: 'indic-auto',
+  speakReplies: true,
   autonomousSreVoice: true,
   sreSeverityYieldFloor: 'high',
 
@@ -103,17 +96,15 @@ export const DEFAULT_SETTINGS: AppSettings = {
   adrExportFormat: 'markdown',
 
   // 6. Cloud & Infrastructure as Code (IaC)
-  databaseProvider: 'neon',
-  neonDatabaseUrl: '',
   redisCacheUrl: 'redis://127.0.0.1:6379',
   defaultIacTarget: 'terraform',
   gitOpsAutoCommit: false,
 
   // 7. Reviewer Profile & SRE Identity
-  reviewerName: 'Alex Chen',
-  reviewerEmail: 'alex.chen@meta.internal',
+  reviewerName: 'Platform Engineer',
+  reviewerEmail: 'engineer@echmameet.local',
   reviewerRole: 'Staff Site Reliability Engineer',
-  organization: 'Meta Infrastructure Core',
+  organization: 'Platform Reliability',
 };
 
 export const SETTINGS_STORAGE_KEY = 'chaosboard_settings';
@@ -168,33 +159,26 @@ export interface SectionMeta {
 export const SECTIONS_CATALOG: readonly SectionMeta[] = [
   {
     id: 'ai-models',
-    title: 'Meta AI Models & Inference',
-    shortTitle: 'Meta AI & Models',
+    title: 'Voice & Language (Gnani AI)',
+    shortTitle: 'Voice & Language',
     category: 'SYSTEM & ENGINE',
     description:
-      'Configure Meta foundation models, API provider endpoints, and meeting intervention settings.',
+      'Choose the spoken language for Gnani Prisma speech-to-text and Timbre text-to-speech, and set how Echma speaks up in calls.',
     subsections: [
       {
         id: 'sub-active-model',
-        title: 'Active Foundation Model',
-        description: 'Choose your primary reasoning and automated repair engine.',
+        title: 'Spoken Language',
+        description: 'Language hint for Gnani Prisma: Hinglish, Hindi, English or auto-detect.',
       },
       {
         id: 'sub-api-credentials',
-        title: 'Provider API Endpoint & Key',
-        description: 'Meta dev gateway or local OpenAI-compatible inference bridge.',
-      },
-      {
-        id: 'sub-hyperparameters',
-        title: 'Reasoning Depth & Context Tokens',
-        description:
-          'Sampling temperature and max generation limits for deterministic SRE verification.',
+        title: 'Gnani Connection',
+        description: 'Live handshake with the speech APIs configured on the server.',
       },
       {
         id: 'sub-autonomous-voice',
         title: 'Autonomous Meeting SRE Intervention',
-        description:
-          'Allow Meta AI SRE to verbally interject when critical design hazards are detected.',
+        description: 'Allow Echma to verbally interject when critical design hazards are detected.',
       },
     ],
   },

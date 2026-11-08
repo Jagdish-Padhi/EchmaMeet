@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import type { AppSettings, SettingsSectionId } from './types';
 import { DEFAULT_SETTINGS, saveSettingsToStorage, SECTIONS_CATALOG } from './types';
 import type { UserProfile } from '../board';
+import type { ApiClient } from '../../api/client';
 import { useToast } from '../toast';
 import { SettingsHeader } from './components/SettingsHeader';
 import { SettingsSidebar } from './components/SettingsSidebar';
-import { AiModelsSection } from './components/AiModelsSection';
+import { VoiceLanguageSection } from './components/VoiceLanguageSection';
 import { ChaosEngineSection } from './components/ChaosEngineSection';
 import { TrialsGuardrailsSection } from './components/TrialsGuardrailsSection';
 import { CanvasErgonomicsSection } from './components/CanvasErgonomicsSection';
@@ -16,6 +17,7 @@ import { ProfileIdentitySection } from './components/ProfileIdentitySection';
 export type { SettingsSectionId };
 
 export interface SettingsPageProps {
+  readonly api: ApiClient;
   readonly currentSettings: AppSettings;
   readonly onSave: (settings: AppSettings) => void;
   readonly onBack: () => void;
@@ -26,6 +28,7 @@ export interface SettingsPageProps {
 }
 
 export function SettingsPage({
+  api,
   currentSettings,
   onSave,
   onBack,
@@ -38,11 +41,9 @@ export function SettingsPage({
   const [activeSection, setActiveSection] = useState<SettingsSectionId>('ai-models');
   const [form, setForm] = useState<AppSettings>(currentSettings);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
-  const [showApiKey, setShowApiKey] = useState<boolean>(false);
-  const [showDbUrl, setShowDbUrl] = useState<boolean>(false);
   const [pingStatus, setPingStatus] = useState<{
     readonly toxiproxy?: string;
-    readonly metaAi?: string;
+    readonly gnani?: string;
     readonly neonDb?: string;
   }>({});
 
@@ -82,7 +83,10 @@ export function SettingsPage({
 
   const handleResetToDefaults = () => {
     setForm(DEFAULT_SETTINGS);
-    toast.success('Settings reset to enterprise defaults. Click Save to persist.', 'Defaults Loaded');
+    toast.success(
+      'Settings reset to enterprise defaults. Click Save to persist.',
+      'Defaults Loaded',
+    );
   };
 
   const handleTestToxiproxy = () => {
@@ -108,32 +112,41 @@ export function SettingsPage({
       });
   };
 
-  const handleTestMetaAi = () => {
-    setPingStatus((prev) => ({ ...prev, metaAi: 'Validating endpoint...' }));
-    setTimeout(() => {
-      setPingStatus((prev) => ({
-        ...prev,
-        metaAi: `Connected to ${form.partnerModelId} • 1M Context Window Ready`,
-      }));
-      toast.success(
-        `Meta AI engine verified (${form.partnerModelId}). Ready for autonomous review assistance.`,
-        'Meta AI Active',
-      );
-    }, 450);
+  const handleTestGnani = () => {
+    setPingStatus((prev) => ({ ...prev, gnani: 'Asking the server…' }));
+    api
+      .getGnaniHealth()
+      .then((health) => {
+        const ready = health.speechToText.enabled && health.textToSpeech.enabled;
+        const message = ready
+          ? `Connected • ${health.speechToText.model} (STT) + ${health.textToSpeech.model} (TTS)`
+          : 'GNANI_API_KEY is not set on the server';
+        setPingStatus((prev) => ({ ...prev, gnani: message }));
+        if (ready) toast.success('Gnani Prisma and Timbre are enabled.', 'Gnani Connected');
+        else toast.warning(health.message, 'Gnani Not Configured');
+      })
+      .catch(() => {
+        setPingStatus((prev) => ({ ...prev, gnani: 'Server unreachable' }));
+        toast.warning('Could not reach the server to check Gnani.', 'Gnani Check Failed');
+      });
   };
 
   const handleTestNeon = () => {
-    setPingStatus((prev) => ({ ...prev, neonDb: 'Testing connection...' }));
-    setTimeout(() => {
-      setPingStatus((prev) => ({
-        ...prev,
-        neonDb: 'Connected to Neon Serverless Postgres (ep-morning-moon-12451995) • SSL Verified',
-      }));
-      toast.success(
-        'Neon Serverless Postgres connected with SSL mode require.',
-        'Neon Postgres Live',
-      );
-    }, 400);
+    setPingStatus((prev) => ({ ...prev, neonDb: 'Asking the server…' }));
+    api
+      .getVoiceAnalytics()
+      .then((stats) => {
+        const message =
+          stats.backend === 'postgres'
+            ? `PostgreSQL active • ${String(stats.total)} voice commands stored`
+            : 'In-memory ledger (set DATABASE_URL on the server for PostgreSQL)';
+        setPingStatus((prev) => ({ ...prev, neonDb: message }));
+        if (stats.backend === 'postgres') toast.success(message, 'PostgreSQL Live');
+        else toast.warning(message, 'PostgreSQL Not Configured');
+      })
+      .catch(() => {
+        setPingStatus((prev) => ({ ...prev, neonDb: 'Server unreachable' }));
+      });
   };
 
   return (
@@ -159,13 +172,11 @@ export function SettingsPage({
 
           <div className="settings-subsections-stream">
             {activeSection === 'ai-models' && (
-              <AiModelsSection
+              <VoiceLanguageSection
                 form={form}
                 onChange={updateForm}
-                onTestMetaAi={handleTestMetaAi}
-                pingStatus={pingStatus.metaAi}
-                showApiKey={showApiKey}
-                onToggleApiKey={() => setShowApiKey(!showApiKey)}
+                onTestGnani={handleTestGnani}
+                pingStatus={pingStatus.gnani}
               />
             )}
 
@@ -196,8 +207,6 @@ export function SettingsPage({
                 onChange={updateForm}
                 onTestNeon={handleTestNeon}
                 pingStatus={pingStatus.neonDb}
-                showDbUrl={showDbUrl}
-                onToggleDbUrl={() => setShowDbUrl(!showDbUrl)}
               />
             )}
 

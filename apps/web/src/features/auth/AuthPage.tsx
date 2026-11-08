@@ -77,24 +77,25 @@ export function AuthPage({
   }, [api, onAuthenticate]);
 
   const handleContinueOffline = () => {
+    const displayName =
+      fullName.trim() ||
+      (email.includes('@') ? email.split('@')[0] : '') ||
+      'Platform Engineer';
+
     const initials =
-      fullName
+      displayName
         .split(' ')
         .map((p) => p[0])
         .join('')
         .toUpperCase()
-        .slice(0, 2) || 'SRE';
+        .slice(0, 2) || 'PE';
 
     const user: UserProfile = {
-      userId: email.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() || 'eng-alex-chen',
-      name: isLogin
-        ? email.includes('alex')
-          ? 'Alex Chen'
-          : fullName || 'SRE Reviewer'
-        : fullName,
+      userId: email ? email.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() : `eng-${Date.now().toString(36)}`,
+      name: displayName,
       role: isLogin ? 'Staff SRE' : 'Reviewer',
       avatar: initials,
-      email: email.trim() || 'alex.chen@meta.internal',
+      email: email.trim() || 'engineer@echmameet.local',
     };
     localStorage.setItem('chaosboard_token', 'local-offline-session-token');
     onAuthenticate(user);

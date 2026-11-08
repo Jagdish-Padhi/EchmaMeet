@@ -36,7 +36,7 @@ describe('Voice Feature components', () => {
         proposer: 'model',
         maxIterations: 3,
       },
-      plainTextConfirmation: 'Start autonomous repair loop with Meta model proposer',
+      plainTextConfirmation: 'Start autonomous repair loop with model proposer',
     };
 
     const html = renderToStaticMarkup(
@@ -49,7 +49,7 @@ describe('Voice Feature components', () => {
       />,
     );
 
-    expect(html).toContain('Start autonomous repair loop with Meta model proposer');
+    expect(html).toContain('Start autonomous repair loop with model proposer');
     expect(html).toContain('Confirm &amp; Execute Action');
   });
 

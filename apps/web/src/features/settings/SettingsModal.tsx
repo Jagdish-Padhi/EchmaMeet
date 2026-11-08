@@ -1,3 +1,4 @@
+import type { AppSettings } from './types';
 export type { AppSettings } from './types';
 export {
   DEFAULT_SETTINGS,
@@ -11,8 +12,8 @@ export { SettingsPage, type SettingsPageProps } from './SettingsPage';
 export interface SettingsModalProps {
   readonly isOpen: boolean;
   readonly onClose: () => void;
-  readonly onSave: (settings: import('./types').AppSettings) => void;
-  readonly currentSettings: import('./types').AppSettings;
+  readonly onSave: (settings: AppSettings) => void;
+  readonly currentSettings: AppSettings;
 }
 
 /**

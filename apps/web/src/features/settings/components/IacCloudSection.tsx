@@ -5,18 +5,9 @@ interface IacCloudSectionProps {
   readonly onChange: (patch: Partial<AppSettings>) => void;
   readonly onTestNeon: () => void;
   readonly pingStatus?: string | undefined;
-  readonly showDbUrl: boolean;
-  readonly onToggleDbUrl: () => void;
 }
 
-export function IacCloudSection({
-  form,
-  onChange,
-  onTestNeon,
-  pingStatus,
-  showDbUrl,
-  onToggleDbUrl,
-}: IacCloudSectionProps) {
+export function IacCloudSection({ form, onChange, onTestNeon, pingStatus }: IacCloudSectionProps) {
   return (
     <>
       <section id="sub-database-backend" className="settings-card-subsection">
@@ -24,27 +15,11 @@ export function IacCloudSection({
           <h2 className="subsection-title">Database &amp; Cache Storage Engine</h2>
         </div>
         <p className="subsection-desc">
-          Configure Neon Serverless Postgres for cloud persistence, and Redis for distributed
-          queueing.
+          The voice ledger uses PostgreSQL when the server has a DATABASE_URL; Redis enables
+          distributed queueing.
         </p>
 
         <div className="settings-form-grid">
-          <label className="field-group">
-            <span className="field-label">Primary Database Engine</span>
-            <select
-              className="input-select"
-              value={form.databaseProvider}
-              onChange={(e) =>
-                onChange({
-                  databaseProvider: e.target.value as 'neon' | 'sqlite',
-                })
-              }
-            >
-              <option value="neon">Neon Serverless Postgres (Production)</option>
-              <option value="sqlite">Local SQLite Embedded (Development)</option>
-            </select>
-          </label>
-
           <label className="field-group">
             <span className="field-label">Redis Cache URL (BullMQ)</span>
             <input
@@ -56,22 +31,11 @@ export function IacCloudSection({
             />
           </label>
 
-          <label className="field-group" style={{ gridColumn: 'span 2' }}>
-            <span className="field-label">Neon Postgres Connection String</span>
-            <div className="input-with-button-wrap">
-              <input
-                type={showDbUrl ? 'text' : 'password'}
-                className="input-text"
-                value={form.neonDatabaseUrl}
-                onChange={(e) => onChange({ neonDatabaseUrl: e.target.value })}
-                placeholder="postgresql://echmameet_owner:...@ep-morning-moon-...neon.tech/neondb?sslmode=require"
-              />
-              <button type="button" className="btn-input-action" onClick={onToggleDbUrl}>
-                {showDbUrl ? 'Hide' : 'Show'}
-              </button>
-            </div>
-            <span className="field-hint">Automatically pulled by Neon CLI (`neon deploy`).</span>
-          </label>
+          <p className="field-hint" style={{ gridColumn: 'span 2' }}>
+            PostgreSQL (Neon) is configured on the server with <code>DATABASE_URL</code> in{' '}
+            <code>.env</code>, so credentials never reach the browser. It stores the voice ledger:
+            command history plus language and latency analytics.
+          </p>
         </div>
 
         <div className="test-action-row">
@@ -88,7 +52,7 @@ export function IacCloudSection({
               <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
               <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
             </svg>
-            <span>Test Neon DB Connection</span>
+            <span>Check Server Database</span>
           </button>
           {pingStatus && <span className="ping-feedback-pill success">{pingStatus}</span>}
         </div>

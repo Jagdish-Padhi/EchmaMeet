@@ -7,9 +7,9 @@ export function AiSreSection() {
         <span className="section-eyebrow">YOUR AUTONOMOUS MEETING PARTICIPANT</span>
         <h2 className="section-title">An SRE AI Agent Sitting at the Table with Your Team</h2>
         <p className="section-desc">
-          EchmaMeet&apos;s Meta AI agent doesn&apos;t just generate text. It sits in your review
-          call like a principal reliability engineer—listening, stress-testing hypotheses, and
-          raising its hand when it spots hidden cascading failure risks.
+          Echma doesn&apos;t just generate text. It sits in your review call like a principal
+          reliability engineer, hearing Hindi, English and Hinglish through Gnani Prisma, and
+          raising its hand, in your language, when it spots hidden cascading failure risks.
         </p>
       </div>
 
@@ -24,16 +24,16 @@ export function AiSreSection() {
               </svg>
             </div>
             <div className="agentic-title-group">
-              <span className="agentic-name">Meta AI Autonomous SRE</span>
+              <span className="agentic-name">Echma Autonomous SRE</span>
               <span className="agentic-badge">IN MEETING NOW</span>
             </div>
           </div>
 
           <div className="meeting-chat-preview">
             <div className="meeting-dialogue-item reviewer">
-              <div className="reviewer-avatar">AC</div>
+              <div className="reviewer-avatar">PE</div>
               <div className="reviewer-bubble">
-                <span className="reviewer-name">Alex Chen (Staff SRE)</span>
+                <span className="reviewer-name">Staff SRE</span>
                 <p>
                   &quot;If Checkout Service times out calling Payments, let&apos;s just add an
                   immediate 3x retry so the user doesn&apos;t see an error.&quot;
@@ -54,7 +54,7 @@ export function AiSreSection() {
                 </svg>
               </div>
               <div className="ai-bubble">
-                <div className="ai-bubble-tag">META AI SRE &bull; RAISED HAND</div>
+                <div className="ai-bubble-tag">ECHMA SRE &bull; RAISED HAND</div>
                 <p className="ai-bubble-warning">
                   &quot;Careful team: immediate 3x retries on a degraded downstream service creates
                   a <strong>Retry Storm</strong>. In our simulated 500 RPS load, downstream queue

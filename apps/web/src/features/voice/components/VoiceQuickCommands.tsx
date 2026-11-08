@@ -9,8 +9,11 @@ export interface VoiceQuickCommandsProps {
 const RECOMMENDED_PHRASES = [
   { label: 'Inject 300ms Latency', phrase: 'inject latency 300ms from gateway to auth' },
   { label: 'Run 5s Sandbox Proof', phrase: 'run experiment with 5 trials' },
-  { label: 'Start Autonomous Repair', phrase: 'start repair with model proposer' },
+  { label: 'Start Autonomous Repair', phrase: 'start repair' },
   { label: 'Cancel Active Run', phrase: 'cancel active run' },
+  { label: 'हिन्दी: लेटेंसी डालो', phrase: 'gateway se auth par 300 ms latency inject karo' },
+  { label: 'हिन्दी: एक्सपेरिमेंट चलाओ', phrase: 'पाँच ट्रायल के साथ एक्सपेरिमेंट चलाओ' },
+  { label: 'हिन्दी: रिपेयर शुरू करो', phrase: 'रिपेयर शुरू करो' },
 ];
 
 export const VoiceQuickCommands: React.FC<VoiceQuickCommandsProps> = ({

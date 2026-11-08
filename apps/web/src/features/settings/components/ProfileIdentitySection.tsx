@@ -11,8 +11,8 @@ export function ProfileIdentitySection({ form, onChange }: ProfileIdentitySectio
 
   const sessionToken =
     typeof window !== 'undefined'
-      ? (localStorage.getItem('chaosboard_token') ?? 'sre-session-demo-token-2026')
-      : 'sre-session-demo-token-2026';
+      ? (localStorage.getItem('chaosboard_token') ?? '')
+      : '';
 
   const handleCopyToken = () => {
     void navigator.clipboard.writeText(sessionToken);
@@ -37,7 +37,7 @@ export function ProfileIdentitySection({ form, onChange }: ProfileIdentitySectio
               className="input-text"
               value={form.reviewerName}
               onChange={(e) => onChange({ reviewerName: e.target.value })}
-              placeholder="Alex Chen"
+              placeholder="Platform Engineer"
             />
           </label>
 
@@ -48,7 +48,7 @@ export function ProfileIdentitySection({ form, onChange }: ProfileIdentitySectio
               className="input-text"
               value={form.reviewerEmail}
               onChange={(e) => onChange({ reviewerEmail: e.target.value })}
-              placeholder="alex.chen@meta.internal"
+              placeholder="engineer@echmameet.local"
             />
           </label>
 
@@ -95,8 +95,8 @@ export function ProfileIdentitySection({ form, onChange }: ProfileIdentitySectio
         </p>
 
         <div className="token-viewer-box">
-          <div className="token-text-preview">{sessionToken}</div>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={handleCopyToken}>
+          <div className="token-text-preview">{sessionToken || 'No active session token'}</div>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={handleCopyToken} disabled={!sessionToken}>
             Copy Bearer Token
           </button>
         </div>

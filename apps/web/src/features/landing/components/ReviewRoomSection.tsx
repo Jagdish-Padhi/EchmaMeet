@@ -88,8 +88,9 @@ export function ReviewRoomSection() {
           </div>
           <h3 className="step-title">End the Call with Ready-to-Merge IaC</h3>
           <p className="step-desc">
-            Don&apos;t leave with &quot;action items to follow up.&quot; EchmaMeet exports the agreed,
-            empirically proven topology straight into Terraform and Envoy configuration files.
+            Don&apos;t leave with &quot;action items to follow up.&quot; EchmaMeet exports the
+            agreed, empirically proven topology straight into Terraform and Envoy configuration
+            files.
           </p>
           <div className="step-tags">
             <span>Production Terraform</span>

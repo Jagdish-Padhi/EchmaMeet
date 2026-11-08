@@ -1,12 +1,26 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ApiClient } from '../../../api/client';
-import type { Topology, VoiceIntentParseResult } from '@chaosboard/contracts';
+import type { Topology, VoiceIntentParseResult, VoiceServerMessage } from '@chaosboard/contracts';
+import { createPcmCapture, type PcmCapture } from '../../../audio/pcm-capture';
+import { playBase64Audio, stopSpeech } from '../../../audio/playback';
+import { bytesToBase64, concatInt16, encodeWav } from '../../../audio/wav';
 import type { VoiceCommandAction, VoiceSessionState } from '../types';
+
+const SAMPLE_RATE = 16000;
+const MAX_CLIP_SECONDS = 28; // Gnani REST accepts clips up to 30 s
+
+function topologyRefs(topology: Topology | null) {
+  return {
+    nodes: (topology?.nodes ?? []).map((n) => ({ id: n.id, label: n.label })),
+    edges: (topology?.edges ?? []).map((e) => ({ id: e.id, source: e.source, target: e.target })),
+  };
+}
 
 export function useVoiceSession(
   api: ApiClient,
   activeTopology: Topology | null,
   onExecuteCommand?: VoiceCommandAction,
+  initial?: { readonly language?: string; readonly speakReplies?: boolean },
 ) {
   const [state, setState] = useState<VoiceSessionState>({
     isRecording: false,
@@ -17,268 +31,285 @@ export function useVoiceSession(
     timings: null,
     error: null,
     autoConfirm: false,
+    language: initial?.language ?? 'indic-auto',
+    speakReplies: initial?.speakReplies ?? true,
+    isSpeaking: false,
+    liveStatus: 'off',
   });
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const recordStartMsRef = useRef<number>(0);
+  // Latest values for long-lived callbacks (WebSocket handlers) without re-subscribing.
+  const latest = useRef({ state, activeTopology, onExecuteCommand });
+  latest.current = { state, activeTopology, onExecuteCommand };
+
+  const streamRef = useRef<MediaStream | null>(null);
+  const captureRef = useRef<PcmCapture | null>(null);
+  const framesRef = useRef<Int16Array[]>([]);
+  const startedAtRef = useRef(0);
   const wsRef = useRef<WebSocket | null>(null);
 
-  // Setup WebSocket connection
-  useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/voice`;
-    let ws: WebSocket;
-
-    try {
-      ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-
-      ws.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data as string) as {
-            type: string;
-            text?: string;
-            latencyMs?: number;
-            result?: VoiceIntentParseResult;
-            message?: string;
-          };
-
-          if (msg.type === 'transcript_partial' && typeof msg.text === 'string') {
-            const partial = msg.text;
-            setState((prev) => ({ ...prev, partialTranscript: partial }));
-          } else if (msg.type === 'transcript_final' && typeof msg.text === 'string') {
-            const final = msg.text;
-            setState((prev) => ({
-              ...prev,
-              finalTranscript: final,
-              partialTranscript: '',
-            }));
-          } else if (msg.type === 'intent_parsed' && msg.result) {
-            const parseResult = msg.result;
-            setState((prev) => ({
-              ...prev,
-              isProcessing: false,
-              parseResult,
-              timings: parseResult.timings,
-            }));
-          } else if (msg.type === 'error' && typeof msg.message === 'string') {
-            const error = msg.message;
-            setState((prev) => ({
-              ...prev,
-              isProcessing: false,
-              error,
-            }));
-          }
-        } catch {
-          // ignore malformed ws messages
-        }
-      };
-    } catch {
-      // ws connection error, fallback to HTTP will be used
-    }
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-    };
+  const speak = useCallback(async (base64: string, contentType: string) => {
+    setState((p) => ({ ...p, isSpeaking: true }));
+    await playBase64Audio(base64, contentType);
+    setState((p) => ({ ...p, isSpeaking: false }));
   }, []);
 
+  const applyResult = useCallback((result: VoiceIntentParseResult) => {
+    setState((prev) => ({
+      ...prev,
+      isProcessing: false,
+      finalTranscript: result.transcript,
+      partialTranscript: '',
+      parseResult: result,
+      timings: result.timings,
+    }));
+    const { state: s, onExecuteCommand: exec } = latest.current;
+    if (s.autoConfirm && result.status === 'parsed' && result.command) {
+      void exec?.(result.command);
+    }
+  }, []);
+
+  const releaseMic = useCallback(() => {
+    captureRef.current?.stop();
+    captureRef.current = null;
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }, []);
+
+  useEffect(
+    () => () => {
+      releaseMic();
+      wsRef.current?.close();
+      stopSpeech();
+    },
+    [releaseMic],
+  );
+
+  /** Typed or quick-phrase command: no audio, but still answered in the speaker's language. */
   const submitTranscript = useCallback(
     async (transcript: string) => {
-      setState((prev) => ({
-        ...prev,
-        isProcessing: true,
-        finalTranscript: transcript,
-        error: null,
-      }));
-
+      setState((p) => ({ ...p, isProcessing: true, finalTranscript: transcript, error: null }));
       try {
-        const nodes = (activeTopology?.nodes ?? []).map((n: { id: string; label: string }) => ({
-          id: n.id,
-          label: n.label,
-        }));
-        const edges = (activeTopology?.edges ?? []).map(
-          (e: { id: string; source: string; target: string }) => ({
-            id: e.id,
-            source: e.source,
-            target: e.target,
-          }),
-        );
-
+        const { language, speakReplies } = latest.current.state;
         const result = await api.parseVoiceCommand({
           transcript,
-          nodes,
-          edges,
+          language: language.includes(',') || language === 'indic-auto' ? undefined : language,
+          speakReply: speakReplies,
+          ...topologyRefs(latest.current.activeTopology),
         });
-
-        setState((prev) => ({
-          ...prev,
-          isProcessing: false,
-          parseResult: result,
-          timings: result.timings,
-        }));
-
-        if (state.autoConfirm && result.status === 'parsed' && result.command) {
-          void onExecuteCommand?.(result.command);
-        }
+        applyResult(result);
+        if (result.speech) void speak(result.speech.audioBase64, result.speech.contentType);
       } catch (err: unknown) {
-        setState((prev) => ({
-          ...prev,
+        setState((p) => ({
+          ...p,
           isProcessing: false,
           error: err instanceof Error ? err.message : 'Failed to parse voice command.',
         }));
       }
     },
-    [api, activeTopology, state.autoConfirm, onExecuteCommand],
+    [api, applyResult, speak],
   );
 
+  const openMic = useCallback(async (onFrame: (pcm: Int16Array) => void) => {
+    const md = navigator.mediaDevices as MediaDevices | undefined;
+    if (typeof md?.getUserMedia !== 'function') {
+      throw new Error('Microphone capture is not supported in this browser.');
+    }
+    const stream = await md.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+    });
+    streamRef.current = stream;
+    captureRef.current = await createPcmCapture(stream, onFrame, SAMPLE_RATE);
+  }, []);
+
+  /** Push-to-talk: record a clip, encode 16 kHz WAV, send to Gnani Prisma over REST. */
   const startRecording = useCallback(async () => {
-    setState((prev) => ({
-      ...prev,
+    stopSpeech();
+    framesRef.current = [];
+    startedAtRef.current = performance.now();
+    setState((p) => ({
+      ...p,
       isRecording: true,
       error: null,
-      partialTranscript: 'Listening...',
+      partialTranscript: 'Listening…',
       finalTranscript: '',
       parseResult: null,
     }));
-
     try {
-      if (
-        typeof (navigator.mediaDevices as unknown as { getUserMedia?: unknown }).getUserMedia !==
-        'function'
-      ) {
-        throw new Error('Microphone audio capture is not supported in this browser.');
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioChunksRef.current = [];
-      recordStartMsRef.current = performance.now();
-
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
+      await openMic((pcm) => {
+        framesRef.current.push(pcm);
+        const samples = framesRef.current.reduce((n, f) => n + f.length, 0);
+        if (samples > SAMPLE_RATE * MAX_CLIP_SECONDS) {
+          // Hard stop before the API's 30 s limit.
+          captureRef.current?.stop();
         }
-      };
-
-      mediaRecorder.start(200);
+      });
     } catch (err: unknown) {
-      setState((prev) => ({
-        ...prev,
+      releaseMic();
+      setState((p) => ({
+        ...p,
         isRecording: false,
-        error:
-          err instanceof Error
-            ? err.message
-            : 'Microphone permission denied or microphone unavailable.',
+        partialTranscript: '',
+        error: err instanceof Error ? err.message : 'Microphone permission denied.',
       }));
     }
-  }, []);
+  }, [openMic, releaseMic]);
 
   const stopRecording = useCallback(() => {
-    setState((prev) => ({ ...prev, isRecording: false, isProcessing: true }));
-
-    const durationMs = Math.round(performance.now() - recordStartMsRef.current);
-    const mediaRecorder = mediaRecorderRef.current;
-
-    if (!mediaRecorder) {
-      setState((prev) => ({ ...prev, isProcessing: false }));
+    const captureMs = Math.round(performance.now() - startedAtRef.current);
+    releaseMic();
+    const pcm = concatInt16(framesRef.current);
+    framesRef.current = [];
+    if (pcm.length < SAMPLE_RATE * 0.25) {
+      setState((p) => ({ ...p, isRecording: false, partialTranscript: '', isProcessing: false }));
       return;
     }
-
-    mediaRecorder.onstop = () => {
+    setState((p) => ({ ...p, isRecording: false, isProcessing: true, partialTranscript: '' }));
+    void (async () => {
       try {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const reader = new FileReader();
-
-        reader.onloadend = () => {
-          void (async () => {
-            try {
-              const resultStr = reader.result as string;
-              const commaIdx = resultStr.indexOf(',');
-              const base64 = commaIdx >= 0 ? resultStr.slice(commaIdx + 1) : resultStr;
-
-              const nodes = (activeTopology?.nodes ?? []).map(
-                (n: { id: string; label: string }) => ({
-                  id: n.id,
-                  label: n.label,
-                }),
-              );
-              const edges = (activeTopology?.edges ?? []).map(
-                (e: { id: string; source: string; target: string }) => ({
-                  id: e.id,
-                  source: e.source,
-                  target: e.target,
-                }),
-              );
-
-              const parseRes = await api.parseVoiceCommand({
-                audioBase64: base64,
-                audioDurationMs: durationMs,
-                nodes,
-                edges,
-              });
-
-              setState((prev) => ({
-                ...prev,
-                isProcessing: false,
-                finalTranscript: parseRes.transcript,
-                partialTranscript: '',
-                parseResult: parseRes,
-                timings: parseRes.timings,
-              }));
-
-              if (state.autoConfirm && parseRes.status === 'parsed' && parseRes.command) {
-                void onExecuteCommand?.(parseRes.command);
-              }
-            } catch (innerErr: unknown) {
-              setState((prev) => ({
-                ...prev,
-                isProcessing: false,
-                error:
-                  innerErr instanceof Error
-                    ? innerErr.message
-                    : 'Failed to process recorded audio.',
-              }));
-            }
-          })();
-        };
-
-        reader.readAsDataURL(audioBlob);
+        const { language, speakReplies } = latest.current.state;
+        const result = await api.parseVoiceCommand({
+          audioBase64: bytesToBase64(encodeWav(pcm, SAMPLE_RATE)),
+          audioDurationMs: captureMs,
+          language,
+          speakReply: speakReplies,
+          ...topologyRefs(latest.current.activeTopology),
+        });
+        applyResult(result);
+        if (result.speech) void speak(result.speech.audioBase64, result.speech.contentType);
       } catch (err: unknown) {
-        setState((prev) => ({
-          ...prev,
+        setState((p) => ({
+          ...p,
           isProcessing: false,
           error: err instanceof Error ? err.message : 'Failed to process recorded audio.',
         }));
       }
-    };
+    })();
+  }, [api, applyResult, releaseMic, speak]);
 
-    mediaRecorder.stop();
-  }, [api, activeTopology, state.autoConfirm, onExecuteCommand]);
+  /** Hands-free: stream continuously to Gnani Prisma; its VAD segments each spoken command. */
+  const stopLive = useCallback(() => {
+    releaseMic();
+    wsRef.current?.close();
+    wsRef.current = null;
+    setState((p) => ({ ...p, liveStatus: 'off', isRecording: false }));
+  }, [releaseMic]);
 
+  const startLive = useCallback(async () => {
+    stopSpeech();
+    setState((p) => ({ ...p, liveStatus: 'connecting', error: null, isRecording: false }));
+    try {
+      const token = localStorage.getItem('chaosboard_token') ?? '';
+      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(
+        `${proto}//${window.location.host}/ws/voice?token=${encodeURIComponent(token)}`,
+      );
+      wsRef.current = ws;
+      ws.binaryType = 'arraybuffer';
+
+      await new Promise<void>((resolve, reject) => {
+        ws.onopen = () => {
+          const { state: s, activeTopology: topo } = latest.current;
+          ws.send(
+            JSON.stringify({
+              type: 'start',
+              language: s.language,
+              sampleRate: SAMPLE_RATE,
+              speakReplies: s.speakReplies,
+              ...topologyRefs(topo),
+            }),
+          );
+        };
+        ws.onerror = () => reject(new Error('Live voice connection failed.'));
+        ws.onclose = () => reject(new Error('Live voice connection closed.'));
+        ws.onmessage = (event) => {
+          let msg: VoiceServerMessage;
+          try {
+            msg = JSON.parse(event.data as string) as VoiceServerMessage;
+          } catch {
+            return;
+          }
+          switch (msg.type) {
+            case 'ready':
+              resolve();
+              break;
+            case 'transcript_partial':
+              setState((p) => ({
+                ...p,
+                partialTranscript: msg.type === 'transcript_partial' ? msg.text : '',
+              }));
+              break;
+            case 'transcript_final':
+              setState((p) => ({
+                ...p,
+                finalTranscript: msg.type === 'transcript_final' ? msg.text : '',
+                partialTranscript: '',
+              }));
+              break;
+            case 'intent_parsed':
+              applyResult(msg.result);
+              break;
+            case 'speech_reply':
+              void speak(msg.audioBase64, msg.contentType);
+              break;
+            case 'error':
+              setState((p) => ({ ...p, error: msg.type === 'error' ? msg.message : p.error }));
+              reject(new Error(msg.message));
+              break;
+          }
+        };
+      });
+
+      ws.onclose = () => setState((p) => ({ ...p, liveStatus: 'off', isRecording: false }));
+      await openMic((pcm) => {
+        if (ws.readyState === WebSocket.OPEN) ws.send(pcm.buffer as ArrayBuffer);
+      });
+      setState((p) => ({ ...p, liveStatus: 'listening', isRecording: true }));
+    } catch (err: unknown) {
+      releaseMic();
+      wsRef.current?.close();
+      wsRef.current = null;
+      setState((p) => ({
+        ...p,
+        liveStatus: 'unavailable',
+        isRecording: false,
+        error: err instanceof Error ? err.message : 'Live voice is unavailable.',
+      }));
+    }
+  }, [applyResult, openMic, releaseMic, speak]);
+
+  const setLanguage = useCallback((language: string) => {
+    setState((p) => ({ ...p, language }));
+  }, []);
+  const setSpeakReplies = useCallback((value: boolean) => {
+    if (!value) stopSpeech();
+    setState((p) => ({ ...p, speakReplies: value, ...(value ? {} : { isSpeaking: false }) }));
+  }, []);
+  const toggleSpeakReplies = useCallback(() => {
+    stopSpeech();
+    setState((p) => ({ ...p, speakReplies: !p.speakReplies, isSpeaking: false }));
+  }, []);
   const toggleAutoConfirm = useCallback(() => {
-    setState((prev) => ({ ...prev, autoConfirm: !prev.autoConfirm }));
+    setState((p) => ({ ...p, autoConfirm: !p.autoConfirm }));
   }, []);
 
   const confirmAndExecute = useCallback(async () => {
-    if (state.parseResult?.status === 'parsed' && state.parseResult.command) {
-      await onExecuteCommand?.(state.parseResult.command);
-      setState((prev) => ({ ...prev, parseResult: null }));
+    const result = latest.current.state.parseResult;
+    if (result?.status === 'parsed' && result.command) {
+      await latest.current.onExecuteCommand?.(result.command);
+      setState((p) => ({ ...p, parseResult: null }));
     }
-  }, [state.parseResult, onExecuteCommand]);
+  }, []);
 
   const clearSession = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
+    stopSpeech();
+    setState((p) => ({
+      ...p,
       partialTranscript: '',
       finalTranscript: '',
       parseResult: null,
       timings: null,
       error: null,
+      isSpeaking: false,
     }));
   }, []);
 
@@ -286,7 +317,12 @@ export function useVoiceSession(
     ...state,
     startRecording,
     stopRecording,
+    startLive,
+    stopLive,
     submitTranscript,
+    setLanguage,
+    setSpeakReplies,
+    toggleSpeakReplies,
     toggleAutoConfirm,
     confirmAndExecute,
     clearSession,
