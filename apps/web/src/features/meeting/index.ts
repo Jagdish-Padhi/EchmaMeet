@@ -11,6 +11,7 @@ export { useCollaborationPresence } from './useCollaborationPresence';
 export { useMeetingMediaStream } from './useMeetingMediaStream';
 export { useMeetingSreWatcher } from './useMeetingSreWatcher';
 export { useMeetingAgent } from './useMeetingAgent';
-export { MetaAgentSettingsModal } from './components/MetaAgentSettingsModal';
+export { useMeetingTranscription } from './useMeetingTranscription';
+export { AgentSettingsModal } from './components/AgentSettingsModal';
 export { meetingAudio } from './services/audioAlert';
 export type { MeetingParticipant, SreHazard } from './types';

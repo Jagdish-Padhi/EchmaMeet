@@ -16,6 +16,7 @@ export interface MeetingSideDrawerProps {
   readonly onSendMessage?: ((text: string) => void) | undefined;
   readonly isSendingChat?: boolean | undefined;
   readonly onClose: () => void;
+  readonly onAutoRemediate?: (() => void) | undefined;
 }
 
 export function MeetingSideDrawer({
@@ -27,11 +28,12 @@ export function MeetingSideDrawer({
   onSendMessage,
   isSendingChat = false,
   onClose,
+  onAutoRemediate,
 }: MeetingSideDrawerProps) {
   const [inputText, setInputText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleSend = (e?: React.FormEvent) => {
+  const handleSend = (e?: React.SyntheticEvent) => {
     e?.preventDefault();
     const trimmed = inputText.trim();
     if (!trimmed || isSendingChat || !onSendMessage) return;
@@ -143,7 +145,9 @@ export function MeetingSideDrawer({
                 <button
                   type="button"
                   className={`chat-filter-pill ${searchQuery.toLowerCase() === '@echma' ? 'active' : ''}`}
-                  onClick={() => setSearchQuery((prev) => (prev.toLowerCase() === '@echma' ? '' : '@echma'))}
+                  onClick={() =>
+                    setSearchQuery((prev) => (prev.toLowerCase() === '@echma' ? '' : '@echma'))
+                  }
                 >
                   <FemaleArchitectIcon size={11} strokeWidth={2} />
                   <span>@echma</span>
@@ -151,7 +155,9 @@ export function MeetingSideDrawer({
                 <button
                   type="button"
                   className={`chat-filter-pill ${searchQuery.toLowerCase() === 'risk' ? 'active' : ''}`}
-                  onClick={() => setSearchQuery((prev) => (prev.toLowerCase() === 'risk' ? '' : 'risk'))}
+                  onClick={() =>
+                    setSearchQuery((prev) => (prev.toLowerCase() === 'risk' ? '' : 'risk'))
+                  }
                 >
                   <span>Risks</span>
                 </button>
@@ -165,8 +171,14 @@ export function MeetingSideDrawer({
                     <p>No messages match &ldquo;{searchQuery}&rdquo;.</p>
                   ) : (
                     <>
-                      <p>Messages can only be seen by people in the call and are deleted when the call ends.</p>
-                      <p className="meet-chat-hint">Echma is live-casting architectural observations and listening for your questions.</p>
+                      <p>
+                        Messages can only be seen by people in the call and are deleted when the
+                        call ends.
+                      </p>
+                      <p className="meet-chat-hint">
+                        Echma is live-casting architectural observations and listening for your
+                        questions.
+                      </p>
                     </>
                   )}
                 </div>
@@ -189,9 +201,46 @@ export function MeetingSideDrawer({
                     </div>
 
                     {msg.hazardBadge && (
-                      <div className={`meet-chat-hazard-pill sev-${msg.hazardBadge.severity}`}>
-                        <span className="hazard-pill-dot" />
-                        <span className="hazard-pill-title">{msg.hazardBadge.title}</span>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '8px',
+                          marginBottom: '6px',
+                        }}
+                      >
+                        <div className={`meet-chat-hazard-pill sev-${msg.hazardBadge.severity}`}>
+                          <span className="hazard-pill-dot" />
+                          <span className="hazard-pill-title">{msg.hazardBadge.title}</span>
+                        </div>
+                        {onAutoRemediate && (
+                          <button
+                            type="button"
+                            onClick={onAutoRemediate}
+                            title="Apply recommended resilience policy"
+                            style={{
+                              background: '#0284c7',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '4px',
+                              padding: '2px 8px',
+                              fontSize: '10px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                              <path d="m9 12 2 2 4-4" />
+                            </svg>
+                            Remediate
+                          </button>
+                        )}
                       </div>
                     )}
 

@@ -34,9 +34,9 @@ export function MeetingBar({
   const [showPersonaMenu, setShowPersonaMenu] = useState(false);
   const [currentUser, setCurrentUser] = useState<MeetingParticipant>({
     id: 'user-1',
-    name: 'Alex Chen',
+    name: 'Platform Engineer',
     role: 'Staff SRE',
-    avatar: 'AC',
+    avatar: 'PE',
     isSpeaking: false,
     isMuted: false,
   });
@@ -126,23 +126,23 @@ export function MeetingBar({
               <button
                 type="button"
                 className="persona-option"
-                onClick={() => handleSelectRole('Alex Chen', 'Staff SRE', 'AC')}
+                onClick={() => handleSelectRole('Platform Engineer', 'Staff SRE', 'PE')}
               >
-                <strong>Alex Chen</strong> &bull; Staff SRE
+                <strong>Platform Engineer</strong> &bull; Staff SRE
               </button>
               <button
                 type="button"
                 className="persona-option"
-                onClick={() => handleSelectRole('Priya Patel', 'Tech Lead', 'PP')}
+                onClick={() => handleSelectRole('Tech Lead', 'Tech Lead', 'TL')}
               >
-                <strong>Priya Patel</strong> &bull; Tech Lead
+                <strong>Tech Lead</strong> &bull; Architecture Lead
               </button>
               <button
                 type="button"
                 className="persona-option"
-                onClick={() => handleSelectRole('Marcus Vance', 'Principal Architect', 'MV')}
+                onClick={() => handleSelectRole('Principal Architect', 'Principal Architect', 'PA')}
               >
-                <strong>Marcus Vance</strong> &bull; Principal Architect
+                <strong>Principal Architect</strong> &bull; Systems Architect
               </button>
             </div>
           )}

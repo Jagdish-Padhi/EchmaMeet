@@ -128,10 +128,14 @@ export function useMicrophonePreflight(): UseMicrophonePreflightReturn {
       const error = err as Error;
       if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
         setStatus('denied');
-        setErrorMessage('Microphone permission was denied. Please allow microphone access in browser settings.');
+        setErrorMessage(
+          'Microphone permission was denied. Please allow microphone access in browser settings.',
+        );
       } else {
         setStatus('failed');
-        setErrorMessage(error.message || 'Could not access microphone hardware. Please check your connection.');
+        setErrorMessage(
+          error.message || 'Could not access microphone hardware. Please check your connection.',
+        );
       }
     }
   }, [selectedDeviceId, stopMicTest, refreshDevices]);
@@ -155,4 +159,3 @@ export function useMicrophonePreflight(): UseMicrophonePreflightReturn {
     stopMicTest,
   };
 }
-

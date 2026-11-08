@@ -26,6 +26,8 @@ export interface MeetingFloatingWindowProps {
   readonly aiRaisedHand: boolean;
   readonly isEvaluatingAi?: boolean | undefined;
   readonly onAskAiOpinion?: (() => void) | undefined;
+  readonly isCaptionsActive?: boolean | undefined;
+  readonly onToggleCaptions?: (() => void) | undefined;
   readonly onOpenSreFinding: () => void;
   readonly remoteReviewers: readonly RemoteReviewer[];
   readonly copied: boolean;
@@ -35,6 +37,7 @@ export interface MeetingFloatingWindowProps {
   readonly isScreenSharing: boolean;
   readonly onToggleScreenShare: () => void;
   readonly formatTimer: (totalSec: number) => string;
+  readonly onAutoRemediate?: (() => void) | undefined;
 }
 
 export function MeetingFloatingWindow({
@@ -57,6 +60,8 @@ export function MeetingFloatingWindow({
   aiRaisedHand,
   isEvaluatingAi,
   onAskAiOpinion,
+  isCaptionsActive,
+  onToggleCaptions,
   onOpenSreFinding,
   remoteReviewers,
   copied,
@@ -66,6 +71,7 @@ export function MeetingFloatingWindow({
   isScreenSharing,
   onToggleScreenShare,
   formatTimer,
+  onAutoRemediate,
 }: MeetingFloatingWindowProps) {
   return (
     <aside
@@ -179,6 +185,7 @@ export function MeetingFloatingWindow({
           role="button"
           tabIndex={0}
           title="Click to view Echma findings"
+          style={{ position: 'relative' }}
         >
           <div className="pip-avatar-wrap ai-pulse">
             <FemaleArchitectIcon size={18} strokeWidth={2} />
@@ -187,15 +194,62 @@ export function MeetingFloatingWindow({
             <span className="pip-tile-name ai">Echma</span>
             {aiRaisedHand && <span className="pip-alert-dot" title="Risk identified" />}
           </div>
+          {aiRaisedHand && onAutoRemediate && (
+            <button
+              type="button"
+              className="pip-quick-heal-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAutoRemediate();
+              }}
+              title="Click to auto-remediate architecture hazard immediately"
+              style={{
+                position: 'absolute',
+                bottom: '4px',
+                right: '4px',
+                background: '#0284c7',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '3px',
+                padding: '2px 6px',
+                fontSize: '9px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+                zIndex: 5,
+              }}
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              Remediate
+            </button>
+          )}
         </div>
 
         {/* Real Remote Reviewer Tile */}
         {remoteReviewers.length > 0 ? (
           remoteReviewers.slice(0, 1).map((peer) => (
             <div key={peer.userId} className="pip-tile tile-peer">
-              <div className="pip-avatar-wrap">
-                <span className="pip-avatar-text">{peer.avatar || 'SRE'}</span>
-              </div>
+              {peer.stream ? (
+                <video
+                  ref={(el) => {
+                    if (el && peer.stream && el.srcObject !== peer.stream) {
+                      el.srcObject = peer.stream;
+                    }
+                  }}
+                  autoPlay
+                  playsInline
+                  className="pip-camera-video"
+                />
+              ) : (
+                <div className="pip-avatar-wrap">
+                  <span className="pip-avatar-text">{peer.avatar || 'SRE'}</span>
+                </div>
+              )}
               <div className="pip-tile-meta">
                 <span className="pip-tile-name">{peer.name}</span>
               </div>
@@ -341,10 +395,36 @@ export function MeetingFloatingWindow({
             title="Ask Echma for live architecture opinion"
             aria-label="Ask Echma"
           >
-            <span style={{ fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', padding: '0 4px' }}>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '0 4px',
+              }}
+            >
               <FemaleArchitectIcon size={14} strokeWidth={2} />
               <span>{isEvaluatingAi ? '...' : 'Ask Echma'}</span>
             </span>
+          </button>
+        )}
+
+        {onToggleCaptions && (
+          <button
+            type="button"
+            className={`pip-action-btn ${isCaptionsActive ? 'highlight' : ''}`}
+            onClick={onToggleCaptions}
+            title={
+              isCaptionsActive
+                ? 'Turn off live captions (Saves Gnani Prisma tokens)'
+                : 'Turn on live captions (Gnani Prisma STT)'
+            }
+            aria-label="Live Captions"
+            style={{ fontWeight: 700, fontSize: '10px' }}
+          >
+            CC
           </button>
         )}
 

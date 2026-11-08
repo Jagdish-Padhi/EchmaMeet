@@ -98,6 +98,11 @@ export function useMeetingMediaStream(
         screenStreamRef.current.getTracks().forEach((track) => track.stop());
         screenStreamRef.current = null;
       }
+      setLocalStream(null);
+      setScreenStream(null);
+      setIsVideoOn(false);
+      setIsMuted(true);
+      setIsScreenSharing(false);
     };
   }, [autoStart]);
 
@@ -193,31 +198,24 @@ export function useMeetingMediaStream(
     }
   }, [isMuted]);
 
-  // Toggle Camera (Video)
+  // Toggle Camera (Video) - Directly halts the camera hardware sensor when turned off
   const toggleVideo = useCallback(async () => {
     const stream = localStreamRef.current;
 
-    // If currently on, turn off video track
+    // If currently on, halt the hardware sensor and extinguish camera LED light
     if (isVideoOn) {
       if (stream) {
         stream.getVideoTracks().forEach((track) => {
-          track.enabled = false;
+          track.stop(); // Releases camera device hardware lock at the OS level
+          stream.removeTrack(track);
         });
+        setLocalStream(new MediaStream(stream.getTracks()));
       }
       setIsVideoOn(false);
       return;
     }
 
-    // Turning ON
-    if (stream && stream.getVideoTracks().length > 0) {
-      stream.getVideoTracks().forEach((track) => {
-        track.enabled = true;
-      });
-      setIsVideoOn(true);
-      return;
-    }
-
-    // If no video track exists yet, request it
+    // Turning ON - Request fresh hardware video track
     if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
       try {
         const videoStream = await navigator.mediaDevices.getUserMedia({
@@ -228,6 +226,7 @@ export function useMeetingMediaStream(
         if (newVideoTrack) {
           if (stream) {
             stream.addTrack(newVideoTrack);
+            setLocalStream(new MediaStream(stream.getTracks()));
           } else {
             localStreamRef.current = videoStream;
             setLocalStream(videoStream);
@@ -281,7 +280,7 @@ export function useMeetingMediaStream(
     }
   }, [isScreenSharing, onPermissionError]);
 
-  // Clean stop for all media
+  // Clean stop for all media - guarantees all hardware devices and indicator lights turn off immediately
   const stopAllMedia = useCallback(() => {
     stopAudioAnalysis();
     if (localStreamRef.current) {
@@ -294,6 +293,8 @@ export function useMeetingMediaStream(
     }
     setLocalStream(null);
     setScreenStream(null);
+    setIsVideoOn(false);
+    setIsMuted(true);
     setIsScreenSharing(false);
     setIsSpeaking(false);
     setAudioLevel(0);

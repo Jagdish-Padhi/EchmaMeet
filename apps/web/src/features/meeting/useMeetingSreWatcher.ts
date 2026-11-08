@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { EdgeId, NodeId } from '@chaosboard/contracts';
 import type { BoardState } from '../board';
 import type { SreHazard } from './types';
 
@@ -80,9 +81,98 @@ export function detectSreHazards(board: BoardState): SreHazard[] {
         },
       });
     }
+
+    // 4. Downstream Worker Capacity Bottleneck
+    const sourceNode = nodeMap.get(edge.source);
+    if (
+      sourceNode?.concurrency?.maxWorkers &&
+      targetNode?.concurrency?.maxWorkers &&
+      sourceNode.concurrency.maxWorkers >= targetNode.concurrency.maxWorkers * 3 &&
+      targetNode.concurrency.maxWorkers <= 10
+    ) {
+      list.push({
+        id: `hazard-capacity-${edge.id}`,
+        targetEdgeId: edge.id,
+        targetNodeId: targetNode.id,
+        title: 'Downstream Worker Capacity Bottleneck',
+        severity: 'high',
+        risk: `Service [${sourceNode.label}] (${String(sourceNode.concurrency.maxWorkers)} workers) connects into [${targetNode.label}] (${String(targetNode.concurrency.maxWorkers)} workers). Upstream concurrency can saturate downstream queues under burst traffic.`,
+        recommendation: `Scale [${targetNode.label}] workers to match caller concurrency or configure rate limiting.`,
+      });
+    }
   }
 
-  // 4. Unbounded Queue Saturation Hazard on Nodes
+  // 5. Critical Circular Synchronous Call Dependency (Cycles)
+  const syncAdj = new Map<NodeId, { target: NodeId; edgeId: EdgeId }[]>();
+  for (const edge of board.edges) {
+    if (edge.mode === 'sync_call') {
+      const existing = syncAdj.get(edge.source) ?? [];
+      existing.push({ target: edge.target, edgeId: edge.id });
+      syncAdj.set(edge.source, existing);
+    }
+  }
+
+  const visited = new Set<NodeId>();
+  const inStack = new Set<NodeId>();
+  const detectedCycles: { path: NodeId[]; edgeIds: EdgeId[] }[] = [];
+
+  function dfsCycle(curr: NodeId, path: NodeId[], edgeIds: EdgeId[]) {
+    visited.add(curr);
+    inStack.add(curr);
+    path.push(curr);
+
+    const neighbors = syncAdj.get(curr) ?? [];
+    for (const { target, edgeId } of neighbors) {
+      if (!visited.has(target)) {
+        dfsCycle(target, [...path], [...edgeIds, edgeId]);
+      } else if (inStack.has(target)) {
+        const startIdx = path.indexOf(target);
+        if (startIdx >= 0) {
+          detectedCycles.push({
+            path: [...path.slice(startIdx), target],
+            edgeIds: [...edgeIds.slice(startIdx), edgeId],
+          });
+        }
+      }
+    }
+
+    inStack.delete(curr);
+  }
+
+  for (const node of board.nodes) {
+    if (!visited.has(node.id)) {
+      dfsCycle(node.id, [], []);
+    }
+  }
+
+  for (const cycle of detectedCycles) {
+    const cycleLabels = cycle.path.map((nid) => nodeMap.get(nid)?.label || nid);
+    const primaryEdgeId = cycle.edgeIds[cycle.edgeIds.length - 1];
+    const firstNode = cycle.path[0];
+    const secondNode = cycle.path[1];
+    const hazard: SreHazard = {
+      id: `hazard-cycle-${String(firstNode)}-${String(secondNode)}`,
+      ...(primaryEdgeId !== undefined ? { targetEdgeId: primaryEdgeId } : {}),
+      ...(firstNode !== undefined ? { targetNodeId: firstNode } : {}),
+      title: 'Critical Circular Call Dependency',
+      severity: 'critical',
+      risk: `Circular synchronous RPC chain detected: [${cycleLabels.join(' -> ')}]. Cyclic sync RPCs cause distributed thread pool deadlocks and cascading timeouts under load.`,
+      recommendation:
+        'Break the sync call cycle by decoupling with an asynchronous event queue or isolating state.',
+      patch: {
+        breaker: {
+          enabled: true,
+          failureThresholdPct: 50,
+          windowRequests: 20,
+          cooldownMs: 3000,
+          halfOpenProbes: 2,
+        },
+      },
+    };
+    list.unshift(hazard);
+  }
+
+  // 5. Unbounded Queue Saturation Hazard on Nodes
   for (const node of board.nodes) {
     if (node.queue.mode === 'unbounded') {
       list.push({

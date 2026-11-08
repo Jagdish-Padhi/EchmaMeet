@@ -28,6 +28,8 @@ export interface MeetingFullscreenStageProps {
   readonly aiRaisedHand: boolean;
   readonly isEvaluatingAi?: boolean | undefined;
   readonly onAskAiOpinion?: (() => void) | undefined;
+  readonly isCaptionsActive?: boolean | undefined;
+  readonly onToggleCaptions?: (() => void) | undefined;
   readonly hazardsCount: number;
   readonly onOpenSreFinding: () => void;
   readonly remoteReviewers: readonly RemoteReviewer[];
@@ -41,6 +43,7 @@ export interface MeetingFullscreenStageProps {
   readonly onToggleVideo: () => void;
   readonly onOpenLeaveModal: () => void;
   readonly formatTimer: (totalSec: number) => string;
+  readonly onAutoRemediate?: (() => void) | undefined;
 }
 
 export function MeetingFullscreenStage({
@@ -62,6 +65,8 @@ export function MeetingFullscreenStage({
   aiRaisedHand,
   isEvaluatingAi,
   onAskAiOpinion,
+  isCaptionsActive,
+  onToggleCaptions,
   hazardsCount,
   onOpenSreFinding,
   remoteReviewers,
@@ -75,6 +80,7 @@ export function MeetingFullscreenStage({
   onToggleVideo,
   onOpenLeaveModal,
   formatTimer,
+  onAutoRemediate,
 }: MeetingFullscreenStageProps) {
   return (
     <div
@@ -261,9 +267,22 @@ export function MeetingFullscreenStage({
               key={reviewer.userId}
               className={`meet-tile meet-tile-peer ${reviewer.isSpeaking ? 'speaking' : ''}`}
             >
-              <div className="meet-avatar-wrap large peer">
-                <span className="meet-avatar-initials">{reviewer.avatar || 'SRE'}</span>
-              </div>
+              {reviewer.stream ? (
+                <video
+                  ref={(el) => {
+                    if (el && reviewer.stream && el.srcObject !== reviewer.stream) {
+                      el.srcObject = reviewer.stream;
+                    }
+                  }}
+                  autoPlay
+                  playsInline
+                  className="meet-camera-video"
+                />
+              ) : (
+                <div className="meet-avatar-wrap large peer">
+                  <span className="meet-avatar-initials">{reviewer.avatar || 'SRE'}</span>
+                </div>
+              )}
               <div className="meet-tile-footer">
                 <div className="meet-tile-user-info">
                   <span className="meet-tile-name">{reviewer.name}</span>
@@ -285,6 +304,7 @@ export function MeetingFullscreenStage({
             onSendMessage={onSendMessage}
             isSendingChat={isSendingChat}
             onClose={onCloseSideDrawer}
+            onAutoRemediate={onAutoRemediate}
           />
         )}
       </div>
@@ -297,6 +317,8 @@ export function MeetingFullscreenStage({
         aiRaisedHand={aiRaisedHand}
         isEvaluatingAi={isEvaluatingAi}
         onAskAiOpinion={onAskAiOpinion}
+        isCaptionsActive={isCaptionsActive}
+        onToggleCaptions={onToggleCaptions}
         activeSideDrawer={activeSideDrawer}
         onToggleAudio={onToggleAudio}
         onToggleVideo={onToggleVideo}

@@ -49,7 +49,7 @@ export function SreYieldFloorModal({
             </div>
             <div>
               <div className="sre-agent-name">Echma</div>
-              <div className="sre-agent-subtitle">AI Principal SRE &bull; Meta Llama 3</div>
+              <div className="sre-agent-subtitle">AI Principal SRE &bull; Gnani voice</div>
             </div>
           </div>
           <button
@@ -110,20 +110,47 @@ export function SreYieldFloorModal({
           )}
 
           {currentHazard.targetEdgeId && currentHazard.patch && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => {
-                onApplyPatch(
-                  currentHazard.targetEdgeId as EdgeId,
-                  currentHazard.patch as Partial<EdgePolicy>,
-                );
-                onClose();
-              }}
-              title="Automatically update connection with recommended resilience settings"
-            >
-              Apply Fix to Architecture
-            </Button>
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  onApplyPatch(
+                    currentHazard.targetEdgeId as EdgeId,
+                    currentHazard.patch as Partial<EdgePolicy>,
+                  );
+                  onClose();
+                }}
+                title="Automatically update connection with recommended resilience settings"
+              >
+                Apply Fix
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  onApplyPatch(
+                    currentHazard.targetEdgeId as EdgeId,
+                    currentHazard.patch as Partial<EdgePolicy>,
+                  );
+                  onRunProof(currentHazard.targetEdgeId as EdgeId);
+                  onClose();
+                }}
+                title="Apply fix and run simulation to verify resilience live"
+                style={{
+                  background: '#0284c7',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+                Remediate &amp; Verify (5s)
+              </Button>
+            </>
           )}
 
           <Button variant="ghost" size="sm" onClick={onClose}>

@@ -7,6 +7,8 @@ export interface MeetingControlsDockProps {
   readonly aiRaisedHand: boolean;
   readonly isEvaluatingAi?: boolean | undefined;
   readonly onAskAiOpinion?: (() => void) | undefined;
+  readonly isCaptionsActive?: boolean | undefined;
+  readonly onToggleCaptions?: (() => void) | undefined;
   readonly activeSideDrawer: 'none' | 'people' | 'chat';
   readonly onToggleAudio: () => void;
   readonly onToggleVideo: () => void;
@@ -22,6 +24,8 @@ export function MeetingControlsDock({
   isScreenSharing,
   isEvaluatingAi,
   onAskAiOpinion,
+  isCaptionsActive,
+  onToggleCaptions,
   activeSideDrawer,
   onToggleAudio,
   onToggleVideo,
@@ -143,6 +147,24 @@ export function MeetingControlsDock({
               <FemaleArchitectIcon size={16} strokeWidth={2} />
               <span>{isEvaluatingAi ? 'Analyzing...' : 'Ask Echma'}</span>
             </span>
+          </button>
+        )}
+
+        {/* 5. Live Captions / STT Toggle (Token Saver) */}
+        {onToggleCaptions && (
+          <button
+            type="button"
+            className={`meet-ctrl-btn ${isCaptionsActive ? 'active' : 'muted'}`}
+            onClick={onToggleCaptions}
+            title={
+              isCaptionsActive
+                ? 'Turn off live captions (Saves Gnani Prisma tokens)'
+                : 'Turn on live captions (Gnani Prisma STT)'
+            }
+            aria-label="Live Captions"
+            style={{ fontWeight: 700, fontSize: '11px', letterSpacing: '0.5px' }}
+          >
+            CC
           </button>
         )}
 

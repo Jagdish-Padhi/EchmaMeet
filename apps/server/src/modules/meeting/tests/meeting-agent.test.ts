@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { MeetingAgentService } from '../meeting-agent-service';
 import type { Topology } from '@chaosboard/contracts';
-import type { StructuredModelPort } from '../../meta-ai';
+import type { StructuredModelPort } from '../../reasoning';
 
 describe('MeetingAgentService', () => {
   it('returns clean zero-cost natural opinion when canvas is empty', async () => {
@@ -28,12 +28,19 @@ describe('MeetingAgentService', () => {
     expect(res.spokenOpinion).toContain("haven't drawn any services");
   });
 
-  it('calls Meta LLM with structured distributed reasoning when nodes are present', async () => {
+  it('calls the optional language model with structured distributed reasoning when nodes are present', async () => {
     const mockModel: StructuredModelPort = {
       generateStructured: vi.fn().mockResolvedValue({
         data: {
           handRaised: true,
-          spokenOpinion: 'Sarah, your Auth service has unbounded retries to the database which could trigger a cascading failure.',
+          supportingTranscriptReferences: [],
+          affectedNodeIds: [],
+          affectedEdgeIds: [],
+          facts: [],
+          assumptions: [],
+          confidence: 0.8,
+          spokenOpinion:
+            'Sarah, your Auth service has unbounded retries to the database which could trigger a cascading failure.',
           hazards: [
             {
               id: 'hazard-1',
@@ -46,8 +53,8 @@ describe('MeetingAgentService', () => {
         },
         rawOutput: '{}',
         metadata: {
-          provider: 'meta_llama',
-          modelId: 'llama-3.3-70b-versatile',
+          provider: 'evon',
+          modelId: 'gnani-evon-v3.3',
           promptVersion: 'v1',
           latencyMs: 120,
           tokenCounts: { promptTokens: 180, completionTokens: 60 },
@@ -84,4 +91,3 @@ describe('MeetingAgentService', () => {
     expect(res.spokenOpinion).toContain('Sarah');
   });
 });
-

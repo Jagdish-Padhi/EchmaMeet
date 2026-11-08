@@ -60,10 +60,40 @@ export const voiceIntentParseResultSchema = z.object({
   plainTextConfirmation: z.string().optional(),
   message: z.string().optional(),
   candidates: z.array(z.string()).optional(),
+  /** BCP-47 tag of the language the speaker used (en-IN, hi-IN, ...). */
+  language: z.string().optional(),
+  /** Localised confirmation in the speaker's language, suitable for text-to-speech. */
+  spokenReply: z.string().optional(),
+  /** Present when the request asked for a spoken reply and Gnani Timbre produced one. */
+  speech: z
+    .object({
+      audioBase64: z.string(),
+      contentType: z.string(),
+      voice: z.string(),
+      latencyMs: z.number().int().min(0),
+    })
+    .nullable()
+    .optional(),
 });
 export type VoiceIntentParseResult = z.infer<typeof voiceIntentParseResultSchema>;
 
 export const voiceClientMessageSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('start'),
+    /** `indic-auto` or 1-4 comma-separated codes such as `hi-IN,en-IN`. */
+    language: z.string().max(40).default('indic-auto'),
+    sampleRate: z.union([z.literal(8000), z.literal(16000)]).default(16000),
+    /** Speak the confirmation back with Gnani Timbre text-to-speech. */
+    speakReplies: z.boolean().default(true),
+    nodes: z
+      .array(z.object({ id: z.string(), label: z.string() }))
+      .max(200)
+      .default([]),
+    edges: z
+      .array(z.object({ id: z.string(), source: z.string(), target: z.string() }))
+      .max(400)
+      .default([]),
+  }),
   z.object({
     type: z.literal('audio_chunk'),
     data: z.string(), // base64 encoded audio bytes
@@ -86,8 +116,24 @@ export const voiceServerMessageSchema = z.discriminatedUnion('type', [
     text: z.string(),
   }),
   z.object({
+    type: z.literal('ready'),
+    sttModel: z.string(),
+    language: z.string(),
+  }),
+  z.object({
     type: z.literal('transcript_final'),
     text: z.string(),
+    latencyMs: z.number().int().min(0),
+    language: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('speech_reply'),
+    text: z.string(),
+    language: z.string(),
+    voice: z.string(),
+    contentType: z.string(),
+    /** base64 WAV from Gnani Timbre. */
+    audioBase64: z.string(),
     latencyMs: z.number().int().min(0),
   }),
   z.object({

@@ -161,7 +161,11 @@ export function JoinMeetingModal({
               <Button
                 variant="primary"
                 type="submit"
-                disabled={!roomCode.trim() || micPreflight.status === 'failed' || micPreflight.status === 'denied'}
+                disabled={
+                  !roomCode.trim() ||
+                  micPreflight.status === 'failed' ||
+                  micPreflight.status === 'denied'
+                }
               >
                 Join Room
               </Button>

@@ -1,5 +1,10 @@
 import type { EdgeId, EdgePolicy, NodeId } from '@chaosboard/contracts';
 
+export interface SreHazardPatch extends Partial<EdgePolicy> {
+  readonly mode?: 'sync_call' | 'async_enqueue';
+  readonly queue?: { mode: 'bounded' | 'unbounded'; maxDepth?: number };
+}
+
 export interface SreHazard {
   readonly id: string;
   readonly targetEdgeId?: EdgeId;
@@ -8,7 +13,7 @@ export interface SreHazard {
   readonly severity: 'critical' | 'high' | 'warning';
   readonly risk: string;
   readonly recommendation: string;
-  readonly patch?: Partial<EdgePolicy>;
+  readonly patch?: SreHazardPatch;
 }
 
 export interface MeetingParticipant {

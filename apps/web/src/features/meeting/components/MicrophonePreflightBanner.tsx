@@ -26,7 +26,14 @@ export function MicrophonePreflightBanner({ preflight }: MicrophonePreflightBann
         marginBottom: '16px',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '8px',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '13px', fontWeight: 600, color: '#f8fafc' }}>
             Microphone Check
@@ -145,11 +152,26 @@ export function MicrophonePreflightBanner({ preflight }: MicrophonePreflightBann
       {/* Live Audio Level Meter */}
       {(status === 'testing' || status === 'passed') && (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: '11px',
+              color: '#94a3b8',
+              marginBottom: '4px',
+            }}
+          >
             <span>{deviceLabel || 'Hardware Input'}</span>
             <span>{audioLevel}%</span>
           </div>
-          <div style={{ height: '6px', background: '#0f172a', borderRadius: '3px', overflow: 'hidden' }}>
+          <div
+            style={{
+              height: '6px',
+              background: '#0f172a',
+              borderRadius: '3px',
+              overflow: 'hidden',
+            }}
+          >
             <div
               style={{
                 height: '100%',
