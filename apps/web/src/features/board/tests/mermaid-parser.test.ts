@@ -77,14 +77,55 @@ describe('mermaid-parser', () => {
     }
   });
 
-  it('all pre-packaged templates parse without error', () => {
+  it('all pre-packaged templates parse without error and satisfy contracts', () => {
     for (const template of MERMAID_TEMPLATES) {
       const result = parseMermaidArchitecture(template.code);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.nodes.length).toBeGreaterThan(1);
+        expect(result.nodes.length).toBeGreaterThanOrEqual(template.nodeCount - 1);
         expect(result.edges.length).toBeGreaterThan(0);
+
+        // Entry node must not be a queue_consumer
+        const entry = result.nodes.find((n) => n.id === result.entryNodeId);
+        expect(entry?.kind).not.toBe('queue_consumer');
+
+        // All edges targeting a queue_consumer must be async_enqueue
+        const nodeKindMap = new Map(result.nodes.map((n) => [n.id, n.kind]));
+        for (const edge of result.edges) {
+          const tgtKind = nodeKindMap.get(edge.target);
+          if (tgtKind === 'queue_consumer') {
+            expect(edge.mode).toBe('async_enqueue');
+          } else {
+            expect(edge.mode).toBe('sync_call');
+          }
+        }
       }
+    }
+  });
+
+  it('automatically sets edge mode to async_enqueue when targeting a queue_consumer', () => {
+    const code = `
+      graph TD
+      api[API Gateway] --> q>Kafka Broker]
+    `;
+    const result = parseMermaidArchitecture(code);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      const edge = result.edges.find((e) => e.target === 'q');
+      expect(edge?.mode).toBe('async_enqueue');
+    }
+  });
+
+  it('demotes ledger_sink with outgoing edges to service to prevent contract violations', () => {
+    const code = `
+      graph TD
+      db[(Primary DB)] --> worker[Sync Worker]
+    `;
+    const result = parseMermaidArchitecture(code);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      const dbNode = result.nodes.find((n) => n.id === 'db');
+      expect(dbNode?.kind).toBe('service');
     }
   });
 

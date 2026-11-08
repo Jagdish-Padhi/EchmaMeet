@@ -1061,8 +1061,8 @@ export function App() {
       <ImportDiagramModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        onImport={(nodes, edges, entryNodeId) => {
-          importDiagram(nodes, edges, entryNodeId, 'Imported Architecture');
+        onImport={(nodes, edges, entryNodeId, name) => {
+          importDiagram(nodes, edges, entryNodeId, name || 'Imported Architecture');
         }}
       />
 

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useId } from 'react';
 import { Button } from '../../../components/ui/Button';
 import {
   MERMAID_TEMPLATES,
   parseMermaidArchitecture,
+  type ArchitectureTemplate,
   type MermaidParseResult,
 } from '../utils/mermaid-parser';
 import type { BoardNode } from '../types';
@@ -15,61 +16,101 @@ export interface ImportDiagramModalProps {
     nodes: readonly BoardNode[],
     edges: readonly TopologyEdge[],
     entryNodeId: NodeId,
+    name?: string,
   ) => void;
 }
 
 export function ImportDiagramModal({ isOpen, onClose, onImport }: ImportDiagramModalProps) {
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
+    MERMAID_TEMPLATES[0]?.id ?? 'aws-microservices',
+  );
   const [code, setCode] = useState<string>(MERMAID_TEMPLATES[0]?.code ?? '');
+  const [copied, setCopied] = useState(false);
+  const editorId = useId();
 
   if (!isOpen) return null;
 
+  const activeTemplate: ArchitectureTemplate | undefined = MERMAID_TEMPLATES.find(
+    (t) => t.id === selectedTemplateId,
+  );
+
   const parseResult: MermaidParseResult = parseMermaidArchitecture(code);
+
+  const handleSelectTemplate = (template: ArchitectureTemplate) => {
+    setSelectedTemplateId(template.id);
+    setCode(template.code);
+  };
+
+  const handleResetTemplate = () => {
+    if (activeTemplate) {
+      setCode(activeTemplate.code);
+    }
+  };
+
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard write failed or unpermitted
+    }
+  };
 
   const handleApply = () => {
     if (parseResult.success) {
-      onImport(parseResult.nodes, parseResult.edges, parseResult.entryNodeId);
+      onImport(
+        parseResult.nodes,
+        parseResult.edges,
+        parseResult.entryNodeId,
+        activeTemplate?.name ?? 'Imported Architecture',
+      );
       onClose();
     }
   };
 
+  const lineCount = code.split('\n').length;
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
-        className="sre-yield-modal-card"
-        style={{ maxWidth: 680, width: '92%' }}
+        className="import-diagram-modal-card"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="import-diagram-title"
       >
-        {/* Header */}
-        <div className="sre-modal-header">
-          <div className="sre-agent-identity">
-            <div className="sre-agent-emblem">
+        {/* Enterprise Modal Header */}
+        <div className="import-modal-header">
+          <div className="import-modal-identity">
+            <div className="import-modal-emblem" aria-hidden="true">
               <svg
                 viewBox="0 0 24 24"
-                width="18"
-                height="18"
+                width="20"
+                height="20"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                <polyline points="22,6 12,13 2,6" />
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M3 9h18" />
+                <path d="M9 21V9" />
               </svg>
             </div>
             <div>
-              <div className="sre-agent-name" id="import-diagram-title">
-                Import Architecture Diagram
+              <div className="import-modal-title" id="import-diagram-title">
+                Import Architecture Topology
               </div>
-              <div className="sre-agent-subtitle">
-                Ingest Mermaid.js flowcharts or load proven production patterns
+              <div className="import-modal-subtitle">
+                Select industry-standard reference designs or paste custom Mermaid.js flowchart definitions
               </div>
             </div>
           </div>
           <button
             type="button"
-            className="btn-close-drawer"
+            className="import-modal-close-btn"
             onClick={onClose}
             aria-label="Close dialog"
           >
@@ -77,120 +118,148 @@ export function ImportDiagramModal({ isOpen, onClose, onImport }: ImportDiagramM
           </button>
         </div>
 
-        {/* Templates */}
-        <div
-          style={{
-            padding: '12px 20px',
-            borderBottom: '1px solid var(--border-subtle)',
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
-          <span
-            style={{
-              fontSize: '0.75rem',
-              color: 'var(--text-subtle)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-            }}
-          >
-            Templates:
-          </span>
-          {MERMAID_TEMPLATES.map((tmpl) => (
-            <button
-              key={tmpl.name}
-              type="button"
-              className={`studio-action-pill ${code.trim() === tmpl.code.trim() ? 'active' : ''}`}
-              style={{ fontSize: '0.75rem', padding: '4px 10px' }}
-              onClick={() => setCode(tmpl.code)}
-              title={tmpl.description}
-            >
-              {tmpl.name}
-            </button>
-          ))}
-        </div>
+        {/* Template Catalog Section */}
+        <div className="import-templates-section">
+          <div className="import-templates-label-row">
+            <span className="import-section-heading">PRODUCTION ARCHITECTURE TEMPLATES</span>
+            <span className="import-section-counter">{MERMAID_TEMPLATES.length} PRE-CONFIGURED PATTERNS</span>
+          </div>
 
-        {/* Textarea Editor */}
-        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <label
-            htmlFor="mermaid-editor-input"
-            style={{
-              fontSize: '0.8rem',
-              color: 'var(--text-subtle)',
-              display: 'flex',
-              justifyContent: 'space-between',
-            }}
-          >
-            <span>Mermaid Syntax (graph TD / flowchart LR)</span>
-            <span>Auto DAG coordinates will be computed</span>
-          </label>
-          <textarea
-            id="mermaid-editor-input"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            rows={10}
-            style={{
-              width: '100%',
-              backgroundColor: 'var(--bg-canvas-dark, #0d1117)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 6,
-              padding: '12px',
-              fontFamily: 'var(--font-mono, monospace)',
-              fontSize: '0.82rem',
-              lineHeight: 1.5,
-              resize: 'vertical',
-            }}
-            placeholder="graph TD&#10;  gateway[API Gateway] --> orders[Order Service]&#10;  orders --> db[(PostgreSQL)]"
-          />
+          <div className="import-templates-scroll-row">
+            {MERMAID_TEMPLATES.map((tmpl) => {
+              const isSelected = tmpl.id === selectedTemplateId;
+              return (
+                <button
+                  key={tmpl.id}
+                  type="button"
+                  className={`import-template-chip ${isSelected ? 'active' : ''}`}
+                  onClick={() => handleSelectTemplate(tmpl)}
+                >
+                  <span className="import-template-category-tag">{tmpl.category}</span>
+                  <span className="import-template-name">{tmpl.name}</span>
+                </button>
+              );
+            })}
+          </div>
 
-          {/* Validation & Preview Summary */}
-          {parseResult.success ? (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 16,
-                padding: '10px 14px',
-                backgroundColor: 'rgba(56, 189, 248, 0.08)',
-                border: '1px solid rgba(56, 189, 248, 0.25)',
-                borderRadius: 6,
-                fontSize: '0.8rem',
-              }}
-            >
-              <span style={{ color: 'var(--accent, #38bdf8)', fontWeight: 600 }}>
-                Parsed Successfully
-              </span>
-              <span style={{ color: 'var(--text-subtle)' }}>Nodes: {parseResult.nodes.length}</span>
-              <span style={{ color: 'var(--text-subtle)' }}>Edges: {parseResult.edges.length}</span>
-              <span style={{ color: 'var(--text-subtle)' }}>Entry: {parseResult.entryNodeId}</span>
-            </div>
-          ) : (
-            <div
-              style={{
-                padding: '10px 14px',
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: 6,
-                fontSize: '0.8rem',
-                color: '#f87171',
-              }}
-            >
-              Syntax Error: {parseResult.error}
+          {activeTemplate && (
+            <div className="import-template-detail-box">
+              <div className="import-template-description-text">{activeTemplate.description}</div>
+              <div className="import-template-highlights-row">
+                <span className="import-highlights-label">Guaranteed Patterns:</span>
+                {activeTemplate.highlights.map((h) => (
+                  <span key={h} className="import-highlight-pill">
+                    {h}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
-        {/* Footer Actions */}
-        <div className="sre-modal-footer">
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" size="sm" onClick={handleApply} disabled={!parseResult.success}>
-            Import to Canvas
-          </Button>
+        {/* High-Contrast Code Editor Section */}
+        <div className="import-editor-section">
+          <div className="import-editor-toolbar">
+            <div className="import-editor-meta-left">
+              <span className="import-syntax-badge">Mermaid v10 Flowchart</span>
+              <span className="import-editor-stat">{lineCount} lines</span>
+            </div>
+            <div className="import-editor-actions-right">
+              <button
+                type="button"
+                className="import-editor-btn"
+                onClick={handleCopyCode}
+                title="Copy diagram code to clipboard"
+              >
+                {copied ? '✓ Copied' : 'Copy'}
+              </button>
+              <button
+                type="button"
+                className="import-editor-btn"
+                onClick={handleResetTemplate}
+                title="Reset code to current template default"
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                className="import-editor-btn"
+                onClick={() => setCode('')}
+                title="Clear editor"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <div className="import-code-container">
+            <textarea
+              id={editorId}
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              rows={9}
+              className="import-code-textarea"
+              placeholder="graph TD&#10;  gateway[API Gateway] --> orders[Order Service]&#10;  orders --> db[(PostgreSQL Primary)]"
+              spellCheck={false}
+              aria-label="Mermaid diagram code"
+            />
+          </div>
+
+          {/* Live Validation & Preflight Diagnostics Bar */}
+          {parseResult.success ? (
+            <div className="import-diagnostic-box success">
+              <div className="import-diagnostic-status">
+                <span className="import-status-dot success" />
+                <span className="import-status-title">Syntax Valid & Topology Ready</span>
+              </div>
+              <div className="import-diagnostic-metrics">
+                <span className="import-metric-chip">
+                  <strong>{parseResult.nodes.length}</strong> Nodes
+                </span>
+                <span className="import-metric-chip">
+                  <strong>{parseResult.edges.length}</strong> Edges
+                </span>
+                <span className="import-metric-chip">
+                  Entry: <code>{parseResult.entryNodeId}</code>
+                </span>
+                <span className="import-metric-chip preflight-chip">
+                  ✓ Preflight Compliant
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="import-diagnostic-box error">
+              <div className="import-diagnostic-status">
+                <span className="import-status-dot error" />
+                <span className="import-status-title">Mermaid Parse Error</span>
+              </div>
+              <div className="import-error-message">{parseResult.error}</div>
+            </div>
+          )}
+        </div>
+
+        {/* Enterprise Modal Footer */}
+        <div className="import-modal-footer">
+          <div className="import-syntax-hints">
+            <span>Syntax:</span>
+            <code>node[Service]</code>
+            <code>queue&gt;Worker]</code>
+            <code>db[(Sink)]</code>
+            <code>redis[(Cache)]</code>
+          </div>
+          <div className="import-modal-footer-actions">
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleApply}
+              disabled={!parseResult.success || parseResult.nodes.length === 0}
+            >
+              Import to Canvas
+            </Button>
+          </div>
         </div>
       </div>
     </div>

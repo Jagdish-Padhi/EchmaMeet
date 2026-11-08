@@ -302,7 +302,12 @@ export function parseMermaidArchitecture(mermaidCode: string): MermaidParseResul
       const def = rawNodes.get(rawId);
       const sanitizedId = idMap.get(rawId);
       if (!def || !sanitizedId) return;
-      const kind = inferNodeKind(def.shape, def.label, def.rawId);
+      let kind = inferNodeKind(def.shape, def.label, def.rawId);
+
+      // Sinks cannot have outgoing edges per preflight rules; demote to service if it acts as a caller
+      if (kind === 'ledger_sink' && childrenMap.get(rawId)?.length) {
+        kind = 'service';
+      }
 
       const baseProps = {
         id: sanitizedId,
@@ -332,6 +337,12 @@ export function parseMermaidArchitecture(mermaidCode: string): MermaidParseResul
     });
   }
 
+  // Pre-index node kind by sanitized id for edge configuration
+  const nodeKindById = new Map<NodeId, NodeKind>();
+  for (const n of nodes) {
+    nodeKindById.set(n.id, n.kind);
+  }
+
   // Generate TopologyEdges
   const edges: TopologyEdge[] = [];
   const edgeKeys = new Set<string>();
@@ -349,26 +360,51 @@ export function parseMermaidArchitecture(mermaidCode: string): MermaidParseResul
           ? parsedEdgeId.data
           : edgeIdSchema.parse(`e-${srcId.slice(0, 14)}-${tgtId.slice(0, 14)}`);
 
+        // Contract Rule: If target is a queue_consumer, edge mode MUST be async_enqueue!
+        const targetKind = nodeKindById.get(tgtId);
+        const edgeMode = targetKind === 'queue_consumer' ? 'async_enqueue' : 'sync_call';
+
         edges.push({
           id: edgeId,
           source: srcId,
           target: tgtId,
-          mode: 'sync_call',
+          mode: edgeMode,
           policy: defaultEdgePolicy,
         });
       }
     }
   }
 
-  // Find entry node (layer 0 root node or first node)
-  const firstNode = nodes[0];
-  if (!firstNode) {
+  // Find valid entry node (must be reachable root and not a queue_consumer)
+  const candidateEntry = nodes.find((n) => {
+    const rawKey = [...idMap.entries()].find(([, sId]) => sId === n.id)?.[0];
+    return rawKey && (inDegree.get(rawKey) ?? 0) === 0 && n.kind === 'service';
+  });
+
+  const initialEntry =
+    candidateEntry ??
+    nodes.find((n) => n.kind === 'service') ??
+    nodes.find((n) => n.kind !== 'queue_consumer') ??
+    nodes[0];
+
+  if (!initialEntry) {
     return {
       success: false,
       error: 'Failed to generate nodes from diagram.',
     };
   }
-  const entryNodeId = firstNode.id;
+
+  // Contract rule: Entry node cannot be queue_consumer
+  let finalEntry: BoardNode = initialEntry;
+  if (finalEntry.kind === 'queue_consumer') {
+    finalEntry = { ...finalEntry, kind: 'service' };
+    const idxInList = nodes.findIndex((n) => n.id === finalEntry.id);
+    if (idxInList !== -1) {
+      nodes[idxInList] = finalEntry;
+    }
+  }
+
+  const entryNodeId = finalEntry.id;
 
   return {
     success: true,
@@ -378,36 +414,94 @@ export function parseMermaidArchitecture(mermaidCode: string): MermaidParseResul
   };
 }
 
-export const MERMAID_TEMPLATES = [
+export interface ArchitectureTemplate {
+  readonly id: string;
+  readonly name: string;
+  readonly category: string;
+  readonly description: string;
+  readonly nodeCount: number;
+  readonly highlights: readonly string[];
+  readonly code: string;
+}
+
+export const MERMAID_TEMPLATES: readonly ArchitectureTemplate[] = [
   {
-    name: 'E-Commerce Checkout & Payments',
-    description: 'API Gateway fan-out to Auth, Order Service, Stripe Gateway, and Ledger Sink.',
+    id: 'aws-microservices',
+    name: 'AWS Cloud-Native Microservices',
+    category: 'Cloud Native',
+    description:
+      'Multi-tier production architecture with Edge ALB ingress, Auth caching, Order microservice, PostgreSQL primary, and Payment Gateway with Financial Ledger.',
+    nodeCount: 7,
+    highlights: ['Redis Session Cache', 'PostgreSQL DB Sink', 'Financial Ledger Sink'],
     code: `graph TD
-  gateway[API Gateway] --> auth[Auth Service]
-  gateway --> orders[Order Service]
-  orders --> inventory[(Inventory DB)]
-  orders --> payment[Payment Gateway]
-  payment --> ledger[(Ledger Sink)]`,
+  alb[Edge Application Load Balancer] --> auth[Auth Service]
+  alb --> orders[Order Microservice]
+  auth --> session[(Redis Session Cache)]
+  orders --> catalog[Product Catalog Service]
+  orders --> payment[Payment Service]
+  catalog --> db[(PostgreSQL Primary DB)]
+  payment --> ledger[(Financial Ledger Sink)]`,
   },
   {
-    name: 'Event-Driven Saga with Queue Workers',
-    description: 'Ingress routing through Kafka event bus with async consumers and store sinks.',
+    id: 'event-driven-saga',
+    name: 'Event-Driven Saga with Kafka & DLQ',
+    category: 'Event-Driven',
+    description:
+      'Choreographed event-driven orchestration with an Ingress Dispatcher, Kafka Event Bus, async fulfillment workers, notification dispatchers, Redis state, and Immutable Audit Sink.',
+    nodeCount: 7,
+    highlights: ['Kafka Async Broker', 'Worker Pool Consumers', 'Immutable Audit Sink'],
     code: `graph TD
-  ingress[Edge Ingress] --> dispatcher[Event Dispatcher]
-  dispatcher --> kafka>Event Broker]
-  kafka --> worker[Saga Worker]
-  worker --> cache[(Redis State)]
-  worker --> sink[(Audit Ledger Sink)]`,
+  gateway[API Gateway Ingress] --> dispatcher[Event Dispatcher]
+  dispatcher --> kafka>Kafka Event Broker]
+  kafka --> fulfillment>Fulfillment Worker]
+  kafka --> notifications>Notification Consumer]
+  fulfillment --> state[(Redis Cluster State)]
+  fulfillment --> audit[(Immutable Audit Sink)]`,
   },
   {
-    name: 'Multi-Tier Microservices with Redis',
-    description: 'Load balanced edge calling microservices with caching tier and database.',
+    id: 'fintech-ledger',
+    name: 'FinTech Real-Time Payment Ledger',
+    category: 'FinTech & Banking',
+    description:
+      'Zero-loss transactional banking pipeline featuring ML Fraud Risk scoring, Redis Idempotency Deduplication, settlement routing, and immutable double-entry ledger sinks.',
+    nodeCount: 6,
+    highlights: ['Idempotency Store', 'Fraud & Risk Engine', 'Double-Entry Core Ledger'],
+    code: `graph TD
+  ingress[Payment API Gateway] --> fraud[Risk & Fraud Engine]
+  fraud --> dedup[(Redis Idempotency Store)]
+  fraud --> settlement[Settlement Router]
+  settlement --> clearing>Clearing Queue Consumer]
+  settlement --> core[(Core Banking Ledger Sink)]`,
+  },
+  {
+    id: 'k8s-resilient-mesh',
+    name: 'Kubernetes Ingress & Resilient Mesh',
+    category: 'Kubernetes',
+    description:
+      'Decoupled cloud-native service mesh with Envoy Ingress routing, user service caching, transactional checkout, payment proxy, and persistent database sinks.',
+    nodeCount: 7,
+    highlights: ['Envoy Ingress Mesh', 'Redis Distributed Cache', 'Decoupled Microservices'],
     code: `graph LR
-  client[Edge Proxy] --> web[Web API]
-  web --> cache[(Redis Cluster)]
-  web --> accounts[Accounts Service]
-  web --> billing[Billing Service]
-  accounts --> db[(PostgreSQL Primary)]
-  billing --> db`,
+  ingress[Envoy Ingress Controller] --> web[Web API Gateway]
+  web --> cache[(Redis Distributed Cache)]
+  web --> user[User Account Service]
+  web --> checkout[Checkout Service]
+  user --> accounts[(PostgreSQL User DB)]
+  checkout --> payments[Payment Gateway Service]
+  payments --> records[(Transaction Ledger Sink)]`,
+  },
+  {
+    id: 'streaming-telemetry',
+    name: 'High-Throughput Streaming & Telemetry',
+    category: 'Streaming & IoT',
+    description:
+      'Large-scale telemetry ingestion pipeline with bounded stream buffering, distributed aggregation worker pool, hot Redis metrics cache, and long-term object storage.',
+    nodeCount: 5,
+    highlights: ['Ingestion Buffer Queue', 'Aggregation Workers', 'TimeSeries Object Sink'],
+    code: `graph TD
+  collector[Telemetry Ingress Collector] --> ingest>Ingestion Stream Buffer]
+  ingest --> aggregator>Stream Worker Pool]
+  aggregator --> hotcache[(Redis Metrics Cache)]
+  aggregator --> storage[(Long-term Object Storage Sink)]`,
   },
 ];
