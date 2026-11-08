@@ -290,27 +290,56 @@ class MeetingAudioAlertService {
       const getVoicesAndSpeak = () => {
         const voices = window.speechSynthesis.getVoices();
 
-        // Priority list of premium natural/neural female English voices
-        const femaleVoiceNames = [
-          'Samantha',
-          'Victoria',
-          'Karen',
-          'Moira',
-          'Fiona',
-          'Tessa',
-          'Zira',
-          'Microsoft Jenny Online (Natural)',
-          'Microsoft Aria Online (Natural)',
-          'Google US English',
+        // 1. Primary Priority: Indian English (en-IN) and Hindi (hi-IN) female voices
+        const indianFemaleVoiceNames = [
+          'Heera',
+          'Kavya',
+          'Kalpana',
+          'Neerja',
+          'Veena',
+          'Swara',
+          'Aditi',
+          'India',
+          'Indian',
         ];
 
         let selectedVoice = voices.find(
           (v) =>
-            v.lang.startsWith('en') &&
-            femaleVoiceNames.some((name) => v.name.toLowerCase().includes(name.toLowerCase())),
+            (v.lang === 'en-IN' || v.lang.startsWith('en-IN') || v.lang.startsWith('hi')) &&
+            (indianFemaleVoiceNames.some((name) => v.name.toLowerCase().includes(name.toLowerCase())) ||
+              v.name.toLowerCase().includes('female') ||
+              v.name.toLowerCase().includes('natural')),
         );
 
-        // Fallback: any voice explicitly marked female or with natural English
+        if (!selectedVoice) {
+          selectedVoice = voices.find(
+            (v) => v.lang === 'en-IN' || v.lang.startsWith('en-IN') || v.lang.startsWith('hi'),
+          );
+        }
+
+        // 2. Secondary Priority: High-quality natural female voices
+        if (!selectedVoice) {
+          const fallbackFemaleVoiceNames = [
+            'Samantha',
+            'Victoria',
+            'Karen',
+            'Moira',
+            'Fiona',
+            'Tessa',
+            'Zira',
+            'Microsoft Jenny Online (Natural)',
+            'Microsoft Aria Online (Natural)',
+            'Google US English',
+          ];
+
+          selectedVoice = voices.find(
+            (v) =>
+              v.lang.startsWith('en') &&
+              fallbackFemaleVoiceNames.some((name) => v.name.toLowerCase().includes(name.toLowerCase())),
+          );
+        }
+
+        // 3. Fallback: Any available female or natural English voice
         if (!selectedVoice) {
           selectedVoice =
             voices.find(
