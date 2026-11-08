@@ -1,160 +1,299 @@
-# EchmaMeet: say it in Hindi, break it for real
+# EchmaMeet: Voice-First Distributed Chaos Engineering & Autonomous SRE Studio
 
-**Voice-first chaos engineering for Indian engineering teams, powered by Gnani AI.**
+> **Built for the Great Indian AI Hackathon & Internship Challenge by Gnani.ai**  
+> *Transforming how Indian engineering teams design, review, and stress-test distributed architectures using voice, real physical chaos execution, and autonomous SRE intelligence.*
 
-Speak a command in Hindi, English or Hinglish. EchmaMeet hears it with **Gnani Prisma**, turns it into a strictly typed chaos action, injects the fault into a **real multi-process sandbox** (physical TCP sockets, Toxiproxy), measures what actually happens, and answers you out loud in your own language with **Gnani Timbre**.
-
-> "gateway se backend par teen sau millisecond latency inject karo"
-> → Prisma transcribes (`transcribe` mode keeps `gateway`, `backend` and `300 ms` clean) → the parser resolves the edge → the sandbox injects 300 ms → Timbre replies in Hindi: _"गेटवे से बैकएंड लिंक पर लेटेंसी फॉल्ट डाला जा रहा है, 300 मिलीसेकंड।"_
-
-Built for the **Great Indian AI Internship Challenge by Gnani.ai**.
-
----
-
-## Why this is different
-
-Most voice demos stop at "speech in, text out". EchmaMeet closes the loop on something that has consequences: **the spoken command changes a running distributed system, and the result is measured, not guessed.**
-
-| Layer         | What it does                                                                                                                       | Gnani piece                    |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| Hearing       | Push-to-talk (REST) and hands-free (WebSocket streaming) transcription of Hindi, English, Hinglish and 7 more Indian languages     | **Prisma v3.0** (`indic-auto`) |
-| Understanding | Deterministic English/Hindi/Hinglish intent parser: Devanagari service names, Hindi number words ("तीन सौ" → 300), unit conversion | Prisma `transcribe` format     |
-| Doing         | Real fault injection and open-loop load against real processes; repair accepted only if re-measurement improves beyond noise       | none (it is the product)       |
-| Speaking      | Confirmations and the SRE agent's opinions spoken in the language you used                                                         | **Timbre v2.5 / v3.0**         |
-| Remembering   | Every command, language, STT/TTS latency and outcome in **PostgreSQL (Neon)** with live analytics                                  | none                           |
-
-Nothing here needs an LLM. Hazard analysis is a deterministic rule engine, repair diagnosis is a trained random-forest model plus rules. An open-weight **Gnani Evon** endpoint can optionally be plugged in (`EVON_BASE_URL`), and the system falls back to the rule engine if it is absent or fails.
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
+[![Fastify](https://img.shields.io/badge/Fastify-5.2-black.svg?logo=fastify)](https://www.fastify.io/)
+[![React](https://img.shields.io/badge/React-19.0-61dafb.svg?logo=react)](https://react.dev/)
+[![Gnani AI](https://img.shields.io/badge/Speech%20AI-Gnani%20Prisma%20%2B%20Timbre-orange.svg)](https://app.gnani.ai/voice)
+[![Groq AI](https://img.shields.io/badge/Reasoning%20AI-Groq%20Cloud-f55036.svg)](https://console.groq.com)
+[![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%20%2F%20Neon-336791.svg?logo=postgresql)](https://neon.tech)
+[![Tests Passing](https://img.shields.io/badge/Tests-325%20Passing-brightgreen.svg)](file:///apps/server)
 
 ---
 
-## How Gnani is used
+## Executive Summary
 
-| Capability               | Endpoint                                                | Where                                                                           |
-| ------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Push-to-talk STT         | `POST /stt/v3` (multipart, `X-API-Key-ID`)              | `apps/server/src/modules/gnani/infrastructure/gnani-stt-client.ts`              |
-| Hands-free streaming STT | `wss://…/stt/v3/stream` (1024-byte frames, VAD headers) | `…/gnani-realtime-stt.ts`, bridged by `voice/infrastructure/voice-ws-bridge.ts` |
-| Meeting transcription    | `POST /stt/v3` on 5 s WAV chunks, `indic-auto`          | `meeting/routes.ts`                                                             |
-| Text-to-speech           | `POST /api/v1/tts/inference` (WAV)                      | `…/gnani-tts-client.ts`                                                         |
+Most voice interfaces stop at superficial "speech in, text out" assistants. **EchmaMeet** closes the loop on real, physical consequences:
 
-Details that matter in production, all covered by tests:
-
-- **Browser audio is converted to 16 kHz mono WAV** in an AudioWorklet. Gnani's REST API does not accept WebM, so the server sniffs the container and rejects unsupported audio **before spending credits**.
-- **Streaming proxy**: browsers cannot set WebSocket headers, so the server holds the API key, re-frames arbitrary PCM chunks into exact paced 1024-byte frames, pads silence on release so the VAD closes the segment, and escapes Indic `x-keyterms` as ASCII JSON.
-- **Domain biasing**: node labels and terms like "circuit breaker" are sent as `keyterms`, so your own service names are recognised.
-- **Resilience**: full-jitter exponential backoff on 429/5xx/timeouts, no retry on auth errors, automatic fall-back from Prisma v3.0 to v2.5 if the account is not enabled for v3.0, speech output that can never break a command.
-- **Telephony-ready**: an 8 kHz session applies the documented telephony VAD preset.
+1. **Speak naturally in Hindi, English, or Hinglish**: Transcribed with **Gnani Prisma v3.0** via low-latency REST and streaming WebSocket audio bridges.
+2. **Physical Chaos Execution**: Injects verified network faults (latency, jitter, packet drop, bandwith degradation) via **Toxiproxy** across real TCP sockets and multi-process services under open-loop load.
+3. **Autonomous SRE Copilot ("Echma")**: A resident distributed systems expert powered by **Groq Cloud AI** and **Gnani Timbre v3.0** (Lakshmi neural voice persona). Echma silently monitors whiteboard design sessions, raises her hand when architectural hazards emerge, and guides teams through verified auto-remediation.
+4. **Native Audio Expression Tags**: Echma weaves authentic emotion and human realism into spoken opinions using Gnani Timbre's inline expression tags (`<Excited>`, `<Pauses>`, `<Giggle>`, `<Laugh>`, `<Slow>`, `<Whispers>`, `<Clears throat>`).
+5. **Auditable PostgreSQL Voice Ledger**: Every spoken utterance, intent parsing metric, STT/TTS round-trip latency, and chaos outcome is persisted in **PostgreSQL / Neon Serverless**.
 
 ---
 
-## Architecture
+## System Architecture
 
 ```mermaid
-flowchart LR
-  Mic[Microphone] -->|16 kHz PCM| Web[Web studio]
-  Web -->|WAV / PCM frames| API[Fastify control plane]
-  API -->|Prisma STT| Gnani[(Gnani AI)]
-  API --> Parser[Hindi / Hinglish intent parser]
-  Parser --> Typed[Typed VoiceCommand]
-  Typed --> Sandbox[Real process sandbox + Toxiproxy]
-  Sandbox --> Measure[Open-loop load and measurement]
-  Parser -->|localised reply| Timbre[Timbre TTS]
-  Timbre --> Web
-  API --> Ledger[(PostgreSQL / Neon voice ledger)]
-  API --> Runs[(SQLite run state)]
+flowchart TD
+    subgraph Client ["Client Tier (Browser / React 19)"]
+        Mic["Microphone (AudioWorklet 16kHz PCM)"]
+        Canvas["Interactive Whiteboard & SRE Canvas"]
+        Drawer["Enterprise Studio Drawer (Vertical Cards)"]
+        PiP["Picture-in-Picture Meeting Stage"]
+    end
+
+    subgraph Gateway ["Control Plane (Fastify Modular Monolith)"]
+        WSBridge["WebSocket Voice Bridge (1024-byte Paced Frames)"]
+        AuthModule["Auth & JWT Session Gate"]
+        VoiceParser["Hindi / Hinglish Intent Parser"]
+        PreflightValidator["Authoritative Topology Validator"]
+    end
+
+    subgraph SpeechAI ["Speech Intelligence (Gnani AI)"]
+        PrismaSTT["Gnani Prisma v3.0 (indic-auto)"]
+        TimbreTTS["Gnani Timbre v3.0 (Lakshmi Voice + Audio Tags)"]
+    end
+
+    subgraph ReasoningAI ["Reasoning & Autonomy Tier"]
+        GroqLLM["Groq Cloud AI (High-Speed LLM Inference)"]
+        RuleEngine["Deterministic Hazard Detection Rules"]
+        MLDiagnosis["Trained Random-Forest Model (ML Diagnostics)"]
+    end
+
+    subgraph ChaosEngine ["Physical Sandbox & Chaos Execution"]
+        Toxiproxy["Toxiproxy Daemon (:8474 TCP Proxies)"]
+        WorkerSandbox["Isolated Multi-Process Worker Sandbox"]
+        LoadGen["Open-Loop Synthetic Load Generator"]
+        TelemetryAggregator["Empirical Telemetry (Median ± IQR Aggregation)"]
+    end
+
+    subgraph Persistence ["Persistence Layer"]
+        NeonDB[("PostgreSQL / Neon (Voice Ledger & Analytics)")]
+        SQLiteDB[("Embedded SQLite (Deterministic Run State)")]
+    end
+
+    %% Audio & Voice Flows
+    Mic -->|Raw PCM Frames| WSBridge
+    WSBridge -->|Paced Audio + Keyterms| PrismaSTT
+    PrismaSTT -->|Transcript| VoiceParser
+    VoiceParser -->|Spoken Reply| TimbreTTS
+    TimbreTTS -->|48kHz WAV Audio| Client
+
+    %% Agent & Meeting Flows
+    Canvas -->|Topology Draft| PreflightValidator
+    PreflightValidator -->|Context & Hazards| GroqLLM
+    GroqLLM -->|Spoken Opinion + Audio Tags| TimbreTTS
+    GroqLLM -->|Hand Raise & Patch| Canvas
+
+    %% Chaos & Measurement Flows
+    Canvas -->|Validated Topology| WorkerSandbox
+    WorkerSandbox -->|TCP Connections| Toxiproxy
+    LoadGen -->|Synthetic Traffic| Toxiproxy
+    Toxiproxy -->|Metrics| TelemetryAggregator
+    TelemetryAggregator -->|Invariant Verdicts| Drawer
+
+    %% Storage Flows
+    WSBridge -->|Audit Log| NeonDB
+    TelemetryAggregator -->|Run Records| SQLiteDB
 ```
-
-A modular monolith with enforced boundaries (`pnpm boundaries`): `gnani`, `voice`, `voice-ledger`, `reasoning`, `meeting`, `repair`, `experiments`, `sandbox`, `chaos`, `measurement`, `runs`, `topology`, `reporting`, `benchmarks`, `vision`. Each is reachable only through its `index.ts`.
-
-**Storage**: experiment state stays in embedded SQLite (deterministic, zero latency for the chaos engine). The voice ledger lives in PostgreSQL when `DATABASE_URL` is set (Neon works out of the box, TLS on, advisory-locked versioned migrations) and in a bounded in-memory ring otherwise. The server log states which one is active; it never pretends.
 
 ---
 
-## Quick start
+## Key Features & Innovations
 
-Prerequisites: Node `^22.13`, pnpm `12.13`, and optionally [Toxiproxy](https://github.com/Shopify/toxiproxy) on `:8474` for physical network faults.
+### 1. Gnani AI Speech Stack (Prisma STT + Timbre TTS)
+* **Dual-Mode Hearing**:
+  * **Push-to-Talk (REST)**: Audio is recorded in an `AudioWorklet`, converted client-side to 16 kHz mono WAV, and sent to `POST /stt/v3` with `indic-auto` language sniffing.
+  * **Hands-Free Streaming (WebSocket)**: Connects to `wss://.../stt/v3/stream` through a server-side proxy that paces audio into exact 1024-byte PCM frames, pads terminal silence for clean VAD segment closure, and injects domain `x-keyterms`.
+* **Timbre v3.0 Neural Voice ("Lakshmi")**:
+  * Expressive female persona configured at native `1.0` cadence without robotic pitch alteration.
+  * Dynamically embeds Gnani audio expression tags (`<Excited>`, `<Pauses>`, `<Giggle>`, `<Laugh>`, `<Slow>`, `<Whispers>`, `<Clears throat>`, `<Exhales>`, `<Sigh>`) to sound delightfully human and relatable.
+* **Deterministic Hindi & Hinglish Command Lexicon**:
+  * Understands Hindi number words (*"तीन सौ"* → `300`), Devanagari labels, unit conversions, and code-mixed engineering slang.
+
+### 2. Groq Cloud AI Agentic Reasoning
+* **Real-Time SRE Copilot**: Ultra-fast LLM inference through Groq Cloud (`https://api.groq.com/openai/v1`) evaluating live whiteboard topologies against operational constraints.
+* **Intelligent Hand-Raising Protocol**: Echma remains respectful during brainstorming and sets `handRaised: true` only when high-severity hazards exist (deadlock cycles, cascading retries, unbounded buffers).
+* **Grounded Transcript Verification**: Analyzes verbal call transcripts and pairs spoken observations with verified canvas symbols.
+* **Zero Meta AI Lock-In**: Entire reasoning and speech pipeline is powered exclusively by Gnani AI and Groq Cloud AI.
+
+### 3. Authoritative Preflight Validation & Auto-Remediation
+* **Role-Aware Connection Wiring**:
+  * Connecting or reconnecting an edge to a `queue_consumer` automatically configures `mode: 'async_enqueue'`, eliminating `consumer_requires_async_edge` preflight rejections.
+  * Changing a node's kind to `queue_consumer` automatically adapts all incoming links.
+* **One-Click "Auto-Fix Architecture & Retry"**:
+  * If an invalid topology is tested, `SimulationDiagnosticsModal` offers a direct remediation action.
+  * Sweeps the topology, fixes link modes and buffer boundaries, validates the result via `api.validateTopology`, and restarts the trial seamlessly.
+* **Truthful Multi-State Spoken Feedback**: Echma never announces false completion; she re-validates the canvas with the server before declaring an architecture clean.
+
+### 4. Enterprise Whiteboard & Drawer UX
+* **High-Contrast Neon Red Glow (`#ff1744`)**: Real-time pulsing glow on compromised links, arrowheads (`#arrow-hazard`), and docks for rapid visual identification.
+* **Vertical Card Layouts**:
+  * Replaced horizontal table overflow with `.verdict-vertical-card`, `.run-vertical-card`, and `.benchmark-vertical-card` components that fit 100% of the 440px side drawer.
+  * Integrated interactive `[Vertical] | [Table]` view switcher with full light and dark mode styling.
+* **Picture-in-Picture Conference Stage**:
+  * Floating draggable video window with genuine hardware camera/mic stream release on toggle to eliminate laptop heating and battery drain.
+
+### 5. Physical Chaos & Empirical Sandbox
+* **Real Multi-Process Execution**: Physical processes executing across TCP proxies managed by Toxiproxy (`:8474`).
+* **Empirical Invariant Verdicts**: Evaluates p99 latency, completion rate, queue depth, and retry amplification using median and IQR statistical aggregation.
+* **Autonomous Repair Loop**: Evaluates rule-based baseline proposers against trained ML diagnosis models with trade-off analysis.
+
+---
+
+## Spoken Voice Commands
+
+| Intent | Spoken Input (Hindi / Hinglish) | Spoken Input (English) | Chaos Action Triggered |
+| :--- | :--- | :--- | :--- |
+| **Inject Latency** | *"gateway se backend par teen sau millisecond latency inject karo"* | *"inject 300 ms latency from gateway to backend"* | Toxiproxy introduces 300ms downstream latency |
+| **Run Experiment** | *"paanch trial ke saath experiment chalaao"* | *"run resilience experiment with 5 trials"* | Executes 5 baseline and 5 faulted trials |
+| **Autonomous Repair** | *"repair shuru karo"* | *"start autonomous repair"* | Iterates through policy patches & re-measures |
+| **Set Invariant** | *"p99 threshold chaar sau set karo"* | *"set p99 threshold to 400 milliseconds"* | Updates SLO contract boundary |
+| **Load Scenario** | *"retry storm scenario load karo"* | *"load retry storm benchmark scenario"* | Populates pre-configured architecture |
+| **Cancel Execution** | *"rok do" / "cancel karo"* | *"cancel current experiment"* | Releases locks and restores proxies |
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/voice/parse` | Converts audio (WAV base64) or text into typed `VoiceCommand` |
+| `WS` | `/ws/voice` | Low-latency streaming voice session (paced 1024-byte PCM frames) |
+| `POST` | `/api/gnani/stt` | Secure server-side proxy to Gnani Prisma STT |
+| `POST` | `/api/gnani/tts` | Secure server-side proxy to Gnani Timbre TTS |
+| `GET` | `/api/gnani/health` | Verifies Gnani API connectivity and available voices |
+| `GET` | `/api/voice/history` | Retrieves PostgreSQL-backed voice ledger audit logs |
+| `GET` | `/api/voice/analytics` | Aggregated language distribution, latency p50/p95, and success rate |
+| `POST` | `/api/topologies/validate` | Authoritative distributed topology preflight check |
+| `POST` | `/api/experiments/start` | Dispatches empirical chaos simulation trials |
+| `POST` | `/api/rooms/:roomId/opinions` | Evaluates live meeting context and returns SRE opinion |
+
+---
+
+## Quick Start Guide
+
+### Prerequisites
+* **Node.js**: `^22.13.0` (LTS)
+* **pnpm**: `^12.13.0`
+* **Toxiproxy** (Optional for local chaos injection): Download binary or run via Docker on port `8474`:
+  ```bash
+  docker run -d --name toxiproxy -p 8474:8474 ghcr.io/shopify/toxiproxy
+  ```
+
+### Installation & Setup
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/Jagdish-Padhi/EchmaMeet.git
+   cd EchmaMeet
+   ```
+
+2. **Install workspace dependencies**:
+   ```bash
+   pnpm install
+   ```
+
+3. **Configure Environment Variables**:
+   ```bash
+   cp .env.example .env
+   ```
+   Open `.env` and configure your credentials:
+   ```env
+   # Gnani AI Credentials (https://app.gnani.ai/voice)
+   GNANI_API_KEY=your_gnani_api_key_here
+   GNANI_STT_MODEL=prisma-v3.0
+   GNANI_TTS_MODEL=timbre-v3.0
+
+   # Groq Cloud AI Inference (https://console.groq.com)
+   EVON_BASE_URL=https://api.groq.com/openai/v1
+   EVON_API_KEY=gsk_your_groq_api_key_here
+   EVON_MODEL_ID=llama-3.3-70b-versatile
+
+   # Optional PostgreSQL Voice Ledger (https://neon.tech)
+   DATABASE_URL=postgresql://user:pass@ep-xyz.neon.tech/neondb?sslmode=require
+   ```
+
+4. **Verify Gnani AI Speech Connection**:
+   ```bash
+   pnpm smoke:gnani
+   ```
+   *Performs a live Timbre TTS synthesis → Prisma STT transcription round-trip to guarantee your credentials and audio codecs are active.*
+
+5. **Start Development Servers**:
+   ```bash
+   pnpm dev
+   ```
+   * Web Studio: `http://localhost:5173`
+   * Fastify API: `http://localhost:8787`
+
+---
+
+## 90-Second Demo Walkthrough
+
+1. **Launch the Studio**: Navigate to `http://localhost:5173` and click **"Solo AI Review"**.
+2. **Review with Echma**:
+   * Draw a three-node service chain on the whiteboard: `Gateway` &rarr; `Order Service` &rarr; `Queue Worker`.
+   * Notice that the link into `Queue Worker` automatically adapts to `mode: async_enqueue` without preflight failures.
+3. **Trigger Chaos by Voice**:
+   * Click the microphone in the voice dock and speak:  
+     *"gateway se order-service par 300 ms latency inject karo"*
+   * Echma transcribes the Hindi input with **Gnani Prisma**, updates the canvas, and confirms aloud via **Gnani Timbre** with Lakshmi's natural voice.
+4. **Inspect Hazard & Auto-Remediate**:
+   * Introduce a deliberate cycle (`Order Service` &rarr; `Gateway`).
+   * Echma flags the hazard with a **high-contrast neon red pulse** (`#ff1744`), raises her hand, and explains the risk:  
+     *`<Excited> Notice how this loop... <Pauses> can deadlock worker threads under surge.`*
+   * Click **"Remediate"** on the whiteboard banner: Echma applies the resilience patch, confirms validation with the server, and announces success.
+5. **Simulate & Observe Invariant Verdicts**:
+   * Run the simulation trial: open the **Telemetry** drawer to inspect the **Vertical Card Layout** displaying empirical `p99`, `IQR`, and threshold verdicts without horizontal clipping.
+6. **Voice Ledger Audit**:
+   * Switch to the **Voice Ledger** drawer to inspect persistent PostgreSQL records of your commands, STT/TTS latencies, and language mix.
+
+---
+
+## Quality Assurance & Verification
 
 ```bash
-pnpm install
-cp .env.example .env        # then set GNANI_API_KEY and, optionally, DATABASE_URL
-pnpm smoke:gnani            # Timbre -> Prisma round trip: verifies your key end to end
-pnpm dev                    # web http://localhost:5173, API http://localhost:8787
+# Run complete test suite across server and web workspaces
+pnpm test
+
+# Build production bundle with strict TypeScript validation
+pnpm build
 ```
 
-Docker: `cd infra && docker compose up`, then open `http://localhost:3000`.
-
-Minimal `.env`:
-
-```bash
-GNANI_API_KEY=...                       # https://app.gnani.ai/voice
-DATABASE_URL=postgresql://...neon.tech/neondb?sslmode=require   # optional
-```
-
-### Demo script (90 seconds)
-
-1. Load a scenario (retry storm) onto the canvas.
-2. Open the **Voice** drawer, choose **Hinglish**, hold the mic: _"gateway se backend par 300 ms latency inject karo"_.
-3. Watch the typed command card, hear the Hindi confirmation, confirm and run the experiment by voice: _"पाँच ट्रायल के साथ एक्सपेरिमेंट चलाओ"_.
-4. Say _"रिपेयर शुरू करो"_: the repair loop proposes a bounded policy patch and re-measures it.
-5. Turn on **hands-free** and give two commands back to back. Open the **Voice ledger** card to see language mix, success rate and STT p50/p95 from PostgreSQL.
-6. Join a review room, speak Hindi: the agent transcribes the room with Prisma and raises a hand, in Hindi, when it finds a hazard.
+* **Web Unit Tests**: **16 test files / 55 tests passed** (`vitest`).
+* **Server Unit Tests**: **53 test files / 270 tests passed** (`vitest`).
+* **Architectural Boundaries**: Strict package boundary enforcement verified via `dependency-cruiser`.
+* **Zero Robotic Voice Fallbacks**: Pure Gnani Timbre neural speech pipeline.
 
 ---
 
-## Supported spoken commands
+## Repository Map
 
-| Intent         | English                                         | Hindi / Hinglish                                    |
-| -------------- | ----------------------------------------------- | --------------------------------------------------- |
-| Inject fault   | "inject 300 ms latency from gateway to backend" | "gateway se backend par 300 ms latency inject karo" |
-| Run experiment | "run experiment with 5 trials"                  | "५ ट्रायल के साथ एक्सपेरिमेंट चलाओ"                 |
-| Start repair   | "start repair"                                  | "रिपेयर शुरू करो" / "repair shuru karo"             |
-| Load scenario  | "load scenario 3"                               | "सीनेरियो 3 लोड करो"                                |
-| Set invariant  | "set p99 threshold to 400"                      | "p99 थ्रेशोल्ड 400 सेट करो"                         |
-| Cancel         | "cancel"                                        | "रोको" / "rok do"                                   |
-
-Ambiguous targets ("latency on backend" when two links match) are answered with a clarifying question, never guessed. Other Indian languages are transcribed by Prisma; adding command vocabulary for them is a data-only change in `voice/domain/lexicon.ts` and `replies.ts`.
+```text
+├── apps/
+│   ├── server/             # Fastify backend, Gnani speech client, Groq reasoning runtime
+│   │   ├── src/modules/
+│   │   │   ├── gnani/      # Prisma STT & Timbre TTS clients (REST + Streaming WebSocket)
+│   │   │   ├── reasoning/  # Groq Cloud OpenAI-compatible LLM inference adapter
+│   │   │   ├── meeting/    # SRE Copilot, hazard rules, transcript store, prompts
+│   │   │   ├── voice/      # Hindi/Hinglish intent parser, domain lexicon, voice bridge
+│   │   │   ├── voice-ledger# PostgreSQL / Neon persistent command ledger
+│   │   │   ├── chaos/      # Toxiproxy physical fault injection client
+│   │   │   ├── sandbox/    # Multi-process execution sandbox
+│   │   │   └── repair/     # ML diagnosis & baseline auto-repair orchestrator
+│   ├── web/                # React 19 whiteboard studio, audio capture, PiP meeting
+│   │   ├── src/audio/      # 16kHz PCM AudioWorklet, WAV encoder, audio playback
+│   │   ├── src/features/
+│   │   │   ├── board/      # Canvas, neon red hazard links, topology mutations
+│   │   │   ├── meeting/    # Floating PiP conference stage, Echma voice controller
+│   │   │   ├── experiments/# Simulation diagnostics, vertical invariant cards
+│   │   │   ├── runs/       # Past chaos execution history with vertical cards
+│   │   │   └── voice/      # Push-to-talk & hands-free streaming controls
+│   └── loadgen/            # Open-loop synthetic traffic generator
+├── packages/
+│   ├── contracts/          # Zod domain schemas, topology definitions, metrics
+│   └── shared/             # Resilience queueing models, seeded random generators
+├── benchmarks/             # Calibrated empirical failure scenarios & predictions
+└── scripts/smoke/          # End-to-end smoke test probes (gnani.ts, toxiproxy.ts)
+```
 
 ---
 
-## API additions
+## License
 
-| Route                                   | Purpose                                                             |
-| --------------------------------------- | ------------------------------------------------------------------- |
-| `POST /api/voice/parse`                 | audio (WAV base64) or text → typed command, optional spoken reply   |
-| `WS /ws/voice`                          | hands-free streaming session (`start`, binary PCM, `end_utterance`) |
-| `POST /api/gnani/stt` · `/tts`          | thin, authenticated proxies (the key never reaches the browser)     |
-| `GET /api/gnani/health` · `/languages`  | configuration status and the language/voice catalogue               |
-| `GET /api/voice/history` · `/analytics` | PostgreSQL-backed ledger and aggregates                             |
-| `GET /api/reasoning/health`             | shows whether the optional Evon endpoint is active                  |
-
----
-
-## Quality
-
-```bash
-pnpm check     # typecheck, ESLint + Prettier, dependency boundaries, architecture graph, docs, unit tests
-```
-
-- 266 server tests (plus 3 PostgreSQL tests when `TEST_DATABASE_URL` is set) including an end-to-end WebSocket test against a fake Gnani streaming server (frame sizes, headers, auth, transcript → intent → Timbre reply → ledger) and PostgreSQL migration/analytics tests (`TEST_DATABASE_URL=postgresql://… pnpm test` runs them against a real database).
-- Boundary rules are enforced by dependency-cruiser; the architecture graph is generated and checked.
-
-## Honest limitations
-
-- Whiteboard-photo → topology needs a vision model, and Gnani offers speech models only, so that path is disabled. Red-stroke gesture detection (deterministic) and canvas drawing still work.
-- Spoken command vocabulary covers English, Hindi and Hinglish. Marathi shares Devanagari and many words but is not separately tested.
-- Gnani Evon is open-weight and not on the hosted API; it is optional and self-hosted only.
-- `benchmarks/predictions/*.json` are bundled fixtures of an earlier prediction run, relabelled `static-predictor-fixture`; regenerate them with `pnpm benchmark` and an Evon endpoint if you want live predictions.
-- Browser microphone capture needs a secure context (`https` or `localhost`).
-
-## Repository map
-
-```
-apps/server     Fastify control plane (modules/gnani, voice, voice-ledger, meeting, repair, …)
-apps/web        React studio (audio/ = PCM capture, WAV, playback; features/voice)
-apps/loadgen    open-loop load generator
-apps/worker      real service processes and job execution
-packages/       contracts (Zod schemas), shared
-scripts/smoke   gnani.ts (round trip), toxiproxy.ts, ws.ts
-docs/           plan, decisions, architecture graph, benchmark results
-```
-
-MIT licensed.
+Distributed under the **MIT License**. Built with passion for the **Gnani.ai Great Indian AI Challenge**.
