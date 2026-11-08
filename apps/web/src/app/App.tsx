@@ -271,6 +271,22 @@ export function App() {
     autonomousVoice: settings.autonomousSreVoice,
   });
 
+  const handleLeaveMeeting = useCallback(() => {
+    setIsMeetingLive(false);
+    setIsSreModalOpen(false);
+    meetingAudio.stopSpeaking();
+    sreWatcher.reset();
+    meetingMedia.stopAllMedia();
+    toast.info('You have left the meeting.', 'Session Ended');
+  }, [meetingMedia, sreWatcher]);
+
+  useEffect(() => {
+    if (!isMeetingLive) {
+      setIsSreModalOpen(false);
+      sreWatcher.reset();
+    }
+  }, [isMeetingLive, sreWatcher]);
+
   // Experiments state
   const experimentSession = useExperimentSession(api, null);
 
@@ -889,6 +905,7 @@ export function App() {
         setIsCreateMeetingOpen={setIsCreateMeetingOpen}
         setIsJoinMeetingOpen={setIsJoinMeetingOpen}
         setIsMeetingLive={setIsMeetingLive}
+        onLeaveMeeting={handleLeaveMeeting}
         experimentSession={experimentSession}
         canStartExperiment={canStartExperiment}
         currentTopology={currentTopology}
@@ -974,11 +991,12 @@ export function App() {
                 : undefined
             }
             hazardBanner={
-              sreWatcher.aiRaisedHand && sreWatcher.hazardCount > 0
+              isMeetingLive && sreWatcher.aiRaisedHand && sreWatcher.hazardCount > 0
                 ? {
                     hazardCount: sreWatcher.hazardCount,
                     onReviewFinding: () => setIsSreModalOpen(true),
                     onAutoRemediate: handleAutoRemediate,
+                    onDismiss: sreWatcher.dismissFinding,
                   }
                 : undefined
             }
@@ -997,11 +1015,7 @@ export function App() {
             onToggleCaptions={meetingTranscription.toggleCaptions}
             onOpenSreFinding={() => setIsSreModalOpen(true)}
             onAutoRemediate={handleAutoRemediate}
-            onLeaveMeeting={() => {
-              setIsMeetingLive(false);
-              sreWatcher.stopSpeaking();
-              meetingMedia.stopAllMedia();
-            }}
+            onLeaveMeeting={handleLeaveMeeting}
             currentUser={currentReviewer}
             remoteReviewers={remoteReviewers}
             hazardsCount={sreWatcher.hazards.length}

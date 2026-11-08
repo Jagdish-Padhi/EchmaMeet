@@ -78,6 +78,7 @@ export interface BoardCanvasProps {
         readonly hazardCount: number;
         readonly onReviewFinding: () => void;
         readonly onAutoRemediate?: (() => void) | undefined;
+        readonly onDismiss?: (() => void) | undefined;
       }
     | undefined;
 }
@@ -1209,6 +1210,17 @@ export function BoardCanvas({
                 <path d="m9 12 2 2 4-4" />
               </svg>
               Remediate
+            </button>
+          )}
+          {hazardBanner.onDismiss && (
+            <button
+              type="button"
+              className="echma-badge-dismiss-btn"
+              onClick={hazardBanner.onDismiss}
+              title="Dismiss hazard banner"
+              aria-label="Dismiss alert"
+            >
+              &times;
             </button>
           )}
         </div>

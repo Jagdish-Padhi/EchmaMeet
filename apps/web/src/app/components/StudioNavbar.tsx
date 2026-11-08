@@ -41,6 +41,7 @@ export interface StudioNavbarProps {
   readonly setIsCreateMeetingOpen: (v: boolean) => void;
   readonly setIsJoinMeetingOpen: (v: boolean) => void;
   readonly setIsMeetingLive: (v: boolean) => void;
+  readonly onLeaveMeeting?: (() => void) | undefined;
   readonly experimentSession: any;
   readonly canStartExperiment: boolean;
   readonly currentTopology: Topology;
@@ -76,6 +77,7 @@ export function StudioNavbar({
   setIsCreateMeetingOpen,
   setIsJoinMeetingOpen,
   setIsMeetingLive,
+  onLeaveMeeting,
   experimentSession,
   canStartExperiment,
   currentTopology,
@@ -344,8 +346,12 @@ export function StudioNavbar({
           onOpenCreate={() => setIsCreateMeetingOpen(true)}
           onOpenJoin={() => setIsJoinMeetingOpen(true)}
           onLeaveMeeting={() => {
-            setIsMeetingLive(false);
-            onToastInfo('You have left the meeting.', 'Session Ended');
+            if (onLeaveMeeting) {
+              onLeaveMeeting();
+            } else {
+              setIsMeetingLive(false);
+              onToastInfo('You have left the meeting.', 'Session Ended');
+            }
           }}
           onShareRoom={() => {
             const url = window.location.href;

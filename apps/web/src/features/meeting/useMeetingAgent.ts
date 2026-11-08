@@ -48,6 +48,8 @@ export function useMeetingAgent({
 
   const prevRaisedHandRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isMeetingActiveRef = useRef(isMeetingActive);
+  isMeetingActiveRef.current = isMeetingActive;
 
   // Compute lightweight deterministic signature of canvas topology to avoid redundant LLM calls
   const currentHash = `${board.nodes.length}-${board.edges.length}-${board.nodes
@@ -72,9 +74,28 @@ export function useMeetingAgent({
   // In-call permission state for Echma speaking up
   const [permissionRequested, setPermissionRequested] = useState(false);
 
+  // Complete reset to prevent audio or badge leaks after leaving a meeting
+  const reset = useCallback(() => {
+    meetingAudio.stopSpeaking();
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setIsSpeaking(false);
+    setPermissionRequested(false);
+    setAiRaisedHand(false);
+    setHazards([]);
+    setSpokenOpinion('');
+    setIdentifiedRisk(undefined);
+    setAffectedNodeIds([]);
+    setAffectedEdgeIds([]);
+    prevRaisedHandRef.current = false;
+  }, []);
+
   // Evaluate the topology with the review agent (rule engine, plus Gnani Evon when configured)
   const evaluateTopology = useCallback(
     async (manualPrompt?: string) => {
+      if (!isMeetingActiveRef.current) return;
+
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -105,6 +126,9 @@ export function useMeetingAgent({
           abortControllerRef.current.signal,
         );
 
+        // Strict guard: if meeting ended while API request was in flight, discard response immediately
+        if (!isMeetingActiveRef.current) return;
+
         setHazards(res.hazards as SreHazard[]);
         setAiRaisedHand(res.handRaised);
         setSpokenOpinion(res.spokenOpinion);
@@ -123,6 +147,7 @@ export function useMeetingAgent({
 
         if (manualPrompt) {
           // If the host or engineer explicitly clicked "Ask Echma" or chatted, speak immediately
+          if (!isMeetingActiveRef.current) return;
           setPermissionRequested(false);
           setIsSpeaking(true);
           meetingAudio.speakNaturally(res.spokenOpinion, () => {
@@ -131,6 +156,7 @@ export function useMeetingAgent({
         } else if (res.handRaised) {
           // Automated background watcher identified a genuine hazard:
           // Sound alarm chime and present discrete allow badge next to drawing tools.
+          if (!isMeetingActiveRef.current) return;
           if (!prevRaisedHandRef.current) {
             meetingAudio.playAlertChime();
           }
@@ -176,17 +202,16 @@ export function useMeetingAgent({
     setPermissionRequested(false);
   }, []);
 
+  const dismissFinding = useCallback(() => {
+    setAiRaisedHand(false);
+  }, []);
+
   // Stop speaking and cancel in-flight analysis immediately when call ends
   useEffect(() => {
     if (!isMeetingActive) {
-      meetingAudio.stopSpeaking();
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      setIsSpeaking(false);
-      setPermissionRequested(false);
+      reset();
     }
-  }, [isMeetingActive]);
+  }, [isMeetingActive, reset]);
 
   // Debounced auto-watcher: only re-evaluates when topology actually changes and meeting is active
   useEffect(() => {
@@ -265,7 +290,9 @@ export function useMeetingAgent({
     permissionRequested,
     allowSpeaking,
     dismissPermission,
+    dismissFinding,
     askOpinion,
     stopSpeaking,
+    reset,
   };
 }
