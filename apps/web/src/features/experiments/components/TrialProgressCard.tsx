@@ -98,13 +98,21 @@ export function TrialProgressCard({
       {status === 'completed' && (
         <div className="execution-completed-container">
           <div className="execution-completed-badge">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" strokeWidth="2.5">
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="#10b981"
+              strokeWidth="2.5"
+            >
               <polyline points="20 6 9 17 4 12" />
             </svg>
             <span>Simulation Completed</span>
           </div>
           <p className="execution-completed-text">
-            All {String(totalTrials)} trials recorded. Baseline steady-state and fault injection tail metrics are plotted below.
+            All {String(totalTrials)} trials recorded. Baseline steady-state and fault injection
+            tail metrics are plotted below.
           </p>
           <div className="execution-kpi-grid">
             <div className="execution-kpi-cell">
@@ -125,8 +133,18 @@ export function TrialProgressCard({
 
       {/* 3. Host Busy State */}
       {status === 'busy' && (
-        <div className="execution-halted-container" style={{ borderLeft: '3px solid #f59e0b', background: 'rgba(245, 158, 11, 0.08)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+        <div
+          className="execution-halted-container"
+          style={{ borderLeft: '3px solid #f59e0b', background: 'rgba(245, 158, 11, 0.08)' }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '6px',
+            }}
+          >
             <span className="execution-halted-title" style={{ color: '#fbbf24' }}>
               Execution Lock Held (Host Busy)
             </span>
@@ -170,7 +188,14 @@ export function TrialProgressCard({
       {/* 4. Failed or Cancelled State */}
       {(status === 'failed' || status === 'cancelled') && (
         <div className="execution-halted-container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '6px',
+            }}
+          >
             <span className="execution-halted-title">
               {status === 'failed' ? 'Execution Error' : 'Simulation Cancelled'}
             </span>
@@ -193,7 +218,10 @@ export function TrialProgressCard({
             )}
           </div>
           <p className="execution-halted-message" style={{ margin: '0 0 10px 0' }}>
-            {errorMessage ?? (status === 'cancelled' ? 'Simulation stopped by user.' : 'An error occurred during execution.')}
+            {errorMessage ??
+              (status === 'cancelled'
+                ? 'Simulation stopped by user.'
+                : 'An error occurred during execution.')}
           </p>
           {status === 'failed' && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -217,12 +245,16 @@ export function TrialProgressCard({
         <div className="execution-idle-container">
           <p className="execution-idle-title">Ready for resilience simulation</p>
           <p className="execution-idle-subtext">
-            Executes baseline calibration followed by chaos fault injection to measure p99 latency regressions and invariant violations.
+            Executes baseline calibration followed by chaos fault injection to measure p99 latency
+            regressions and invariant violations.
           </p>
           <div className="execution-kpi-grid">
             <div className="execution-kpi-cell">
               <span className="kpi-label">Planned Trials</span>
-              <span className="kpi-value">{String(totalTrials || 6)} ({String(Math.ceil((totalTrials || 6) / 2))} base / {String(Math.floor((totalTrials || 6) / 2))} fault)</span>
+              <span className="kpi-value">
+                {String(totalTrials || 6)} ({String(Math.ceil((totalTrials || 6) / 2))} base /{' '}
+                {String(Math.floor((totalTrials || 6) / 2))} fault)
+              </span>
             </div>
             <div className="execution-kpi-cell">
               <span className="kpi-label">Configured Load</span>

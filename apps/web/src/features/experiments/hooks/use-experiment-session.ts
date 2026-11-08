@@ -155,7 +155,8 @@ export function useExperimentSession(api: ApiClient, currentTopology: Topology |
         setState((prev) => ({
           ...prev,
           status: 'failed',
-          errorMessage: 'Cannot simulate an empty canvas. Add at least one service to start testing.',
+          errorMessage:
+            'Cannot simulate an empty canvas. Add at least one service to start testing.',
         }));
         return;
       }

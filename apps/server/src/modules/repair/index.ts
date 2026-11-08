@@ -5,7 +5,7 @@ import { MLRandomForestRepairProposer } from './application/proposers/ml-propose
 import { registerRepairRoutes } from './http/routes';
 import { EventBroadcaster, type ExperimentOrchestrator } from '../experiments';
 import type { RunsService } from '../runs';
-import type { StructuredModelPort } from '../meta-ai';
+import type { StructuredModelPort } from '../reasoning';
 
 import { MLDiagnosisService } from './application/ml-diagnosis-service';
 
@@ -21,7 +21,7 @@ export {
 export interface CreateRepairOrchestratorDependencies {
   experiments: ExperimentOrchestrator;
   runs: RunsService;
-  model: StructuredModelPort;
+  model?: StructuredModelPort | undefined;
   broadcaster?: EventBroadcaster | undefined;
 }
 
@@ -29,7 +29,7 @@ export function createRepairOrchestrator(
   deps: CreateRepairOrchestratorDependencies,
 ): RepairOrchestrator {
   const broadcaster = deps.broadcaster ?? new EventBroadcaster();
-  const modelProposer = new ModelRepairProposer(deps.model);
+  const modelProposer = deps.model ? new ModelRepairProposer(deps.model) : undefined;
   const ruleBasedProposer = new RuleBasedRepairProposer();
   const mlProposer = new MLRandomForestRepairProposer();
 

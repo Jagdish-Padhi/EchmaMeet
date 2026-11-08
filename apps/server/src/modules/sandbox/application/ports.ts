@@ -1,4 +1,5 @@
 import type {
+  EventLoopDelaySummary,
   LoadgenConfig,
   LoadgenRecord,
   LoadgenSummary,
@@ -57,6 +58,7 @@ export interface SandboxHandle {
   readonly configs: ReadonlyMap<NodeId, NodeConfig>;
   readCounters(nodeId?: NodeId): Promise<Map<NodeId, WorkerCounters>>;
   readSeries(nodeId?: NodeId): Promise<Map<NodeId, WorkerSeries>>;
+  readDelays(nodeId?: NodeId): Promise<Map<NodeId, EventLoopDelaySummary>>;
   resetCounters(): Promise<void>;
   stop(): Promise<void>;
 }

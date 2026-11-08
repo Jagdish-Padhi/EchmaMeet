@@ -105,15 +105,14 @@ export const EdgeLink = memo(function EdgeLink({
       {/* Invisible wider stroke for easy clicking */}
       <path d={pathData} className="edge-hitbox" style={{ outline: 'none' }} />
 
-      {/* Hazard Pulse Aura if flagged by SRE agent */}
+      {/* High-contrast Red Neon Blink Aura if flagged by SRE co-pilot */}
       {isHazard && (
         <path
           d={pathData}
           fill="none"
-          stroke="#f59e0b"
+          stroke="#ff1744"
           strokeWidth={5}
-          strokeDasharray="6 4"
-          className="edge-hazard-pulse"
+          className="edge-hazard-neon-pulse"
           style={{ outline: 'none' }}
         />
       )}
@@ -121,9 +120,15 @@ export const EdgeLink = memo(function EdgeLink({
       {/* Visible Sleek Connecting Line */}
       <path
         d={pathData}
-        className="edge-path"
+        className={`edge-path ${isHazard ? 'edge-path-hazard' : ''}`}
         style={{ outline: 'none' }}
-        markerEnd={isSelected ? 'url(#arrow-selected)' : 'url(#arrow)'}
+        markerEnd={
+          isHazard
+            ? 'url(#arrow-hazard)'
+            : isSelected
+              ? 'url(#arrow-selected)'
+              : 'url(#arrow)'
+        }
       />
 
       {/* Breakscale Signature Flow: Subtle Live Network Packet Dot */}

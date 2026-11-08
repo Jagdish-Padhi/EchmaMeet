@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { diagnoseWithMLModel, proposeMLRepairPatch, type MLDiagnosisFeatureInput } from '../ml-diagnostics';
+import {
+  diagnoseWithMLModel,
+  proposeMLRepairPatch,
+  type MLDiagnosisFeatureInput,
+} from '../ml-diagnostics';
 import { edgeIdSchema, nodeIdSchema, topologyIdSchema, type Topology } from '@chaosboard/contracts';
 
 describe('ML Diagnostics & Random Forest Root-Cause Diagnosis', () => {
@@ -112,8 +116,20 @@ describe('ML Diagnostics & Random Forest Root-Cause Diagnosis', () => {
           mode: 'sync_call',
           policy: {
             timeoutMs: 1000,
-            retry: { maxAttempts: 3, backoffBaseMs: 0, backoffMultiplier: 1, maxBackoffMs: 0, jitter: 'none' },
-            breaker: { enabled: false, failureThresholdPct: 50, windowRequests: 10, cooldownMs: 3000, halfOpenProbes: 2 },
+            retry: {
+              maxAttempts: 3,
+              backoffBaseMs: 0,
+              backoffMultiplier: 1,
+              maxBackoffMs: 0,
+              jitter: 'none',
+            },
+            breaker: {
+              enabled: false,
+              failureThresholdPct: 50,
+              windowRequests: 10,
+              cooldownMs: 3000,
+              halfOpenProbes: 2,
+            },
             fallback: 'fail_fast_503',
             idempotency: { sendKey: false },
             pool: { maxConnections: 50 },

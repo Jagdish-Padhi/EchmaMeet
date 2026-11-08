@@ -320,7 +320,9 @@ export const NodeCard = memo(function NodeCard({
           }
         }}
       >
-        <title>{isConnecting ? 'Drop to connect to bottom edge' : 'Connect from bottom edge'}</title>
+        <title>
+          {isConnecting ? 'Drop to connect to bottom edge' : 'Connect from bottom edge'}
+        </title>
         <circle cx={92} cy={76} r={16} fill="transparent" style={{ cursor: 'crosshair' }} />
         <circle cx={92} cy={76} r={2.5} className="port-dot-handle" />
       </g>

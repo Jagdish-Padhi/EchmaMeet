@@ -27,19 +27,28 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
                 <p style={{ margin: 0, fontWeight: 600 }}>Collecting trial measurements...</p>
               </div>
               <span className="subtext">
-                Executing trial {String(currentTrial)} of {String(totalTrials)}. Real-time tail latency and error curves will plot as trials complete.
+                Executing trial {String(currentTrial)} of {String(totalTrials)}. Real-time tail
+                latency and error curves will plot as trials complete.
               </span>
             </>
           ) : (
             <>
               <div className="empty-chart-icon">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--color-text-dim)" strokeWidth="1.8">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="22"
+                  height="22"
+                  fill="none"
+                  stroke="var(--color-text-dim)"
+                  strokeWidth="1.8"
+                >
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                 </svg>
               </div>
               <p style={{ fontWeight: 600, margin: '6px 0 2px' }}>Awaiting Simulation Run</p>
               <span className="subtext">
-                Start a resilience simulation to stream live p99 tail latency and error metrics over baseline and fault trials.
+                Start a resilience simulation to stream live p99 tail latency and error metrics over
+                baseline and fault trials.
               </span>
             </>
           )}
@@ -117,11 +126,15 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
       <div className="telemetry-stats-bar">
         <div className="telemetry-stat-box">
           <span className="stat-label">Latest p99</span>
-          <span className="stat-value cyan">{latestPt ? `${Math.round(latestPt.latency)}ms` : '—'}</span>
+          <span className="stat-value cyan">
+            {latestPt ? `${Math.round(latestPt.latency)}ms` : '—'}
+          </span>
         </div>
         <div className="telemetry-stat-box">
           <span className="stat-label">Peak p99</span>
-          <span className="stat-value">{peakLatency > 0 ? `${Math.round(peakLatency)}ms` : '—'}</span>
+          <span className="stat-value">
+            {peakLatency > 0 ? `${Math.round(peakLatency)}ms` : '—'}
+          </span>
         </div>
         <div className="telemetry-stat-box">
           <span className="stat-label">Peak Error</span>
@@ -131,7 +144,9 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
         </div>
         <div className="telemetry-stat-box">
           <span className="stat-label">Evaluated</span>
-          <span className="stat-value">{String(telemetry.length)} / {String(totalTrials)}</span>
+          <span className="stat-value">
+            {String(telemetry.length)} / {String(totalTrials)}
+          </span>
         </div>
       </div>
 

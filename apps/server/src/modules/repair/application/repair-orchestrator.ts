@@ -28,6 +28,7 @@ function generateRepairId(): RunId {
 interface ActiveRepairSession {
   isCancelled: () => boolean;
   markCancelled: () => void;
+  controller: AbortController;
   currentExperimentRunId?: RunId | undefined;
   donePromise?: Promise<void> | undefined;
 }
@@ -35,7 +36,7 @@ interface ActiveRepairSession {
 export interface RepairOrchestratorDependencies {
   experiments: ExperimentOrchestratorPort;
   runs: RunsService;
-  modelProposer: RepairProposerPort;
+  modelProposer?: RepairProposerPort | undefined;
   ruleBasedProposer: RepairProposerPort;
   mlProposer?: RepairProposerPort | undefined;
   broadcaster: EventBroadcasterPort;
@@ -94,11 +95,14 @@ export class RepairOrchestrator implements RepairOrchestratorPort {
     this.sessions.set(repairId, sessionRecord);
 
     let cancelled = false;
+    const controller = new AbortController();
     const active: ActiveRepairSession = {
       isCancelled: () => cancelled,
       markCancelled: () => {
         cancelled = true;
+        controller.abort();
       },
+      controller,
     };
     this.activeSessions.set(repairId, active);
 
@@ -188,7 +192,7 @@ export class RepairOrchestrator implements RepairOrchestratorPort {
 
     const proposer =
       request.proposer === 'model'
-        ? this.deps.modelProposer
+        ? (this.deps.modelProposer ?? this.deps.mlProposer ?? this.deps.ruleBasedProposer)
         : request.proposer === 'ml_random_forest'
           ? (this.deps.mlProposer ?? this.deps.ruleBasedProposer)
           : this.deps.ruleBasedProposer;
@@ -212,6 +216,21 @@ export class RepairOrchestrator implements RepairOrchestratorPort {
       const initialRecord = await this.waitForRunCompletion(initialRunId, deadline, active);
       active.currentExperimentRunId = undefined;
       latestVerdicts = initialRecord.verdicts;
+
+      if (initialRecord.overallStatus === 'INVALID') {
+        const reason = `Initial run is INVALID (${initialRecord.errorMessage ?? 'Baseline or trial gating invalid'}). Baseline must be healthy before autonomous repair can proceed.`;
+        this.updateSession(repairId, {
+          status: 'failed',
+          errorMessage: reason,
+          finishedAt: new Date().toISOString(),
+        });
+        emit('repair_finished', {
+          status: 'failed',
+          iterations: 0,
+          reason,
+        });
+        return;
+      }
 
       const initialPassed =
         latestVerdicts.length > 0 && latestVerdicts.every((v) => v.status === 'PASS');
@@ -245,7 +264,23 @@ export class RepairOrchestrator implements RepairOrchestratorPort {
           record: latestRecord,
           invariants: request.invariants,
           iterationIndex: i,
+          signal: active.controller.signal,
         });
+
+        if (proposeRes.error) {
+          const errorMsg = `Model proposer failed: ${proposeRes.error}`;
+          this.updateSession(repairId, {
+            status: 'failed',
+            errorMessage: errorMsg,
+            finishedAt: new Date().toISOString(),
+          });
+          emit('repair_finished', {
+            status: 'failed',
+            iterations: i,
+            reason: errorMsg,
+          });
+          return;
+        }
 
         if (!proposeRes.patch) {
           // Proposer could not propose any patch
@@ -304,8 +339,14 @@ export class RepairOrchestrator implements RepairOrchestratorPort {
           overallStatus: expRecord.overallStatus,
         });
 
-        // Decide: accept or rollback
-        const evaluation = evaluateRepairDecision(latestVerdicts, candidateVerdicts);
+        // Decide: accept or rollback (INVALID runs are strictly rejected)
+        const evaluation =
+          expRecord.overallStatus === 'INVALID'
+            ? {
+                decision: 'rollback' as const,
+                reason: `Rolled back: Candidate experiment ${expRunId} had INVALID status (${expRecord.errorMessage ?? 'invalid telemetry'}).`,
+              }
+            : evaluateRepairDecision(latestVerdicts, candidateVerdicts);
 
         if (evaluation.decision === 'accept') {
           currentTopology = candidateTopology;

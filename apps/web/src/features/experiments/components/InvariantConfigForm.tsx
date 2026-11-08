@@ -80,7 +80,9 @@ export function InvariantConfigForm({
                     className="input-number input-sm threshold-input"
                     value={inv.threshold}
                     disabled={disabled}
-                    onChange={(e) => handleUpdate(idx, { threshold: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      handleUpdate(idx, { threshold: parseFloat(e.target.value) || 0 })
+                    }
                   />
                   {metricMeta.unit && <span className="threshold-unit">{metricMeta.unit}</span>}
                 </div>

@@ -53,7 +53,89 @@ export interface NodePresetConfig {
   readonly meta?: NodeMeta;
 }
 
-export function useBoardState(initialTopology: Topology | null, api: ApiClient) {
+export interface CanvasOperationPayload {
+  readonly opId: string;
+  readonly op:
+    | 'create_node'
+    | 'delete_node'
+    | 'move_node'
+    | 'update_node'
+    | 'create_edge'
+    | 'delete_edge'
+    | 'update_edge'
+    | 'move_edge_control_point';
+  readonly payload: unknown;
+}
+
+export interface UseBoardStateOptions {
+  readonly onLocalOperation?: ((op: CanvasOperationPayload) => void) | undefined;
+}
+
+export function useBoardState(
+  initialTopology: Topology | null,
+  api: ApiClient,
+  options?: UseBoardStateOptions,
+) {
+  const isRemoteApplyingRef = useRef(false);
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+  const seenRemoteOpIdsRef = useRef<Set<string>>(new Set());
+  const moveThrottleRef = useRef<
+    Map<string, { lastSentTime: number; timer: ReturnType<typeof setTimeout> | null }>
+  >(new Map());
+
+  const emitLocalOp = useCallback((op: CanvasOperationPayload['op'], payload: unknown) => {
+    if (isRemoteApplyingRef.current) return;
+    const opId = `op-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    seenRemoteOpIdsRef.current.add(opId);
+    if (seenRemoteOpIdsRef.current.size > 2000) {
+      const first = seenRemoteOpIdsRef.current.values().next().value;
+      if (first) seenRemoteOpIdsRef.current.delete(first);
+    }
+    optionsRef.current?.onLocalOperation?.({ opId, op, payload });
+  }, []);
+
+  const emitThrottledNodeMove = useCallback(
+    (nodeId: NodeId, x: number, y: number) => {
+      if (isRemoteApplyingRef.current) return;
+      const now = performance.now();
+      let entry = moveThrottleRef.current.get(nodeId);
+      if (!entry) {
+        entry = { lastSentTime: 0, timer: null };
+        moveThrottleRef.current.set(nodeId, entry);
+      }
+
+      if (entry.timer) {
+        clearTimeout(entry.timer);
+        entry.timer = null;
+      }
+
+      const elapsed = now - entry.lastSentTime;
+      if (elapsed >= 50) {
+        entry.lastSentTime = now;
+        emitLocalOp('move_node', { nodeId, x, y });
+      } else {
+        entry.timer = setTimeout(() => {
+          if (entry) {
+            entry.lastSentTime = performance.now();
+            entry.timer = null;
+          }
+          emitLocalOp('move_node', { nodeId, x, y });
+        }, 50 - elapsed);
+      }
+    },
+    [emitLocalOp],
+  );
+
+  useEffect(() => {
+    return () => {
+      moveThrottleRef.current.forEach((entry) => {
+        if (entry.timer) clearTimeout(entry.timer);
+      });
+      moveThrottleRef.current.clear();
+    };
+  }, []);
+
   const [board, setBoard] = useState<BoardState>(() => {
     if (initialTopology) {
       return fromTopology(initialTopology);
@@ -182,7 +264,9 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         edges: [...prevSnapshot.edges],
         edgeSourcePorts: prevSnapshot.edgeSourcePorts ? { ...prevSnapshot.edgeSourcePorts } : {},
         edgeTargetPorts: prevSnapshot.edgeTargetPorts ? { ...prevSnapshot.edgeTargetPorts } : {},
-        edgeControlPoints: prevSnapshot.edgeControlPoints ? { ...prevSnapshot.edgeControlPoints } : {},
+        edgeControlPoints: prevSnapshot.edgeControlPoints
+          ? { ...prevSnapshot.edgeControlPoints }
+          : {},
         strokes: prevSnapshot.strokes ? [...prevSnapshot.strokes] : [],
         entryNodeId: prevSnapshot.entryNodeId,
         selectedNodeId: prevSnapshot.selectedNodeId,
@@ -209,7 +293,9 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         edges: [...nextSnapshot.edges],
         edgeSourcePorts: nextSnapshot.edgeSourcePorts ? { ...nextSnapshot.edgeSourcePorts } : {},
         edgeTargetPorts: nextSnapshot.edgeTargetPorts ? { ...nextSnapshot.edgeTargetPorts } : {},
-        edgeControlPoints: nextSnapshot.edgeControlPoints ? { ...nextSnapshot.edgeControlPoints } : {},
+        edgeControlPoints: nextSnapshot.edgeControlPoints
+          ? { ...nextSnapshot.edgeControlPoints }
+          : {},
         strokes: nextSnapshot.strokes ? [...nextSnapshot.strokes] : [],
         entryNodeId: nextSnapshot.entryNodeId,
         selectedNodeId: nextSnapshot.selectedNodeId,
@@ -259,13 +345,17 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
     [triggerValidation],
   );
 
-  const updateNodePosition = useCallback((nodeId: NodeId, x: number, y: number) => {
-    setBoard((prev) => ({
-      ...prev,
-      isDirty: true,
-      nodes: prev.nodes.map((n) => (n.id === nodeId ? { ...n, position: { x, y } } : n)),
-    }));
-  }, []);
+  const updateNodePosition = useCallback(
+    (nodeId: NodeId, x: number, y: number) => {
+      setBoard((prev) => ({
+        ...prev,
+        isDirty: true,
+        nodes: prev.nodes.map((n) => (n.id === nodeId ? { ...n, position: { x, y } } : n)),
+      }));
+      emitThrottledNodeMove(nodeId, x, y);
+    },
+    [emitThrottledNodeMove],
+  );
 
   const moveSelectedNodes = useCallback((dx: number, dy: number) => {
     if (dx === 0 && dy === 0) return;
@@ -341,9 +431,22 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
     (nodeId: NodeId, patch: Partial<TopologyNode>, metaPatch?: Partial<NodeMeta>) => {
       setBoard((prev) => {
         pushHistory(prev);
+        const targetKind = patch.kind;
+        const nextEdges = targetKind !== undefined
+          ? prev.edges.map((e) => {
+              if (e.target !== nodeId) return e;
+              if (targetKind === 'queue_consumer') {
+                return { ...e, mode: 'async_enqueue' as const };
+              } else if (e.mode === 'async_enqueue') {
+                return { ...e, mode: 'sync_call' as const };
+              }
+              return e;
+            })
+          : prev.edges;
         const next: BoardState = {
           ...prev,
           isDirty: true,
+          edges: nextEdges,
           nodes: prev.nodes.map((n) => {
             if (n.id !== nodeId) return n;
             const updated = {
@@ -351,24 +454,25 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
               ...patch,
               meta: metaPatch ? { ...(n.meta ?? {}), ...metaPatch } : n.meta,
             };
-            const targetKind = patch.kind ?? n.kind;
-            if (targetKind !== 'cache') {
+            const currentKind = patch.kind ?? n.kind;
+            if (currentKind !== 'cache') {
               delete (updated as { ttlMs?: unknown }).ttlMs;
             }
-            if (targetKind !== 'queue_consumer') {
+            if (currentKind !== 'queue_consumer') {
               delete (updated as { consumeRateRps?: unknown }).consumeRateRps;
             }
-            if (targetKind !== 'ledger_sink') {
+            if (currentKind !== 'ledger_sink') {
               delete (updated as { dedupeByKey?: unknown }).dedupeByKey;
             }
             return updated as BoardNode;
           }),
         };
         triggerValidation(next);
+        emitLocalOp('update_node', { nodeId, patch, metaPatch });
         return next;
       });
     },
-    [pushHistory, triggerValidation],
+    [emitLocalOp, pushHistory, triggerValidation],
   );
 
   const updateEdgePolicy = useCallback(
@@ -381,10 +485,35 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
           edges: prev.edges.map((e) => (e.id === edgeId ? { ...e, policy } : e)),
         };
         triggerValidation(next);
+        emitLocalOp('update_edge', { edgeId, policy });
         return next;
       });
     },
-    [pushHistory, triggerValidation],
+    [emitLocalOp, pushHistory, triggerValidation],
+  );
+
+  const updateEdge = useCallback(
+    (edgeId: EdgeId, patch: Partial<TopologyEdge>) => {
+      setBoard((prev) => {
+        pushHistory(prev);
+        const next: BoardState = {
+          ...prev,
+          isDirty: true,
+          edges: prev.edges.map((e) => {
+            if (e.id !== edgeId) return e;
+            return {
+              ...e,
+              ...patch,
+              policy: patch.policy ? { ...e.policy, ...patch.policy } : e.policy,
+            };
+          }),
+        };
+        triggerValidation(next);
+        emitLocalOp('update_edge', { edgeId, patch });
+        return next;
+      });
+    },
+    [emitLocalOp, pushHistory, triggerValidation],
   );
 
   const addNode = useCallback(
@@ -454,10 +583,11 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
           selectedEdgeId: null,
         };
         triggerValidation(next);
+        emitLocalOp('create_node', { node: newNode });
         return next;
       });
     },
-    [pushHistory, triggerValidation],
+    [emitLocalOp, pushHistory, triggerValidation],
   );
 
   const removeNode = useCallback(
@@ -468,7 +598,9 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         const remainingEdges = prev.edges.filter((e) => e.source !== nodeId && e.target !== nodeId);
         const validEdgeIds = new Set(remainingEdges.map((e) => e.id));
         const nextControlPoints = Object.fromEntries(
-          Object.entries(prev.edgeControlPoints ?? {}).filter(([k]) => validEdgeIds.has(k as EdgeId)),
+          Object.entries(prev.edgeControlPoints ?? {}).filter(([k]) =>
+            validEdgeIds.has(k as EdgeId),
+          ),
         );
         const nextSourcePorts = Object.fromEntries(
           Object.entries(prev.edgeSourcePorts ?? {}).filter(([k]) => validEdgeIds.has(k as EdgeId)),
@@ -488,10 +620,11 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
           selectedNodeIds: (prev.selectedNodeIds ?? []).filter((id) => id !== nodeId),
         };
         triggerValidation(next);
+        emitLocalOp('delete_node', { nodeId });
         return next;
       });
     },
-    [pushHistory, triggerValidation],
+    [emitLocalOp, pushHistory, triggerValidation],
   );
 
   const duplicateNode = useCallback(
@@ -529,10 +662,11 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
           selectedEdgeId: null,
         };
         triggerValidation(next);
+        emitLocalOp('create_node', { node: clonedNode });
         return next;
       });
     },
-    [pushHistory, triggerValidation],
+    [emitLocalOp, pushHistory, triggerValidation],
   );
 
   const duplicateSelected = useCallback(() => {
@@ -674,69 +808,75 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
     });
   }, [pushHistory, triggerValidation]);
 
-  const alignSelected = useCallback((direction: 'left' | 'top' | 'distribute') => {
-    setBoard((prev) => {
-      const selectedIds = new Set(
-        prev.selectedNodeIds ?? (prev.selectedNodeId ? [prev.selectedNodeId] : []),
-      );
-      if (selectedIds.size < 2) return prev;
-      pushHistory(prev);
+  const alignSelected = useCallback(
+    (direction: 'left' | 'top' | 'distribute') => {
+      setBoard((prev) => {
+        const selectedIds = new Set(
+          prev.selectedNodeIds ?? (prev.selectedNodeId ? [prev.selectedNodeId] : []),
+        );
+        if (selectedIds.size < 2) return prev;
+        pushHistory(prev);
 
-      const selected = prev.nodes.filter((n) => selectedIds.has(n.id));
-      if (direction === 'left') {
-        const minX = Math.min(...selected.map((n) => n.position.x));
-        return {
-          ...prev,
-          isDirty: true,
-          nodes: prev.nodes.map((n) =>
-            selectedIds.has(n.id) ? { ...n, position: { ...n.position, x: minX } } : n,
-          ),
-        };
-      } else if (direction === 'top') {
-        const minY = Math.min(...selected.map((n) => n.position.y));
-        return {
-          ...prev,
-          isDirty: true,
-          nodes: prev.nodes.map((n) =>
-            selectedIds.has(n.id) ? { ...n, position: { ...n.position, y: minY } } : n,
-          ),
-        };
-      } else {
-        // Distribute horizontally
-        const sorted = [...selected].sort((a, b) => a.position.x - b.position.x);
-        const first = sorted[0];
-        const last = sorted[sorted.length - 1];
-        if (!first || !last) return prev;
-        const minX = first.position.x;
-        const maxX = last.position.x;
-        const step = (maxX - minX) / (sorted.length - 1 || 1);
-        const posMap = new Map<NodeId, number>();
-        sorted.forEach((node, i) => posMap.set(node.id, Math.round(minX + i * step)));
-        return {
-          ...prev,
-          isDirty: true,
-          nodes: prev.nodes.map((n) => {
-            const mappedX = posMap.get(n.id);
-            if (selectedIds.has(n.id) && mappedX !== undefined) {
-              return { ...n, position: { ...n.position, x: mappedX } };
-            }
-            return n;
-          }),
-        };
-      }
-    });
-  }, [pushHistory]);
+        const selected = prev.nodes.filter((n) => selectedIds.has(n.id));
+        if (direction === 'left') {
+          const minX = Math.min(...selected.map((n) => n.position.x));
+          return {
+            ...prev,
+            isDirty: true,
+            nodes: prev.nodes.map((n) =>
+              selectedIds.has(n.id) ? { ...n, position: { ...n.position, x: minX } } : n,
+            ),
+          };
+        } else if (direction === 'top') {
+          const minY = Math.min(...selected.map((n) => n.position.y));
+          return {
+            ...prev,
+            isDirty: true,
+            nodes: prev.nodes.map((n) =>
+              selectedIds.has(n.id) ? { ...n, position: { ...n.position, y: minY } } : n,
+            ),
+          };
+        } else {
+          // Distribute horizontally
+          const sorted = [...selected].sort((a, b) => a.position.x - b.position.x);
+          const first = sorted[0];
+          const last = sorted[sorted.length - 1];
+          if (!first || !last) return prev;
+          const minX = first.position.x;
+          const maxX = last.position.x;
+          const step = (maxX - minX) / (sorted.length - 1 || 1);
+          const posMap = new Map<NodeId, number>();
+          sorted.forEach((node, i) => posMap.set(node.id, Math.round(minX + i * step)));
+          return {
+            ...prev,
+            isDirty: true,
+            nodes: prev.nodes.map((n) => {
+              const mappedX = posMap.get(n.id);
+              if (selectedIds.has(n.id) && mappedX !== undefined) {
+                return { ...n, position: { ...n.position, x: mappedX } };
+              }
+              return n;
+            }),
+          };
+        }
+      });
+    },
+    [pushHistory],
+  );
 
-  const addStroke = useCallback((stroke: CanvasStroke) => {
-    setBoard((prev) => {
-      pushHistory(prev);
-      return {
-        ...prev,
-        isDirty: true,
-        strokes: [...(prev.strokes ?? []), stroke],
-      };
-    });
-  }, [pushHistory]);
+  const addStroke = useCallback(
+    (stroke: CanvasStroke) => {
+      setBoard((prev) => {
+        pushHistory(prev);
+        return {
+          ...prev,
+          isDirty: true,
+          strokes: [...(prev.strokes ?? []), stroke],
+        };
+      });
+    },
+    [pushHistory],
+  );
 
   const undoStroke = useCallback(() => {
     setBoard((prev) => {
@@ -762,24 +902,22 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
     });
   }, [pushHistory]);
 
-  const deleteStroke = useCallback((strokeId: string) => {
-    setBoard((prev) => {
-      pushHistory(prev);
-      return {
-        ...prev,
-        isDirty: true,
-        strokes: (prev.strokes ?? []).filter((s) => s.id !== strokeId),
-      };
-    });
-  }, [pushHistory]);
+  const deleteStroke = useCallback(
+    (strokeId: string) => {
+      setBoard((prev) => {
+        pushHistory(prev);
+        return {
+          ...prev,
+          isDirty: true,
+          strokes: (prev.strokes ?? []).filter((s) => s.id !== strokeId),
+        };
+      });
+    },
+    [pushHistory],
+  );
 
   const addEdge = useCallback(
-    (
-      source: NodeId,
-      target: NodeId,
-      sourcePort?: EdgePortSide,
-      targetPort?: EdgePortSide,
-    ) => {
+    (source: NodeId, target: NodeId, sourcePort?: EdgePortSide, targetPort?: EdgePortSide) => {
       setBoard((prev) => {
         const id = edgeIdSchema.parse(`${source}-to-${target}`);
         if (prev.edges.some((e) => e.id === id || (e.source === source && e.target === target))) {
@@ -806,11 +944,13 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
           return prev;
         }
         pushHistory(prev);
+        const targetNode = prev.nodes.find((n) => n.id === target);
+        const initialMode = targetNode?.kind === 'queue_consumer' ? 'async_enqueue' : 'sync_call';
         const newEdge: TopologyEdge = {
           id,
           source,
           target,
-          mode: 'sync_call',
+          mode: initialMode,
           policy: defaultEdgePolicy,
         };
         const nextSourcePorts = sourcePort
@@ -830,10 +970,11 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
           selectedNodeIds: [],
         };
         triggerValidation(next);
+        emitLocalOp('create_edge', { edge: newEdge });
         return next;
       });
     },
-    [pushHistory, triggerValidation],
+    [emitLocalOp, pushHistory, triggerValidation],
   );
 
   const reconnectEdge = useCallback(
@@ -853,17 +994,29 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
         const edgesWithoutOld = prev.edges.filter((e) => e.id !== edgeId);
 
         // Check if an edge between these two nodes already exists (different from the one being reconnected)
-        if (newId !== edgeId && edgesWithoutOld.some((e) => e.source === newSource && e.target === newTarget)) {
+        if (
+          newId !== edgeId &&
+          edgesWithoutOld.some((e) => e.source === newSource && e.target === newTarget)
+        ) {
           return prev;
         }
 
         pushHistory(prev);
+
+        const targetNode = prev.nodes.find((n) => n.id === newTarget);
+        const resolvedMode =
+          targetNode?.kind === 'queue_consumer'
+            ? ('async_enqueue' as const)
+            : existing.mode === 'async_enqueue'
+              ? ('sync_call' as const)
+              : existing.mode;
 
         const updatedEdge: TopologyEdge = {
           ...existing,
           id: newId,
           source: newSource,
           target: newTarget,
+          mode: resolvedMode,
         };
 
         const nextControlPoints = Object.fromEntries(
@@ -925,25 +1078,30 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
           selectedEdgeId: prev.selectedEdgeId === edgeId ? null : prev.selectedEdgeId,
         };
         triggerValidation(next);
+        emitLocalOp('delete_edge', { edgeId });
         return next;
       });
     },
-    [pushHistory, triggerValidation],
+    [emitLocalOp, pushHistory, triggerValidation],
   );
 
-  const updateEdgeControlPoint = useCallback((edgeId: EdgeId, point: CanvasPosition | null) => {
-    setBoard((prev) => {
-      const remaining = Object.fromEntries(
-        Object.entries(prev.edgeControlPoints ?? {}).filter(([k]) => k !== edgeId),
-      );
-      const nextControlPoints = point === null ? remaining : { ...remaining, [edgeId]: point };
-      return {
-        ...prev,
-        isDirty: true,
-        edgeControlPoints: nextControlPoints,
-      };
-    });
-  }, []);
+  const updateEdgeControlPoint = useCallback(
+    (edgeId: EdgeId, point: CanvasPosition | null) => {
+      setBoard((prev) => {
+        const remaining = Object.fromEntries(
+          Object.entries(prev.edgeControlPoints ?? {}).filter(([k]) => k !== edgeId),
+        );
+        const nextControlPoints = point === null ? remaining : { ...remaining, [edgeId]: point };
+        return {
+          ...prev,
+          isDirty: true,
+          edgeControlPoints: nextControlPoints,
+        };
+      });
+      emitLocalOp('move_edge_control_point', { edgeId, point });
+    },
+    [emitLocalOp],
+  );
 
   useEffect(() => {
     return () => {
@@ -952,6 +1110,138 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
       }
     };
   }, []);
+
+  const applyRemoteCanvasOp = useCallback(
+    (rawOp: unknown) => {
+      if (!rawOp || typeof rawOp !== 'object') return;
+      const opData = rawOp as {
+        op: string;
+        payload: any;
+        opId?: string;
+        operations?: any[];
+      };
+
+      if (Array.isArray(opData.operations)) {
+        for (const singleOp of opData.operations) {
+          applyRemoteCanvasOp(singleOp);
+        }
+        return;
+      }
+
+      if (opData.opId) {
+        if (seenRemoteOpIdsRef.current.has(opData.opId)) return;
+        seenRemoteOpIdsRef.current.add(opData.opId);
+        if (seenRemoteOpIdsRef.current.size > 2000) {
+          const first = seenRemoteOpIdsRef.current.values().next().value;
+          if (first) seenRemoteOpIdsRef.current.delete(first);
+        }
+      }
+
+      isRemoteApplyingRef.current = true;
+      try {
+        if (opData.op === 'create_node' && opData.payload?.node) {
+          setBoard((prev) => {
+            if (prev.nodes.some((n) => n.id === opData.payload.node.id)) return prev;
+            const next = {
+              ...prev,
+              nodes: [...prev.nodes, opData.payload.node],
+            };
+            triggerValidation(next);
+            return next;
+          });
+        } else if (opData.op === 'delete_node' && opData.payload?.nodeId) {
+          setBoard((prev) => {
+            const remainingEdges = prev.edges.filter(
+              (e) => e.source !== opData.payload.nodeId && e.target !== opData.payload.nodeId,
+            );
+            const next = {
+              ...prev,
+              nodes: prev.nodes.filter((n) => n.id !== opData.payload.nodeId),
+              edges: remainingEdges,
+              selectedNodeId:
+                prev.selectedNodeId === opData.payload.nodeId ? null : prev.selectedNodeId,
+              selectedNodeIds: (prev.selectedNodeIds ?? []).filter(
+                (id) => id !== opData.payload.nodeId,
+              ),
+            };
+            triggerValidation(next);
+            return next;
+          });
+        } else if (opData.op === 'move_node' && opData.payload?.nodeId) {
+          setBoard((prev) => ({
+            ...prev,
+            nodes: prev.nodes.map((n) =>
+              n.id === opData.payload.nodeId
+                ? { ...n, position: { x: opData.payload.x, y: opData.payload.y } }
+                : n,
+            ),
+          }));
+        } else if (opData.op === 'update_node' && opData.payload?.nodeId && opData.payload?.patch) {
+          setBoard((prev) => {
+            const next = {
+              ...prev,
+              nodes: prev.nodes.map((n) =>
+                n.id === opData.payload.nodeId ? { ...n, ...opData.payload.patch } : n,
+              ),
+            };
+            triggerValidation(next);
+            return next;
+          });
+        } else if (opData.op === 'create_edge' && opData.payload?.edge) {
+          setBoard((prev) => {
+            if (prev.edges.some((e) => e.id === opData.payload.edge.id)) return prev;
+            const next = {
+              ...prev,
+              edges: [...prev.edges, opData.payload.edge],
+            };
+            triggerValidation(next);
+            return next;
+          });
+        } else if (opData.op === 'delete_edge' && opData.payload?.edgeId) {
+          setBoard((prev) => {
+            const next = {
+              ...prev,
+              edges: prev.edges.filter((e) => e.id !== opData.payload.edgeId),
+              selectedEdgeId:
+                prev.selectedEdgeId === opData.payload.edgeId ? null : prev.selectedEdgeId,
+            };
+            triggerValidation(next);
+            return next;
+          });
+        } else if (
+          opData.op === 'update_edge' &&
+          opData.payload?.edgeId &&
+          opData.payload?.policy
+        ) {
+          setBoard((prev) => {
+            const next = {
+              ...prev,
+              edges: prev.edges.map((e) =>
+                e.id === opData.payload.edgeId ? { ...e, policy: opData.payload.policy } : e,
+              ),
+            };
+            triggerValidation(next);
+            return next;
+          });
+        } else if (opData.op === 'move_edge_control_point' && opData.payload?.edgeId) {
+          setBoard((prev) => {
+            const edgeId = opData.payload.edgeId;
+            const point = opData.payload.point as CanvasPosition | null;
+            const remaining = Object.fromEntries(
+              Object.entries(prev.edgeControlPoints ?? {}).filter(([k]) => k !== edgeId),
+            );
+            return {
+              ...prev,
+              edgeControlPoints: point === null ? remaining : { ...remaining, [edgeId]: point },
+            };
+          });
+        }
+      } finally {
+        isRemoteApplyingRef.current = false;
+      }
+    },
+    [triggerValidation],
+  );
 
   return {
     board,
@@ -964,6 +1254,7 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
     selectEdge,
     setEntryNode,
     updateNode,
+    updateEdge,
     updateEdgePolicy,
     addNode,
     duplicateNode,
@@ -982,5 +1273,6 @@ export function useBoardState(initialTopology: Topology | null, api: ApiClient) 
     undo,
     redo,
     recordActionBeforeChange,
+    applyRemoteCanvasOp,
   };
 }

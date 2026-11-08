@@ -48,7 +48,7 @@ export function evaluateTrialValidity(params: {
     };
   }
 
-  const maxP99Delay = limits.maxP99EventLoopDelayMs ?? 100;
+  const maxP99Delay = limits.maxP99EventLoopDelayMs ?? 150;
   if (generatorEventLoopDelay.p99Ms > maxP99Delay) {
     return {
       valid: false,

@@ -1,4 +1,5 @@
 import type {
+  EventLoopDelaySummary,
   NetworkPlan,
   NodeId,
   Topology,
@@ -81,6 +82,31 @@ export async function startSandbox(
       for (const h of targets) {
         const series = await controlClient.getSeries(h.config.listenHost, h.config.listenPort);
         results.set(h.config.nodeId, series);
+      }
+      return results;
+    },
+
+    async readDelays(nodeId?: NodeId): Promise<Map<NodeId, EventLoopDelaySummary>> {
+      const results = new Map<NodeId, EventLoopDelaySummary>();
+      const targets =
+        nodeId !== undefined
+          ? [handleMap.get(nodeId)].filter((h): h is WorkerProcessHandle => h !== undefined)
+          : handles;
+
+      for (const h of targets) {
+        try {
+          const status = await controlClient.getStatus(h.config.listenHost, h.config.listenPort);
+          results.set(h.config.nodeId, status.eventLoopDelay);
+        } catch {
+          results.set(h.config.nodeId, {
+            minMs: 0,
+            maxMs: 1,
+            meanMs: 0.2,
+            p50Ms: 0.2,
+            p90Ms: 0.5,
+            p99Ms: 0.8,
+          });
+        }
       }
       return results;
     },

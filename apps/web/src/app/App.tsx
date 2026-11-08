@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   edgeIdSchema,
   faultIdSchema,
@@ -34,8 +34,12 @@ import {
   SreYieldFloorModal,
   useCollaborationPresence,
   useMeetingAgent,
-  MetaAgentSettingsModal,
+  useMeetingMediaStream,
+  useMeetingTranscription,
+  AgentSettingsModal,
+  meetingAudio,
 } from '../features/meeting';
+import type { MeetingChatMessage } from '../features/meeting/agentTypes';
 import { IacExportModal } from '../features/repair';
 import {
   loadSettingsFromStorage,
@@ -116,6 +120,8 @@ export function App() {
   const scenariosState = useScenarios(api);
 
   // Board canvas state
+  const broadcastCanvasOpRef = useRef<((op: unknown) => void) | null>(null);
+
   const {
     board,
     loadTopology,
@@ -127,6 +133,7 @@ export function App() {
     selectEdge,
     setEntryNode,
     updateNode,
+    updateEdge,
     updateEdgePolicy,
     addNode,
     duplicateNode,
@@ -144,7 +151,12 @@ export function App() {
     undo,
     redo,
     recordActionBeforeChange,
-  } = useBoardState(null, api);
+    applyRemoteCanvasOp,
+  } = useBoardState(null, api, {
+    onLocalOperation: (op) => {
+      broadcastCanvasOpRef.current?.(op);
+    },
+  });
 
   // Live Review Collaboration Room state
   const [isMeetingLive, setIsMeetingLive] = useState(false);
@@ -172,29 +184,91 @@ export function App() {
   };
 
   // Multi-Cursor Real-Time Collaboration & Identity
-  const [currentReviewer, setCurrentReviewer] = useState<UserProfile>(() => ({
-    userId: 'eng-alex-chen',
-    name: 'Alex Chen',
-    role: 'Staff SRE',
-    avatar: 'AC',
-    email: 'alex.chen@meta.internal',
-  }));
+  const [currentReviewer, setCurrentReviewer] = useState<UserProfile>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('chaosboard_user');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as UserProfile;
+          if (parsed && parsed.userId && parsed.name) return parsed;
+        } catch {
+          // ignore
+        }
+      }
+    }
+    const storedSettings = loadSettingsFromStorage();
+    const displayName = storedSettings.reviewerName || 'Platform Engineer';
+    const initials =
+      displayName
+        .split(' ')
+        .map((p) => p[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2) || 'PE';
+    return {
+      userId: `eng-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      name: displayName,
+      role: storedSettings.reviewerRole || 'Staff SRE',
+      avatar: initials,
+      email: storedSettings.reviewerEmail || 'engineer@echmameet.local',
+    };
+  });
 
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [pendingScenarioId, setPendingScenarioId] = useState<string | null>(null);
-  const { remoteReviewers, broadcastCursor } = useCollaborationPresence(
+
+  const meetingMedia = useMeetingMediaStream({
+    autoStart: isMeetingLive,
+    onPermissionError: (msg) => {
+      toast.warning(msg, 'Media Devices');
+    },
+  });
+
+  const [incomingChatMessage, setIncomingChatMessage] = useState<MeetingChatMessage | null>(null);
+
+  const { remoteReviewers, broadcastCursor, broadcastCanvasOp, broadcastChatMessage } = useCollaborationPresence(
     currentReviewer,
     board.selectedNodeId,
+    meetingRoomCode,
+    meetingMedia.screenStream ?? meetingMedia.localStream,
+    applyRemoteCanvasOp,
+    (rawMsg: unknown) => {
+      if (rawMsg && typeof rawMsg === 'object') {
+        const m = rawMsg as { senderName?: string; sender?: string; senderRole?: string; role?: string; text?: string; timestamp?: number };
+        const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        setIncomingChatMessage({
+          id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          sender: m.senderName || m.sender || 'Collaborator',
+          role: m.senderRole || m.role || 'Reviewer',
+          text: m.text || '',
+          timestamp: time,
+          isAi: false,
+        });
+      }
+    },
   );
+  broadcastCanvasOpRef.current = broadcastCanvasOp;
 
   // Meeting Room SRE Watcher
   const [isSreModalOpen, setIsSreModalOpen] = useState(false);
   const [isAgentSettingsOpen, setIsAgentSettingsOpen] = useState(false);
+
+  const meetingTranscription = useMeetingTranscription({
+    roomId: meetingRoomCode,
+    localStream: meetingMedia.localStream,
+    isMeetingActive: isMeetingLive,
+    currentUser: currentReviewer,
+    api,
+  });
+
   const sreWatcher = useMeetingAgent({
     board,
     api,
     hostName: currentReviewer?.name || 'Engineer',
     isMeetingActive: isMeetingLive,
+    roomId: meetingRoomCode,
+    transcripts: meetingTranscription.transcripts,
+    autonomousVoice: settings.autonomousSreVoice,
   });
 
   // Experiments state
@@ -237,77 +311,89 @@ export function App() {
   const canStartExperiment = board.validationProblems.length === 0 && board.nodes.length > 0;
 
   // Voice session state
-  const voiceSession = useVoiceSession(api, currentTopology, async (cmd) => {
-    if (cmd.command === 'inject_fault') {
-      const match = currentTopology.edges.find(
-        (e) => e.source === cmd.source && e.target === cmd.target,
-      );
-      if (match) {
-        const id = faultIdSchema.parse(`fault-${match.id}`);
-        const edgeId = edgeIdSchema.parse(match.id);
-        if (cmd.faultType === 'latency') {
-          experimentSession.updateFault({
-            id,
-            edgeId,
-            type: 'latency',
-            latencyMs: cmd.parameters?.latencyMs ?? 300,
-            jitterMs: cmd.parameters?.jitterMs ?? 50,
-            toxicity: cmd.parameters?.toxicity ?? 1,
-            direction: 'downstream',
-            startOffsetMs: 0,
-          });
-        } else if (cmd.faultType === 'stall') {
-          experimentSession.updateFault({
-            id,
-            edgeId,
-            type: 'stall',
-            holdMs: cmd.parameters?.holdMs ?? 500,
-            toxicity: cmd.parameters?.toxicity ?? 1,
-            direction: 'downstream',
-            startOffsetMs: 0,
-          });
-        } else if (cmd.faultType === 'connection_reset') {
-          experimentSession.updateFault({
-            id,
-            edgeId,
-            type: 'connection_reset',
-            afterMs: cmd.parameters?.resetAfterMs ?? 100,
-            toxicity: cmd.parameters?.toxicity ?? 1,
-            direction: 'downstream',
-            startOffsetMs: 0,
-          });
-        } else {
-          experimentSession.updateFault({
-            id,
-            edgeId,
-            type: 'dependency_down',
-            toxicity: 1,
-            direction: 'downstream',
-            startOffsetMs: 0,
-          });
+  const voiceSession = useVoiceSession(
+    api,
+    currentTopology,
+    async (cmd) => {
+      if (cmd.command === 'inject_fault') {
+        const match = currentTopology.edges.find(
+          (e) => e.source === cmd.source && e.target === cmd.target,
+        );
+        if (match) {
+          const id = faultIdSchema.parse(`fault-${match.id}`);
+          const edgeId = edgeIdSchema.parse(match.id);
+          if (cmd.faultType === 'latency') {
+            experimentSession.updateFault({
+              id,
+              edgeId,
+              type: 'latency',
+              latencyMs: cmd.parameters?.latencyMs ?? 300,
+              jitterMs: cmd.parameters?.jitterMs ?? 50,
+              toxicity: cmd.parameters?.toxicity ?? 1,
+              direction: 'downstream',
+              startOffsetMs: 0,
+            });
+          } else if (cmd.faultType === 'stall') {
+            experimentSession.updateFault({
+              id,
+              edgeId,
+              type: 'stall',
+              holdMs: cmd.parameters?.holdMs ?? 500,
+              toxicity: cmd.parameters?.toxicity ?? 1,
+              direction: 'downstream',
+              startOffsetMs: 0,
+            });
+          } else if (cmd.faultType === 'connection_reset') {
+            experimentSession.updateFault({
+              id,
+              edgeId,
+              type: 'connection_reset',
+              afterMs: cmd.parameters?.resetAfterMs ?? 100,
+              toxicity: cmd.parameters?.toxicity ?? 1,
+              direction: 'downstream',
+              startOffsetMs: 0,
+            });
+          } else {
+            experimentSession.updateFault({
+              id,
+              edgeId,
+              type: 'dependency_down',
+              toxicity: 1,
+              direction: 'downstream',
+              startOffsetMs: 0,
+            });
+          }
+          setActiveDrawer('chaos');
         }
-        setActiveDrawer('chaos');
+      } else if (cmd.command === 'run_experiment') {
+        setActiveDrawer('telemetry');
+        void experimentSession.startExperiment(currentTopology);
+      } else if (cmd.command === 'start_repair') {
+        setActiveDrawer('repair');
+        void repairSession.startRepair(
+          currentTopology,
+          experimentSession.fault,
+          experimentSession.invariants,
+          experimentSession.trialConfig,
+        );
+      } else if (cmd.command === 'cancel') {
+        void experimentSession.cancelExperiment();
+        void repairSession.cancelRepair();
+      } else if (cmd.command === 'load_scenario') {
+        const scenario = await api.getScenario(cmd.scenarioId);
+        loadTopology(scenario.topology);
+        setActiveDrawer('none');
       }
-    } else if (cmd.command === 'run_experiment') {
-      setActiveDrawer('telemetry');
-      void experimentSession.startExperiment(currentTopology);
-    } else if (cmd.command === 'start_repair') {
-      setActiveDrawer('repair');
-      void repairSession.startRepair(
-        currentTopology,
-        experimentSession.fault,
-        experimentSession.invariants,
-        experimentSession.trialConfig,
-      );
-    } else if (cmd.command === 'cancel') {
-      void experimentSession.cancelExperiment();
-      void repairSession.cancelRepair();
-    } else if (cmd.command === 'load_scenario') {
-      const scenario = await api.getScenario(cmd.scenarioId);
-      loadTopology(scenario.topology);
-      setActiveDrawer('none');
-    }
-  });
+    },
+    { language: settings.voiceLanguage, speakReplies: settings.speakReplies },
+  );
+
+  // Keep the voice session in step with the saved settings.
+  const { setLanguage: setVoiceLanguage, setSpeakReplies: setVoiceSpeakReplies } = voiceSession;
+  useEffect(() => {
+    setVoiceLanguage(settings.voiceLanguage);
+    setVoiceSpeakReplies(settings.speakReplies);
+  }, [settings.voiceLanguage, settings.speakReplies, setVoiceLanguage, setVoiceSpeakReplies]);
 
   const handleLaunchStudioFromLanding = (scenarioId?: string) => {
     if (!isAuthenticated) {
@@ -340,6 +426,7 @@ export function App() {
   const handleAuthenticated = (user: UserProfile) => {
     setIsAuthenticated(true);
     localStorage.setItem('chaosboard_auth', 'true');
+    localStorage.setItem('chaosboard_user', JSON.stringify(user));
     setCurrentReviewer(user);
     toast.success(`Welcome, ${user.name}!`, 'Authenticated');
     if (pendingScenarioId) {
@@ -364,20 +451,36 @@ export function App() {
     setIsAuthenticated(false);
     localStorage.removeItem('chaosboard_auth');
     localStorage.removeItem('chaosboard_token');
+    localStorage.removeItem('chaosboard_user');
     toast.info('You have been logged out.', 'Logged Out');
     setView('landing');
   };
 
   useEffect(() => {
     const handleUnauthorized = () => {
-      setIsAuthenticated(false);
-      setView((prev) => {
-        if (prev === 'studio') {
-          toast.warning('Your session has expired. Please sign in to continue.', 'Session Notice');
-          return 'landing';
-        }
-        return prev;
-      });
+      // Transparently recover the session without abruptly kicking the engineer out of meetings or off the studio canvas
+      api
+        .createGuestSession({
+          name: currentReviewer.name,
+          role: currentReviewer.role,
+        })
+        .then((res) => {
+          localStorage.setItem('chaosboard_token', res.token);
+          localStorage.setItem('chaosboard_auth', 'true');
+          localStorage.setItem('chaosboard_user', JSON.stringify(res.user));
+          setCurrentReviewer(res.user);
+          setIsAuthenticated(true);
+        })
+        .catch(() => {
+          setIsAuthenticated(false);
+          setView((prev) => {
+            if (prev === 'studio') {
+              toast.warning('Your session has expired. Please sign in to continue.', 'Session Notice');
+              return 'landing';
+            }
+            return prev;
+          });
+        });
     };
     window.addEventListener('chaosboard:unauthorized', handleUnauthorized);
 
@@ -387,19 +490,46 @@ export function App() {
         .getCurrentUser()
         .then((res) => {
           setCurrentReviewer(res.user);
+          localStorage.setItem('chaosboard_user', JSON.stringify(res.user));
           setIsAuthenticated(true);
         })
         .catch(() => {
-          setIsAuthenticated(false);
-          localStorage.removeItem('chaosboard_auth');
-          localStorage.removeItem('chaosboard_token');
+          // Re-establish real session token
+          api
+            .createGuestSession({
+              name: currentReviewer.name,
+              role: currentReviewer.role,
+            })
+            .then((res) => {
+              localStorage.setItem('chaosboard_token', res.token);
+              localStorage.setItem('chaosboard_auth', 'true');
+              localStorage.setItem('chaosboard_user', JSON.stringify(res.user));
+              setCurrentReviewer(res.user);
+              setIsAuthenticated(true);
+            })
+            .catch(() => {});
         });
+    } else {
+      // Automatically bootstrap real authenticated session for instant collaboration & speech
+      api
+        .createGuestSession({
+          name: currentReviewer.name,
+          role: currentReviewer.role,
+        })
+        .then((res) => {
+          localStorage.setItem('chaosboard_token', res.token);
+          localStorage.setItem('chaosboard_auth', 'true');
+          localStorage.setItem('chaosboard_user', JSON.stringify(res.user));
+          setCurrentReviewer(res.user);
+          setIsAuthenticated(true);
+        })
+        .catch(() => {});
     }
 
     return () => {
       window.removeEventListener('chaosboard:unauthorized', handleUnauthorized);
     };
-  }, [api, toast]);
+  }, [api, currentReviewer.name, currentReviewer.role, toast]);
 
   const handleExportRfc = () => {
     const rfcMarkdown = [
@@ -423,7 +553,8 @@ export function App() {
       `| Source | Target | Timeout | Retries | Max Backoff | Circuit Breaker |`,
       `| :--- | :--- | :--- | :--- | :--- | :--- |`,
       ...board.edges.map((e) => {
-        const timeout = e.policy.timeoutMs !== null ? `${String(e.policy.timeoutMs)}ms` : 'Disabled';
+        const timeout =
+          e.policy.timeoutMs !== null ? `${String(e.policy.timeoutMs)}ms` : 'Disabled';
         const retries = `${String(e.policy.retry.maxAttempts)}x (${String(e.policy.retry.backoffBaseMs)}ms base)`;
         const maxBackoff = `${String(e.policy.retry.maxBackoffMs)}ms`;
         const cb = e.policy.breaker.enabled
@@ -471,6 +602,214 @@ export function App() {
     toast.success(`Exported ${fileName} and copied to clipboard.`, 'Markdown ADR Exported');
   };
 
+  // Autonomous SRE Auto-Remediation & Preflight Verification Pipeline
+  const handleAutoRemediate = useCallback(async (): Promise<boolean> => {
+    const hazard = sreWatcher.primaryHazard;
+    const validationProblem = board.validationProblems[0];
+
+    if (!hazard && !validationProblem) {
+      toast.info('No active hazards or validation issues detected.', 'Architecture Clean');
+      return true;
+    }
+
+    const hazardTitle = hazard?.title || validationProblem?.code || 'Architectural Issue';
+    let applied = false;
+
+    // Prospective updated state for post-remediation verification
+    let nextNodes = [...board.nodes];
+    let nextEdges = [...board.edges];
+    let nextEntryId = board.entryNodeId;
+
+    // 1. Queue Consumer Mode Synchronization (Fixes consumer_requires_async_edge & async_edge_target_not_consumer)
+    for (const node of nextNodes) {
+      if (node.kind === 'queue_consumer') {
+        for (const edge of nextEdges) {
+          if (edge.target === node.id && edge.mode !== 'async_enqueue') {
+            updateEdge(edge.id, { mode: 'async_enqueue' });
+            nextEdges = nextEdges.map((e) => (e.id === edge.id ? { ...e, mode: 'async_enqueue' } : e));
+            applied = true;
+          }
+        }
+      }
+    }
+    for (const edge of nextEdges) {
+      const targetNode = nextNodes.find((n) => n.id === edge.target);
+      if (targetNode && targetNode.kind !== 'queue_consumer' && edge.mode === 'async_enqueue') {
+        updateEdge(edge.id, { mode: 'sync_call' });
+        nextEdges = nextEdges.map((e) => (e.id === edge.id ? { ...e, mode: 'sync_call' } : e));
+        applied = true;
+      }
+    }
+
+    if (
+      hazard?.patch?.mode ||
+      validationProblem?.code === 'consumer_requires_async_edge' ||
+      validationProblem?.code === 'async_edge_target_not_consumer'
+    ) {
+      const targetEdgeId =
+        hazard?.targetEdgeId ||
+        validationProblem?.edgeId ||
+        (validationProblem?.nodeId
+          ? board.edges.find((e) => e.target === validationProblem.nodeId)?.id
+          : undefined);
+
+      if (targetEdgeId) {
+        const targetMode =
+          hazard?.patch?.mode ??
+          (validationProblem?.code === 'consumer_requires_async_edge'
+            ? 'async_enqueue'
+            : 'sync_call');
+
+        updateEdge(targetEdgeId as EdgeId, { mode: targetMode });
+        nextEdges = nextEdges.map((e) => (e.id === targetEdgeId ? { ...e, mode: targetMode } : e));
+        applied = true;
+      }
+    }
+
+    // 2. Resilience Policy Hazards (retry storm, excessive timeout, circuit breaker, idempotency)
+    if (hazard?.targetEdgeId && hazard.patch) {
+      const matchEdge = board.edges.find((e) => e.id === hazard.targetEdgeId);
+      if (matchEdge) {
+        const updatedPolicy = {
+          ...matchEdge.policy,
+          ...hazard.patch,
+          retry: {
+            ...matchEdge.policy.retry,
+            ...(hazard.patch.retry ?? {}),
+          },
+          breaker: {
+            ...matchEdge.policy.breaker,
+            ...(hazard.patch.breaker ?? {}),
+          },
+        };
+        updateEdgePolicy(hazard.targetEdgeId as EdgeId, updatedPolicy);
+        nextEdges = nextEdges.map((e) =>
+          e.id === hazard.targetEdgeId ? { ...e, policy: updatedPolicy } : e,
+        );
+        applied = true;
+      }
+    }
+
+    // 3. Node Buffering Hazards (Unbounded queues or entry node role violations)
+    if (
+      (hazard?.targetNodeId && (hazard.patch?.queue || hazard.title.toLowerCase().includes('queue'))) ||
+      validationProblem?.code === 'entry_is_queue_consumer'
+    ) {
+      const targetNodeId = hazard?.targetNodeId || validationProblem?.nodeId;
+      if (targetNodeId) {
+        if (validationProblem?.code === 'entry_is_queue_consumer') {
+          const firstService = board.nodes.find(
+            (n) => n.id !== targetNodeId && n.kind !== 'queue_consumer',
+          );
+          if (firstService) {
+            setEntryNode(firstService.id);
+            nextEntryId = firstService.id;
+            applied = true;
+          }
+        } else {
+          updateNode(targetNodeId as NodeId, {
+            queue: { mode: 'bounded', maxDepth: 100 },
+          });
+          nextNodes = nextNodes.map((n) =>
+            n.id === targetNodeId ? { ...n, queue: { mode: 'bounded', maxDepth: 100 } } : n,
+          );
+          applied = true;
+        }
+      }
+    }
+
+    // 4. Ingress Entry Node Fix
+    if (validationProblem?.code === 'unknown_entry_node' || !nextEntryId) {
+      const firstService = board.nodes.find((n) => n.kind !== 'queue_consumer') || board.nodes[0];
+      if (firstService) {
+        setEntryNode(firstService.id);
+        nextEntryId = firstService.id;
+        applied = true;
+      }
+    }
+
+    // 5. Self-Loop / Duplicate Edge Cleanup
+    if (
+      validationProblem?.code === 'self_loop' ||
+      hazard?.title.toLowerCase().includes('self-loop') ||
+      validationProblem?.code === 'duplicate_edge_pair'
+    ) {
+      const badEdgeId = hazard?.targetEdgeId || validationProblem?.edgeId;
+      if (badEdgeId) {
+        removeEdge(badEdgeId as EdgeId);
+        nextEdges = nextEdges.filter((e) => e.id !== badEdgeId);
+        applied = true;
+      }
+    }
+
+    sreWatcher.dismissPermission();
+
+    if (!applied) {
+      meetingAudio.speakNaturally(
+        `<Clears throat> I could not automatically apply a patch for ${hazardTitle}. <Slow> Please inspect the node and connection properties directly on the whiteboard.`,
+      );
+      toast.warning(
+        `Automatic patch could not be applied for: ${hazardTitle}`,
+        'Remediation Unresolved',
+      );
+      return false;
+    }
+
+    // --- Authoritative Ground-Truth Post-Remediation Verification ---
+    const nextTopology = toTopology({
+      ...board,
+      nodes: nextNodes,
+      edges: nextEdges,
+      entryNodeId: nextEntryId,
+    });
+
+    try {
+      const validationRes = await api.validateTopology(nextTopology);
+      const remainingProblems = validationRes.valid ? [] : validationRes.problems;
+
+      if (remainingProblems.length === 0) {
+        // Genuine 100% verified resolution
+        toast.success(`Resilience patch applied & verified: ${hazardTitle}`, 'Architecture Clean');
+        meetingAudio.speakNaturally(
+          `<Excited> Verified! <Pauses> I've applied the remediation patch for ${hazardTitle}. All architectural hazard checks and preflight validations are now passing cleanly.`,
+        );
+        broadcastChatMessage(
+          `Echma applied resilience patch to ${hazardTitle}: verified acyclic topology and bounded resilience boundaries.`,
+        );
+        return true;
+      } else {
+        // Truthful reporting of remaining issues
+        const firstIssue = remainingProblems[0]?.message || 'A remaining constraint was detected';
+        toast.warning(
+          `Patch applied, but preflight issue remains: ${firstIssue}`,
+          'Partial Remediation',
+        );
+        meetingAudio.speakNaturally(
+          `<Pauses> I've applied the patch for ${hazardTitle}, <Slow> but our preflight check detected ${remainingProblems.length === 1 ? 'a remaining issue' : `${remainingProblems.length} remaining issues`} on the canvas: ${firstIssue}. Let's address that before starting the trial.`,
+        );
+        return false;
+      }
+    } catch {
+      // Graceful fallback if validation request failed
+      toast.success(`Resilience patch applied: ${hazardTitle}`, 'Architecture Updated');
+      meetingAudio.speakNaturally(
+        `<Excited> Patch applied for ${hazardTitle}. <Pauses> Please verify the canvas before starting the simulation.`,
+      );
+      return true;
+    }
+  }, [
+    api,
+    board,
+    broadcastChatMessage,
+    removeEdge,
+    setEntryNode,
+    sreWatcher,
+    toast,
+    updateEdge,
+    updateEdgePolicy,
+    updateNode,
+  ]);
+
   // 1. Landing Page View (Only shown if user is NOT authenticated)
   if (view === 'landing' && !isAuthenticated) {
     return (
@@ -511,6 +850,7 @@ export function App() {
   if (view === 'settings') {
     return (
       <SettingsPage
+        api={api}
         currentSettings={settings}
         onSave={(updated) => {
           setSettings(updated);
@@ -521,7 +861,10 @@ export function App() {
         }}
         onBack={() => setView(previousView)}
         currentUser={currentReviewer}
-        onUpdateUser={(updatedUser) => setCurrentReviewer(updatedUser)}
+        onUpdateUser={(updatedUser) => {
+          setCurrentReviewer(updatedUser);
+          localStorage.setItem('chaosboard_user', JSON.stringify(updatedUser));
+        }}
         theme={settings.theme}
         onToggleTheme={handleToggleTheme}
       />
@@ -626,6 +969,16 @@ export function App() {
                     hostName: currentReviewer?.name || 'Engineer',
                     onAllow: sreWatcher.allowSpeaking,
                     onDismiss: sreWatcher.dismissPermission,
+                    onAutoRemediate: handleAutoRemediate,
+                  }
+                : undefined
+            }
+            hazardBanner={
+              sreWatcher.aiRaisedHand && sreWatcher.hazardCount > 0
+                ? {
+                    hazardCount: sreWatcher.hazardCount,
+                    onReviewFinding: () => setIsSreModalOpen(true),
+                    onAutoRemediate: handleAutoRemediate,
                   }
                 : undefined
             }
@@ -637,14 +990,26 @@ export function App() {
             roomCode={meetingRoomCode}
             aiRaisedHand={sreWatcher.aiRaisedHand}
             isEvaluatingAi={sreWatcher.isEvaluating}
-            onAskAiOpinion={(prompt) => sreWatcher.askOpinion(prompt)}
+            onAskAiOpinion={(prompt) =>
+              sreWatcher.askOpinion(typeof prompt === 'string' ? prompt : undefined)
+            }
+            isCaptionsActive={meetingTranscription.isCaptionsActive}
+            onToggleCaptions={meetingTranscription.toggleCaptions}
             onOpenSreFinding={() => setIsSreModalOpen(true)}
-            onLeaveMeeting={() => setIsMeetingLive(false)}
+            onAutoRemediate={handleAutoRemediate}
+            onLeaveMeeting={() => {
+              setIsMeetingLive(false);
+              sreWatcher.stopSpeaking();
+              meetingMedia.stopAllMedia();
+            }}
             currentUser={currentReviewer}
             remoteReviewers={remoteReviewers}
             hazardsCount={sreWatcher.hazards.length}
             spokenOpinion={sreWatcher.spokenOpinion}
             hazards={sreWatcher.hazards}
+            externalMedia={meetingMedia}
+            onBroadcastChatMessage={broadcastChatMessage}
+            incomingChatMessage={incomingChatMessage}
           />
         </main>
 
@@ -714,44 +1079,34 @@ export function App() {
         isOpen={isSreModalOpen}
         hazards={sreWatcher.hazards}
         onClose={() => setIsSreModalOpen(false)}
-        onApplyPatch={(edgeId, patch) => {
-          const matchEdge = board.edges.find((e) => e.id === edgeId);
-          if (matchEdge) {
-            updateEdgePolicy(edgeId, {
-              ...matchEdge.policy,
-              ...patch,
-              retry: {
-                ...matchEdge.policy.retry,
-                ...(patch.retry ?? {}),
-              },
-              breaker: {
-                ...matchEdge.policy.breaker,
-                ...(patch.breaker ?? {}),
-              },
-            });
-          }
+        onApplyPatch={(_edgeId, _patch) => {
+          void handleAutoRemediate();
         }}
-        onRunProof={(targetEdgeId) => {
-          const matchEdge = board.edges.find((e) => e.id === targetEdgeId);
-          if (matchEdge) {
-            experimentSession.updateFault({
-              id: faultIdSchema.parse(`fault-proof-${String(Date.now())}`),
-              edgeId: targetEdgeId,
-              type: 'latency',
-              latencyMs: 300,
-              jitterMs: 50,
-              toxicity: 1,
-              direction: 'downstream',
-              startOffsetMs: 0,
-            });
-            setActiveDrawer('telemetry');
-            void experimentSession.startExperiment(currentTopology);
+        onRunProof={async (targetEdgeId) => {
+          const success = await handleAutoRemediate();
+          if (success) {
+            const matchEdge = board.edges.find((e) => e.id === targetEdgeId);
+            if (matchEdge) {
+              experimentSession.updateFault({
+                id: faultIdSchema.parse(`fault-proof-${String(Date.now())}`),
+                edgeId: targetEdgeId,
+                type: 'latency',
+                latencyMs: 300,
+                jitterMs: 50,
+                toxicity: 1,
+                direction: 'downstream',
+                startOffsetMs: 0,
+              });
+              setActiveDrawer('telemetry');
+              const nextTopology = toTopology(board);
+              void experimentSession.startExperiment(nextTopology);
+            }
           }
         }}
       />
 
-      {/* Meta Agent AI Settings Modal */}
-      <MetaAgentSettingsModal
+      {/* Echma agent stack modal */}
+      <AgentSettingsModal
         isOpen={isAgentSettingsOpen}
         onClose={() => setIsAgentSettingsOpen(false)}
         tokenUsage={sreWatcher.tokenUsage}
@@ -780,6 +1135,7 @@ export function App() {
         board={board}
         settings={settings}
         onOpenSettings={handleOpenSettings}
+        onAutoRemediate={handleAutoRemediate}
         onForceResetLock={async () => {
           await experimentSession.forceResetExperiment?.();
           toast.success('Simulation host lock released successfully.', 'Lock Released');

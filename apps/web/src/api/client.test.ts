@@ -153,14 +153,14 @@ describe('createApiClient', () => {
         name: 'Alex Chen',
         role: 'Staff SRE',
         avatar: 'AC',
-        email: 'alex.chen@meta.internal',
+        email: 'alex.chen@echmameet.dev',
       },
     };
     const client = createApiClient({
       fetchFn: answering(200, mockAuthResponse),
     });
     const res = await client.login({
-      email: 'alex.chen@meta.internal',
+      email: 'alex.chen@echmameet.dev',
       password: 'chaosboard123',
     });
     expect(res.token).toBe('cb_test_session_token_123');
@@ -175,11 +175,11 @@ describe('createApiClient', () => {
           name: 'Alex Chen',
           role: 'Staff SRE',
           avatar: 'AC',
-          email: 'alex.chen@meta.internal',
+          email: 'alex.chen@echmameet.dev',
         },
       }),
     });
     const res = await client.getCurrentUser();
-    expect(res.user.email).toBe('alex.chen@meta.internal');
+    expect(res.user.email).toBe('alex.chen@echmameet.dev');
   });
 });

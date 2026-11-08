@@ -21,6 +21,8 @@ import { IterationTimeline, RepairControls, TradeOffCard } from '../../features/
 import {
   ParsedCommandCard,
   PushToTalkButton,
+  VoiceControls,
+  VoiceAnalyticsCard,
   VoiceQuickCommands,
   VoiceTranscriptStream,
 } from '../../features/voice';
@@ -297,6 +299,19 @@ export function StudioDrawers({
           <>
             {voiceSession.error && <Alert variant="error">{voiceSession.error}</Alert>}
 
+            <VoiceControls
+              language={voiceSession.language}
+              onLanguageChange={voiceSession.setLanguage}
+              speakReplies={voiceSession.speakReplies}
+              onToggleSpeakReplies={voiceSession.toggleSpeakReplies}
+              liveStatus={voiceSession.liveStatus}
+              onStartLive={() => {
+                void voiceSession.startLive();
+              }}
+              onStopLive={voiceSession.stopLive}
+              isSpeaking={voiceSession.isSpeaking}
+            />
+
             <PushToTalkButton
               isRecording={voiceSession.isRecording}
               isProcessing={voiceSession.isProcessing}
@@ -315,6 +330,8 @@ export function StudioDrawers({
               isProcessing={voiceSession.isProcessing}
               timings={voiceSession.timings}
             />
+
+            <VoiceAnalyticsCard api={api} refreshKey={voiceSession.parseResult?.transcript ?? ''} />
 
             <VoiceQuickCommands
               onSelectPhrase={(phrase) => {

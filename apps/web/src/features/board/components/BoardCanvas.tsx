@@ -64,12 +64,22 @@ export interface BoardCanvasProps {
   readonly onUpdateEdgeControlPoint?: (edgeId: EdgeId, point: CanvasPosition | null) => void;
   readonly hazardEdgeId?: EdgeId | null;
   readonly hazardNodeId?: NodeId | null;
-  readonly echmaSpeakingRequest?: {
-    readonly isRequested: boolean;
-    readonly hostName: string;
-    readonly onAllow: () => void;
-    readonly onDismiss: () => void;
-  } | undefined;
+  readonly echmaSpeakingRequest?:
+    | {
+        readonly isRequested: boolean;
+        readonly hostName: string;
+        readonly onAllow: () => void;
+        readonly onDismiss: () => void;
+        readonly onAutoRemediate?: (() => void) | undefined;
+      }
+    | undefined;
+  readonly hazardBanner?:
+    | {
+        readonly hazardCount: number;
+        readonly onReviewFinding: () => void;
+        readonly onAutoRemediate?: (() => void) | undefined;
+      }
+    | undefined;
 }
 
 function pointsToSmoothPath(points: readonly CanvasPosition[]): string {
@@ -177,6 +187,7 @@ export function BoardCanvas({
   hazardEdgeId,
   hazardNodeId,
   echmaSpeakingRequest,
+  hazardBanner,
 }: BoardCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -259,7 +270,9 @@ export function BoardCanvas({
   const [connectingTarget, setConnectingTarget] = useState<NodeId | null>(null);
   const [reconnectingEdgeId, setReconnectingEdgeId] = useState<EdgeId | null>(null);
   const [reconnectingSide, setReconnectingSide] = useState<'source' | 'target'>('target');
-  const [connectingPort, setConnectingPort] = useState<'top' | 'right' | 'bottom' | 'left'>('right');
+  const [connectingPort, setConnectingPort] = useState<'top' | 'right' | 'bottom' | 'left'>(
+    'right',
+  );
   const [connectingCursor, setConnectingCursor] = useState<{ x: number; y: number } | null>(null);
   const connectStartPosRef = useRef<{ clientX: number; clientY: number } | null>(null);
   const hasMovedWireRef = useRef(false);
@@ -477,11 +490,7 @@ export function BoardCanvas({
   };
 
   // Start reconnecting / detaching an existing edge source dot
-  const handleStartReconnectSource = (
-    edgeId: EdgeId,
-    targetId: NodeId,
-    e: ReactMouseEvent,
-  ) => {
+  const handleStartReconnectSource = (edgeId: EdgeId, targetId: NodeId, e: ReactMouseEvent) => {
     e.stopPropagation();
     setConnectingSource(null);
     setConnectingTarget(targetId);
@@ -494,11 +503,7 @@ export function BoardCanvas({
   };
 
   // Start reconnecting / detaching an existing edge arrowhead
-  const handleStartReconnectTarget = (
-    edgeId: EdgeId,
-    sourceId: NodeId,
-    e: ReactMouseEvent,
-  ) => {
+  const handleStartReconnectTarget = (edgeId: EdgeId, sourceId: NodeId, e: ReactMouseEvent) => {
     e.stopPropagation();
     setConnectingSource(sourceId);
     setConnectingTarget(null);
@@ -515,7 +520,11 @@ export function BoardCanvas({
     if (reconnectingEdgeId && onReconnectEdge) {
       if (reconnectingSide === 'source' && connectingTarget && connectingTarget !== targetId) {
         onReconnectEdge(reconnectingEdgeId, targetId, connectingTarget, targetPort, undefined);
-      } else if (reconnectingSide === 'target' && connectingSource && connectingSource !== targetId) {
+      } else if (
+        reconnectingSide === 'target' &&
+        connectingSource &&
+        connectingSource !== targetId
+      ) {
         onReconnectEdge(reconnectingEdgeId, connectingSource, targetId, undefined, targetPort);
       }
     } else if (connectingSource && connectingSource !== targetId) {
@@ -1127,10 +1136,38 @@ export function BoardCanvas({
                 type="button"
                 className="echma-badge-allow-btn"
                 onClick={echmaSpeakingRequest.onAllow}
-                title="Allow Echma to speak on architectural hazard"
+                title="Hear Echma speak her findings"
               >
-                Allow
+                Listen
               </button>
+              {echmaSpeakingRequest.onAutoRemediate && (
+                <button
+                  type="button"
+                  className="echma-badge-heal-btn"
+                  onClick={echmaSpeakingRequest.onAutoRemediate}
+                  title="Apply recommended resilience policy directly to the architecture"
+                  style={{
+                    background: '#0284c7',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    marginLeft: '4px',
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <path d="m9 12 2 2 4-4" />
+                  </svg>
+                  Remediate Policy
+                </button>
+              )}
               <button
                 type="button"
                 className="echma-badge-dismiss-btn"
@@ -1144,6 +1181,38 @@ export function BoardCanvas({
           </div>
         )}
       </div>
+
+      {/* 1.1 Architectural Hazard Alert Banner (Positioned directly below draw tools in whiteboard) */}
+      {hazardBanner && hazardBanner.hazardCount > 0 && (
+        <div className="canvas-hazard-banner" role="alert" aria-live="assertive">
+          <span className="canvas-hazard-dot" />
+          <span className="canvas-hazard-text">
+            Echma flagged {hazardBanner.hazardCount} architectural hazard{hazardBanner.hazardCount > 1 ? 's' : ''}.
+          </span>
+          <button
+            type="button"
+            className="canvas-hazard-review-btn"
+            onClick={hazardBanner.onReviewFinding}
+            title="Inspect hazard details and blast radius analysis"
+          >
+            Review Finding
+          </button>
+          {hazardBanner.onAutoRemediate && (
+            <button
+              type="button"
+              className="canvas-hazard-remediate-btn"
+              onClick={hazardBanner.onAutoRemediate}
+              title="Apply recommended resilience policy directly to the architecture"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              Remediate
+            </button>
+          )}
+        </div>
+      )}
 
       {/* 2. Floating Zoom Controls */}
       <div className="canvas-zoom-dock" role="toolbar" aria-label="Canvas zoom controls">
@@ -1217,6 +1286,17 @@ export function BoardCanvas({
             orient="auto-start-reverse"
           >
             <path d="M 0 1.5 L 7.5 5 L 0 8.5 Z" fill="var(--color-accent)" />
+          </marker>
+          <marker
+            id="arrow-hazard"
+            viewBox="0 0 10 10"
+            refX="7.5"
+            refY="5"
+            markerWidth="7.5"
+            markerHeight="7.5"
+            orient="auto-start-reverse"
+          >
+            <path d="M 0 1.5 L 7.5 5 L 0 8.5 Z" fill="#ff1744" />
           </marker>
         </defs>
 
@@ -1379,7 +1459,9 @@ export function BoardCanvas({
           )}
 
           {/* Layer F: Remote Reviewer Cursors (Figma Presence) */}
-          {remoteCursors.map((rc) => (
+          {remoteCursors
+            .filter((rc) => rc.cursor && rc.cursor.x > 0 && rc.cursor.y > 0)
+            .map((rc) => (
             <g
               key={rc.userId}
               transform={`translate(${String(rc.cursor.x)}, ${String(rc.cursor.y)})`}

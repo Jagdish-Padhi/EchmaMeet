@@ -52,8 +52,7 @@ const POLICY_RECOMMENDATIONS: Record<FailureRootCause, string> = {
     'Set strict bounded upstream timeout (e.g., 500ms) to unpin worker threads before cascade propagates.',
   UNBOUNDED_QUEUE:
     'Configure bounded queue capacity with drop-tail or drop-head backpressure policy.',
-  NON_IDEMPOTENT_RETRY:
-    'Enforce idempotency keys and deduplication cache on mutating endpoints.',
+  NON_IDEMPOTENT_RETRY: 'Enforce idempotency keys and deduplication cache on mutating endpoints.',
   OVERSENSITIVE_BREAKER:
     'Relax circuit breaker sensitivity: increase failure threshold percentage and expand observation window.',
   AVAILABILITY_TRADEOFF:

@@ -41,12 +41,12 @@ export function RepairControls({
             disabled={isRunning}
             onChange={(e) => onProposerChange(e.target.value as RepairProposerKind)}
           >
-            <option value="model">Partner Model Agent (Meta Llama 3.3 / Muse)</option>
+            <option value="model">Model Agent (ML diagnosis, Gnani Evon when configured)</option>
             <option value="rule_based">Deterministic SRE Rules (Local Heuristic)</option>
           </select>
           <span className="field-help-text">
             {proposerKind === 'model'
-              ? 'LLM agent evaluates simulation traces and proposes targeted policy patches (timeouts, retries, circuit breakers).'
+              ? 'The model agent reads measured simulation traces and proposes targeted policy patches (timeouts, retries, circuit breakers). Without an LLM it uses the trained random-forest diagnosis.'
               : 'Deterministic expert rules analyze queue depths and latency spikes without model inference.'}
           </span>
         </label>
@@ -63,7 +63,8 @@ export function RepairControls({
             onChange={(e) => onMaxIterationsChange(parseInt(e.target.value, 10) || 3)}
           />
           <span className="field-help-text">
-            Stops as soon as all invariants pass or search space reaches {String(maxIterations)} iterations.
+            Stops as soon as all invariants pass or search space reaches {String(maxIterations)}{' '}
+            iterations.
           </span>
         </label>
 
@@ -78,7 +79,11 @@ export function RepairControls({
               disabled={!canStart}
               onClick={onStart}
               className="btn-full-width"
-              title={!canStart ? 'Resolve topology incompatibilities before running repair' : 'Start autonomous repair loop'}
+              title={
+                !canStart
+                  ? 'Resolve topology incompatibilities before running repair'
+                  : 'Start autonomous repair loop'
+              }
             >
               Start Autonomous Repair Loop
             </Button>

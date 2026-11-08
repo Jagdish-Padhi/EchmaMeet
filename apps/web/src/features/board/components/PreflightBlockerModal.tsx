@@ -78,10 +78,19 @@ export function PreflightBlockerModal({
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <div>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 600, color: '#f87171' }}>
+            <h4
+              style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 600, color: '#f87171' }}
+            >
               Simulation Cannot Dispatch
             </h4>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-dim)', lineHeight: 1.5 }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: '13px',
+                color: 'var(--color-text-dim)',
+                lineHeight: 1.5,
+              }}
+            >
               {hasMissingNodes
                 ? 'Your canvas is empty. Chaos simulation requires at least one ingress service and downstream connection.'
                 : isSingleNode
@@ -93,7 +102,15 @@ export function PreflightBlockerModal({
 
         {problems.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span
+              style={{
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--color-text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
               Structural Incompatibilities ({problems.length})
             </span>
             <div
@@ -170,4 +187,3 @@ export function PreflightBlockerModal({
     </Modal>
   );
 }
-

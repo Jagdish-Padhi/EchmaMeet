@@ -46,7 +46,7 @@ describe('IterationTimeline component', () => {
         decisionReason: 'p99 latency improved by 77% with zero increase in error rate.',
         modelCallMetadata: {
           provider: 'openai-compatible',
-          modelId: 'meta-models/muse-spark-open-1026',
+          modelId: 'gnani-evon-v3.3',
           promptVersion: 'repair-v1',
           latencyMs: 420,
           tokenCounts: { promptTokens: 300, completionTokens: 120 },

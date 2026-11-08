@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import {
   runIdSchema,
-  type EventLoopDelaySummary,
   type LoadgenConfig,
   type RunEvent,
   type RunEventType,
@@ -19,7 +18,7 @@ class CancelledError extends Error {
   }
 }
 import type { ExperimentLock } from '../domain/experiment-lock';
-import { validateTopologyInput } from '../../topology/application/validate-topology';
+import { validateTopologyInput } from '../../topology';
 import type {
   ChaosPort,
   EventBroadcasterPort,
@@ -52,7 +51,7 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
 
   start(request: StartExperimentRequest): Promise<RunId> {
     // 0. Preflight Architecture Validation: Reject invalid or incomplete topologies before acquiring host lock
-    if (!request.topology || !request.topology.nodes || request.topology.nodes.length === 0) {
+    if (request.topology.nodes.length === 0) {
       throw new AppError(
         'validation',
         'topology_empty',
@@ -204,8 +203,6 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
       trials: request.trialConfig.trials,
     });
 
-    let terminalEvent: { type: RunEventType; payload: Record<string, unknown> } | null = null;
-
     try {
       const plan = this.sandbox.allocateNetworkPlan(request.topology, {
         baseNodePort: 24000,
@@ -249,18 +246,6 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
       }
       const edgeIds = request.topology.edges.map((e) => e.id);
 
-      const baselineDelays = new Map<string, EventLoopDelaySummary>();
-      for (const [nodeId] of sandbox.configs) {
-        baselineDelays.set(nodeId, {
-          minMs: 0,
-          maxMs: 1,
-          meanMs: 0.2,
-          p50Ms: 0.2,
-          p90Ms: 0.5,
-          p99Ms: 0.8,
-        });
-      }
-
       // --- 1. Baseline Trials ---
       const baselineTrials: TrialResult[] = [];
       for (let i = 0; i < request.trialConfig.trials; i += 1) {
@@ -292,6 +277,7 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
 
         const endCounters = await sandbox.readCounters();
         const series = await sandbox.readSeries();
+        const baselineDelays = await sandbox.readDelays();
 
         const trial = this.measurement.buildTrialResult({
           trialIndex: i,
@@ -305,6 +291,8 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
           edgeIds,
           loadgenSummary: loadResult.summary,
         });
+
+        await sandbox.resetCounters();
 
         this.runs.appendTrial(runId, 'baseline', trial);
         baselineTrials.push(trial);
@@ -373,6 +361,7 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
 
         const endCounters = await sandbox.readCounters();
         const series = await sandbox.readSeries();
+        const faultedDelays = await sandbox.readDelays();
 
         const trial = this.measurement.buildTrialResult({
           trialIndex: i,
@@ -381,11 +370,13 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
           startCounters,
           endCounters,
           workerSeries: series,
-          workerEventLoopDelays: baselineDelays,
+          workerEventLoopDelays: faultedDelays,
           nodeMaxWorkers,
           edgeIds,
           loadgenSummary: loadResult.summary,
         });
+
+        await sandbox.resetCounters();
 
         this.runs.appendTrial(runId, 'faulted', trial);
         faultedTrials.push(trial);
@@ -421,6 +412,15 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
 
       const overallStatus = this.measurement.computeOverallStatus(verdicts);
 
+      emit('experiment_finished', {
+        overallStatus,
+        verdicts: verdicts.map((v) => ({
+          invariantId: v.invariantId,
+          status: v.status,
+          reason: v.reason,
+        })),
+      });
+
       this.runs.updateRunStatus(runId, 'completed', {
         finishedAt: new Date().toISOString(),
         baselineAggregate,
@@ -428,35 +428,23 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
         verdicts,
         overallStatus,
       });
-
-      terminalEvent = {
-        type: 'experiment_finished',
-        payload: {
-          overallStatus,
-          verdicts: verdicts.map((v) => ({
-            invariantId: v.invariantId,
-            status: v.status,
-            reason: v.reason,
-          })),
-        },
-      };
     } catch (err: unknown) {
       const isCancelled = exec.isCancelled() || err instanceof CancelledError;
 
       const finishedAt = new Date().toISOString();
       if (isCancelled) {
+        emit('experiment_cancelled', { reason: 'User cancellation' });
         this.runs.updateRunStatus(runId, 'cancelled', {
           finishedAt,
           errorMessage: 'Experiment was cancelled by user.',
         });
-        terminalEvent = { type: 'experiment_cancelled', payload: { reason: 'User cancellation' } };
       } else {
         const errorMsg = err instanceof Error ? err.message : String(err);
+        emit('experiment_failed', { error: errorMsg });
         this.runs.updateRunStatus(runId, 'failed', {
           finishedAt,
           errorMessage: errorMsg,
         });
-        terminalEvent = { type: 'experiment_failed', payload: { error: errorMsg } };
       }
     } finally {
       if (exec.activeLoadgen && exec.activeLoadgen.isRunning()) {
@@ -468,10 +456,6 @@ export class ExperimentOrchestrator implements ExperimentOrchestratorPort {
       }
       this.lock.release(runId);
       this.activeExecutions.delete(runId);
-
-      if (terminalEvent) {
-        emit(terminalEvent.type, terminalEvent.payload);
-      }
     }
   }
 }

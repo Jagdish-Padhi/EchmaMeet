@@ -15,7 +15,7 @@ export function registerExperimentRoutes(
     return reply.status(201).send({ runId });
   });
 
-  app.get('/api/experiments/:id', async (request) => {
+  app.get('/api/experiments/:id', (request) => {
     const params = request.params as { id: string };
     const runId = runIdSchema.parse(params.id);
     const run = runs.getRun(runId);

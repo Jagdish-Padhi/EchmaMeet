@@ -70,6 +70,33 @@ export function describeFailure(failure: ApiFailure): string {
   }
 }
 
+export const voiceAnalyticsSchema = z.object({
+  backend: z.enum(['postgres', 'memory']),
+  total: z.number(),
+  byLanguage: z.array(z.object({ language: z.string(), count: z.number() })),
+  byStatus: z.array(z.object({ status: z.string(), count: z.number() })),
+  byCommand: z.array(z.object({ command: z.string(), count: z.number() })),
+  sttLatencyMs: z.object({ p50: z.number(), p95: z.number() }).nullable(),
+  successRatePct: z.number().nullable(),
+});
+export type VoiceAnalytics = {
+  backend: 'postgres' | 'memory';
+  total: number;
+  byLanguage: { language: string; count: number }[];
+  byStatus: { status: string; count: number }[];
+  byCommand: { command: string; count: number }[];
+  sttLatencyMs: { p50: number; p95: number } | null;
+  successRatePct: number | null;
+};
+
+export const gnaniHealthSchema = z.object({
+  status: z.enum(['configured', 'unconfigured']),
+  speechToText: z.object({ provider: z.string(), model: z.string(), enabled: z.boolean() }),
+  textToSpeech: z.object({ provider: z.string(), model: z.string(), enabled: z.boolean() }),
+  message: z.string(),
+});
+export type GnaniHealth = z.infer<typeof gnaniHealthSchema>;
+
 export interface ApiClientOptions {
   /** Empty means same origin, which is what both development (proxy) and production use. */
   readonly baseUrl?: string;
@@ -131,6 +158,10 @@ export type AuthConfigResponse = z.infer<typeof authConfigResponseSchema>;
 
 export interface ApiClient {
   getHealth(signal?: AbortSignal): Promise<HealthResponse>;
+  createGuestSession(
+    payload?: { name?: string; role?: string },
+    signal?: AbortSignal,
+  ): Promise<AuthSessionResponse>;
   login(
     payload: { email: string; password: string },
     signal?: AbortSignal,
@@ -146,7 +177,7 @@ export interface ApiClient {
   ): Promise<AuthSessionResponse>;
   sso(
     payload: {
-      provider: 'google' | 'github' | 'meta';
+      provider: 'google' | 'github';
       profile: {
         email: string;
         name: string;
@@ -224,27 +255,92 @@ export interface ApiClient {
       transcript?: string | undefined;
       audioBase64?: string | undefined;
       audioDurationMs?: number | undefined;
+      /** `indic-auto` or BCP-47 codes such as `hi-IN,en-IN`. */
+      language?: string | undefined;
+      speakReply?: boolean | undefined;
       nodes: readonly { id: string; label: string }[];
       edges: readonly { id: string; source: string; target: string }[];
     },
     signal?: AbortSignal,
   ): Promise<VoiceIntentParseResult>;
+  getVoiceAnalytics(signal?: AbortSignal): Promise<VoiceAnalytics>;
+  getGnaniHealth(signal?: AbortSignal): Promise<GnaniHealth>;
+  synthesizeSpeech(
+    body: {
+      text: string;
+      language: string;
+      voice?: string | undefined;
+      speed?: number | undefined;
+    },
+    signal?: AbortSignal,
+  ): Promise<Blob>;
   getReportMarkdown(runId: RunId, signal?: AbortSignal): Promise<string>;
   getReportJson(runId: RunId, signal?: AbortSignal): Promise<ReportExport>;
   getReportDiagramSvg(runId: RunId, signal?: AbortSignal): Promise<string>;
   getBlueprintCard(runId: RunId, signal?: AbortSignal): Promise<BlueprintCard>;
+  sendMeetingTranscriptChunk(
+    roomId: string,
+    body: {
+      chunkId: string;
+      audioBase64: string;
+      speakerId: string;
+      speakerName: string;
+      timestampMs: number;
+      recordingConsent: boolean;
+    },
+    signal?: AbortSignal,
+  ): Promise<{
+    id: string;
+    text: string;
+    speakerName?: string | undefined;
+    timestampMs?: number | undefined;
+    latencyMs?: number | undefined;
+  }>;
+  getMeetingTranscripts(
+    roomId: string,
+    signal?: AbortSignal,
+  ): Promise<{
+    roomId: string;
+    segments: readonly {
+      id: string;
+      roomId: string;
+      speakerId: string;
+      speakerName: string;
+      text: string;
+      timestampMs: number;
+      durationMs: number;
+    }[];
+  }>;
   getMeetingAiOpinion(
     body: {
       topology: unknown;
       hostName?: string | undefined;
       userPrompt?: string | undefined;
+      language?: string | undefined;
+      roomId?: string | undefined;
+      transcriptSegments?: readonly unknown[] | undefined;
+      experimentSummary?: unknown;
     },
     signal?: AbortSignal,
   ): Promise<{
     handRaised: boolean;
     spokenOpinion: string;
-    hazards: readonly any[];
-    tokenUsage?: { promptTokens?: number | undefined; completionTokens?: number | undefined; totalTokens?: number | undefined } | undefined;
+    identifiedRisk?: string | undefined;
+    supportingTranscriptReferences?: readonly unknown[] | undefined;
+    affectedNodeIds?: readonly string[] | undefined;
+    affectedEdgeIds?: readonly string[] | undefined;
+    facts?: readonly string[] | undefined;
+    assumptions?: readonly string[] | undefined;
+    confidence?: number | undefined;
+    proposedExperiment?: unknown;
+    hazards: readonly unknown[];
+    tokenUsage?:
+      | {
+          promptTokens?: number | undefined;
+          completionTokens?: number | undefined;
+          totalTokens?: number | undefined;
+        }
+      | undefined;
   }>;
 }
 
@@ -259,7 +355,13 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   async function request<T>(path: string, schema: ZodType<T>, init: RequestInit = {}): Promise<T> {
     let response: Response;
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('chaosboard_token') : null;
+      const token =
+        typeof window !== 'undefined'
+          ? (localStorage.getItem('chaosboard_token') ||
+             localStorage.getItem('chaosboard_auth_token') ||
+             sessionStorage.getItem('chaosboard_token') ||
+             sessionStorage.getItem('chaosboard_auth_token'))
+          : null;
       const headers: Record<string, string> = {
         ...(init.body !== undefined ? { 'content-type': 'application/json' } : {}),
         ...(token ? { authorization: `Bearer ${token}` } : {}),
@@ -282,11 +384,15 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
       });
     }
 
-    const isAuthPath = path.startsWith('/api/auth/');
+    const isExemptFromAuthKickout =
+      path.startsWith('/api/auth/') ||
+      path.startsWith('/api/rooms/') ||
+      path.startsWith('/api/meeting/') ||
+      path.startsWith('/api/gnani/');
     const hadToken =
       typeof window !== 'undefined' && Boolean(localStorage.getItem('chaosboard_token'));
 
-    if (response.status === 401 && !isAuthPath && hadToken && typeof window !== 'undefined') {
+    if (response.status === 401 && !isExemptFromAuthKickout && hadToken && typeof window !== 'undefined') {
       localStorage.removeItem('chaosboard_token');
       localStorage.removeItem('chaosboard_auth');
       window.dispatchEvent(new Event('chaosboard:unauthorized'));
@@ -410,6 +516,13 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
 
   return {
     getHealth: (signal) => request('/api/health', healthResponseSchema, withSignal('GET', signal)),
+
+    createGuestSession: (payload, signal) =>
+      request(
+        '/api/auth/session',
+        authSessionResponseSchema,
+        withSignal('POST', signal, JSON.stringify(payload ?? {})),
+      ),
 
     login: (payload, signal) =>
       request(
@@ -583,6 +696,37 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
         withSignal('POST', signal, JSON.stringify(body)),
       ),
 
+    getVoiceAnalytics: (signal) =>
+      request('/api/voice/analytics', voiceAnalyticsSchema, withSignal('GET', signal)),
+
+    getGnaniHealth: (signal) =>
+      request('/api/gnani/health', gnaniHealthSchema, withSignal('GET', signal)),
+
+    synthesizeSpeech: async (body, signal) => {
+      const token =
+        typeof window !== 'undefined'
+          ? (localStorage.getItem('chaosboard_token') ||
+             localStorage.getItem('chaosboard_auth_token') ||
+             sessionStorage.getItem('chaosboard_token') ||
+             sessionStorage.getItem('chaosboard_auth_token'))
+          : null;
+      const response = await fetchFn(`${baseUrl}/api/gnani/tts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+        ...(signal ? { signal } : {}),
+      });
+      if (!response.ok) {
+        const errText = await response.text().catch(() => '');
+        console.error('[ApiClient] /api/gnani/tts failed:', response.status, errText);
+        throw new Error(`Text-to-speech failed (${String(response.status)}): ${errText}`);
+      }
+      return response.blob();
+    },
+
     getReportMarkdown: (runId, signal) =>
       requestText(`/api/reports/${runId}/markdown`, withSignal('GET', signal)),
 
@@ -595,13 +739,54 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
     getBlueprintCard: (runId, signal) =>
       request(`/api/reports/${runId}/card`, blueprintCardSchema, withSignal('GET', signal)),
 
+    sendMeetingTranscriptChunk: (roomId, body, signal) =>
+      request(
+        `/api/rooms/${encodeURIComponent(roomId)}/transcript`,
+        z.object({
+          id: z.string(),
+          text: z.string(),
+          speakerName: z.string().optional(),
+          timestampMs: z.number().optional(),
+          latencyMs: z.number().optional(),
+        }),
+        withSignal('POST', signal, JSON.stringify(body)),
+      ),
+
+    getMeetingTranscripts: (roomId, signal) =>
+      request(
+        `/api/rooms/${encodeURIComponent(roomId)}/transcripts`,
+        z.object({
+          roomId: z.string(),
+          segments: z.array(
+            z.object({
+              id: z.string(),
+              roomId: z.string(),
+              speakerId: z.string(),
+              speakerName: z.string(),
+              text: z.string(),
+              timestampMs: z.number(),
+              durationMs: z.number(),
+            }),
+          ),
+        }),
+        withSignal('GET', signal),
+      ),
+
     getMeetingAiOpinion: (body, signal) =>
       request(
         '/api/meeting/ai-opinion',
-        z.object({
+        z.looseObject({
           handRaised: z.boolean(),
           spokenOpinion: z.string(),
-          hazards: z.array(z.any()),
+          identifiedRisk: z.string().optional(),
+          supportingTranscriptReferences: z.array(z.unknown()).optional(),
+          affectedNodeIds: z.array(z.string()).optional(),
+          affectedEdgeIds: z.array(z.string()).optional(),
+          facts: z.array(z.string()).optional(),
+          assumptions: z.array(z.string()).optional(),
+          confidence: z.number().optional(),
+          proposedExperiment: z.unknown().optional(),
+          hazards: z.array(z.unknown()),
           tokenUsage: z
             .object({
               promptTokens: z.number().optional(),

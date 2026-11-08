@@ -35,7 +35,9 @@ export function TradeOffCard({ report }: TradeOffCardProps) {
           </div>
           <div className="meta-stat">
             <span className="meta-label">Unsatisfied SLOs</span>
-            <span className={`meta-value ${report.unsatisfiedInvariants.length > 0 ? 'amber' : 'green'}`}>
+            <span
+              className={`meta-value ${report.unsatisfiedInvariants.length > 0 ? 'amber' : 'green'}`}
+            >
               {String(report.unsatisfiedInvariants.length)}
             </span>
           </div>

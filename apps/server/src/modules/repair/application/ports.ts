@@ -8,7 +8,7 @@ import type {
   StartRepairRequest,
   Topology,
 } from '@chaosboard/contracts';
-import type { ModelCallMetadata } from '../../meta-ai';
+import type { ModelCallMetadata } from '../../reasoning';
 
 export interface ProposeRepairParams {
   topology: Topology;
@@ -22,6 +22,7 @@ export interface ProposeRepairResult {
   patch: RepairPatch | null;
   rawOutput: string | null;
   metadata: ModelCallMetadata | null;
+  error?: string | null | undefined;
 }
 
 export interface RepairProposerPort {

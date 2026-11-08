@@ -1,5 +1,5 @@
 import { repairPatchSchema } from '@chaosboard/contracts';
-import type { ChatMessage, StructuredModelPort } from '../../../meta-ai';
+import type { ChatMessage, StructuredModelPort } from '../../../reasoning';
 import { buildTelemetrySummary } from '../../domain/summarizer';
 import type { ProposeRepairParams, ProposeRepairResult, RepairProposerPort } from '../ports';
 
@@ -38,12 +38,14 @@ export class ModelRepairProposer implements RepairProposerPort {
         patch: result.data,
         rawOutput: result.rawOutput,
         metadata: result.metadata,
+        error: null,
       };
-    } catch {
+    } catch (err) {
       return {
         patch: null,
         rawOutput: null,
         metadata: null,
+        error: err instanceof Error ? err.message : String(err),
       };
     }
   }
