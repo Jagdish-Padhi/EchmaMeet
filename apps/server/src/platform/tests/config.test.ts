@@ -18,7 +18,7 @@ describe('loadSettings', () => {
       gnaniBaseUrl: 'https://api.vachana.ai',
       gnaniSttModel: 'prisma-v3.0',
       gnaniTtsModel: 'timbre-v2.5',
-      gnaniTtsSampleRate: 24000,
+      gnaniTtsSampleRate: 48000,
       evonBaseUrl: '',
       evonApiKey: '',
       evonModelId: 'gnani-evon-v3.3',

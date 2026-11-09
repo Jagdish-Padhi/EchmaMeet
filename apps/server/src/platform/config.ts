@@ -14,7 +14,7 @@ const settingsSchema = z.strictObject({
   GNANI_BASE_URL: z.url().default('https://api.vachana.ai'),
   GNANI_STT_MODEL: z.enum(['prisma-v3.0', 'prisma-v2.5']).default('prisma-v3.0'),
   GNANI_TTS_MODEL: z.enum(['timbre-v2.5', 'timbre-v3.0']).default('timbre-v2.5'),
-  GNANI_TTS_SAMPLE_RATE: z.coerce.number().int().min(8000).max(48000).default(24000),
+  GNANI_TTS_SAMPLE_RATE: z.coerce.number().int().min(8000).max(48000).default(48000),
   EVON_BASE_URL: z.string().default(''),
   EVON_API_KEY: z.string().default(''),
   EVON_MODEL_ID: z.string().default('gnani-evon-v3.3'),

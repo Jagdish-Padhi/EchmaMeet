@@ -205,174 +205,129 @@ class MeetingAudioAlertService {
     }
   }
 
-  private playBuffer(fixedBuffer: ArrayBuffer, token: number): Promise<void> {
-    return new Promise<void>((resolve) => {
-      if (token !== this.speakToken) {
-        resolve();
-        return;
-      }
-
-      // Priority 1: Direct HTMLAudioElement bitstream playback (exact bitstream match with Gnani.ai demo)
-      try {
-        const fixedBlob = new Blob([fixedBuffer], { type: 'audio/wav' });
-        const url = URL.createObjectURL(fixedBlob);
-        const audio = new Audio(url);
-        audio.playbackRate = 1.0;
-        audio.volume = 1.0;
-        this.currentAudio = audio;
-
-        let finished = false;
-        const finish = (): void => {
-          if (finished) return;
-          finished = true;
-          URL.revokeObjectURL(url);
-          if (this.currentAudio === audio) this.currentAudio = null;
-          resolve();
-        };
-
-        audio.onended = finish;
-        audio.onerror = finish;
-
-        audio.play().catch(async (audioElementErr) => {
-          // If browser policy blocks autoplay on new Audio, fall through to Web Audio context
-          // eslint-disable-next-line no-console
-          console.info('[EchmaAudio] Direct audio playback deferred to Web Audio context:', audioElementErr);
-          await this.playViaWebAudio(fixedBuffer, token);
-          resolve();
-        });
-        return;
-      } catch {
-        // Fall back directly to Web Audio
-      }
-
-      // Priority 2: Web Audio context fallback
-      void this.playViaWebAudio(fixedBuffer, token).then(resolve);
-    });
-  }
-
-  private async playViaWebAudio(fixedBuffer: ArrayBuffer, token: number): Promise<void> {
-    const ctx = this.getContext();
-    if (!ctx || ctx.state === 'closed') return;
-    try {
-      if (ctx.state === 'suspended') {
-        await ctx.resume();
-      }
-      const audioBuffer = await ctx.decodeAudioData(fixedBuffer.slice(0));
-      if (token !== this.speakToken) return;
-
-      return new Promise<void>((resolve) => {
-        const source = ctx.createBufferSource();
-        source.buffer = audioBuffer;
-        source.playbackRate.value = 1.0;
-        source.connect(ctx.destination);
-        this.currentSource = source;
-        source.onended = () => {
-          if (this.currentSource === source) {
-            this.currentSource = null;
-          }
-          resolve();
-        };
-        source.start(0);
-      });
-    } catch (audioCtxErr) {
-      // eslint-disable-next-line no-console
-      console.warn('[EchmaAudio] Web Audio context decode failed:', audioCtxErr);
-    }
-  }
-
-  private async fetchChunk(
-    text: string,
-    voice: string,
-    synthesizer: Synthesizer,
-    token: number,
-  ): Promise<ArrayBuffer | null> {
-    const cacheKey = `${voice}:${text.toLowerCase().trim()}`;
-    const cached = this.audioCache.get(cacheKey);
-    if (cached) {
-      return cached.slice(0);
-    }
-
-    try {
-      const blob = await synthesizer(text, spokenLanguageFor(text), {
-        speed: 1.0,
-        voice,
-      });
-      if (token !== this.speakToken) return null;
-      const rawBuffer = await blob.arrayBuffer();
-      const fixedBuffer = fixWavHeader(rawBuffer);
-
-      if (this.audioCache.size >= MeetingAudioAlertService.MAX_CACHE_ENTRIES) {
-        const oldest = this.audioCache.keys().next().value;
-        if (oldest) this.audioCache.delete(oldest);
-      }
-      this.audioCache.set(cacheKey, fixedBuffer);
-      return fixedBuffer;
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('[EchmaAudio] Gnani neural TTS request failed for chunk:', err);
-      return null;
-    }
-  }
-
   /**
-   * Speaks naturally with enterprise-grade real-time streaming pipeline.
-   * Chunks multi-sentence paragraphs so speech starts playing in < 350ms,
-   * pre-fetching upcoming sentences concurrently with seamless zero-gap transitions.
+   * Speaks naturally with a warm, clear, authentic female voice.
+   * Priority 1: High-fidelity Web Audio playback of Gnani Timbre neural speech with zero autoplay block.
+   * Priority 2: HTMLAudioElement direct bitstream playback.
+   * Fallback: Native browser speech synthesis so voice never goes silent.
    */
   speakNaturally(text: string, onEnd?: () => void): void {
     if (typeof window === 'undefined') return;
     this.stopSpeaking();
     const token = ++this.speakToken;
-    const synthesizer = this.synthesizer;
-    if (!synthesizer) {
-      // eslint-disable-next-line no-console
-      console.warn('[EchmaAudio] Gnani neural speech synthesizer not connected yet.');
-      onEnd?.();
-      return;
-    }
     const cleanText = stripAudioTags(text);
     if (!cleanText) {
       onEnd?.();
       return;
     }
 
-    const sentences = splitSentences(cleanText);
+    const synthesizer = this.synthesizer;
+    if (!synthesizer) {
+      // eslint-disable-next-line no-console
+      console.warn('[EchmaAudio] Gnani neural synthesizer not set; using offline voice.');
+      this.speakWithOfflineVoice(cleanText, onEnd);
+      return;
+    }
+
     const voice = this.voiceOverride || 'Lakshmi';
+    const cacheKey = `${voice}:${cleanText.toLowerCase().trim()}`;
 
     void (async () => {
-      // Pipelined queue: start pre-fetching sentence 1 concurrently if multiple sentences exist
-      let nextFetchPromise =
-        sentences.length > 1
-          ? this.fetchChunk(sentences[1]!, voice, synthesizer, token)
-          : null;
+      try {
+        let fixedBuffer = this.audioCache.get(cacheKey);
 
-      const firstBuffer = await this.fetchChunk(sentences[0]!, voice, synthesizer, token);
-      if (token !== this.speakToken || !firstBuffer) {
-        onEnd?.();
-        return;
-      }
+        if (!fixedBuffer) {
+          const blob = await synthesizer(cleanText, spokenLanguageFor(cleanText), {
+            speed: 1.0,
+            voice,
+          });
+          if (token !== this.speakToken) return;
 
-      // Play first sentence immediately (ultra-fast Time-To-First-Audio < 350ms)
-      await this.playBuffer(firstBuffer, token);
+          const rawBuffer = await blob.arrayBuffer();
+          fixedBuffer = fixWavHeader(rawBuffer);
 
-      // Play subsequent sentences seamlessly
-      for (let i = 1; i < sentences.length; i++) {
-        if (token !== this.speakToken) break;
-
-        const currentBuffer = await nextFetchPromise;
-
-        // Kick off pre-fetch for the next sentence in background
-        if (i + 1 < sentences.length) {
-          nextFetchPromise = this.fetchChunk(sentences[i + 1]!, voice, synthesizer, token);
+          if (this.audioCache.size >= MeetingAudioAlertService.MAX_CACHE_ENTRIES) {
+            const oldest = this.audioCache.keys().next().value;
+            if (oldest) this.audioCache.delete(oldest);
+          }
+          this.audioCache.set(cacheKey, fixedBuffer);
         }
 
-        if (currentBuffer && token === this.speakToken) {
-          await this.playBuffer(currentBuffer, token);
-        }
-      }
+        if (token !== this.speakToken || !fixedBuffer) return;
 
-      if (token === this.speakToken) {
-        onEnd?.();
+        // Priority 1: Web Audio context (pre-warmed, lowest latency, zero autoplay block)
+        const ctx = this.getContext();
+        if (ctx && ctx.state !== 'closed') {
+          try {
+            if (ctx.state === 'suspended') {
+              await ctx.resume();
+            }
+            const audioBuffer = await ctx.decodeAudioData(fixedBuffer.slice(0));
+            if (token !== this.speakToken) return;
+
+            const source = ctx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.playbackRate.value = 1.0;
+            source.connect(ctx.destination);
+            this.currentSource = source;
+
+            source.onended = () => {
+              if (this.currentSource === source) {
+                this.currentSource = null;
+              }
+              if (token === this.speakToken) {
+                onEnd?.();
+              }
+            };
+
+            source.start(0);
+            return;
+          } catch (audioCtxErr) {
+            // eslint-disable-next-line no-console
+            console.warn('[EchmaAudio] Web Audio context decode failed, trying Audio element:', audioCtxErr);
+          }
+        }
+
+        // Priority 2: Direct HTMLAudioElement fallback
+        try {
+          const fixedBlob = new Blob([fixedBuffer], { type: 'audio/wav' });
+          const url = URL.createObjectURL(fixedBlob);
+          const audio = new Audio(url);
+          audio.playbackRate = 1.0;
+          audio.volume = 1.0;
+          this.currentAudio = audio;
+
+          let finished = false;
+          const finish = (): void => {
+            if (finished) return;
+            finished = true;
+            URL.revokeObjectURL(url);
+            if (this.currentAudio === audio) this.currentAudio = null;
+            if (token === this.speakToken) {
+              onEnd?.();
+            }
+          };
+
+          audio.onended = finish;
+          audio.onerror = finish;
+
+          await audio.play();
+          return;
+        } catch (audioElementErr) {
+          // eslint-disable-next-line no-console
+          console.warn('[EchmaAudio] Direct audio playback failed:', audioElementErr);
+        }
+
+        // Priority 3: Offline speech synthesis fallback
+        if (token === this.speakToken) {
+          this.speakWithOfflineVoice(cleanText, onEnd);
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[EchmaAudio] Gnani neural TTS request failed:', err);
+        if (token === this.speakToken) {
+          this.speakWithOfflineVoice(cleanText, onEnd);
+        }
       }
     })();
   }
