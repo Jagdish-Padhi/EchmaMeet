@@ -157,7 +157,9 @@ export function RunHistoryTable({
             return (
               <div key={r.id} className="run-vertical-card">
                 <div className="run-card-header">
-                  <span className="cell-mono run-id-text">{r.id}</span>
+                  <span className="cell-mono run-id-text" title={r.id}>
+                    run:{r.id.slice(0, 8)}
+                  </span>
                   <StatusPill
                     status={
                       r.overallStatus ?? (r.status === 'running' ? 'running' : 'INCONCLUSIVE')
@@ -214,7 +216,9 @@ export function RunHistoryTable({
 
                 return (
                   <tr key={r.id}>
-                    <td className="cell-mono">{r.id}</td>
+                    <td className="cell-mono" title={r.id}>
+                      run:{r.id.slice(0, 8)}
+                    </td>
                     <td>
                       <StatusPill
                         status={

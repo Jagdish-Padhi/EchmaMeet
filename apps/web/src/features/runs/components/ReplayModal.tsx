@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { RunEvent, RunId } from '@chaosboard/contracts';
 import { Button } from '../../../components/ui/Button';
 import { Modal } from '../../../components/ui/Modal';
@@ -9,97 +9,192 @@ export interface ReplayModalProps {
   readonly onClose: () => void;
 }
 
-export function ReplayModal({ runId, events, onClose }: ReplayModalProps) {
-  const [step, setStep] = useState(0);
-  const [showRawDetails, setShowRawDetails] = useState(false);
+function getEventBadgeClass(type: string): string {
+  if (type.includes('started') || type.includes('ready')) return 'replay-badge-info';
+  if (type.includes('fault')) return 'replay-badge-warn';
+  if (type.includes('finished') || type.includes('accepted')) return 'replay-badge-success';
+  if (type.includes('invalid') || type.includes('failed') || type.includes('rejected'))
+    return 'replay-badge-danger';
+  if (type.includes('repair') || type.includes('patch')) return 'replay-badge-optimizer';
+  return 'replay-badge-default';
+}
 
+function formatEventType(type: string): string {
+  return type
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export function ReplayModal({ events, onClose }: ReplayModalProps) {
+  const [step, setStep] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showJson, setShowJson] = useState(false);
+
+  const totalEvents = events.length;
   const currentEvent = events[step];
 
-  const renderPayloadSummary = (payload: unknown) => {
-    if (!payload || typeof payload !== 'object') {
-      return <div className="replay-empty-val">{String(payload ?? 'None')}</div>;
-    }
+  useEffect(() => {
+    if (!isPlaying) return;
+    const timer = setInterval(() => {
+      setStep((prev) => {
+        if (prev >= totalEvents - 1) {
+          setIsPlaying(false);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 750);
+    return () => clearInterval(timer);
+  }, [isPlaying, totalEvents]);
 
-    const entries = Object.entries(payload as Record<string, unknown>);
-    if (entries.length === 0) {
-      return <div className="replay-empty-val">No payload parameters attached.</div>;
-    }
-
+  if (totalEvents === 0 || !currentEvent) {
     return (
-      <div className="replay-fields-grid">
-        {entries.map(([key, val]) => (
-          <div key={key} className="replay-field-row">
-            <span className="replay-field-key">{key}:</span>
-            <span className="replay-field-value cell-mono">
-              {typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val)}
-            </span>
-          </div>
-        ))}
-      </div>
+      <Modal title="Execution Event Replay" isOpen={true} onClose={onClose} size="md">
+        <p className="replay-empty-message">No events recorded for this simulation.</p>
+      </Modal>
     );
-  };
+  }
+
+  const payloadEntries = currentEvent.payload
+    ? Object.entries(currentEvent.payload).filter(([k]) => k !== 'runId')
+    : [];
 
   return (
     <Modal
-      title={`Event Replay: ${runId}`}
+      title="Execution Event Replay"
       isOpen={true}
       onClose={onClose}
-      actions={
-        <div className="replay-controls">
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={step <= 0}
-            onClick={() => setStep((s) => Math.max(0, s - 1))}
-          >
-            Previous
-          </Button>
-          <span className="replay-step-counter">
-            Step {String(step + 1)} of {String(events.length)}
-          </span>
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={step >= events.length - 1}
-            onClick={() => setStep((s) => Math.min(events.length - 1, s + 1))}
-          >
-            Next
-          </Button>
-        </div>
-      }
+      size="lg"
+      className="replay-clean-modal"
     >
-      <div className="replay-content">
-        {currentEvent ? (
-          <div className="replay-event-card">
-            <div className="replay-event-header">
-              <span className="event-seq cell-mono">Step #{String(currentEvent.sequence)}</span>
-              <span className="event-type">{currentEvent.type}</span>
-              <span className="event-time cell-mono">+{String(currentEvent.timestampMs)}ms</span>
-            </div>
+      <div className="replay-clean-wrapper">
+        {/* Compact Player Control Bar */}
+        <div className="replay-player-bar">
+          <div className="player-controls">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={step <= 0}
+              onClick={() => {
+                setIsPlaying(false);
+                setStep((s) => Math.max(0, s - 1));
+              }}
+              title="Previous Event"
+            >
+              ◀
+            </Button>
+            <Button
+              variant={isPlaying ? 'danger' : 'primary'}
+              size="sm"
+              onClick={() => setIsPlaying((p) => !p)}
+              title={isPlaying ? 'Pause' : 'Play'}
+            >
+              {isPlaying ? '⏸ Pause' : '▶ Play'}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={step >= totalEvents - 1}
+              onClick={() => {
+                setIsPlaying(false);
+                setStep((s) => Math.min(totalEvents - 1, s + 1));
+              }}
+              title="Next Event"
+            >
+              ▶
+            </Button>
+          </div>
 
-            <div className="replay-structured-body">
-              <div className="replay-section-title">Execution Event Data</div>
-              {renderPayloadSummary(currentEvent.payload)}
-            </div>
-
-            <div className="replay-raw-toggle-wrap">
-              <button
-                type="button"
-                className="btn-replay-toggle"
-                onClick={() => setShowRawDetails((prev) => !prev)}
-              >
-                {showRawDetails ? 'Hide Technical JSON' : 'Show Technical JSON'}
-              </button>
-              {showRawDetails && (
-                <pre className="replay-payload cell-mono">
-                  {JSON.stringify(currentEvent.payload, null, 2)}
-                </pre>
-              )}
+          {/* Stepper scrubber */}
+          <div className="player-scrubber">
+            <input
+              type="range"
+              min={0}
+              max={totalEvents - 1}
+              value={step}
+              onChange={(e) => {
+                setIsPlaying(false);
+                setStep(Number(e.target.value));
+              }}
+              className="player-slider"
+              aria-label="Replay Timeline"
+            />
+            <div className="player-meta">
+              <span className="player-step-text">
+                Event <strong>{String(step + 1)}</strong> of <strong>{String(totalEvents)}</strong>
+              </span>
+              <span className="player-timestamp cell-mono">
+                +{((currentEvent.timestampMs ?? 0) / 1000).toFixed(2)}s
+              </span>
             </div>
           </div>
-        ) : (
-          <p className="state-message">No events recorded for this run.</p>
-        )}
+        </div>
+
+        {/* Horizontal Event Step Selector */}
+        <div className="replay-steps-ribbon" role="tablist">
+          {events.map((ev, idx) => (
+            <button
+              key={`${String(ev.sequence)}-${ev.type}`}
+              type="button"
+              className={`ribbon-step-btn ${idx === step ? 'active' : ''}`}
+              onClick={() => {
+                setIsPlaying(false);
+                setStep(idx);
+              }}
+              title={`Step ${String(idx + 1)}: ${ev.type}`}
+            >
+              #{String(idx + 1)}
+            </button>
+          ))}
+        </div>
+
+        {/* Active Event Card */}
+        <div className="replay-card">
+          <div className="replay-card-header">
+            <span className={`replay-badge ${getEventBadgeClass(currentEvent.type)}`}>
+              {formatEventType(currentEvent.type)}
+            </span>
+            <span className="replay-time-tag cell-mono">
+              T + {((currentEvent.timestampMs ?? 0) / 1000).toFixed(3)}s
+            </span>
+          </div>
+
+          {/* Structured Parameters */}
+          {payloadEntries.length > 0 ? (
+            <div className="replay-params-table-wrap">
+              <table className="replay-params-table">
+                <tbody>
+                  {payloadEntries.map(([key, val]) => (
+                    <tr key={key}>
+                      <td className="param-key-cell">{key}</td>
+                      <td className="param-val-cell cell-mono">
+                        {typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="replay-no-params">No dynamic parameters attached to this lifecycle transition.</div>
+          )}
+
+          {/* JSON Toggle */}
+          <div className="replay-json-toggle-wrap">
+            <button
+              type="button"
+              className="replay-json-toggle"
+              onClick={() => setShowJson((prev) => !prev)}
+            >
+              {showJson ? '▾ Hide Technical JSON' : '▸ View Raw Event JSON'}
+            </button>
+            {showJson && (
+              <pre className="replay-json-block cell-mono">
+                {JSON.stringify(currentEvent.payload, null, 2)}
+              </pre>
+            )}
+          </div>
+        </div>
       </div>
     </Modal>
   );

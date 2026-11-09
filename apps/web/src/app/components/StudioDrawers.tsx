@@ -477,6 +477,7 @@ export function StudioDrawers({
               <RunDetailView
                 record={runsHistory.selectedRunRecord}
                 onClose={runsHistory.closeDetail}
+                onReplay={runsHistory.startReplay}
               />
             )}
 

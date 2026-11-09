@@ -123,7 +123,7 @@ export function SimulationDiagnosticsModal({
             </Button>
           )}
 
-          {onOpenSettings && (
+          {(isApiKeyIssue || isAuthError) && onOpenSettings && (
             <Button
               variant="secondary"
               size="sm"

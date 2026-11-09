@@ -1,15 +1,28 @@
 import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from './Button';
 
 export interface ModalProps {
   readonly title: string;
+  readonly subtitle?: string;
   readonly isOpen: boolean;
   readonly onClose: () => void;
   readonly children: ReactNode;
   readonly actions?: ReactNode;
+  readonly size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  readonly className?: string;
 }
 
-export function Modal({ title, isOpen, onClose, children, actions }: ModalProps) {
+export function Modal({
+  title,
+  subtitle,
+  isOpen,
+  onClose,
+  children,
+  actions,
+  size,
+  className,
+}: ModalProps) {
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -21,11 +34,17 @@ export function Modal({ title, isOpen, onClose, children, actions }: ModalProps)
 
   if (!isOpen) return null;
 
-  return (
+  const sizeClass = size ? `modal-${size}` : '';
+  const customClass = className ? ` ${className}` : '';
+
+  const modalElement = (
     <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className={`modal-content ${sizeClass}${customClass}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2 className="modal-title">{title}</h2>
+          <div className="modal-title-wrap">
+            <h2 className="modal-title">{title}</h2>
+            {subtitle && <p className="modal-subtitle">{subtitle}</p>}
+          </div>
           <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close dialog">
             Close
           </Button>
@@ -35,4 +54,10 @@ export function Modal({ title, isOpen, onClose, children, actions }: ModalProps)
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined' && document.body) {
+    return createPortal(modalElement, document.body);
+  }
+
+  return modalElement;
 }
