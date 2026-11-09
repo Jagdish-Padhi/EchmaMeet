@@ -5017,17 +5017,25 @@ button.validation-target-chip:hover {
   text-transform: uppercase;
   color: var(--color-text-dim);
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .execution-kpi-cell .kpi-value {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--color-text);
   font-family: var(--font-mono);
+  white-space: nowrap;
 }
 
 .execution-kpi-cell .kpi-value.highlight {
   color: var(--color-accent);
+}
+
+.execution-kpi-cell .kpi-subtext {
+  font-size: 10px;
+  color: var(--color-text-dim);
+  white-space: nowrap;
 }
 
 .execution-completed-badge {

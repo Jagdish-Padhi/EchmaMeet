@@ -245,23 +245,22 @@ export function TrialProgressCard({
           <div className="execution-kpi-grid">
             <div className="execution-kpi-cell">
               <span className="kpi-label">Planned Trials</span>
-              <span className="kpi-value">
-                {String(totalTrials || 6)} ({String(Math.ceil((totalTrials || 6) / 2))} base /{' '}
-                {String(Math.floor((totalTrials || 6) / 2))} fault)
+              <span className="kpi-value">{String(totalTrials || 6)}</span>
+              <span className="kpi-subtext">
+                {String(Math.ceil((totalTrials || 6) / 2))} base · {String(Math.floor((totalTrials || 6) / 2))} fault
               </span>
             </div>
             <div className="execution-kpi-cell">
-              <span className="kpi-label">Configured Load</span>
+              <span className="kpi-label">Target Load</span>
               <span className="kpi-value">{String(config?.arrivalRateRps ?? 10)} RPS</span>
+              <span className="kpi-subtext">open-loop</span>
+            </div>
+            <div className="execution-kpi-cell">
+              <span className="kpi-label">Sample Window</span>
+              <span className="kpi-value">{((config?.measurementMs ?? 5000) / 1000).toFixed(1)}s</span>
+              <span className="kpi-subtext">per trial</span>
             </div>
           </div>
-          {onRetry && (
-            <div style={{ marginTop: '10px' }}>
-              <Button variant="primary" size="sm" onClick={onRetry} style={{ width: '100%' }}>
-                Start Simulation
-              </Button>
-            </div>
-          )}
         </div>
       )}
     </Card>
