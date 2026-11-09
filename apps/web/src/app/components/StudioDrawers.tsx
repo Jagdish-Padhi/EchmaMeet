@@ -414,7 +414,7 @@ export function StudioDrawers({
                     >
                       {runsHistory.runs.map((r: any) => (
                         <option key={r.id} value={r.id}>
-                          {r.id.slice(0, 16)}... ({r.topology.name})
+                          {r.id.slice(0, 16)}... ({r.topology?.name ?? r.topologyName ?? 'Run'})
                         </option>
                       ))}
                     </select>

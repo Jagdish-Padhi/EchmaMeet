@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import type { RunId, RunRecord } from '@chaosboard/contracts';
+import type { RunId, RunRecord, RunSummary } from '@chaosboard/contracts';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { StatusPill } from '../../../components/ui/StatusPill';
 
 export interface RunHistoryTableProps {
-  readonly runs: readonly RunRecord[];
+  readonly runs: readonly (RunRecord | RunSummary)[];
   readonly isLoading: boolean;
   readonly error?: string | null;
   readonly onRefresh: () => void;
@@ -14,6 +14,37 @@ export interface RunHistoryTableProps {
   readonly onReplay: (id: RunId) => void;
   readonly onExport: (id: RunId) => void;
   readonly hideTitle?: boolean;
+}
+
+function getTopologyName(r: RunRecord | RunSummary): string {
+  if ('topology' in r && r.topology && typeof r.topology === 'object' && 'name' in r.topology) {
+    return r.topology.name;
+  }
+  if ('topologyName' in r && r.topologyName) {
+    return r.topologyName;
+  }
+  return 'Topology';
+}
+
+function getFaultText(r: RunRecord | RunSummary): string {
+  if ('faults' in r && Array.isArray(r.faults) && r.faults.length > 0) {
+    const fault = r.faults[0];
+    return fault ? `${fault.type} (${fault.edgeId})` : 'None';
+  }
+  if ('faultCount' in r && typeof r.faultCount === 'number') {
+    return r.faultCount > 0 ? `${r.faultCount} fault${r.faultCount > 1 ? 's' : ''}` : 'None';
+  }
+  return 'None';
+}
+
+function getStartedAtText(r: RunRecord | RunSummary): string {
+  if ('provenance' in r && r.provenance?.startedAt) {
+    return new Date(r.provenance.startedAt).toLocaleString();
+  }
+  if ('createdAt' in r && r.createdAt) {
+    return new Date(r.createdAt).toLocaleString();
+  }
+  return '—';
 }
 
 export function RunHistoryTable({
@@ -119,7 +150,10 @@ export function RunHistoryTable({
       ) : viewMode === 'vertical' ? (
         <div className="runs-vertical-list">
           {runs.map((r) => {
-            const fault = r.faults[0];
+            const faultLabel = getFaultText(r);
+            const topoName = getTopologyName(r);
+            const startedAt = getStartedAtText(r);
+
             return (
               <div key={r.id} className="run-vertical-card">
                 <div className="run-card-header">
@@ -133,19 +167,15 @@ export function RunHistoryTable({
                 <div className="run-card-details">
                   <div className="run-card-row">
                     <span className="run-field-label">Topology</span>
-                    <span className="run-field-val font-semibold">{r.topology.name}</span>
+                    <span className="run-field-val font-semibold">{topoName}</span>
                   </div>
                   <div className="run-card-row">
                     <span className="run-field-label">Fault</span>
-                    <span className="run-field-val cell-mono">
-                      {fault ? `${fault.type} (${fault.edgeId})` : 'None'}
-                    </span>
+                    <span className="run-field-val cell-mono">{faultLabel}</span>
                   </div>
                   <div className="run-card-row">
                     <span className="run-field-label">Started</span>
-                    <span className="run-field-val cell-mono">
-                      {new Date(r.provenance.startedAt).toLocaleString()}
-                    </span>
+                    <span className="run-field-val cell-mono">{startedAt}</span>
                   </div>
                 </div>
                 <div className="run-card-actions">
@@ -178,7 +208,10 @@ export function RunHistoryTable({
             </thead>
             <tbody>
               {runs.map((r) => {
-                const fault = r.faults[0];
+                const faultLabel = getFaultText(r);
+                const topoName = getTopologyName(r);
+                const startedAt = getStartedAtText(r);
+
                 return (
                   <tr key={r.id}>
                     <td className="cell-mono">{r.id}</td>
@@ -189,11 +222,9 @@ export function RunHistoryTable({
                         }
                       />
                     </td>
-                    <td>{r.topology.name}</td>
-                    <td>{fault ? `${fault.type} (${fault.edgeId})` : 'None'}</td>
-                    <td className="cell-mono">
-                      {new Date(r.provenance.startedAt).toLocaleString()}
-                    </td>
+                    <td>{topoName}</td>
+                    <td>{faultLabel}</td>
+                    <td className="cell-mono">{startedAt}</td>
                     <td>
                       <div className="action-buttons">
                         <Button variant="ghost" size="sm" onClick={() => onView(r.id)}>

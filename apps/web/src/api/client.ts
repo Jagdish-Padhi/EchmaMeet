@@ -16,6 +16,7 @@ import {
   voiceIntentParseResultSchema,
   reportExportSchema,
   blueprintCardSchema,
+  runSummarySchema,
   type BenchmarkSuiteSummary,
   type CancelExperimentResponse,
   type HealthResponse,
@@ -24,6 +25,7 @@ import {
   type RunEvent,
   type RunId,
   type RunRecord,
+  type RunSummary,
   type ScenarioId,
   type ScenarioSpec,
   type StartExperimentRequest,
@@ -239,7 +241,7 @@ export interface ApiClient {
   startRepair(request: StartRepairRequest, signal?: AbortSignal): Promise<StartRepairResponse>;
   getRepair(id: RunId, signal?: AbortSignal): Promise<RepairSessionRecord>;
   cancelRepair(id: RunId, signal?: AbortSignal): Promise<CancelRepairResponse>;
-  listRuns(limit?: number, signal?: AbortSignal): Promise<readonly RunRecord[]>;
+  listRuns(limit?: number, signal?: AbortSignal): Promise<readonly (RunRecord | RunSummary)[]>;
   getRun(id: RunId, signal?: AbortSignal): Promise<RunRecord>;
   getRunEvents(id: RunId, signal?: AbortSignal): Promise<readonly RunEvent[]>;
   exportRun(id: RunId, signal?: AbortSignal): Promise<RunRecord>;
@@ -639,7 +641,7 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
     listRuns: (limit = 50, signal) =>
       request(
         `/api/runs?limit=${String(limit)}`,
-        z.array(runRecordSchema),
+        z.array(z.union([runSummarySchema, runRecordSchema])),
         withSignal('GET', signal),
       ),
 
