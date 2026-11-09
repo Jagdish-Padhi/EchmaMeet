@@ -193,8 +193,13 @@ class MeetingAudioAlertService {
       onEnd?.();
       return;
     }
-    void synthesizer(text, spokenLanguageFor(text), {
-      speed: this.speechSpeed,
+    const cleanText = stripAudioTags(text);
+    if (!cleanText) {
+      onEnd?.();
+      return;
+    }
+    void synthesizer(cleanText, spokenLanguageFor(cleanText), {
+      speed: 1.0,
       voice: this.voiceOverride || 'Lakshmi',
     })
       .then(async (blob) => {
@@ -283,9 +288,9 @@ class MeetingAudioAlertService {
       const text = stripAudioTags(rawText);
 
       const utterance = new SpeechSynthesisUtterance(text);
-      // Measured, crystal-clear, unhurried cadence with warm feminine intonation
-      utterance.rate = 0.84;
-      utterance.pitch = 1.05;
+      // Pure 1.0 rate and pitch matching native speech with zero pitch alteration
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
 
       const getVoicesAndSpeak = () => {
         const voices = window.speechSynthesis.getVoices();

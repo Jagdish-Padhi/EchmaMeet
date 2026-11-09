@@ -261,12 +261,12 @@ export function composeSpokenOpinion(
   const top = hazards[0];
   if (!top) {
     return language === 'hi'
-      ? `आपके इन ${String(nodeCount)} सर्विसेज़ का आर्किटेक्चर काफी संतुलित है। जब आप चाहें, हम एक त्वरित केऑस ट्रायल चलाकर इसे टेस्ट कर सकते हैं।`
-      : `<Excited> Looking over these ${String(nodeCount)} services, <Pauses> the topology is clean and balanced! Whenever you're ready, we can run a short chaos trial to verify it.`;
+      ? `आपके इन ${String(nodeCount)} सर्विसेज़ का आर्किटेक्चर संतुलित है। जब आप चाहें, हम केऑस ट्रायल चलाकर इसे टेस्ट कर सकते हैं।`
+      : `Looking over these ${String(nodeCount)} services, the topology is clean and balanced. Whenever you are ready, we can run a short chaos trial to verify resilience.`;
   }
   const more = hazards.length - 1;
   if (language === 'hi') {
     return `${top.riskHi}${more > 0 ? ` इसके अलावा ${String(more)} अन्य रिस्क भी हैं।` : ''} सलाह है: ${top.recommendation}`;
   }
-  return `<Pauses> ${top.risk} <Slow> ${more > 0 ? `There ${more === 1 ? 'is also 1 other issue' : `are also ${String(more)} other issues`} on the board.` : ''} I recommend: ${top.recommendation}`;
+  return `${top.risk} ${more > 0 ? `There ${more === 1 ? 'is also 1 other issue' : `are also ${String(more)} other issues`} on the board.` : ''} I recommend: ${top.recommendation}`;
 }

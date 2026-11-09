@@ -142,16 +142,16 @@ export function AgentSettingsModal({ isOpen, onClose, tokenUsage }: AgentSetting
                   fontSize: '12px',
                 }}
               >
-                <option value="Lakshmi">Lakshmi (Highly Expressive &amp; Dynamic with Audio Tags — Recommended)</option>
-                <option value="Kaveri">Kaveri (Charming, Elegant &amp; Warm Young Voice)</option>
-                <option value="Saanvi">Saanvi (Youthful, Bright &amp; Engaging Tone)</option>
-                <option value="Trisha">Trisha (Sweet, Melodic &amp; Gentle Cadence)</option>
-                <option value="Aarohi">Aarohi (Warm, Polished &amp; Friendly Voice)</option>
-                <option value="Nalini">Nalini (Articulate &amp; Poised Hindi/English)</option>
-                <option value="Riyaa">Riyaa (Radiant Smiling Tone — Timbre v3)</option>
-                <option value="Tarika">Tarika (Gentle &amp; Soft-spoken Cadence — Timbre v3)</option>
-                <option value="Shivani">Shivani (Thoughtful SRE Support Persona — Timbre v3)</option>
-                <option value="Chetana">Chetana (Crisp Professional Tone — Timbre v3)</option>
+                <option value="Lakshmi">Lakshmi (Pure Natural Indian English — Recommended)</option>
+                <option value="Kaveri">Kaveri (Clear &amp; Professional Tone)</option>
+                <option value="Saanvi">Saanvi (Engaging Technical Persona)</option>
+                <option value="Trisha">Trisha (Gentle Cadence)</option>
+                <option value="Aarohi">Aarohi (Polished Advisory Persona)</option>
+                <option value="Nalini">Nalini (Articulate Hindi &amp; English)</option>
+                <option value="Riyaa">Riyaa (Balanced Persona — Timbre v3)</option>
+                <option value="Tarika">Tarika (Focused SRE Reviewer — Timbre v3)</option>
+                <option value="Shivani">Shivani (Direct Infrastructure Persona — Timbre v3)</option>
+                <option value="Chetana">Chetana (Crisp Technical Lead — Timbre v3)</option>
               </select>
             </div>
           </div>

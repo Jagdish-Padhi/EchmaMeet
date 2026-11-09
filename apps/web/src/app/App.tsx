@@ -818,7 +818,7 @@ export function App() {
         }
 
         meetingAudio.speakNaturally(
-          `<Clears throat> I could not automatically apply a patch for ${hazardTitle}. <Slow> Please inspect the node and connection properties directly on the whiteboard.`,
+          `I could not automatically apply a patch for ${hazardTitle}. Please inspect the node and connection properties directly on the whiteboard.`,
         );
         toast.warning(
           `Automatic patch could not be applied for: ${hazardTitle}`,
@@ -863,7 +863,7 @@ export function App() {
 
           toast.success(`Resilience patch applied & verified: ${hazardTitle}`, 'Architecture Clean');
           meetingAudio.speakNaturally(
-            `<Excited> Verified! <Pauses> I've applied the remediation patch for ${hazardTitle}. All architectural hazard checks and preflight validations are now passing cleanly.`,
+            `Verified. I've applied the remediation patch for ${hazardTitle}. All architectural hazard checks and preflight validations are now passing cleanly.`,
           );
           broadcastChatMessage(
             `Echma applied resilience patch to ${hazardTitle}: verified acyclic topology and bounded resilience boundaries.`,
@@ -879,7 +879,7 @@ export function App() {
             'Partial Remediation',
           );
           meetingAudio.speakNaturally(
-            `<Pauses> I've applied the patch for ${hazardTitle}, <Slow> but our verification check detected ${
+            `I've applied the patch for ${hazardTitle}, but our verification check detected ${
               targetStillFlagged
                 ? 'that the resilience condition is still unmet'
                 : `${remainingProblems.length === 1 ? 'a remaining issue' : `${remainingProblems.length} remaining issues`}: ${firstIssue}`
@@ -893,7 +893,7 @@ export function App() {
         sreWatcher.dismissFinding();
         toast.success(`Resilience patch applied: ${hazardTitle}`, 'Architecture Updated');
         meetingAudio.speakNaturally(
-          `<Excited> Patch applied for ${hazardTitle}. <Pauses> Please verify the canvas before starting the simulation.`,
+          `Patch applied for ${hazardTitle}. Please verify the canvas before starting the simulation.`,
         );
         return true;
       }
