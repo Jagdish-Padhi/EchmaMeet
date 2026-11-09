@@ -393,10 +393,8 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
       path.startsWith('/api/rooms/') ||
       path.startsWith('/api/meeting/') ||
       path.startsWith('/api/gnani/');
-    const hadToken =
-      typeof window !== 'undefined' && Boolean(localStorage.getItem('chaosboard_token'));
 
-    if (response.status === 401 && !isExemptFromAuthKickout && hadToken && typeof window !== 'undefined') {
+    if (response.status === 401 && !isExemptFromAuthKickout && typeof window !== 'undefined') {
       localStorage.removeItem('chaosboard_token');
       localStorage.removeItem('chaosboard_auth');
       window.dispatchEvent(new Event('chaosboard:unauthorized'));

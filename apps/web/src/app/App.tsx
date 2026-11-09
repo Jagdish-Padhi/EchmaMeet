@@ -507,6 +507,7 @@ export function App() {
           localStorage.setItem('chaosboard_user', JSON.stringify(res.user));
           setCurrentReviewer(res.user);
           setIsAuthenticated(true);
+          window.dispatchEvent(new CustomEvent('chaosboard:authenticated', { detail: res.user }));
         })
         .catch(() => {
           setIsAuthenticated(false);
@@ -529,6 +530,7 @@ export function App() {
           setCurrentReviewer(res.user);
           localStorage.setItem('chaosboard_user', JSON.stringify(res.user));
           setIsAuthenticated(true);
+          window.dispatchEvent(new CustomEvent('chaosboard:authenticated', { detail: res.user }));
         })
         .catch(() => {
           // Re-establish real session token
@@ -544,6 +546,7 @@ export function App() {
               localStorage.setItem('chaosboard_user', JSON.stringify(res.user));
               setCurrentReviewer(res.user);
               setIsAuthenticated(true);
+              window.dispatchEvent(new CustomEvent('chaosboard:authenticated', { detail: res.user }));
             })
             .catch(() => {});
         });
@@ -561,6 +564,7 @@ export function App() {
           localStorage.setItem('chaosboard_user', JSON.stringify(res.user));
           setCurrentReviewer(res.user);
           setIsAuthenticated(true);
+          window.dispatchEvent(new CustomEvent('chaosboard:authenticated', { detail: res.user }));
         })
         .catch(() => {});
     }

@@ -10,22 +10,48 @@ export function useBenchmarks(api: ApiClient) {
   });
 
   useEffect(() => {
-    const controller = new AbortController();
-    api
-      .getBenchmarkResults(controller.signal)
-      .then((summary) => {
-        setState({ summary, isLoading: false, error: null });
-      })
-      .catch((err: unknown) => {
-        if (err instanceof DOMException && err.name === 'AbortError') return;
-        setState({
-          summary: null,
-          isLoading: false,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      });
+    let cancelled = false;
+    let controller: AbortController | null = null;
 
-    return () => controller.abort();
+    const fetchBenchmarks = () => {
+      controller?.abort();
+      controller = new AbortController();
+
+      api
+        .getBenchmarkResults(controller.signal)
+        .then((summary) => {
+          if (!cancelled) {
+            setState({ summary, isLoading: false, error: null });
+          }
+        })
+        .catch((err: unknown) => {
+          if (err instanceof DOMException && err.name === 'AbortError') return;
+          if (!cancelled) {
+            setState({
+              summary: null,
+              isLoading: false,
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+        });
+    };
+
+    fetchBenchmarks();
+
+    const handleAuth = () => {
+      fetchBenchmarks();
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('chaosboard:authenticated', handleAuth);
+    }
+
+    return () => {
+      cancelled = true;
+      controller?.abort();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('chaosboard:authenticated', handleAuth);
+      }
+    };
   }, [api]);
 
   return state;

@@ -13,3 +13,4 @@ export function DrawerLoadingBar({ label }: DrawerLoadingBarProps) {
     </div>
   );
 }
+

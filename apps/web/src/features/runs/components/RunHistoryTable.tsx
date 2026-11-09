@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { RunId, RunRecord } from '@chaosboard/contracts';
+import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { StatusPill } from '../../../components/ui/StatusPill';
@@ -86,14 +87,19 @@ export function RunHistoryTable({
       className="runs-table-card"
     >
       {error ? (
-        <div className="table-error-banner" style={{ padding: '16px', color: '#f87171' }}>
-          <p style={{ fontWeight: 600, marginBottom: 4 }}>Server Connection Issue</p>
-          <p style={{ fontSize: '13px', color: 'var(--color-text-dim)', marginBottom: 12 }}>
-            Could not fetch run history from server. Ensure your backend service is running.
-          </p>
-          <Button variant="secondary" size="sm" onClick={onRefresh}>
-            Retry Connection
-          </Button>
+        <div style={{ padding: '6px 0' }}>
+          <Alert variant="error" title="Unable to Load Execution History">
+            <div style={{ fontSize: 12, marginBottom: 10, lineHeight: 1.4 }}>
+              {error.toLowerCase().includes('unauthorized') ||
+              error.toLowerCase().includes('access denied') ||
+              error.includes('401')
+                ? 'Authenticating workspace session. Click Retry Connection to reload.'
+                : error}
+            </div>
+            <Button variant="secondary" size="sm" onClick={onRefresh} disabled={isLoading}>
+              Retry Connection
+            </Button>
+          </Alert>
         </div>
       ) : isLoading ? (
         <div

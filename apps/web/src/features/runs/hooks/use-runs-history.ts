@@ -18,7 +18,7 @@ export function useRunsHistory(api: ApiClient) {
     api
       .listRuns(50)
       .then((runs) => {
-        setState((prev) => ({ ...prev, runs, isLoading: false }));
+        setState((prev) => ({ ...prev, runs, isLoading: false, error: null }));
       })
       .catch((err: unknown) => {
         setState((prev) => ({
@@ -31,24 +31,39 @@ export function useRunsHistory(api: ApiClient) {
 
   useEffect(() => {
     let cancelled = false;
-    api
-      .listRuns(50)
-      .then((runs) => {
-        if (!cancelled) {
-          setState((prev) => ({ ...prev, runs, isLoading: false }));
-        }
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setState((prev) => ({
-            ...prev,
-            isLoading: false,
-            error: err instanceof Error ? err.message : String(err),
-          }));
-        }
-      });
+    const fetchRuns = () => {
+      api
+        .listRuns(50)
+        .then((runs) => {
+          if (!cancelled) {
+            setState((prev) => ({ ...prev, runs, isLoading: false, error: null }));
+          }
+        })
+        .catch((err: unknown) => {
+          if (!cancelled) {
+            setState((prev) => ({
+              ...prev,
+              isLoading: false,
+              error: err instanceof Error ? err.message : String(err),
+            }));
+          }
+        });
+    };
+
+    fetchRuns();
+
+    const handleAuth = () => {
+      fetchRuns();
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('chaosboard:authenticated', handleAuth);
+    }
+
     return () => {
       cancelled = true;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('chaosboard:authenticated', handleAuth);
+      }
     };
   }, [api]);
 
