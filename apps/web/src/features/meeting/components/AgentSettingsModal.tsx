@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '../../../components/ui/Button';
 import { meetingAudio } from '../services/audioAlert';
 
@@ -76,7 +77,7 @@ export function AgentSettingsModal({ isOpen, onClose, tokenUsage }: AgentSetting
 
   if (!isOpen) return null;
 
-  return (
+  const modalElement = (
     <div className="modal-backdrop" onClick={onClose}>
       <div
         className="modal-card"
@@ -208,4 +209,10 @@ export function AgentSettingsModal({ isOpen, onClose, tokenUsage }: AgentSetting
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalElement, document.body);
+  }
+
+  return modalElement;
 }

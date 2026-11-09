@@ -1,4 +1,5 @@
 import { useState, useEffect, type SyntheticEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '../../components/ui/Button';
 import { useMicrophonePreflight } from './useMicrophonePreflight';
 import { MicrophonePreflightBanner } from './components/MicrophonePreflightBanner';
@@ -46,7 +47,7 @@ export function JoinMeetingModal({
     onClose();
   };
 
-  return (
+  const modalElement = (
     <div className="modal-backdrop" onClick={onClose}>
       <div
         className="meeting-dialog-card"
@@ -217,4 +218,10 @@ export function JoinMeetingModal({
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalElement, document.body);
+  }
+
+  return modalElement;
 }

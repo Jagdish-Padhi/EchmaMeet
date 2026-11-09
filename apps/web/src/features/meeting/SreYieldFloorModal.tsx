@@ -1,4 +1,5 @@
 import type { EdgeId, EdgePolicy } from '@chaosboard/contracts';
+import { createPortal } from 'react-dom';
 import { Button } from '../../components/ui/Button';
 import type { SreHazard } from './types';
 
@@ -22,7 +23,7 @@ export function SreYieldFloorModal({
   const currentHazard = hazards[0];
   if (!currentHazard) return null;
 
-  return (
+  const modalElement = (
     <div className="modal-backdrop" onClick={onClose}>
       <div
         className="sre-yield-modal-card"
@@ -160,4 +161,10 @@ export function SreYieldFloorModal({
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalElement, document.body);
+  }
+
+  return modalElement;
 }

@@ -1,4 +1,5 @@
 import { useState, useId } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '../../../components/ui/Button';
 import {
   MERMAID_TEMPLATES,
@@ -65,7 +66,7 @@ export function ImportDiagramModal({ isOpen, onClose, onImport }: ImportDiagramM
     }
   };
 
-  return (
+  const modalElement = (
     <div className="modal-backdrop" onClick={onClose}>
       <div
         className="import-diagram-modal-card"
@@ -178,4 +179,10 @@ export function ImportDiagramModal({ isOpen, onClose, onImport }: ImportDiagramM
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalElement, document.body);
+  }
+
+  return modalElement;
 }

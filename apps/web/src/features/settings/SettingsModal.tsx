@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import type { AppSettings } from './types';
 export type { AppSettings } from './types';
 export {
@@ -21,7 +22,7 @@ export interface SettingsModalProps {
  */
 export function SettingsModal({ isOpen, onClose, onSave, currentSettings }: SettingsModalProps) {
   if (!isOpen) return null;
-  return (
+  const modalElement = (
     <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
       <div className="settings-modal-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="settings-modal-header">
@@ -56,4 +57,10 @@ export function SettingsModal({ isOpen, onClose, onSave, currentSettings }: Sett
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalElement, document.body);
+  }
+
+  return modalElement;
 }

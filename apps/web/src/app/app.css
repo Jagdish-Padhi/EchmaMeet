@@ -7153,7 +7153,7 @@ button.validation-target-chip:hover {
    ============================================================================ */
 body:has(.modal-backdrop) .canvas-floating-toolbox,
 body:has(.modal-backdrop) .canvas-floating-crop-actions,
-body:has(.modal-backdrop) .studio-canvas-layout {
+body:has(.modal-backdrop) .board-canvas-container {
   filter: blur(8px);
   pointer-events: none;
   user-select: none;

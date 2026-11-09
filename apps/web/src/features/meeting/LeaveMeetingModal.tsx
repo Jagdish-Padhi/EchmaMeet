@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface LeaveMeetingModalProps {
   readonly isOpen: boolean;
@@ -30,7 +31,7 @@ export function LeaveMeetingModal({
 
   if (!isOpen) return null;
 
-  return (
+  const modalElement = (
     <div className="modal-backdrop" onClick={onCancel} style={{ zIndex: 10000 }}>
       <div
         className="meeting-leave-confirm-card"
@@ -65,4 +66,10 @@ export function LeaveMeetingModal({
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalElement, document.body);
+  }
+
+  return modalElement;
 }

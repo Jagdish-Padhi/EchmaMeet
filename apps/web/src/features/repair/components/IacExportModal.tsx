@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { Topology } from '@chaosboard/contracts';
 import { generateIstioResilienceManifest, generateEnvoyMeshManifest } from '../utils/iac-generator';
 
@@ -39,7 +40,7 @@ export function IacExportModal({ isOpen, topology, onClose }: IacExportModalProp
     URL.revokeObjectURL(url);
   };
 
-  return (
+  const modalElement = (
     <div className="modal-backdrop" onClick={onClose}>
       <div
         className="import-diagram-modal-card"
@@ -114,4 +115,10 @@ export function IacExportModal({ isOpen, topology, onClose }: IacExportModalProp
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalElement, document.body);
+  }
+
+  return modalElement;
 }
