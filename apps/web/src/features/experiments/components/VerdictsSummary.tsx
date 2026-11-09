@@ -42,7 +42,7 @@ export function VerdictsSummary({ verdicts, overallStatus, finalRecord }: Verdic
 
   if (!verdicts) {
     return (
-      <Card title="Resilience Invariant Verdicts" className="verdicts-card">
+      <Card title="Invariant Verdicts" className="verdicts-card">
         <p className="state-message">
           Verdicts evaluate automatically once all simulation trials complete.
         </p>

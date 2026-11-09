@@ -18,39 +18,19 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
   if (telemetry.length === 0) {
     const isSimulating = currentTrial > 0;
     return (
-      <Card title="Live Telemetry: Tail Latency & Error Rate" className="telemetry-card">
-        <div className="empty-chart-state">
+      <Card title="Tail Latency & Error Rate" className="telemetry-card">
+        <div className="empty-chart-state" style={{ padding: '14px 12px', textAlign: 'center' }}>
           {isSimulating ? (
-            <>
-              <div className="telemetry-measuring-row">
-                <span className="agentic-pulse-spinner" />
-                <p style={{ margin: 0, fontWeight: 600 }}>Collecting trial measurements...</p>
-              </div>
-              <span className="subtext">
-                Executing trial {String(currentTrial)} of {String(totalTrials)}. Real-time tail
-                latency and error curves will plot as trials complete.
+            <div className="telemetry-measuring-row" style={{ justifyContent: 'center' }}>
+              <span className="agentic-pulse-spinner" />
+              <span style={{ fontSize: '12px', fontWeight: 600 }}>
+                Measuring trial {String(currentTrial)} of {String(totalTrials)}...
               </span>
-            </>
+            </div>
           ) : (
-            <>
-              <div className="empty-chart-icon">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="22"
-                  height="22"
-                  fill="none"
-                  stroke="var(--color-text-dim)"
-                  strokeWidth="1.8"
-                >
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                </svg>
-              </div>
-              <p style={{ fontWeight: 600, margin: '6px 0 2px' }}>Awaiting Simulation Run</p>
-              <span className="subtext">
-                Start a resilience simulation to stream live p99 tail latency and error metrics over
-                baseline and fault trials.
-              </span>
-            </>
+            <span style={{ fontSize: '12px', color: 'var(--color-text-dim)' }}>
+              Telemetry streams live during simulation.
+            </span>
           )}
         </div>
       </Card>
@@ -112,7 +92,7 @@ export const LiveTelemetryChart = memo(function LiveTelemetryChart({
 
   return (
     <Card
-      title="Live Telemetry: Tail Latency & Error Rate"
+      title="Tail Latency & Error Rate"
       actions={
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span className="metric-pill">

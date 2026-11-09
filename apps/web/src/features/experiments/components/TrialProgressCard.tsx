@@ -39,7 +39,7 @@ export function TrialProgressCard({
 
   return (
     <Card
-      title="Resilience Execution"
+      title="Execution Status"
       actions={
         <div className="simulation-header-actions">
           {runId && <span className="cell-mono run-id-tag">run:{runId.slice(0, 8)}</span>}
@@ -111,8 +111,7 @@ export function TrialProgressCard({
             <span>Simulation Completed</span>
           </div>
           <p className="execution-completed-text">
-            All {String(totalTrials)} trials recorded. Baseline steady-state and fault injection
-            tail metrics are plotted below.
+            All {String(totalTrials)} trials completed across baseline and fault phases.
           </p>
           <div className="execution-kpi-grid">
             <div className="execution-kpi-cell">
@@ -243,11 +242,6 @@ export function TrialProgressCard({
       {/* 5. Idle Ready State */}
       {status === 'idle' && (
         <div className="execution-idle-container">
-          <p className="execution-idle-title">Ready for resilience simulation</p>
-          <p className="execution-idle-subtext">
-            Executes baseline calibration followed by chaos fault injection to measure p99 latency
-            regressions and invariant violations.
-          </p>
           <div className="execution-kpi-grid">
             <div className="execution-kpi-cell">
               <span className="kpi-label">Planned Trials</span>
@@ -261,6 +255,13 @@ export function TrialProgressCard({
               <span className="kpi-value">{String(config?.arrivalRateRps ?? 10)} RPS</span>
             </div>
           </div>
+          {onRetry && (
+            <div style={{ marginTop: '10px' }}>
+              <Button variant="primary" size="sm" onClick={onRetry} style={{ width: '100%' }}>
+                Start Simulation
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </Card>
