@@ -20,7 +20,7 @@ Most voice interfaces stop at superficial "speech in, text out" assistants. **Ec
 1. **Speak naturally in Hindi, English, or Hinglish**: Transcribed with **Gnani Prisma v3.0** speech platform via low-latency REST and streaming WebSocket audio bridges (`indic-auto` language detection).
 2. **Physical Chaos Execution**: Injects verified network faults (latency, jitter, packet drop, bandwidth degradation) via **Toxiproxy** across real TCP sockets and multi-process services under open-loop load.
 3. **Autonomous SRE Copilot ("Echma")**: A resident distributed systems expert powered by **Groq Cloud Llama 3.3 70B** high-speed reasoning and **Gnani Timbre v3.0** (Lakshmi neural voice persona). Echma silently monitors whiteboard design sessions, raises her hand when architectural hazards emerge, and guides teams through verified auto-remediation.
-4. **Native Audio Expression Tags**: Echma weaves authentic emotion and human realism into spoken opinions using Gnani Timbre's inline expression tags (`<Excited>`, `<Pauses>`, `<Giggle>`, `<Laugh>`, `<Slow>`, `<Whispers>`, `<Clears throat>`).
+4. **Authentic Neural Speech Delivery**: Spoken aloud via Gnani Timbre v3.0 (Lakshmi voice persona) with natural cadence, professional sentence pacing, and clean Indian English and Indic language fluency.
 5. **Auditable PostgreSQL Voice Ledger**: Every spoken utterance, intent parsing metric, STT/TTS round-trip latency, and chaos outcome is persisted in **PostgreSQL / Neon Serverless**.
 
 ---
@@ -101,7 +101,7 @@ flowchart TD
   * **Hands-Free Streaming (WebSocket)**: Connects to `wss://.../stt/v3/stream` through a server-side proxy that paces audio into exact 1024-byte PCM frames, pads terminal silence for clean VAD segment closure, and injects domain `x-keyterms`.
 * **Timbre v3.0 Neural Voice ("Lakshmi")**:
   * Expressive female persona configured at native `1.0` cadence without robotic pitch alteration.
-  * Dynamically embeds Gnani audio expression tags (`<Excited>`, `<Pauses>`, `<Giggle>`, `<Laugh>`, `<Slow>`, `<Whispers>`, `<Clears throat>`, `<Exhales>`, `<Sigh>`) to sound delightfully human and relatable.
+  * Calm, clear, grounded, and authoritative tone modeled after an experienced Staff Site Reliability Engineer in real architecture reviews.
 * **Deterministic Hindi & Hinglish Command Lexicon**:
   * Understands Hindi number words (*"तीन सौ"* → `300`), Devanagari labels, unit conversions, and code-mixed engineering slang.
 
@@ -242,18 +242,18 @@ flowchart TD
    * Draw a three-node service chain on the whiteboard: `Gateway` &rarr; `Order Service` &rarr; `Queue Worker`.
    * Notice that the link into `Queue Worker` automatically adapts to `mode: async_enqueue` without preflight failures.
 3. **Trigger Chaos by Voice**:
-   * Click the microphone in the voice dock and speak:  
+   * Click **"Voice Studio"** in the top navigation or use push-to-talk and speak:  
      *"gateway se order-service par 300 ms latency inject karo"*
    * Echma transcribes the Hindi input with **Gnani Prisma**, updates the canvas, and confirms aloud via **Gnani Timbre** with Lakshmi's natural voice.
 4. **Inspect Hazard & Auto-Remediate**:
    * Introduce a deliberate cycle (`Order Service` &rarr; `Gateway`).
    * Echma flags the hazard with a **high-contrast neon red pulse** (`#ff1744`), raises her hand, and explains the risk:  
-     *`<Excited> Notice how this loop... <Pauses> can deadlock worker threads under surge.`*
+     *"Reviewing the architecture, the order service and gateway form a circular synchronous loop. Under sudden traffic, this risks worker thread deadlocks; decoupling with an event queue will protect worker pools."*
    * Click **"Remediate"** on the whiteboard banner: Echma applies the resilience patch, confirms validation with the server, and announces success.
 5. **Simulate & Observe Invariant Verdicts**:
-   * Run the simulation trial: open the **Telemetry** drawer to inspect the **Vertical Card Layout** displaying empirical `p99`, `IQR`, and threshold verdicts without horizontal clipping.
+   * Run the simulation trial: open the **Telemetry** panel from **"Studio Panels"** to inspect the vertical card layout displaying empirical `p99`, `IQR`, and threshold verdicts without horizontal clipping.
 6. **Voice Ledger Audit**:
-   * Switch to the **Voice Ledger** drawer to inspect persistent PostgreSQL records of your commands, STT/TTS latencies, and language mix.
+   * Open the **Voice Studio** panel to inspect persistent PostgreSQL records of your commands, STT/TTS latencies, and language distribution.
 
 ---
 

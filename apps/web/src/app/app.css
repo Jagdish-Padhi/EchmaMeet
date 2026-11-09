@@ -5987,6 +5987,111 @@ button.validation-target-chip:hover {
   color: var(--color-text);
 }
 
+/* ============================================================================
+   GNANI VOICE & SPEECH STUDIO
+   Enterprise High-Density SRE Speech Controls (Dual-Theme Compliant)
+   ============================================================================ */
+.voice-studio-card,
+.voice-transcript-card,
+.voice-analytics-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='light'] .voice-studio-card,
+[data-theme='light'] .voice-transcript-card,
+[data-theme='light'] .voice-analytics-card {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+.voice-label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.voice-label-title {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-dim);
+}
+
+.voice-select {
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  font-size: 12px;
+}
+
+[data-theme='light'] .voice-select {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.voice-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.voice-live-btn {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.voice-live-btn.off {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--color-accent);
+}
+
+.voice-live-btn.live {
+  background: rgba(225, 29, 72, 0.15);
+  border: 1px solid rgba(225, 29, 72, 0.4);
+  color: #f43f5e;
+}
+
+.voice-transcript-box {
+  min-height: 48px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--color-text);
+  line-height: 1.5;
+  background: var(--color-bg);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+[data-theme='light'] .voice-transcript-box {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #0f172a;
+}
+
 
 
 /* Status Pill */
@@ -8816,11 +8921,26 @@ button.validation-target-chip:hover {
 
 /* Right-anchored dropdowns (Export, Import, Telemetry) expand inwards/left to prevent viewport overflow */
 .meetings-menu.export-menu,
-.meetings-menu.import-menu,
-.meetings-menu.analysis-menu {
+.meetings-menu.import-menu {
   left: auto;
   right: 0;
   width: 280px;
+}
+
+.meetings-menu.analysis-menu {
+  left: auto;
+  right: 0;
+  width: 320px;
+}
+
+.menu-section-header {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-dim);
+  padding: 6px 10px 4px;
+  user-select: none;
 }
 
 @keyframes menuAppear {

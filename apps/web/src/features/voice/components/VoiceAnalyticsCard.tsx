@@ -21,28 +21,11 @@ export const VoiceAnalyticsCard: React.FC<VoiceAnalyticsCardProps> = ({ api, ref
 
   if (!data || data.total === 0) return null;
   return (
-    <div
-      style={{
-        padding: 12,
-        borderRadius: 8,
-        border: '1px solid rgba(255,255,255,0.1)',
-        background: 'rgba(15,23,42,0.75)',
-        fontSize: 12,
-        color: '#cbd5e1',
-      }}
-    >
-      <div
-        style={{
-          fontWeight: 700,
-          color: '#94a3b8',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          marginBottom: 6,
-        }}
-      >
-        Voice ledger • {data.backend === 'postgres' ? 'PostgreSQL' : 'in-memory'}
+    <div className="voice-analytics-card">
+      <div className="voice-label-title">
+        Voice Ledger • {data.backend === 'postgres' ? 'PostgreSQL' : 'In-Memory'}
       </div>
-      <div>
+      <div style={{ fontSize: 12, color: 'var(--color-text)' }}>
         {String(data.total)} commands
         {data.successRatePct !== null && <> • {String(data.successRatePct)}% understood</>}
         {data.sttLatencyMs && (
@@ -52,7 +35,7 @@ export const VoiceAnalyticsCard: React.FC<VoiceAnalyticsCardProps> = ({ api, ref
           </>
         )}
       </div>
-      <div style={{ marginTop: 4, color: '#94a3b8' }}>
+      <div style={{ marginTop: 4, fontSize: 11, color: 'var(--color-text-dim)' }}>
         {data.byLanguage.map((l) => `${l.language}: ${String(l.count)}`).join('  ')}
       </div>
     </div>

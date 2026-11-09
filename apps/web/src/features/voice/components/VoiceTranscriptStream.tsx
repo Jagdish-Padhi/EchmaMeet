@@ -18,33 +18,17 @@ export const VoiceTranscriptStream: React.FC<VoiceTranscriptStreamProps> = ({
   timings,
 }) => {
   return (
-    <div
-      style={{
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: 8,
-        padding: 14,
-        background: 'rgba(15, 23, 42, 0.75)',
-        backdropFilter: 'blur(10px)',
-      }}
-    >
+    <div className="voice-transcript-card">
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: 10,
+          marginBottom: 8,
         }}
       >
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            color: '#94a3b8',
-          }}
-        >
-          Spoken Transcript:
+        <span className="voice-label-title">
+          Live Spoken Transcript
         </span>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {isRecording && <Badge variant="danger">Recording Live</Badge>}
@@ -59,26 +43,14 @@ export const VoiceTranscriptStream: React.FC<VoiceTranscriptStreamProps> = ({
         </div>
       </div>
 
-      <div
-        style={{
-          minHeight: 48,
-          fontSize: 14,
-          fontFamily: 'var(--font-mono)',
-          color: '#f8fafc',
-          lineHeight: 1.6,
-          background: 'rgba(2, 6, 23, 0.6)',
-          padding: '10px 12px',
-          borderRadius: 6,
-          border: '1px solid rgba(255, 255, 255, 0.05)',
-        }}
-      >
+      <div className="voice-transcript-box">
         {finalTranscript ? (
-          <span style={{ color: '#38bdf8' }}>{finalTranscript}</span>
+          <span style={{ color: 'var(--color-accent)' }}>{finalTranscript}</span>
         ) : partialTranscript ? (
-          <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>{partialTranscript}</span>
+          <span style={{ color: 'var(--color-text-dim)', fontStyle: 'italic' }}>{partialTranscript}</span>
         ) : (
-          <span style={{ color: '#64748b' }}>
-            Press hold-to-talk or click a test phrase below to speak...
+          <span style={{ color: 'var(--color-text-muted)' }}>
+            Hold to talk or select a suggested command below...
           </span>
         )}
       </div>

@@ -27,12 +27,6 @@ import {
   VoiceQuickCommands,
   VoiceTranscriptStream,
 } from '../../features/voice';
-import {
-  GestureResultBanner,
-  ImageUploader,
-  RedStrokeCanvas,
-  VisionDraftOverlay,
-} from '../../features/vision';
 import { ReportViewer } from '../../features/reports';
 import {
   ComparisonTable,
@@ -54,7 +48,6 @@ export interface StudioDrawersProps {
   readonly experimentSession: any;
   readonly repairSession: any;
   readonly voiceSession: any;
-  readonly visionFlow: any;
   readonly benchmarksState: any;
   readonly runsHistory: any;
   readonly selectedReportRunId: RunId | null;
@@ -84,7 +77,6 @@ export function StudioDrawers({
   experimentSession,
   repairSession,
   voiceSession,
-  visionFlow,
   benchmarksState,
   runsHistory,
   selectedReportRunId,
@@ -113,8 +105,7 @@ export function StudioDrawers({
             {activeDrawer === 'chaos' && 'Chaos Fault & Invariants'}
             {activeDrawer === 'telemetry' && 'Live Telemetry & Verdicts'}
             {activeDrawer === 'repair' && 'Resilience Policy Optimizer'}
-            {activeDrawer === 'voice' && 'Spoken Push-to-Talk'}
-            {activeDrawer === 'vision' && 'Whiteboard Vision'}
+            {activeDrawer === 'voice' && 'Gnani Voice Studio'}
             {activeDrawer === 'reports' && 'Export & Blueprint Card'}
             {activeDrawer === 'benchmarks' && 'Benchmark Suite'}
             {activeDrawer === 'runs' && 'Execution History'}
@@ -380,78 +371,7 @@ export function StudioDrawers({
           </>
         )}
 
-        {/* 6. Vision Tab */}
-        {activeDrawer === 'vision' && (
-          <>
-            {visionFlow.error && <Alert variant="error">{visionFlow.error}</Alert>}
-
-            {visionFlow.imagePreviewUrl && visionFlow.extraction ? (
-              <VisionDraftOverlay
-                previewUrl={visionFlow.imagePreviewUrl}
-                extraction={visionFlow.extraction}
-                onConfirm={(draft) => {
-                  void visionFlow.confirmDraft(draft);
-                }}
-                onCancel={visionFlow.reset}
-              />
-            ) : (
-              <ImageUploader
-                onImageSelected={(file) => {
-                  void visionFlow.uploadImage(file);
-                }}
-                isExtracting={visionFlow.isExtracting}
-              />
-            )}
-
-            <div style={{ marginTop: 16 }}>
-              <p
-                style={{
-                  margin: '0 0 8px 0',
-                  fontSize: 12,
-                  color: 'var(--color-text-muted)',
-                }}
-              >
-                Draw a red stroke cutting across a link to target it for chaos fault injection:
-              </p>
-              <RedStrokeCanvas
-                candidateEdges={currentTopology.edges.map((e, idx) => ({
-                  id: e.id,
-                  source: e.source,
-                  target: e.target,
-                  polyline: [
-                    [0.2 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
-                    [0.4 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
-                  ],
-                }))}
-                onDetect={(stroke) => {
-                  const candidates = currentTopology.edges.map((e, idx) => ({
-                    id: e.id,
-                    source: e.source,
-                    target: e.target,
-                    polyline: [
-                      [0.2 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
-                      [0.4 + ((idx * 0.2) % 0.6), 0.4] as [number, number],
-                    ],
-                  }));
-                  void visionFlow.triggerGestureDetection(stroke, candidates);
-                }}
-                isDetecting={visionFlow.isDetectingGesture}
-              />
-
-              {visionFlow.gestureResult && (
-                <GestureResultBanner
-                  result={visionFlow.gestureResult}
-                  onApplyFault={(fault) => {
-                    experimentSession.updateFault(fault);
-                    setActiveDrawer('chaos');
-                  }}
-                />
-              )}
-            </div>
-          </>
-        )}
-
-        {/* 7. Reports Tab */}
+        {/* 6. Reports Tab */}
         {activeDrawer === 'reports' &&
           (() => {
             const firstRun = runsHistory.runs[0];

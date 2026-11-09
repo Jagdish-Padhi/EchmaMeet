@@ -46,14 +46,14 @@ export const PushToTalkButton: React.FC<PushToTalkButtonProps> = ({
             width: 88,
             height: 88,
             borderRadius: '50%',
-            border: isRecording ? '2px solid #f43f5e' : '2px solid rgba(56, 189, 248, 0.5)',
+            border: isRecording ? '2px solid #f43f5e' : '2px solid var(--color-border)',
             background: isRecording
               ? 'linear-gradient(135deg, rgba(225, 29, 72, 0.25), rgba(159, 18, 57, 0.35))'
-              : 'linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8))',
-            color: isRecording ? '#f43f5e' : '#38bdf8',
+              : 'var(--color-surface)',
+            color: isRecording ? '#f43f5e' : 'var(--color-accent)',
             boxShadow: isRecording
               ? '0 0 25px rgba(244, 63, 94, 0.5)'
-              : '0 0 20px rgba(56, 189, 248, 0.2)',
+              : '0 4px 12px rgba(0, 0, 0, 0.1)',
             fontSize: 12,
             fontWeight: 800,
             letterSpacing: '0.04em',

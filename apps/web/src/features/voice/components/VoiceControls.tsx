@@ -31,35 +31,17 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
 }) => {
   const live = liveStatus === 'listening' || liveStatus === 'connecting';
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 10,
-        padding: 12,
-        borderRadius: 8,
-        border: '1px solid rgba(255,255,255,0.1)',
-        background: 'rgba(15,23,42,0.75)',
-      }}
-    >
-      <label
-        style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11, color: '#94a3b8' }}
-      >
-        <span style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Spoken language (Gnani Prisma)
+    <div className="voice-studio-card">
+      <label className="voice-label-group">
+        <span className="voice-label-title">
+          Spoken language (Gnani Prisma STT)
         </span>
         <select
           value={language}
           onChange={(e) => onLanguageChange(e.target.value)}
           disabled={live}
           aria-label="Spoken language"
-          style={{
-            padding: '6px 8px',
-            borderRadius: 6,
-            background: '#0f172a',
-            color: '#f8fafc',
-            border: '1px solid #334155',
-          }}
+          className="voice-select input-select"
         >
           {VOICE_LANGUAGE_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -69,27 +51,17 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
         </select>
       </label>
 
-      <label
-        style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#cbd5e1' }}
-      >
+      <label className="voice-checkbox-row">
         <input type="checkbox" checked={speakReplies} onChange={onToggleSpeakReplies} />
-        Speak replies in my language (Gnani Timbre)
-        {isSpeaking && <span style={{ color: '#38bdf8' }}> • speaking</span>}
+        <span>Spoken replies via Gnani Timbre (Lakshmi)</span>
+        {isSpeaking && <span style={{ color: 'var(--color-accent)' }}> • Speaking</span>}
       </label>
 
       <button
         type="button"
         onClick={live ? onStopLive : onStartLive}
         aria-pressed={live}
-        style={{
-          padding: '8px 10px',
-          borderRadius: 6,
-          fontWeight: 700,
-          cursor: 'pointer',
-          border: `1px solid ${live ? '#f43f5e' : '#38bdf8'}`,
-          background: live ? 'rgba(225,29,72,0.15)' : 'rgba(56,189,248,0.12)',
-          color: live ? '#fda4af' : '#7dd3fc',
-        }}
+        className={`voice-live-btn ${live ? 'live' : 'off'}`}
       >
         {LIVE_LABEL[liveStatus]}
       </button>

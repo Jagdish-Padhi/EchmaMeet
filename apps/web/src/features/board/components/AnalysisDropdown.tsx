@@ -7,7 +7,6 @@ export type StudioDrawerTab =
   | 'telemetry'
   | 'repair'
   | 'voice'
-  | 'vision'
   | 'reports'
   | 'benchmarks'
   | 'runs';
@@ -37,21 +36,25 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
 
   const getLabel = () => {
     switch (activeTab) {
-      case 'chaos':
-        return 'Chaos Faults';
+      case 'voice':
+        return 'Voice Studio';
       case 'telemetry':
         return 'Telemetry';
+      case 'chaos':
+        return 'Chaos Faults';
       case 'repair':
-        return 'AI Repair';
-      case 'benchmarks':
-      case 'inspect':
-      case 'reports':
+        return 'Optimizer';
       case 'runs':
-      case 'vision':
-      case 'voice':
+        return 'Run History';
+      case 'benchmarks':
+        return 'Benchmarks';
+      case 'reports':
+        return 'Reports';
+      case 'inspect':
+        return 'Inspector';
       case 'none':
       default:
-        return 'Telemetry';
+        return 'Studio Panels';
     }
   };
 
@@ -70,7 +73,7 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
         onClick={() => setIsOpen((prev) => !prev)}
         aria-haspopup="true"
         aria-expanded={isOpen}
-        title="Open Analysis & Telemetry Drawers"
+        title="Open Studio Analysis & Control Panels"
       >
         <svg
           viewBox="0 0 24 24"
@@ -100,6 +103,39 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
 
       {isOpen && (
         <div className="meetings-menu analysis-menu" role="menu">
+          {/* Section: Speech & Copilot */}
+          <div className="menu-section-header">Speech Intelligence (Gnani)</div>
+          <button
+            type="button"
+            className={`meetings-menu-item ${activeTab === 'voice' ? 'active-item' : ''}`}
+            role="menuitem"
+            onClick={() => handleToggle('voice')}
+          >
+            <div className="menu-item-icon">
+              <svg
+                viewBox="0 0 24 24"
+                width="15"
+                height="15"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="22" />
+              </svg>
+            </div>
+            <div className="menu-item-content">
+              <div className="menu-item-title">Gnani Voice Studio</div>
+              <div className="menu-item-subtitle">
+                Push-to-talk, live streaming STT, and voice ledger
+              </div>
+            </div>
+          </button>
+
+          {/* Section: Resilience Simulation */}
+          <div className="menu-divider" />
+          <div className="menu-section-header">Resilience Simulation</div>
           <button
             type="button"
             className={`meetings-menu-item ${activeTab === 'telemetry' ? 'active-item' : ''}`}
@@ -119,9 +155,9 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
               </svg>
             </div>
             <div className="menu-item-content">
-              <div className="menu-item-title">Telemetry &amp; Latency</div>
+              <div className="menu-item-title">Live Telemetry &amp; Verdicts</div>
               <div className="menu-item-subtitle">
-                Live p99 latency, throughput, and error rates
+                p99 latency, throughput, error rates, and SLO checks
               </div>
             </div>
           </button>
@@ -147,7 +183,7 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
             <div className="menu-item-content">
               <div className="menu-item-title">Chaos Faults &amp; Rules</div>
               <div className="menu-item-subtitle">
-                Inject latency, packet loss, or trip circuit breakers
+                Inject downstream latency, packet loss, or stalls
               </div>
             </div>
           </button>
@@ -172,9 +208,96 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
               </svg>
             </div>
             <div className="menu-item-content">
-              <div className="menu-item-title">AI Architecture Repair</div>
+              <div className="menu-item-title">Resilience Policy Optimizer</div>
               <div className="menu-item-subtitle">
-                Find and apply fixes for bottlenecks and failures
+                Autonomous heuristic &amp; ML policy search
+              </div>
+            </div>
+          </button>
+
+          {/* Section: Observability & History */}
+          <div className="menu-divider" />
+          <div className="menu-section-header">Observability &amp; History</div>
+          <button
+            type="button"
+            className={`meetings-menu-item ${activeTab === 'runs' ? 'active-item' : ''}`}
+            role="menuitem"
+            onClick={() => handleToggle('runs')}
+          >
+            <div className="menu-item-icon">
+              <svg
+                viewBox="0 0 24 24"
+                width="15"
+                height="15"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+            <div className="menu-item-content">
+              <div className="menu-item-title">Execution History</div>
+              <div className="menu-item-subtitle">
+                Inspect past trial logs, events, and replay
+              </div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className={`meetings-menu-item ${activeTab === 'benchmarks' ? 'active-item' : ''}`}
+            role="menuitem"
+            onClick={() => handleToggle('benchmarks')}
+          >
+            <div className="menu-item-icon">
+              <svg
+                viewBox="0 0 24 24"
+                width="15"
+                height="15"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+              </svg>
+            </div>
+            <div className="menu-item-content">
+              <div className="menu-item-title">Benchmark Suite</div>
+              <div className="menu-item-subtitle">
+                Compare baseline vs faulted architecture results
+              </div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className={`meetings-menu-item ${activeTab === 'reports' ? 'active-item' : ''}`}
+            role="menuitem"
+            onClick={() => handleToggle('reports')}
+          >
+            <div className="menu-item-icon">
+              <svg
+                viewBox="0 0 24 24"
+                width="15"
+                height="15"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+            </div>
+            <div className="menu-item-content">
+              <div className="menu-item-title">Architecture Reports</div>
+              <div className="menu-item-subtitle">
+                Executive blueprint and resilience summary
               </div>
             </div>
           </button>

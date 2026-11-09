@@ -25,7 +25,6 @@ import { useRepairSession } from '../features/repair';
 import { useRunsHistory } from '../features/runs';
 import { useBenchmarks } from '../features/benchmarks';
 import { useScenarios } from '../features/scenarios';
-import { useVisionFlow } from '../features/vision';
 import { useVoiceSession } from '../features/voice';
 import { LandingPage } from '../features/landing/LandingPage';
 import {
@@ -60,7 +59,6 @@ type StudioDrawerTab =
   | 'telemetry'
   | 'repair'
   | 'voice'
-  | 'vision'
   | 'reports'
   | 'benchmarks'
   | 'runs';
@@ -304,12 +302,6 @@ export function App() {
 
   // Benchmark suite results state
   const benchmarksState = useBenchmarks(api);
-
-  // Vision flow state
-  const visionFlow = useVisionFlow(api, (topology) => {
-    loadTopology(topology);
-    setActiveDrawer('none');
-  });
 
   const selectedNode = board.nodes.find((n) => n.id === board.selectedNodeId) ?? null;
   const selectedEdge = board.edges.find((e) => e.id === board.selectedEdgeId) ?? null;
@@ -1125,7 +1117,6 @@ export function App() {
           experimentSession={experimentSession}
           repairSession={repairSession}
           voiceSession={voiceSession}
-          visionFlow={visionFlow}
           benchmarksState={benchmarksState}
           runsHistory={runsHistory}
           selectedReportRunId={selectedReportRunId}
