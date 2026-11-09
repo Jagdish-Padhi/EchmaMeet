@@ -67,6 +67,8 @@ export interface StudioDrawersProps {
   readonly updateEdgeControlPoint: (id: any, point: any) => void;
   readonly updateEdgePolicy: (id: any, policy: any) => void;
   readonly removeEdge: (id: any) => void;
+  readonly onApplyPatches?: ((topology: Topology) => void) | undefined;
+  readonly onOpenIacExport?: (() => void) | undefined;
 }
 
 export function StudioDrawers({
@@ -95,6 +97,8 @@ export function StudioDrawers({
   updateEdgeControlPoint,
   updateEdgePolicy,
   removeEdge,
+  onApplyPatches,
+  onOpenIacExport,
 }: StudioDrawersProps) {
   if (activeDrawer === 'none') return null;
 
@@ -107,7 +111,7 @@ export function StudioDrawers({
               (selectedNode ? 'Node Inspector' : selectedEdge ? 'Edge Inspector' : 'Inspector')}
             {activeDrawer === 'chaos' && 'Chaos Fault & Invariants'}
             {activeDrawer === 'telemetry' && 'Live Telemetry & Verdicts'}
-            {activeDrawer === 'repair' && 'Autonomous AI Repair'}
+            {activeDrawer === 'repair' && 'Resilience Policy Optimizer'}
             {activeDrawer === 'voice' && 'Spoken Push-to-Talk'}
             {activeDrawer === 'vision' && 'Whiteboard Vision'}
             {activeDrawer === 'reports' && 'Export & Blueprint Card'}
@@ -265,13 +269,17 @@ export function StudioDrawers({
           </>
         )}
 
-        {/* 4. Autonomous Repair Tab */}
+        {/* 4. Resilience Optimizer Tab */}
         {activeDrawer === 'repair' && (
           <>
             <RepairControls
               status={repairSession.status}
               proposerKind={repairSession.proposerKind}
               maxIterations={repairSession.maxIterations}
+              errorMessage={repairSession.errorMessage}
+              currentTopology={currentTopology}
+              activeFault={experimentSession.fault}
+              onFaultChange={experimentSession.updateFault}
               onProposerChange={repairSession.setProposerKind}
               onMaxIterationsChange={repairSession.setMaxIterations}
               onStart={() => {
@@ -285,7 +293,15 @@ export function StudioDrawers({
               onCancel={() => {
                 void repairSession.cancelRepair();
               }}
-              canStart={canStartExperiment}
+              onReset={repairSession.reset}
+              onApplyPatches={
+                repairSession.finalRecord?.bestTopology && onApplyPatches
+                  ? () => onApplyPatches(repairSession.finalRecord.bestTopology)
+                  : undefined
+              }
+              onExportIaC={onOpenIacExport}
+              hasBestTopology={Boolean(repairSession.finalRecord?.bestTopology)}
+              canStart={canStartExperiment && currentTopology.edges.length > 0}
             />
 
             <TradeOffCard report={repairSession.tradeOffReport} />

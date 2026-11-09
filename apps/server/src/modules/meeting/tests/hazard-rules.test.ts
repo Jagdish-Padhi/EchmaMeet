@@ -172,6 +172,7 @@ describe('detectHazards', () => {
           concurrency: { maxWorkers: 10 },
           queue: { mode: 'bounded', maxDepth: 100 },
           consumeRateRps: 50,
+          ingressRateLimitRps: null,
         },
       ],
       edges: [

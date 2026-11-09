@@ -11,16 +11,16 @@ export interface IterationTimelineProps {
 export function IterationTimeline({ iterations }: IterationTimelineProps) {
   if (iterations.length === 0) {
     return (
-      <Card title="Repair Iteration Timeline">
+      <Card title="Optimization Iteration Timeline">
         <p className="state-message">
-          Iterations will appear here as the repair orchestrator proposes and tests policy patches.
+          Iterations will appear here as the resilience optimization loop tests candidate policies.
         </p>
       </Card>
     );
   }
 
   return (
-    <Card title="Repair Iteration Timeline" className="timeline-card">
+    <Card title="Optimization Iteration Timeline" className="timeline-card">
       <div className="timeline-list">
         {iterations.map((it) => {
           const isAccepted = it.decision === 'accept';

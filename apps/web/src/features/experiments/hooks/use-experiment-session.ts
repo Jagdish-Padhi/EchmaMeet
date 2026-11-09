@@ -69,6 +69,21 @@ export function useExperimentSession(api: ApiClient, currentTopology: Topology |
 
   const sseSubRef = useRef<SseSubscription | null>(null);
 
+  useEffect(() => {
+    if (!currentTopology?.edges?.length) return;
+    setState((prev) => {
+      const edgeExists = currentTopology.edges.some((e) => e.id === prev.fault.edgeId);
+      if (edgeExists) return prev;
+      return {
+        ...prev,
+        fault: {
+          ...prev.fault,
+          edgeId: currentTopology.edges[0]!.id,
+        },
+      };
+    });
+  }, [currentTopology]);
+
   const updateFault = useCallback((fault: Fault) => {
     setState((prev) => ({ ...prev, fault }));
   }, []);

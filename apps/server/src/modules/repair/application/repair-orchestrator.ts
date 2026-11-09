@@ -204,6 +204,42 @@ export class RepairOrchestrator implements RepairOrchestratorPort {
     const deadline = Date.now() + request.timeoutMs;
 
     try {
+      // Step 0: Preflight checks on topology and faults
+      if (!currentTopology.edges || currentTopology.edges.length === 0) {
+        const reason =
+          'Architecture topology has no connections. Connect at least two services to run resilience repair.';
+        this.updateSession(repairId, {
+          status: 'failed',
+          errorMessage: reason,
+          finishedAt: new Date().toISOString(),
+        });
+        emit('repair_finished', {
+          status: 'failed',
+          iterations: 0,
+          reason,
+        });
+        return;
+      }
+
+      for (const fault of request.faults) {
+        const edgeExists = currentTopology.edges.some((e) => e.id === fault.edgeId);
+        if (!edgeExists) {
+          const available = currentTopology.edges.map((e) => e.id).join(', ');
+          const reason = `Fault targets connection "${fault.edgeId}" which does not exist in the diagram. Available connections: [${available}].`;
+          this.updateSession(repairId, {
+            status: 'failed',
+            errorMessage: reason,
+            finishedAt: new Date().toISOString(),
+          });
+          emit('repair_finished', {
+            status: 'failed',
+            iterations: 0,
+            reason,
+          });
+          return;
+        }
+      }
+
       // Step 1: Run baseline experiment on initial topology
       const initialRunId = await this.deps.experiments.start({
         topology: currentTopology,
@@ -217,8 +253,10 @@ export class RepairOrchestrator implements RepairOrchestratorPort {
       active.currentExperimentRunId = undefined;
       latestVerdicts = initialRecord.verdicts;
 
-      if (initialRecord.overallStatus === 'INVALID') {
-        const reason = `Initial run is INVALID (${initialRecord.errorMessage ?? 'Baseline or trial gating invalid'}). Baseline must be healthy before autonomous repair can proceed.`;
+      if (initialRecord.status === 'failed' || initialRecord.overallStatus === 'INVALID') {
+        const reason =
+          initialRecord.errorMessage ||
+          `Initial baseline simulation failed (status: ${initialRecord.status}, overallStatus: ${initialRecord.overallStatus ?? 'UNKNOWN'}). Baseline must be healthy before autonomous repair can proceed.`;
         this.updateSession(repairId, {
           status: 'failed',
           errorMessage: reason,

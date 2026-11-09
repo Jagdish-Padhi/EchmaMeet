@@ -290,8 +290,11 @@ export function App() {
     }
   }, [isMeetingLive, sreWatcher]);
 
+  const currentTopology: Topology = useMemo(() => toTopology(board), [board]);
+  const canStartExperiment = board.validationProblems.length === 0 && board.nodes.length > 0;
+
   // Experiments state
-  const experimentSession = useExperimentSession(api, null);
+  const experimentSession = useExperimentSession(api, currentTopology);
 
   // Repair state
   const repairSession = useRepairSession(api);
@@ -324,10 +327,6 @@ export function App() {
       setActiveDrawer('inspect');
     }
   };
-
-  const currentTopology: Topology = useMemo(() => toTopology(board), [board]);
-
-  const canStartExperiment = board.validationProblems.length === 0 && board.nodes.length > 0;
 
   // Voice session state
   const voiceSession = useVoiceSession(
@@ -1140,6 +1139,11 @@ export function App() {
           removeEdge={removeEdge}
           onOpenPreflightBlocker={() => setIsPreflightBlockerOpen(true)}
           onOpenDiagnostics={() => setIsDiagnosticsModalOpen(true)}
+          onApplyPatches={(topology) => {
+            loadTopology(topology);
+            toast.success('Patched resilience policies applied to whiteboard.', 'Resilience Verified');
+          }}
+          onOpenIacExport={() => setIsIacModalOpen(true)}
         />
       </div>
 

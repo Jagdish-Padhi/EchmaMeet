@@ -4,6 +4,7 @@ import type {
   Invariant,
   RepairIterationRecord,
   RepairProposerKind,
+  RepairStatus,
   RunEvent,
   StartRepairRequest,
   Topology,
@@ -53,8 +54,46 @@ export function useRepairSession(api: ApiClient) {
           return { ...prev, iterations: nextIterations };
         }
       }
+
+      if (event.type === 'repair_finished') {
+        const payloadStatus = (event.payload['status'] as RepairStatus | undefined) ?? 'repaired';
+        const reason = (event.payload['reason'] as string | undefined) ?? null;
+        return {
+          ...prev,
+          status: payloadStatus,
+          errorMessage: payloadStatus === 'failed' ? reason : null,
+        };
+      }
+
+      if (event.type === 'repair_failed') {
+        const reason =
+          (event.payload['reason'] as string | undefined) ??
+          (event.payload['error'] as string | undefined) ??
+          'Autonomous repair failed.';
+        return {
+          ...prev,
+          status: 'failed',
+          errorMessage: reason,
+        };
+      }
+
       return prev;
     });
+  }, []);
+
+  const reset = useCallback(() => {
+    if (sseSubRef.current) {
+      sseSubRef.current.close();
+    }
+    setState((prev) => ({
+      ...prev,
+      repairId: null,
+      status: 'idle',
+      iterations: [],
+      tradeOffReport: null,
+      finalRecord: null,
+      errorMessage: null,
+    }));
   }, []);
 
   const startRepair = useCallback(
@@ -68,6 +107,25 @@ export function useRepairSession(api: ApiClient) {
         sseSubRef.current.close();
       }
 
+      if (!topology.edges.length) {
+        setState((prev) => ({
+          ...prev,
+          status: 'failed',
+          errorMessage:
+            'Architecture has no connections. Connect at least two services before starting resilience optimization.',
+        }));
+        return;
+      }
+
+      // Guarantee fault targets a valid edge in active topology
+      let effectiveFault = fault;
+      if (!topology.edges.some((e) => e.id === fault.edgeId)) {
+        effectiveFault = {
+          ...fault,
+          edgeId: topology.edges[0]!.id,
+        };
+      }
+
       setState((prev) => ({
         ...prev,
         status: 'starting',
@@ -79,7 +137,7 @@ export function useRepairSession(api: ApiClient) {
 
       const request: StartRepairRequest = {
         topology,
-        faults: [fault],
+        faults: [effectiveFault],
         invariants: [...invariants],
         trialConfig,
         proposer: state.proposerKind,
@@ -109,6 +167,7 @@ export function useRepairSession(api: ApiClient) {
                   finalRecord: record,
                   iterations: record.iterations,
                   tradeOffReport: record.finalReport ?? null,
+                  errorMessage: record.errorMessage ?? prev.errorMessage,
                 }));
               })
               .catch((err: unknown) => {
@@ -163,5 +222,6 @@ export function useRepairSession(api: ApiClient) {
     setMaxIterations,
     startRepair,
     cancelRepair,
+    reset,
   };
 }
