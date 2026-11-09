@@ -9,7 +9,7 @@
 [![Gnani AI](https://img.shields.io/badge/Speech%20Platform-Gnani%20Prisma%20%2B%20Timbre%20v3-orange.svg)](https://app.gnani.ai/voice)
 [![Groq AI](https://img.shields.io/badge/Reasoning%20AI-Groq%20Llama%203.3%2070B-f55036.svg)](https://console.groq.com)
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%20%2F%20Neon-336791.svg?logo=postgresql)](https://neon.tech)
-[![Tests Passing](https://img.shields.io/badge/Tests-489%20Passing-brightgreen.svg)](file:///apps/server)
+[![Tests Passing](https://img.shields.io/badge/Tests-486%20Passing-brightgreen.svg)](file:///apps/server)
 
 ---
 
@@ -237,12 +237,12 @@ flowchart TD
 
 ## 90-Second Demo Walkthrough
 
-1. **Launch the Studio**: Navigate to `http://localhost:5173` and click **"Solo AI Review"**.
+1. **Launch the Studio**: Navigate to `http://localhost:5173` and click **"Start Live Review Room"** (or **"Enter Room"** in the top navigation).
 2. **Review with Echma**:
    * Draw a three-node service chain on the whiteboard: `Gateway` &rarr; `Order Service` &rarr; `Queue Worker`.
    * Notice that the link into `Queue Worker` automatically adapts to `mode: async_enqueue` without preflight failures.
 3. **Trigger Chaos by Voice**:
-   * Click **"Voice Studio"** in the top navigation or use push-to-talk and speak:  
+   * Click **"Panels"** &rarr; **"Voice Studio"** in the top navigation or use push-to-talk and speak:  
      *"gateway se order-service par 300 ms latency inject karo"*
    * Echma transcribes the Hindi input with **Gnani Prisma**, updates the canvas, and confirms aloud via **Gnani Timbre** with Lakshmi's natural voice.
 4. **Inspect Hazard & Auto-Remediate**:
@@ -251,7 +251,7 @@ flowchart TD
      *"Reviewing the architecture, the order service and gateway form a circular synchronous loop. Under sudden traffic, this risks worker thread deadlocks; decoupling with an event queue will protect worker pools."*
    * Click **"Remediate"** on the whiteboard banner: Echma applies the resilience patch, confirms validation with the server, and announces success.
 5. **Simulate & Observe Invariant Verdicts**:
-   * Run the simulation trial: open the **Telemetry** panel from **"Studio Panels"** to inspect the vertical card layout displaying empirical `p99`, `IQR`, and threshold verdicts without horizontal clipping.
+   * Run the simulation trial: open the **Telemetry** panel from **"Panels"** to inspect the card layout displaying empirical `p99`, `IQR`, and threshold verdicts.
 6. **Voice Ledger Audit**:
    * Open the **Voice Studio** panel to inspect persistent PostgreSQL records of your commands, STT/TTS latencies, and language distribution.
 
@@ -267,8 +267,8 @@ pnpm test
 pnpm build
 ```
 
-* **Full Workspace Test Suite**: **489 automated tests passing across 104 test files** (`vitest`).
-* **Web Unit Tests**: **16 test files / 57 tests passed** (`vitest`).
+* **Full Workspace Test Suite**: **486 automated tests passing across 106 test files** (`vitest`).
+* **Web Unit Tests**: **18 test files / 64 tests passed** (`vitest`).
 * **Server Unit Tests**: **53 test files / 270 tests passed** (`vitest`).
 * **Contracts & Shared Tests**: **28 test files / 106 tests passed** (`vitest`).
 * **Worker & Tool Tests**: **7 test files / 46 tests passed** (`vitest`).
