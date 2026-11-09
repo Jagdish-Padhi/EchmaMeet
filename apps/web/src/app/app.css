@@ -5792,21 +5792,23 @@ button.validation-target-chip:hover {
   margin-bottom: 4px;
 }
 
-.optimizer-error-message {
-  font-size: 12px;
+.optimizer-error-text {
+  font-size: 12.5px;
   line-height: 1.5;
-  color: #ef4444;
-  margin: 4px 0 10px;
-}
-
-[data-theme='light'] .optimizer-error-message {
-  color: #b91c1c;
+  margin: 6px 0 12px;
+  opacity: 0.95;
 }
 
 .optimizer-banner-actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.optimizer-banner-actions .btn {
+  font-size: 11.5px;
+  padding: 5px 12px;
+  height: auto;
 }
 
 .optimizer-banner-repaired {
@@ -6083,10 +6085,31 @@ button.validation-target-chip:hover {
   font-size: 13px;
 }
 
+.alert-content {
+  flex: 1;
+}
+
+.alert-title {
+  display: block;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.alert-message {
+  line-height: 1.45;
+}
+
 .alert-error {
   background: rgba(159, 18, 57, 0.2);
   border-color: rgba(244, 63, 94, 0.35);
   color: #fca5a5;
+}
+
+[data-theme='light'] .alert-error {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #991b1b;
 }
 
 .alert-warning {
@@ -6095,16 +6118,34 @@ button.validation-target-chip:hover {
   color: #fde68a;
 }
 
+[data-theme='light'] .alert-warning {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+
 .alert-info {
   background: rgba(30, 58, 138, 0.2);
   border-color: rgba(56, 189, 248, 0.35);
   color: #bae6fd;
 }
 
+[data-theme='light'] .alert-info {
+  background: #f0f9ff;
+  border-color: #7dd3fc;
+  color: #075985;
+}
+
 .alert-success {
   background: rgba(6, 78, 59, 0.2);
   border-color: rgba(16, 185, 129, 0.35);
   color: #a7f3d0;
+}
+
+[data-theme='light'] .alert-success {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #166534;
 }
 
 /* Canvas SVG & Nodes */

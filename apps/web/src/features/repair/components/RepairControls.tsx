@@ -118,7 +118,7 @@ export function RepairControls({
 
   return (
     <Card
-      title="Autonomous Resilience Optimizer"
+      title="Optimization Pipeline"
       actions={<StatusPill status={status} />}
       className="repair-controls-card"
     >
@@ -127,10 +127,10 @@ export function RepairControls({
         {isFailed && (
           <div className="optimizer-banner-failed">
             <Alert variant="error" title="Resilience Optimization Blocked">
-              <p className="optimizer-error-message">
+              <div className="optimizer-error-text">
                 {errorMessage ||
                   'The optimization loop halted because the initial baseline run could not verify invariants.'}
-              </p>
+              </div>
               <div className="optimizer-banner-actions">
                 {onReset && (
                   <Button variant="secondary" onClick={onReset}>

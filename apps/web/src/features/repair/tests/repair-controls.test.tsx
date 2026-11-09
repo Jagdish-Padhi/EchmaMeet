@@ -88,7 +88,7 @@ describe('RepairControls component', () => {
       />,
     );
 
-    expect(html).toContain('Autonomous Resilience Optimizer');
+    expect(html).toContain('Optimization Pipeline');
     expect(html).toContain('Target Connection');
     expect(html).toContain('gateway → inventory');
     expect(html).toContain('Stress Failure Profile');

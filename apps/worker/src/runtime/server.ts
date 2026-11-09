@@ -201,6 +201,11 @@ export class WorkerServer {
   }
 
   resetCounters(): { status: 'ok'; resetAtMs: number } {
+    this.queueManager.reset();
+    while (this.waitingRequests.length > 0) {
+      const wait = this.waitingRequests.shift();
+      wait?.();
+    }
     this.requestsIn = 0;
     for (const key of Object.keys(this.attemptsOut) as EdgeId[]) {
       this.attemptsOut[key] = 0;

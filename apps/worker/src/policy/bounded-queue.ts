@@ -49,4 +49,9 @@ export class BoundedQueueManager {
     }
     return false;
   }
+
+  reset(): void {
+    this.activeWorkers = 0;
+    this.queuedCount = 0;
+  }
 }

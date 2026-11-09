@@ -254,9 +254,13 @@ export class RepairOrchestrator implements RepairOrchestratorPort {
       latestVerdicts = initialRecord.verdicts;
 
       if (initialRecord.status === 'failed' || initialRecord.overallStatus === 'INVALID') {
-        const reason =
-          initialRecord.errorMessage ||
-          `Initial baseline simulation failed (status: ${initialRecord.status}, overallStatus: ${initialRecord.overallStatus ?? 'UNKNOWN'}). Baseline must be healthy before autonomous repair can proceed.`;
+        const invalidVerdict = initialRecord.verdicts.find((v) => v.status === 'INVALID');
+        let reason = initialRecord.errorMessage || null;
+        if (invalidVerdict?.reason) {
+          reason = `${invalidVerdict.reason}. Baseline architecture must satisfy SLO invariants before resilience optimization can test chaos faults.`;
+        } else if (!reason) {
+          reason = `Initial baseline simulation was invalid (overallStatus: ${initialRecord.overallStatus ?? 'UNKNOWN'}). Baseline architecture must be healthy before resilience optimization can test faults.`;
+        }
         this.updateSession(repairId, {
           status: 'failed',
           errorMessage: reason,
