@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type {
   InvariantMetric,
   InvariantVerdict,
@@ -38,8 +37,6 @@ function getMetricAggregate(
 }
 
 export function VerdictsSummary({ verdicts, overallStatus, finalRecord }: VerdictsSummaryProps) {
-  const [viewMode, setViewMode] = useState<'vertical' | 'table'>('vertical');
-
   if (!verdicts) {
     return (
       <Card title="Invariant Verdicts" className="verdicts-card">
@@ -59,55 +56,7 @@ export function VerdictsSummary({ verdicts, overallStatus, finalRecord }: Verdic
   return (
     <Card
       title="Invariant Verdicts"
-      actions={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div className="layout-toggle-group" role="group" aria-label="Layout view mode">
-            <button
-              type="button"
-              className={`layout-toggle-btn ${viewMode === 'vertical' ? 'active' : ''}`}
-              onClick={() => setViewMode('vertical')}
-              title="Vertical card layout (drawer optimized)"
-            >
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="3" y="3" width="18" height="7" rx="2" />
-                <rect x="3" y="14" width="18" height="7" rx="2" />
-              </svg>
-              <span>Vertical</span>
-            </button>
-            <button
-              type="button"
-              className={`layout-toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
-              onClick={() => setViewMode('table')}
-              title="Table spreadsheet layout"
-            >
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
-              </svg>
-              <span>Table</span>
-            </button>
-          </div>
-          <StatusPill status={overallStatus ?? 'INCONCLUSIVE'} />
-        </div>
-      }
+      actions={<StatusPill status={overallStatus ?? 'INCONCLUSIVE'} />}
       className="verdicts-card"
     >
       {/* Verdict Summary Strip */}
@@ -122,8 +71,7 @@ export function VerdictsSummary({ verdicts, overallStatus, finalRecord }: Verdic
         </span>
       </div>
 
-      {viewMode === 'vertical' ? (
-        <div className="verdicts-vertical-list">
+      <div className="verdicts-vertical-list">
           {verdicts.map((v: InvariantVerdict) => {
             const faultedMetric = getMetricAggregate(faultedAgg, v.evidence.metric);
             const baselineMetric = getMetricAggregate(baselineAgg, v.evidence.metric);
@@ -176,51 +124,6 @@ export function VerdictsSummary({ verdicts, overallStatus, finalRecord }: Verdic
             );
           })}
         </div>
-      ) : (
-        <div className="verdicts-table-wrapper">
-          <table className="data-table verdicts-data-table">
-            <thead>
-              <tr>
-                <th>Invariant ID</th>
-                <th>Status</th>
-                <th>Metric</th>
-                <th>Threshold</th>
-                <th>Faulted (Median &plusmn; IQR)</th>
-                <th>Baseline (Median &plusmn; IQR)</th>
-                <th>Reason</th>
-              </tr>
-            </thead>
-            <tbody>
-              {verdicts.map((v: InvariantVerdict) => {
-                const faultedMetric = getMetricAggregate(faultedAgg, v.evidence.metric);
-                const baselineMetric = getMetricAggregate(baselineAgg, v.evidence.metric);
-
-                return (
-                  <tr key={v.invariantId} className={`verdict-row verdict-${v.status.toLowerCase()}`}>
-                    <td className="cell-mono verdict-id-cell">{v.invariantId}</td>
-                    <td>
-                      <StatusPill status={v.status} />
-                    </td>
-                    <td className="cell-mono">{v.evidence.metric}</td>
-                    <td className="cell-mono">{String(v.evidence.threshold)}</td>
-                    <td className="cell-mono">
-                      {faultedMetric && faultedMetric.median !== null && faultedMetric.iqr !== null
-                        ? `${faultedMetric.median.toFixed(1)} (IQR ${faultedMetric.iqr.toFixed(1)})`
-                        : 'N/A'}
-                    </td>
-                    <td className="cell-mono">
-                      {baselineMetric && baselineMetric.median !== null && baselineMetric.iqr !== null
-                        ? `${baselineMetric.median.toFixed(1)} (IQR ${baselineMetric.iqr.toFixed(1)})`
-                        : 'N/A'}
-                    </td>
-                    <td className="verdict-reason-cell">{v.reason ?? 'Threshold check verified'}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </Card>
-  );
-}
+      </Card>
+    );
+  }
