@@ -4,9 +4,9 @@ import type { EdgeId, RepairIterationRecord } from '@chaosboard/contracts';
 import { IterationTimeline } from '../components/IterationTimeline';
 
 describe('IterationTimeline component', () => {
-  it('renders empty state when iterations is empty', () => {
+  it('returns null and does not render placeholder when iterations is empty', () => {
     const html = renderToStaticMarkup(<IterationTimeline iterations={[]} />);
-    expect(html).toContain('Iterations will appear here');
+    expect(html).toBe('');
   });
 
   it('renders iteration record details including rationale, patch diff, and decision', () => {

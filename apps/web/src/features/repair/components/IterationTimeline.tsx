@@ -10,13 +10,7 @@ export interface IterationTimelineProps {
 
 export function IterationTimeline({ iterations }: IterationTimelineProps) {
   if (iterations.length === 0) {
-    return (
-      <Card title="Optimization Iteration Timeline">
-        <p className="state-message">
-          Iterations will appear here as the resilience optimization loop tests candidate policies.
-        </p>
-      </Card>
-    );
+    return null;
   }
 
   return (
