@@ -189,6 +189,7 @@ class MeetingAudioAlertService {
     const token = ++this.speakToken;
     const synthesizer = this.synthesizer;
     if (!synthesizer) {
+      // eslint-disable-next-line no-console
       console.warn('[EchmaAudio] Gnani neural speech synthesizer not connected yet.');
       onEnd?.();
       return;
@@ -234,6 +235,7 @@ class MeetingAudioAlertService {
           return;
         } catch (audioElementErr) {
           // If browser policy blocks autoplay on new Audio, fall through to Web Audio context
+          // eslint-disable-next-line no-console
           console.info('[EchmaAudio] Direct audio playback deferred to Web Audio context:', audioElementErr);
         }
 
@@ -261,13 +263,15 @@ class MeetingAudioAlertService {
               source.start(0);
               return;
             } catch (audioCtxErr) {
+              // eslint-disable-next-line no-console
               console.warn('[EchmaAudio] Web Audio context decode failed:', audioCtxErr);
             }
           }
         }
         onEnd?.();
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
+        // eslint-disable-next-line no-console
         console.error('[EchmaAudio] Gnani neural TTS request failed:', err);
         onEnd?.();
       });

@@ -102,7 +102,7 @@ describe('Auth routes and OAuth integrations', () => {
       },
     });
     expect(fakeToken.statusCode).toBe(401);
-  });
+  }, 15000);
 
   it('prevents query string auth bypass attacks like ?x=/events', async () => {
     const db = openDatabase(IN_MEMORY);

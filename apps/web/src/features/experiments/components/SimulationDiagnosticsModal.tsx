@@ -14,9 +14,9 @@ export interface SimulationDiagnosticsModalProps {
   readonly board: BoardState;
   readonly settings: AppSettings;
   readonly onOpenSettings?: (() => void) | undefined;
-  readonly onForceResetLock?: (() => Promise<void> | void) | undefined;
+  readonly onForceResetLock?: (() => Promise<void>) | undefined;
   readonly onRetrySimulation?: (() => void) | undefined;
-  readonly onAutoRemediate?: (() => Promise<unknown> | void) | undefined;
+  readonly onAutoRemediate?: (() => Promise<unknown>) | undefined;
 }
 
 export function SimulationDiagnosticsModal({
@@ -141,19 +141,21 @@ export function SimulationDiagnosticsModal({
               variant="primary"
               size="sm"
               disabled={isFixing || isResetting}
-              onClick={async () => {
-                setIsFixing(true);
-                try {
-                  const res = await onAutoRemediate();
-                  if (res !== false) {
-                    onClose();
-                    if (onRetrySimulation) {
-                      onRetrySimulation();
+              onClick={() => {
+                void (async () => {
+                  setIsFixing(true);
+                  try {
+                    const res = await onAutoRemediate();
+                    if (res !== false) {
+                      onClose();
+                      if (onRetrySimulation) {
+                        onRetrySimulation();
+                      }
                     }
+                  } finally {
+                    setIsFixing(false);
                   }
-                } finally {
-                  setIsFixing(false);
-                }
+                })();
               }}
               style={{
                 background: '#0284c7',

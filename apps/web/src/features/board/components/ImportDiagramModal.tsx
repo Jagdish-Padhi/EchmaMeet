@@ -41,14 +41,16 @@ export function ImportDiagramModal({ isOpen, onClose, onImport }: ImportDiagramM
     setCode(template.code);
   };
 
-  const handleCopyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Fallback if clipboard unpermitted
-    }
+  const handleCopyCode = () => {
+    void (async () => {
+      try {
+        await navigator.clipboard.writeText(code);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        // Fallback if clipboard unpermitted
+      }
+    })();
   };
 
   const handleApply = () => {

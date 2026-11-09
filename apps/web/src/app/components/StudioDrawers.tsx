@@ -108,7 +108,7 @@ export function StudioDrawers({
             {activeDrawer === 'voice' && 'Voice & Speech Stack'}
             {activeDrawer === 'reports' && 'Architecture Reports'}
             {activeDrawer === 'benchmarks' && 'Benchmark Suite'}
-            {activeDrawer === 'runs' && 'Execution History'}
+            {activeDrawer === 'runs' && 'Execution History & Replay'}
           </div>
           {activeDrawer === 'inspect' && selectedNode && (
             <button

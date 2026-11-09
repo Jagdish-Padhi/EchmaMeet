@@ -205,7 +205,7 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
 
           {/* Section: Observability */}
           <div className="menu-divider" />
-          <div className="menu-section-header">History &amp; Benchmarks</div>
+          <div className="menu-section-header">Observability &amp; History</div>
           <button
             type="button"
             className={`meetings-menu-item ${activeTab === 'runs' ? 'active-item' : ''}`}
@@ -226,7 +226,7 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
               </svg>
             </div>
             <div className="menu-item-content">
-              <div className="menu-item-title">Execution History</div>
+              <div className="menu-item-title">Execution History &amp; Replay</div>
             </div>
           </button>
 
