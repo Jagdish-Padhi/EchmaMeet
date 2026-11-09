@@ -185,7 +185,22 @@ export function seedDefaultUsersAndSessions(
     const now = new Date().toISOString();
     const farFuture = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    // 1. Alex Chen
+    // 1. Platform Engineer (Default active reviewer)
+    db.run(
+      `INSERT OR IGNORE INTO users (id, email, password_hash, name, role, avatar, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        'eng-platform-engineer',
+        'engineer@echmameet.dev',
+        hashPassword('chaosboard123'),
+        'Platform Engineer',
+        'Staff SRE',
+        'PE',
+        now,
+      ],
+    );
+
+    // 2. Alex Chen (Secondary test user)
     db.run(
       `INSERT OR IGNORE INTO users (id, email, password_hash, name, role, avatar, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -200,7 +215,7 @@ export function seedDefaultUsersAndSessions(
       ],
     );
 
-    // 2. Elena Rostova
+    // 3. Elena Rostova
     db.run(
       `INSERT OR IGNORE INTO users (id, email, password_hash, name, role, avatar, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -215,16 +230,16 @@ export function seedDefaultUsersAndSessions(
       ],
     );
 
-    // Seed default token for Alex Chen
+    // Seed default tokens for Platform Engineer
     db.run(
       `INSERT OR IGNORE INTO sessions (token, user_id, created_at, expires_at)
        VALUES (?, ?, ?, ?)`,
-      [DEMO_AUTH_TOKEN, 'eng-alex-chen', now, farFuture],
+      [DEMO_AUTH_TOKEN, 'eng-platform-engineer', now, farFuture],
     );
     db.run(
       `INSERT OR IGNORE INTO sessions (token, user_id, created_at, expires_at)
        VALUES (?, ?, ?, ?)`,
-      ['local-offline-session-token', 'eng-alex-chen', now, farFuture],
+      ['local-offline-session-token', 'eng-platform-engineer', now, farFuture],
     );
   } catch {
     // Database might be closed or mock
@@ -485,6 +500,7 @@ export function registerAuthRoutes(
     const sessionBodySchema = z.object({
       name: z.string().optional(),
       role: z.string().optional(),
+      email: z.string().optional(),
     });
     const parsed = sessionBodySchema.safeParse(request.body ?? {});
     const data = parsed.success ? parsed.data : {};
@@ -498,7 +514,7 @@ export function registerAuthRoutes(
         .join('')
         .toUpperCase()
         .slice(0, 2) || 'PE';
-    const email = `engineer_${userId.slice(4, 10)}@echmameet.local`;
+    const email = data.email?.trim() || 'engineer@echmameet.local';
     const now = new Date().toISOString();
     const expiresAt = new Date(Date.now() + jwtExpiresIn * 1000).toISOString();
 

@@ -191,14 +191,40 @@ export function App() {
       if (stored) {
         try {
           const parsed = JSON.parse(stored) as UserProfile;
-          if (parsed && parsed.userId && parsed.name) return parsed;
+          if (parsed && parsed.userId && parsed.name) {
+            const cleanName =
+              parsed.name === 'Alex Chen' || parsed.name === 'Alex'
+                ? 'Platform Engineer'
+                : parsed.name;
+            const cleanAvatar = cleanName === 'Platform Engineer' ? 'PE' : parsed.avatar;
+            const cleanEmail =
+              parsed.email &&
+              parsed.email.startsWith('engineer_') &&
+              parsed.email.endsWith('@echmameet.local')
+                ? 'engineer@echmameet.local'
+                : parsed.email;
+            const cleanRole =
+              parsed.role === 'Staff Site Reliability Engineer'
+                ? 'Staff SRE'
+                : parsed.role;
+            return {
+              userId: parsed.userId,
+              name: cleanName,
+              role: cleanRole,
+              avatar: cleanAvatar,
+              email: cleanEmail,
+            };
+          }
         } catch {
           // ignore
         }
       }
     }
     const storedSettings = loadSettingsFromStorage();
-    const displayName = storedSettings.reviewerName || 'Platform Engineer';
+    let displayName = storedSettings.reviewerName || 'Platform Engineer';
+    if (displayName === 'Alex Chen' || displayName === 'Alex') {
+      displayName = 'Platform Engineer';
+    }
     const initials =
       displayName
         .split(' ')
@@ -473,6 +499,7 @@ export function App() {
         .createGuestSession({
           name: currentReviewer.name,
           role: currentReviewer.role,
+          email: currentReviewer.email,
         })
         .then((res) => {
           localStorage.setItem('chaosboard_token', res.token);
@@ -509,6 +536,7 @@ export function App() {
             .createGuestSession({
               name: currentReviewer.name,
               role: currentReviewer.role,
+              email: currentReviewer.email,
             })
             .then((res) => {
               localStorage.setItem('chaosboard_token', res.token);
@@ -525,6 +553,7 @@ export function App() {
         .createGuestSession({
           name: currentReviewer.name,
           role: currentReviewer.role,
+          email: currentReviewer.email,
         })
         .then((res) => {
           localStorage.setItem('chaosboard_token', res.token);

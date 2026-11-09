@@ -159,7 +159,11 @@ export type AuthConfigResponse = z.infer<typeof authConfigResponseSchema>;
 export interface ApiClient {
   getHealth(signal?: AbortSignal): Promise<HealthResponse>;
   createGuestSession(
-    payload?: { name?: string; role?: string },
+    payload?: {
+      name?: string | undefined;
+      role?: string | undefined;
+      email?: string | undefined;
+    },
     signal?: AbortSignal,
   ): Promise<AuthSessionResponse>;
   login(

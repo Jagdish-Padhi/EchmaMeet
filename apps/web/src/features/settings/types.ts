@@ -103,7 +103,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   // 7. Reviewer Profile & SRE Identity
   reviewerName: 'Platform Engineer',
   reviewerEmail: 'engineer@echmameet.local',
-  reviewerRole: 'Staff Site Reliability Engineer',
+  reviewerRole: 'Staff SRE',
   organization: 'Platform Reliability',
 };
 
@@ -115,7 +115,21 @@ export function loadSettingsFromStorage(): AppSettings {
     if (raw) {
       const parsed: unknown = JSON.parse(raw);
       if (typeof parsed === 'object' && parsed !== null) {
-        return { ...DEFAULT_SETTINGS, ...(parsed as Partial<AppSettings>) };
+        const settings = { ...DEFAULT_SETTINGS, ...(parsed as Partial<AppSettings>) };
+        if (settings.reviewerName === 'Alex Chen' || settings.reviewerName === 'Alex') {
+          settings.reviewerName = 'Platform Engineer';
+        }
+        if (
+          settings.reviewerEmail &&
+          settings.reviewerEmail.startsWith('engineer_') &&
+          settings.reviewerEmail.endsWith('@echmameet.local')
+        ) {
+          settings.reviewerEmail = 'engineer@echmameet.local';
+        }
+        if (settings.reviewerRole === 'Staff Site Reliability Engineer') {
+          settings.reviewerRole = 'Staff SRE';
+        }
+        return settings;
       }
     }
   } catch {

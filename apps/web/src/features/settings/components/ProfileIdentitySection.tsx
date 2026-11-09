@@ -59,7 +59,7 @@ export function ProfileIdentitySection({ form, onChange }: ProfileIdentitySectio
               className="input-text"
               value={form.reviewerRole}
               onChange={(e) => onChange({ reviewerRole: e.target.value })}
-              placeholder="Staff Site Reliability Engineer"
+              placeholder="Staff SRE"
             />
           </label>
         </div>
