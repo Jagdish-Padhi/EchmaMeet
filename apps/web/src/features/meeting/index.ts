@@ -9,7 +9,7 @@ export { MeetingsDropdown } from './MeetingsDropdown';
 export { SreYieldFloorModal } from './SreYieldFloorModal';
 export { useCollaborationPresence } from './useCollaborationPresence';
 export { useMeetingMediaStream } from './useMeetingMediaStream';
-export { useMeetingSreWatcher } from './useMeetingSreWatcher';
+export { useMeetingSreWatcher, detectSreHazards } from './useMeetingSreWatcher';
 export { useMeetingAgent } from './useMeetingAgent';
 export { useMeetingTranscription } from './useMeetingTranscription';
 export { AgentSettingsModal } from './components/AgentSettingsModal';

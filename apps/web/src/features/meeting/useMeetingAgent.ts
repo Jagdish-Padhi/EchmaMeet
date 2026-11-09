@@ -1,8 +1,31 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import type { BoardState } from '../board';
 import type { ApiClient } from '../../api/client';
 import type { SreHazard } from './types';
 import { meetingAudio, spokenLanguageFor } from './services/audioAlert';
+
+/** Compute comprehensive deterministic signature of canvas topology to avoid redundant LLM calls */
+export function computeTopologyHash(board: BoardState): string {
+  const nodeSig = board.nodes
+    .map((n) => `${n.id}:${n.kind}:${n.queue?.mode ?? ''}:${n.concurrency?.maxWorkers ?? ''}`)
+    .sort()
+    .join('|');
+  const edgeSig = board.edges
+    .map((e) => {
+      const p = e.policy;
+      return (
+        `${e.id}:${e.source}->${e.target}:${e.mode ?? 'sync_call'}:` +
+        `r=${p?.retry?.maxAttempts ?? 0}-${p?.retry?.jitter ?? 'none'}-${p?.retry?.backoffBaseMs ?? 0}:` +
+        `b=${p?.breaker?.enabled ? 1 : 0}-${p?.breaker?.failureThresholdPct ?? 0}-${p?.breaker?.cooldownMs ?? 0}:` +
+        `t=${p?.timeoutMs ?? 'null'}:` +
+        `i=${p?.idempotency?.sendKey ? 1 : 0}:` +
+        `f=${p?.fallback ?? ''}`
+      );
+    })
+    .sort()
+    .join('|');
+  return `${board.entryNodeId}#${nodeSig}#${edgeSig}`;
+}
 
 export interface UseMeetingAgentProps {
   readonly board: BoardState;
@@ -51,12 +74,8 @@ export function useMeetingAgent({
   const isMeetingActiveRef = useRef(isMeetingActive);
   isMeetingActiveRef.current = isMeetingActive;
 
-  // Compute lightweight deterministic signature of canvas topology to avoid redundant LLM calls
-  const currentHash = `${board.nodes.length}-${board.edges.length}-${board.nodes
-    .map((n) => `${n.id}:${n.queue.mode}`)
-    .join(
-      '|',
-    )}-${board.edges.map((e) => `${e.id}:${e.policy.retry.maxAttempts}:${e.policy.timeoutMs}`).join('|')}`;
+  // Compute comprehensive deterministic signature of canvas topology to avoid redundant LLM calls
+  const currentHash = useMemo(() => computeTopologyHash(board), [board]);
 
   // Echma speaks with Gnani Timbre; the browser voice is only the offline fallback.
   useEffect(() => {
@@ -93,7 +112,7 @@ export function useMeetingAgent({
 
   // Evaluate the topology with the review agent (rule engine, plus Gnani Evon when configured)
   const evaluateTopology = useCallback(
-    async (manualPrompt?: string) => {
+    async (manualPrompt?: string, boardOverride?: BoardState) => {
       if (!isMeetingActiveRef.current) return;
 
       if (abortControllerRef.current) {
@@ -103,11 +122,12 @@ export function useMeetingAgent({
 
       setIsEvaluating(true);
 
+      const targetBoard = boardOverride || board;
       try {
         const topologyPayload = {
-          nodes: board.nodes,
-          edges: board.edges,
-          entryNodeId: board.entryNodeId,
+          nodes: targetBoard.nodes,
+          edges: targetBoard.edges,
+          entryNodeId: targetBoard.entryNodeId,
         };
 
         const res = await api.getMeetingAiOpinion(
@@ -143,7 +163,7 @@ export function useMeetingAgent({
         if (res.tokenUsage) {
           setTokenUsage(res.tokenUsage);
         }
-        setLastEvaluatedHash(currentHash);
+        setLastEvaluatedHash(computeTopologyHash(targetBoard));
 
         if (manualPrompt) {
           // If the host or engineer explicitly clicked "Ask Echma" or chatted, speak immediately
@@ -175,15 +195,17 @@ export function useMeetingAgent({
         }
 
         prevRaisedHandRef.current = res.handRaised;
+        return res;
       } catch (err: unknown) {
         if ((err as Error)?.name !== 'AbortError') {
           // graceful fallback - don't crash meeting
         }
+        return null;
       } finally {
         setIsEvaluating(false);
       }
     },
-    [api, autonomousVoice, board, currentHash, experimentSummary, hostName, roomId, transcripts],
+    [api, autonomousVoice, board, experimentSummary, hostName, roomId, transcripts],
   );
 
   // Allow handler: Host/engineer clicks "Allow" on Echma's request
@@ -265,6 +287,27 @@ export function useMeetingAgent({
     [evaluateTopology],
   );
 
+  const evictHazard = useCallback((hazardIdOrTargetEdgeId: string) => {
+    if (!hazardIdOrTargetEdgeId) return;
+    setHazards((prev) => {
+      const next = prev.filter(
+        (h) => h.id !== hazardIdOrTargetEdgeId && h.targetEdgeId !== hazardIdOrTargetEdgeId,
+      );
+      if (next.length === 0) {
+        setAiRaisedHand(false);
+        setPermissionRequested(false);
+      }
+      return next;
+    });
+  }, []);
+
+  const reEvaluate = useCallback(
+    async (prospectiveBoard?: BoardState) => {
+      return evaluateTopology(undefined, prospectiveBoard);
+    },
+    [evaluateTopology],
+  );
+
   const stopSpeaking = useCallback(() => {
     meetingAudio.stopSpeaking();
     setIsSpeaking(false);
@@ -294,5 +337,7 @@ export function useMeetingAgent({
     askOpinion,
     stopSpeaking,
     reset,
+    evictHazard,
+    reEvaluate,
   };
 }

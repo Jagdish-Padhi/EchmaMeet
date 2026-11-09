@@ -3,6 +3,7 @@ import {
   edgeIdSchema,
   faultIdSchema,
   type EdgeId,
+  type EdgePolicy,
   type NodeId,
   type RunId,
   type Topology,
@@ -38,6 +39,8 @@ import {
   useMeetingTranscription,
   AgentSettingsModal,
   meetingAudio,
+  detectSreHazards,
+  type SreHazard,
 } from '../features/meeting';
 import type { MeetingChatMessage } from '../features/meeting/agentTypes';
 import { IacExportModal } from '../features/repair';
@@ -619,212 +622,295 @@ export function App() {
   };
 
   // Autonomous SRE Auto-Remediation & Preflight Verification Pipeline
-  const handleAutoRemediate = useCallback(async (): Promise<boolean> => {
-    const hazard = sreWatcher.primaryHazard;
-    const validationProblem = board.validationProblems[0];
+  const handleAutoRemediate = useCallback(
+    async (
+      explicitEdgeId?: EdgeId,
+      explicitPatch?: Partial<EdgePolicy>,
+      explicitHazardId?: string,
+    ): Promise<boolean> => {
+      // 1. Identify target hazard
+      let hazard: SreHazard | undefined = sreWatcher.hazards.find((h) =>
+        explicitHazardId
+          ? h.id === explicitHazardId
+          : explicitEdgeId
+            ? h.targetEdgeId === explicitEdgeId
+            : false,
+      );
+      if (!hazard) {
+        hazard = sreWatcher.primaryHazard ?? undefined;
+      }
+      const validationProblem = board.validationProblems[0];
 
-    if (!hazard && !validationProblem) {
-      toast.info('No active hazards or validation issues detected.', 'Architecture Clean');
-      return true;
-    }
+      if (!hazard && !validationProblem && !explicitEdgeId && !explicitPatch) {
+        toast.info('No active hazards or validation issues detected.', 'Architecture Clean');
+        return true;
+      }
 
-    const hazardTitle = hazard?.title || validationProblem?.code || 'Architectural Issue';
-    let applied = false;
+      const hazardTitle = hazard?.title || validationProblem?.code || 'Architectural Issue';
+      let hasMutated = false;
 
-    // Prospective updated state for post-remediation verification
-    let nextNodes = [...board.nodes];
-    let nextEdges = [...board.edges];
-    let nextEntryId = board.entryNodeId;
+      // Prospective updated state for post-remediation verification
+      let nextNodes = [...board.nodes];
+      let nextEdges = [...board.edges];
+      let nextEntryId = board.entryNodeId;
 
-    // 1. Queue Consumer Mode Synchronization (Fixes consumer_requires_async_edge & async_edge_target_not_consumer)
-    for (const node of nextNodes) {
-      if (node.kind === 'queue_consumer') {
-        for (const edge of nextEdges) {
-          if (edge.target === node.id && edge.mode !== 'async_enqueue') {
-            updateEdge(edge.id, { mode: 'async_enqueue' });
-            nextEdges = nextEdges.map((e) => (e.id === edge.id ? { ...e, mode: 'async_enqueue' } : e));
-            applied = true;
+      // 1. Queue Consumer Mode Synchronization (Fixes consumer_requires_async_edge & async_edge_target_not_consumer)
+      for (const node of nextNodes) {
+        if (node.kind === 'queue_consumer') {
+          for (const edge of nextEdges) {
+            if (edge.target === node.id && edge.mode !== 'async_enqueue') {
+              updateEdge(edge.id, { mode: 'async_enqueue' });
+              nextEdges = nextEdges.map((e) =>
+                e.id === edge.id ? { ...e, mode: 'async_enqueue' } : e,
+              );
+              hasMutated = true;
+            }
           }
         }
       }
-    }
-    for (const edge of nextEdges) {
-      const targetNode = nextNodes.find((n) => n.id === edge.target);
-      if (targetNode && targetNode.kind !== 'queue_consumer' && edge.mode === 'async_enqueue') {
-        updateEdge(edge.id, { mode: 'sync_call' });
-        nextEdges = nextEdges.map((e) => (e.id === edge.id ? { ...e, mode: 'sync_call' } : e));
-        applied = true;
+      for (const edge of nextEdges) {
+        const targetNode = nextNodes.find((n) => n.id === edge.target);
+        if (targetNode && targetNode.kind !== 'queue_consumer' && edge.mode === 'async_enqueue') {
+          updateEdge(edge.id, { mode: 'sync_call' });
+          nextEdges = nextEdges.map((e) => (e.id === edge.id ? { ...e, mode: 'sync_call' } : e));
+          hasMutated = true;
+        }
       }
-    }
 
-    if (
-      hazard?.patch?.mode ||
-      validationProblem?.code === 'consumer_requires_async_edge' ||
-      validationProblem?.code === 'async_edge_target_not_consumer'
-    ) {
       const targetEdgeId =
+        explicitEdgeId ||
         hazard?.targetEdgeId ||
         validationProblem?.edgeId ||
         (validationProblem?.nodeId
-          ? board.edges.find((e) => e.target === validationProblem.nodeId)?.id
+          ? board.edges.find((e) => e.target === validationProblem.nodeId || e.source === validationProblem.nodeId)?.id
+          : undefined) ||
+        (hazard?.targetNodeId
+          ? board.edges.find((e) => e.target === hazard.targetNodeId || e.source === hazard.targetNodeId)?.id
           : undefined);
 
-      if (targetEdgeId) {
+      if (
+        (hazard?.patch?.mode ||
+          validationProblem?.code === 'consumer_requires_async_edge' ||
+          validationProblem?.code === 'async_edge_target_not_consumer') &&
+        targetEdgeId
+      ) {
         const targetMode =
           hazard?.patch?.mode ??
           (validationProblem?.code === 'consumer_requires_async_edge'
             ? 'async_enqueue'
             : 'sync_call');
 
-        updateEdge(targetEdgeId as EdgeId, { mode: targetMode });
-        nextEdges = nextEdges.map((e) => (e.id === targetEdgeId ? { ...e, mode: targetMode } : e));
-        applied = true;
-      }
-    }
-
-    // 2. Resilience Policy Hazards (retry storm, excessive timeout, circuit breaker, idempotency)
-    if (hazard?.targetEdgeId && hazard.patch) {
-      const matchEdge = board.edges.find((e) => e.id === hazard.targetEdgeId);
-      if (matchEdge) {
-        const updatedPolicy = {
-          ...matchEdge.policy,
-          ...hazard.patch,
-          retry: {
-            ...matchEdge.policy.retry,
-            ...(hazard.patch.retry ?? {}),
-          },
-          breaker: {
-            ...matchEdge.policy.breaker,
-            ...(hazard.patch.breaker ?? {}),
-          },
-        };
-        updateEdgePolicy(hazard.targetEdgeId as EdgeId, updatedPolicy);
-        nextEdges = nextEdges.map((e) =>
-          e.id === hazard.targetEdgeId ? { ...e, policy: updatedPolicy } : e,
-        );
-        applied = true;
-      }
-    }
-
-    // 3. Node Buffering Hazards (Unbounded queues or entry node role violations)
-    if (
-      (hazard?.targetNodeId && (hazard.patch?.queue || hazard.title.toLowerCase().includes('queue'))) ||
-      validationProblem?.code === 'entry_is_queue_consumer'
-    ) {
-      const targetNodeId = hazard?.targetNodeId || validationProblem?.nodeId;
-      if (targetNodeId) {
-        if (validationProblem?.code === 'entry_is_queue_consumer') {
-          const firstService = board.nodes.find(
-            (n) => n.id !== targetNodeId && n.kind !== 'queue_consumer',
-          );
-          if (firstService) {
-            setEntryNode(firstService.id);
-            nextEntryId = firstService.id;
-            applied = true;
-          }
-        } else {
-          updateNode(targetNodeId as NodeId, {
-            queue: { mode: 'bounded', maxDepth: 100 },
-          });
-          nextNodes = nextNodes.map((n) =>
-            n.id === targetNodeId ? { ...n, queue: { mode: 'bounded', maxDepth: 100 } } : n,
-          );
-          applied = true;
+        const currentEdge = nextEdges.find((e) => e.id === targetEdgeId);
+        if (currentEdge && currentEdge.mode !== targetMode) {
+          updateEdge(targetEdgeId as EdgeId, { mode: targetMode });
+          nextEdges = nextEdges.map((e) => (e.id === targetEdgeId ? { ...e, mode: targetMode } : e));
+          hasMutated = true;
         }
       }
-    }
 
-    // 4. Ingress Entry Node Fix
-    if (validationProblem?.code === 'unknown_entry_node' || !nextEntryId) {
-      const firstService = board.nodes.find((n) => n.kind !== 'queue_consumer') || board.nodes[0];
-      if (firstService) {
-        setEntryNode(firstService.id);
-        nextEntryId = firstService.id;
-        applied = true;
+      // 2. Resilience Policy Hazards (retry storm, excessive timeout, circuit breaker, idempotency)
+      const effectivePatch = explicitPatch || hazard?.patch;
+      if (targetEdgeId && effectivePatch) {
+        const matchEdge = nextEdges.find((e) => e.id === targetEdgeId);
+        if (matchEdge) {
+          const updatedPolicy: EdgePolicy = {
+            ...matchEdge.policy,
+            ...effectivePatch,
+            retry: {
+              ...matchEdge.policy.retry,
+              ...(effectivePatch.retry ?? {}),
+            },
+            breaker: {
+              ...matchEdge.policy.breaker,
+              ...(effectivePatch.breaker ?? {}),
+            },
+          };
+
+          // Ground-truth equality check: only trigger mutation if policy actually changes!
+          const isPolicyChanged = JSON.stringify(matchEdge.policy) !== JSON.stringify(updatedPolicy);
+          if (isPolicyChanged) {
+            updateEdgePolicy(targetEdgeId as EdgeId, updatedPolicy);
+            nextEdges = nextEdges.map((e) =>
+              e.id === targetEdgeId ? { ...e, policy: updatedPolicy } : e,
+            );
+            hasMutated = true;
+          }
+        }
       }
-    }
 
-    // 5. Self-Loop / Duplicate Edge Cleanup
-    if (
-      validationProblem?.code === 'self_loop' ||
-      hazard?.title.toLowerCase().includes('self-loop') ||
-      validationProblem?.code === 'duplicate_edge_pair'
-    ) {
-      const badEdgeId = hazard?.targetEdgeId || validationProblem?.edgeId;
-      if (badEdgeId) {
-        removeEdge(badEdgeId as EdgeId);
-        nextEdges = nextEdges.filter((e) => e.id !== badEdgeId);
-        applied = true;
+      // 3. Node Buffering Hazards (Unbounded queues or entry node role violations)
+      if (
+        (hazard?.targetNodeId && (hazard.patch?.queue || hazard.title.toLowerCase().includes('queue'))) ||
+        validationProblem?.code === 'entry_is_queue_consumer'
+      ) {
+        const targetNodeId = hazard?.targetNodeId || validationProblem?.nodeId;
+        if (targetNodeId) {
+          if (validationProblem?.code === 'entry_is_queue_consumer') {
+            const firstService = board.nodes.find(
+              (n) => n.id !== targetNodeId && n.kind !== 'queue_consumer',
+            );
+            if (firstService && board.entryNodeId !== firstService.id) {
+              setEntryNode(firstService.id);
+              nextEntryId = firstService.id;
+              hasMutated = true;
+            }
+          } else {
+            const matchNode = nextNodes.find((n) => n.id === targetNodeId);
+            if (matchNode && (matchNode.queue.mode !== 'bounded' || matchNode.queue.maxDepth !== 100)) {
+              updateNode(targetNodeId as NodeId, {
+                queue: { mode: 'bounded', maxDepth: 100 },
+              });
+              nextNodes = nextNodes.map((n) =>
+                n.id === targetNodeId ? { ...n, queue: { mode: 'bounded', maxDepth: 100 } } : n,
+              );
+              hasMutated = true;
+            }
+          }
+        }
       }
-    }
 
-    sreWatcher.dismissPermission();
+      // 4. Ingress Entry Node Fix
+      if (validationProblem?.code === 'unknown_entry_node' || !nextEntryId) {
+        const firstService = board.nodes.find((n) => n.kind !== 'queue_consumer') || board.nodes[0];
+        if (firstService && board.entryNodeId !== firstService.id) {
+          setEntryNode(firstService.id);
+          nextEntryId = firstService.id;
+          hasMutated = true;
+        }
+      }
 
-    if (!applied) {
-      meetingAudio.speakNaturally(
-        `<Clears throat> I could not automatically apply a patch for ${hazardTitle}. <Slow> Please inspect the node and connection properties directly on the whiteboard.`,
-      );
-      toast.warning(
-        `Automatic patch could not be applied for: ${hazardTitle}`,
-        'Remediation Unresolved',
-      );
-      return false;
-    }
+      // 5. Self-Loop / Duplicate Edge Cleanup
+      if (
+        validationProblem?.code === 'self_loop' ||
+        hazard?.title.toLowerCase().includes('self-loop') ||
+        validationProblem?.code === 'duplicate_edge_pair'
+      ) {
+        const badEdgeId = hazard?.targetEdgeId || validationProblem?.edgeId;
+        if (badEdgeId && nextEdges.some((e) => e.id === badEdgeId)) {
+          removeEdge(badEdgeId as EdgeId);
+          nextEdges = nextEdges.filter((e) => e.id !== badEdgeId);
+          hasMutated = true;
+        }
+      }
 
-    // --- Authoritative Ground-Truth Post-Remediation Verification ---
-    const nextTopology = toTopology({
-      ...board,
-      nodes: nextNodes,
-      edges: nextEdges,
-      entryNodeId: nextEntryId,
-    });
+      sreWatcher.dismissPermission();
 
-    try {
-      const validationRes = await api.validateTopology(nextTopology);
-      const remainingProblems = validationRes.valid ? [] : validationRes.problems;
+      // If no mutations took place, check whether the architecture is already clean or unresolvable
+      if (!hasMutated) {
+        const currentLocalHazards = detectSreHazards(board);
+        const isHazardStillDetectedLocally = currentLocalHazards.some(
+          (h) =>
+            (hazard && h.id === hazard.id) ||
+            (targetEdgeId &&
+              h.targetEdgeId === targetEdgeId &&
+              h.title.toLowerCase().includes(hazardTitle.toLowerCase())),
+        );
 
-      if (remainingProblems.length === 0) {
-        // Genuine 100% verified resolution
-        toast.success(`Resilience patch applied & verified: ${hazardTitle}`, 'Architecture Clean');
+        if (!isHazardStillDetectedLocally && board.validationProblems.length === 0) {
+          // Stale badge: clear from state and confirm cleanly without false speech
+          sreWatcher.evictHazard(hazard?.id || (targetEdgeId as string) || '');
+          sreWatcher.dismissFinding();
+          toast.info(
+            'Architecture is already compliant. Resilience parameters are up to date.',
+            'Already Compliant',
+          );
+          return true;
+        }
+
         meetingAudio.speakNaturally(
-          `<Excited> Verified! <Pauses> I've applied the remediation patch for ${hazardTitle}. All architectural hazard checks and preflight validations are now passing cleanly.`,
+          `<Clears throat> I could not automatically apply a patch for ${hazardTitle}. <Slow> Please inspect the node and connection properties directly on the whiteboard.`,
         );
-        broadcastChatMessage(
-          `Echma applied resilience patch to ${hazardTitle}: verified acyclic topology and bounded resilience boundaries.`,
-        );
-        return true;
-      } else {
-        // Truthful reporting of remaining issues
-        const firstIssue = remainingProblems[0]?.message || 'A remaining constraint was detected';
         toast.warning(
-          `Patch applied, but preflight issue remains: ${firstIssue}`,
-          'Partial Remediation',
-        );
-        meetingAudio.speakNaturally(
-          `<Pauses> I've applied the patch for ${hazardTitle}, <Slow> but our preflight check detected ${remainingProblems.length === 1 ? 'a remaining issue' : `${remainingProblems.length} remaining issues`} on the canvas: ${firstIssue}. Let's address that before starting the trial.`,
+          `Automatic patch could not be applied for: ${hazardTitle}`,
+          'Remediation Unresolved',
         );
         return false;
       }
-    } catch {
-      // Graceful fallback if validation request failed
-      toast.success(`Resilience patch applied: ${hazardTitle}`, 'Architecture Updated');
-      meetingAudio.speakNaturally(
-        `<Excited> Patch applied for ${hazardTitle}. <Pauses> Please verify the canvas before starting the simulation.`,
-      );
-      return true;
-    }
-  }, [
-    api,
-    board,
-    broadcastChatMessage,
-    removeEdge,
-    setEntryNode,
-    sreWatcher,
-    toast,
-    updateEdge,
-    updateEdgePolicy,
-    updateNode,
-  ]);
+
+      // --- Authoritative Ground-Truth Post-Remediation Verification ---
+      const nextBoard = {
+        ...board,
+        nodes: nextNodes,
+        edges: nextEdges,
+        entryNodeId: nextEntryId,
+      };
+      const nextTopology = toTopology(nextBoard);
+
+      try {
+        // Step A: Pure Deterministic SRE Hazard Evaluation on prospective board
+        const prospectiveHazards = detectSreHazards(nextBoard);
+        const targetStillFlagged = prospectiveHazards.some((h) => {
+          if (hazard?.id && h.id === hazard.id) return true;
+          if (
+            targetEdgeId &&
+            h.targetEdgeId === targetEdgeId &&
+            h.title.toLowerCase().includes(hazardTitle.toLowerCase())
+          ) {
+            return true;
+          }
+          return false;
+        });
+
+        // Step B: Structural Topology Validation
+        const validationRes = await api.validateTopology(nextTopology);
+        const remainingProblems = validationRes.valid ? [] : validationRes.problems;
+
+        if (!targetStillFlagged && remainingProblems.length === 0) {
+          // Genuine 100% verified resolution
+          sreWatcher.evictHazard(hazard?.id || (targetEdgeId as string) || '');
+          sreWatcher.dismissFinding();
+          void sreWatcher.reEvaluate(nextBoard);
+
+          toast.success(`Resilience patch applied & verified: ${hazardTitle}`, 'Architecture Clean');
+          meetingAudio.speakNaturally(
+            `<Excited> Verified! <Pauses> I've applied the remediation patch for ${hazardTitle}. All architectural hazard checks and preflight validations are now passing cleanly.`,
+          );
+          broadcastChatMessage(
+            `Echma applied resilience patch to ${hazardTitle}: verified acyclic topology and bounded resilience boundaries.`,
+          );
+          return true;
+        } else {
+          // Truthful reporting of remaining issues
+          const firstIssue = targetStillFlagged
+            ? `Connection still flagged: ${hazardTitle}`
+            : remainingProblems[0]?.message || 'A remaining constraint was detected';
+          toast.warning(
+            `Patch applied, but preflight check detected: ${firstIssue}`,
+            'Partial Remediation',
+          );
+          meetingAudio.speakNaturally(
+            `<Pauses> I've applied the patch for ${hazardTitle}, <Slow> but our verification check detected ${
+              targetStillFlagged
+                ? 'that the resilience condition is still unmet'
+                : `${remainingProblems.length === 1 ? 'a remaining issue' : `${remainingProblems.length} remaining issues`}: ${firstIssue}`
+            }. Let's inspect the connection parameters directly.`,
+          );
+          return false;
+        }
+      } catch {
+        // Graceful fallback if validation request failed
+        sreWatcher.evictHazard(hazard?.id || (targetEdgeId as string) || '');
+        sreWatcher.dismissFinding();
+        toast.success(`Resilience patch applied: ${hazardTitle}`, 'Architecture Updated');
+        meetingAudio.speakNaturally(
+          `<Excited> Patch applied for ${hazardTitle}. <Pauses> Please verify the canvas before starting the simulation.`,
+        );
+        return true;
+      }
+    },
+    [
+      api,
+      board,
+      broadcastChatMessage,
+      removeEdge,
+      setEntryNode,
+      sreWatcher,
+      toast,
+      updateEdge,
+      updateEdgePolicy,
+      updateNode,
+    ],
+  );
 
   // 1. Landing Page View (Only shown if user is NOT authenticated)
   if (view === 'landing' && !isAuthenticated) {
@@ -1093,11 +1179,16 @@ export function App() {
         isOpen={isSreModalOpen}
         hazards={sreWatcher.hazards}
         onClose={() => setIsSreModalOpen(false)}
-        onApplyPatch={(_edgeId, _patch) => {
-          void handleAutoRemediate();
+        onApplyPatch={(edgeId, patch) => {
+          void handleAutoRemediate(edgeId, patch);
         }}
         onRunProof={async (targetEdgeId) => {
-          const success = await handleAutoRemediate();
+          const matchHazard = sreWatcher.hazards.find((h) => h.targetEdgeId === targetEdgeId);
+          const success = await handleAutoRemediate(
+            targetEdgeId,
+            matchHazard?.patch as Partial<EdgePolicy>,
+            matchHazard?.id,
+          );
           if (success) {
             const matchEdge = board.edges.find((e) => e.id === targetEdgeId);
             if (matchEdge) {
