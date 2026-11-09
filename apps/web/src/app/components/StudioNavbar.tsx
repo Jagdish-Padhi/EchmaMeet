@@ -430,7 +430,6 @@ export function StudioNavbar({
 
         <ImportDropdown
           onImportDiagram={() => setIsImportModalOpen(true)}
-          onScanWhiteboard={() => setActiveDrawer('vision')}
           scenarios={scenariosState.scenarios}
           onSelectScenario={(sc) => {
             scenariosState.selectScenario(sc.id);
