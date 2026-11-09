@@ -12,7 +12,7 @@ export function RepairComparisonCard({ results }: RepairComparisonCardProps) {
 
   return (
     <Card
-      title="Repair Loop Comparison: Model Agent vs Rule-Based Baseline"
+      title="Repair Loop: Model vs Rule Baseline"
       actions={
         validResults.length > 0 ? (
           <div className="layout-toggle-group" role="group" aria-label="Layout view mode">

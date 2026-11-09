@@ -12,7 +12,7 @@ export function ComparisonTable({ results }: ComparisonTableProps) {
 
   return (
     <Card
-      title="Static LLM Baseline vs Empirical Sandbox Execution"
+      title="Model vs Sandbox Execution"
       actions={
         results.length > 0 ? (
           <div className="layout-toggle-group" role="group" aria-label="Layout view mode">

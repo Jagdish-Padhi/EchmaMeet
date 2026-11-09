@@ -27,7 +27,7 @@ export function RunHistoryTable({
 
   return (
     <Card
-      title="Past Chaos Runs"
+      title="Recorded Simulation Runs"
       actions={
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {runs.length > 0 && (
@@ -95,7 +95,7 @@ export function RunHistoryTable({
         </div>
       ) : runs.length === 0 ? (
         <p className="state-message">
-          {isLoading ? 'Loading run history...' : 'No past runs found in database.'}
+          {isLoading ? 'Loading run history...' : 'No simulation runs recorded yet.'}
         </p>
       ) : viewMode === 'vertical' ? (
         <div className="runs-vertical-list">

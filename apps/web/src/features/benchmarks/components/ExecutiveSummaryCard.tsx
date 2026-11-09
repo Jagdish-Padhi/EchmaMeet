@@ -9,7 +9,7 @@ export function ExecutiveSummaryCard({ summary }: ExecutiveSummaryCardProps) {
   const metrics = summary.aggregateMetrics;
 
   return (
-    <Card title="Benchmark Suite Executive Summary" className="benchmark-summary-card">
+    <Card title="Benchmark Summary" className="benchmark-summary-card">
       <div className="summary-grid">
         <div className="summary-metric-box">
           <span className="summary-label">Evaluated Scenarios</span>

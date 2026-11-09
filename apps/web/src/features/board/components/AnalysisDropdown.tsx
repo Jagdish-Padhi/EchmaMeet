@@ -104,7 +104,7 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
       {isOpen && (
         <div className="meetings-menu analysis-menu" role="menu">
           {/* Section: Speech */}
-          <div className="menu-section-header">Speech (Gnani AI)</div>
+          <div className="menu-section-header">Voice &amp; Speech</div>
           <button
             type="button"
             className={`meetings-menu-item ${activeTab === 'voice' ? 'active-item' : ''}`}
@@ -152,7 +152,7 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
               </svg>
             </div>
             <div className="menu-item-content">
-              <div className="menu-item-title">Telemetry &amp; SLO Verdicts</div>
+              <div className="menu-item-title">Telemetry &amp; Verdicts</div>
             </div>
           </button>
 
@@ -205,7 +205,7 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
 
           {/* Section: Observability */}
           <div className="menu-divider" />
-          <div className="menu-section-header">Observability &amp; History</div>
+          <div className="menu-section-header">History &amp; Benchmarks</div>
           <button
             type="button"
             className={`meetings-menu-item ${activeTab === 'runs' ? 'active-item' : ''}`}
@@ -226,7 +226,7 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
               </svg>
             </div>
             <div className="menu-item-content">
-              <div className="menu-item-title">Execution History &amp; Replay</div>
+              <div className="menu-item-title">Execution History</div>
             </div>
           </button>
 

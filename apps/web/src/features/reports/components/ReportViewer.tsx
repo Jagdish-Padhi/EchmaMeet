@@ -100,7 +100,7 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
   if (loading) {
     return (
       <Card title="Run Report & Artifact Export">
-        <p style={{ color: '#64748b' }}>Loading report data for {runId}...</p>
+        <p className="state-message">Loading report data for {runId}...</p>
       </Card>
     );
   }
@@ -108,7 +108,9 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
   if (error || !report) {
     return (
       <Card title="Run Report & Artifact Export">
-        <p style={{ color: '#ef4444' }}>Error: {error ?? 'Unable to retrieve report'}</p>
+        <p className="state-message" style={{ color: 'var(--color-danger, #ef4444)' }}>
+          Error: {error ?? 'Unable to retrieve report'}
+        </p>
       </Card>
     );
   }
@@ -122,117 +124,111 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: 12,
-          marginBottom: 16,
-          paddingBottom: 12,
-          borderBottom: '1px solid #334155',
+          gap: 10,
+          marginBottom: 14,
+          paddingBottom: 10,
+          borderBottom: '1px solid var(--color-border)',
         }}
       >
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
           <button
             type="button"
-            onClick={() => {
-              setActiveView('summary');
-            }}
+            onClick={() => setActiveView('summary')}
             style={{
-              padding: '6px 14px',
+              padding: '5px 10px',
               borderRadius: 6,
               background:
-                activeView === 'summary' ? 'linear-gradient(135deg, #0284c7, #2563eb)' : '#1e293b',
-              color: '#f8fafc',
-              border: activeView === 'summary' ? '1px solid #38bdf8' : '1px solid #475569',
-              boxShadow: activeView === 'summary' ? '0 0 12px rgba(56, 189, 248, 0.3)' : 'none',
+                activeView === 'summary' ? 'var(--color-primary)' : 'var(--color-surface)',
+              color: activeView === 'summary' ? '#ffffff' : 'var(--color-text)',
+              border: activeView === 'summary' ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
               cursor: 'pointer',
               fontWeight: 600,
+              fontSize: 12,
             }}
           >
             Summary &amp; Card
           </button>
           <button
             type="button"
-            onClick={() => {
-              setActiveView('diagram');
-            }}
+            onClick={() => setActiveView('diagram')}
             style={{
-              padding: '6px 14px',
+              padding: '5px 10px',
               borderRadius: 6,
               background:
-                activeView === 'diagram' ? 'linear-gradient(135deg, #0284c7, #2563eb)' : '#1e293b',
-              color: '#f8fafc',
-              border: activeView === 'diagram' ? '1px solid #38bdf8' : '1px solid #475569',
-              boxShadow: activeView === 'diagram' ? '0 0 12px rgba(56, 189, 248, 0.3)' : 'none',
+                activeView === 'diagram' ? 'var(--color-primary)' : 'var(--color-surface)',
+              color: activeView === 'diagram' ? '#ffffff' : 'var(--color-text)',
+              border: activeView === 'diagram' ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
               cursor: 'pointer',
               fontWeight: 600,
+              fontSize: 12,
             }}
           >
-            Deterministic SVG
+            Topology SVG
           </button>
           <button
             type="button"
-            onClick={() => {
-              setActiveView('markdown');
-            }}
+            onClick={() => setActiveView('markdown')}
             style={{
-              padding: '6px 14px',
+              padding: '5px 10px',
               borderRadius: 6,
               background:
-                activeView === 'markdown' ? 'linear-gradient(135deg, #0284c7, #2563eb)' : '#1e293b',
-              color: '#f8fafc',
-              border: activeView === 'markdown' ? '1px solid #38bdf8' : '1px solid #475569',
-              boxShadow: activeView === 'markdown' ? '0 0 12px rgba(56, 189, 248, 0.3)' : 'none',
+                activeView === 'markdown' ? 'var(--color-primary)' : 'var(--color-surface)',
+              color: activeView === 'markdown' ? '#ffffff' : 'var(--color-text)',
+              border: activeView === 'markdown' ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
               cursor: 'pointer',
               fontWeight: 600,
+              fontSize: 12,
             }}
           >
-            Markdown Preview
+            Markdown
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
           <button
             type="button"
             onClick={handleDownloadMarkdown}
             style={{
-              padding: '6px 12px',
+              padding: '5px 8px',
               borderRadius: 6,
-              background: '#0f172a',
-              color: '#38bdf8',
-              border: '1px solid #0284c7',
+              background: 'var(--color-surface)',
+              color: 'var(--color-text)',
+              border: '1px solid var(--color-border)',
               cursor: 'pointer',
-              fontSize: 12,
+              fontSize: 11,
             }}
           >
-            Export .md
+            .md
           </button>
           <button
             type="button"
             onClick={handleDownloadJson}
             style={{
-              padding: '6px 12px',
+              padding: '5px 8px',
               borderRadius: 6,
-              background: '#0f172a',
-              color: '#38bdf8',
-              border: '1px solid #0284c7',
+              background: 'var(--color-surface)',
+              color: 'var(--color-text)',
+              border: '1px solid var(--color-border)',
               cursor: 'pointer',
-              fontSize: 12,
+              fontSize: 11,
             }}
           >
-            Export .json
+            .json
           </button>
           <button
             type="button"
             onClick={handleDownloadSvg}
             style={{
-              padding: '6px 12px',
+              padding: '5px 8px',
               borderRadius: 6,
-              background: '#0f172a',
-              color: '#38bdf8',
-              border: '1px solid #0284c7',
+              background: 'var(--color-surface)',
+              color: 'var(--color-text)',
+              border: '1px solid var(--color-border)',
               cursor: 'pointer',
-              fontSize: 12,
+              fontSize: 11,
             }}
           >
-            Export .svg
+            .svg
           </button>
         </div>
       </div>
@@ -240,100 +236,100 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
       {/* Provenance Banner */}
       <div
         style={{
-          background: '#0f172a',
-          padding: '10px 14px',
+          background: 'var(--color-surface)',
+          padding: '8px 12px',
           borderRadius: 6,
-          marginBottom: 16,
-          fontSize: 12,
-          color: '#94a3b8',
+          marginBottom: 14,
+          fontSize: 11,
+          color: 'var(--color-text-muted)',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 8,
-          border: '1px solid #1e293b',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: 6,
+          border: '1px solid var(--color-border)',
         }}
       >
         <div>
-          <span style={{ color: '#64748b' }}>Run ID: </span>
-          <span style={{ fontFamily: 'monospace', color: '#f1f5f9' }}>{report.runId}</span>
+          <span style={{ color: 'var(--color-text-dim)' }}>Run: </span>
+          <span style={{ fontFamily: 'monospace', color: 'var(--color-text)' }}>{report.runId}</span>
         </div>
         <div>
-          <span style={{ color: '#64748b' }}>Commit: </span>
-          <span style={{ fontFamily: 'monospace', color: '#f1f5f9' }}>
+          <span style={{ color: 'var(--color-text-dim)' }}>Commit: </span>
+          <span style={{ fontFamily: 'monospace', color: 'var(--color-text)' }}>
             {report.provenance.gitCommit}
           </span>
         </div>
         <div>
-          <span style={{ color: '#64748b' }}>Host: </span>
+          <span style={{ color: 'var(--color-text-dim)' }}>Host: </span>
           <span>{report.provenance.hostDescription}</span>
         </div>
         <div>
-          <span style={{ color: '#64748b' }}>Node / Toxiproxy: </span>
+          <span style={{ color: 'var(--color-text-dim)' }}>Runtime: </span>
           <span>
-            {report.provenance.nodeVersion} / {report.provenance.toxiproxyVersion}
+            {report.provenance.nodeVersion}
           </span>
         </div>
       </div>
 
       {activeView === 'summary' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          {/* Left: Authoritative Numbers */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Authoritative Numbers */}
           <div
             style={{
-              background: '#0f172a',
-              padding: 16,
+              background: 'var(--color-surface)',
+              padding: 12,
               borderRadius: 8,
-              border: '1px solid #1e293b',
+              border: '1px solid var(--color-border)',
             }}
           >
             <h4
               style={{
-                margin: '0 0 12px 0',
-                color: '#f8fafc',
-                fontSize: 14,
-                borderBottom: '1px solid #334155',
+                margin: '0 0 10px 0',
+                color: 'var(--color-text)',
+                fontSize: 13,
+                borderBottom: '1px solid var(--color-border)',
                 paddingBottom: 6,
               }}
             >
               Authoritative Empirical Verdicts
             </h4>
             {report.verdicts.length === 0 ? (
-              <p style={{ color: '#64748b', fontSize: 13 }}>No invariant verdicts recorded.</p>
+              <p style={{ color: 'var(--color-text-dim)', fontSize: 12 }}>No invariant verdicts recorded.</p>
             ) : (
-              <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
+              <table style={{ width: '100%', fontSize: 11, borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ color: '#94a3b8', borderBottom: '1px solid #334155' }}>
-                    <th style={{ textAlign: 'left', padding: '6px 4px' }}>Invariant</th>
-                    <th style={{ textAlign: 'left', padding: '6px 4px' }}>Status</th>
-                    <th style={{ textAlign: 'left', padding: '6px 4px' }}>Evidence</th>
+                  <tr style={{ color: 'var(--color-text-muted)', borderBottom: '1px solid var(--color-border)' }}>
+                    <th style={{ textAlign: 'left', padding: '5px 4px' }}>Invariant</th>
+                    <th style={{ textAlign: 'left', padding: '5px 4px' }}>Status</th>
+                    <th style={{ textAlign: 'left', padding: '5px 4px' }}>Evidence</th>
                   </tr>
                 </thead>
                 <tbody>
                   {report.verdicts.map((v) => (
-                    <tr key={v.invariantId} style={{ borderBottom: '1px solid #1e293b' }}>
+                    <tr key={v.invariantId} style={{ borderBottom: '1px solid var(--color-border)' }}>
                       <td
                         style={{
-                          padding: '6px 4px',
-                          color: '#f1f5f9',
+                          padding: '5px 4px',
+                          color: 'var(--color-text)',
                           fontFamily: 'monospace',
                         }}
                       >
                         {v.invariantId}
                       </td>
-                      <td style={{ padding: '6px 4px' }}>
+                      <td style={{ padding: '5px 4px' }}>
                         <span
                           style={{
                             padding: '2px 6px',
                             borderRadius: 4,
                             fontWeight: 'bold',
-                            fontSize: 11,
-                            background: v.status === 'PASS' ? '#14532d' : '#7f1d1d',
-                            color: v.status === 'PASS' ? '#86efac' : '#fca5a5',
+                            fontSize: 10,
+                            background: v.status === 'PASS' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                            color: v.status === 'PASS' ? '#22c55e' : '#ef4444',
                           }}
                         >
                           {v.status}
                         </span>
                       </td>
-                      <td style={{ padding: '6px 4px', color: '#94a3b8', fontSize: 11 }}>
+                      <td style={{ padding: '5px 4px', color: 'var(--color-text-muted)', fontSize: 11 }}>
                         {v.reason ??
                           `${v.evidence.metric} ${v.evidence.comparator} ${String(v.evidence.threshold)}`}
                       </td>
@@ -345,52 +341,52 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
 
             <h4
               style={{
-                margin: '16px 0 8px 0',
-                color: '#f8fafc',
-                fontSize: 14,
-                borderBottom: '1px solid #334155',
+                margin: '14px 0 8px 0',
+                color: 'var(--color-text)',
+                fontSize: 13,
+                borderBottom: '1px solid var(--color-border)',
                 paddingBottom: 6,
               }}
             >
-              Faulted Distribution (Medians)
+              Faulted Distribution Medians
             </h4>
             <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(2, 1fr)',
                 gap: 8,
-                fontSize: 12,
+                fontSize: 11,
               }}
             >
-              <div style={{ background: '#1e293b', padding: '8px 10px', borderRadius: 4 }}>
-                <span style={{ color: '#94a3b8' }}>p50 Latency: </span>
-                <strong style={{ color: '#f8fafc' }}>
+              <div style={{ background: 'var(--color-surface-hover, rgba(255,255,255,0.04))', padding: '6px 8px', borderRadius: 4 }}>
+                <span style={{ color: 'var(--color-text-muted)' }}>p50 Latency: </span>
+                <strong style={{ color: 'var(--color-text)' }}>
                   {card?.authoritativeMetrics.p50Ms !== undefined
                     ? `${String(card.authoritativeMetrics.p50Ms)}ms`
                     : 'N/A'}
                 </strong>
               </div>
-              <div style={{ background: '#1e293b', padding: '8px 10px', borderRadius: 4 }}>
-                <span style={{ color: '#94a3b8' }}>p99 Latency: </span>
-                <strong style={{ color: '#f8fafc' }}>
+              <div style={{ background: 'var(--color-surface-hover, rgba(255,255,255,0.04))', padding: '6px 8px', borderRadius: 4 }}>
+                <span style={{ color: 'var(--color-text-muted)' }}>p99 Latency: </span>
+                <strong style={{ color: 'var(--color-text)' }}>
                   {card?.authoritativeMetrics.p99Ms !== undefined
                     ? `${String(card.authoritativeMetrics.p99Ms)}ms`
                     : 'N/A'}
                 </strong>
               </div>
-              <div style={{ background: '#1e293b', padding: '8px 10px', borderRadius: 4 }}>
-                <span style={{ color: '#94a3b8' }}>Error Rate: </span>
-                <strong style={{ color: '#f8fafc' }}>
+              <div style={{ background: 'var(--color-surface-hover, rgba(255,255,255,0.04))', padding: '6px 8px', borderRadius: 4 }}>
+                <span style={{ color: 'var(--color-text-muted)' }}>Error Rate: </span>
+                <strong style={{ color: 'var(--color-text)' }}>
                   {card?.authoritativeMetrics.errorRate !== undefined
                     ? `${String(Math.round(card.authoritativeMetrics.errorRate * 100))}%`
                     : 'N/A'}
                 </strong>
               </div>
-              <div style={{ background: '#1e293b', padding: '8px 10px', borderRadius: 4 }}>
-                <span style={{ color: '#94a3b8' }}>Status: </span>
+              <div style={{ background: 'var(--color-surface-hover, rgba(255,255,255,0.04))', padding: '6px 8px', borderRadius: 4 }}>
+                <span style={{ color: 'var(--color-text-muted)' }}>Status: </span>
                 <strong
                   style={{
-                    color: report.status === 'completed' ? '#86efac' : '#fca5a5',
+                    color: report.status === 'completed' ? '#22c55e' : '#ef4444',
                   }}
                 >
                   {report.status}
@@ -399,13 +395,13 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
             </div>
           </div>
 
-          {/* Right: Blueprint Card / Illustrative Rendering */}
+          {/* Blueprint Card / Illustrative Rendering */}
           <div
             style={{
-              background: '#0f172a',
-              padding: 16,
+              background: 'var(--color-surface)',
+              padding: 12,
               borderRadius: 8,
-              border: '1px solid #1e293b',
+              border: '1px solid var(--color-border)',
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -418,31 +414,31 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
                 marginBottom: 8,
               }}
             >
-              <h4 style={{ margin: 0, color: '#f8fafc', fontSize: 14 }}>Blueprint Card</h4>
+              <h4 style={{ margin: 0, color: 'var(--color-text)', fontSize: 13 }}>Topology Architecture</h4>
               <span
                 style={{
                   fontSize: 10,
                   textTransform: 'uppercase',
                   padding: '2px 6px',
                   borderRadius: 4,
-                  background: '#334155',
-                  color: '#94a3b8',
+                  background: 'var(--color-surface-hover, rgba(255,255,255,0.08))',
+                  color: 'var(--color-text-muted)',
                 }}
               >
-                Illustrative Rendering
+                Vector Blueprint
               </span>
             </div>
 
             {card?.fallbackReason && (
               <div
                 style={{
-                  background: '#2d1810',
-                  color: '#fdba74',
-                  border: '1px solid #7c2d12',
+                  background: 'rgba(234, 88, 12, 0.12)',
+                  color: '#fb923c',
+                  border: '1px solid rgba(234, 88, 12, 0.3)',
                   borderRadius: 4,
-                  padding: '6px 10px',
+                  padding: '6px 8px',
                   fontSize: 11,
-                  marginBottom: 10,
+                  marginBottom: 8,
                 }}
               >
                 <strong>Degraded: </strong>
@@ -453,14 +449,14 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
             <div
               style={{
                 flex: 1,
-                minHeight: 200,
-                background: '#020617',
+                minHeight: 180,
+                background: 'var(--color-bg)',
                 borderRadius: 6,
                 overflow: 'hidden',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: '1px solid #1e293b',
+                border: '1px solid var(--color-border)',
               }}
             >
               {card?.mimeType === 'image/svg+xml' ? (
@@ -472,10 +468,10 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
                 <img
                   src={card.content}
                   alt="System Blueprint Card"
-                  style={{ maxWidth: '100%', maxHeight: 280, objectFit: 'contain' }}
+                  style={{ maxWidth: '100%', maxHeight: 240, objectFit: 'contain' }}
                 />
               ) : (
-                <p style={{ color: '#64748b' }}>No diagram available</p>
+                <p style={{ color: 'var(--color-text-dim)', fontSize: 12 }}>No diagram available</p>
               )}
             </div>
           </div>
@@ -485,10 +481,10 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
       {activeView === 'diagram' && (
         <div
           style={{
-            background: '#020617',
-            padding: 16,
+            background: 'var(--color-bg)',
+            padding: 14,
             borderRadius: 8,
-            border: '1px solid #334155',
+            border: '1px solid var(--color-border)',
             overflow: 'auto',
           }}
         >
@@ -499,10 +495,10 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
       {activeView === 'markdown' && (
         <div
           style={{
-            background: '#090d16',
-            padding: 16,
+            background: 'var(--color-bg)',
+            padding: 14,
             borderRadius: 8,
-            border: '1px solid #334155',
+            border: '1px solid var(--color-border)',
             overflow: 'auto',
             maxHeight: 500,
           }}
@@ -510,9 +506,9 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
           <pre
             style={{
               margin: 0,
-              fontSize: 12,
+              fontSize: 11,
               fontFamily: 'monospace',
-              color: '#cbd5e1',
+              color: 'var(--color-text)',
               whiteSpace: 'pre-wrap',
             }}
           >

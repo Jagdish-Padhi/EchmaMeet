@@ -1,5 +1,6 @@
 import type { NodeId, Topology, RunId } from '@chaosboard/contracts';
 import { Alert } from '../../components/ui/Alert';
+import { Card } from '../../components/ui/Card';
 import { StatusPill } from '../../components/ui/StatusPill';
 import type { ApiClient } from '../../api/client';
 import {
@@ -32,7 +33,6 @@ import {
   ComparisonTable,
   ExecutiveSummaryCard,
   RepairComparisonCard,
-  SurprisesSection,
 } from '../../features/benchmarks';
 import { ReplayModal, RunDetailView, RunHistoryTable } from '../../features/runs';
 
@@ -404,9 +404,11 @@ export function StudioDrawers({
                 {activeReportRunId ? (
                   <ReportViewer api={api} runId={activeReportRunId} />
                 ) : (
-                  <p style={{ color: 'var(--color-text-dim)', fontSize: 13 }}>
-                    No runs recorded yet. Execute a chaos run to generate reports.
-                  </p>
+                  <Card title="Architecture Reports">
+                    <p className="state-message" style={{ margin: 0 }}>
+                      No simulation runs recorded yet. Execute a simulation to generate architecture reports.
+                    </p>
+                  </Card>
                 )}
               </div>
             );
@@ -424,7 +426,6 @@ export function StudioDrawers({
                 <ExecutiveSummaryCard summary={benchmarksState.summary} />
                 <ComparisonTable results={benchmarksState.summary.results} />
                 <RepairComparisonCard results={benchmarksState.summary.results} />
-                <SurprisesSection />
               </>
             )}
           </>
