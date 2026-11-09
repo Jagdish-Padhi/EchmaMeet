@@ -1,7 +1,7 @@
 import type { RunId, RunRecord, RunSummary } from '@chaosboard/contracts';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
-import { Card } from '../../../components/ui/Card';
+import { DrawerLoadingBar } from '../../../components/ui/DrawerLoadingBar';
 import { StatusPill } from '../../../components/ui/StatusPill';
 
 export interface RunHistoryTableProps {
@@ -54,97 +54,95 @@ export function RunHistoryTable({
   onView,
   onReplay,
   onExport,
-  hideTitle = false,
 }: RunHistoryTableProps) {
-  return (
-    <Card
-      title={hideTitle ? undefined : 'Recorded Simulation Runs'}
-      actions={
-        <Button variant="secondary" size="sm" onClick={onRefresh} disabled={isLoading}>
-          Refresh Runs
-        </Button>
-      }
-      className="runs-table-card"
-    >
-      {error ? (
-        <div style={{ padding: '6px 0' }}>
-          <Alert variant="error" title="Unable to Load Execution History">
-            <div style={{ fontSize: 12, marginBottom: 10, lineHeight: 1.4 }}>
-              {error.toLowerCase().includes('unauthorized') ||
-              error.toLowerCase().includes('access denied') ||
-              error.includes('401')
-                ? 'Authenticating workspace session. Click Retry Connection to reload.'
-                : error}
-            </div>
-            <Button variant="secondary" size="sm" onClick={onRefresh} disabled={isLoading}>
-              Retry Connection
-            </Button>
-          </Alert>
-        </div>
-      ) : isLoading ? (
-        <div
-          className="drawer-loading-box"
-          style={{ border: 'none', padding: '12px 4px', background: 'transparent' }}
-        >
-          <div className="drawer-loading-header">
-            <span className="agentic-pulse-spinner" />
-            <span className="drawer-loading-label">
-              Loading execution history from database...
-            </span>
+  if (error) {
+    return (
+      <div style={{ padding: '4px 0' }}>
+        <Alert variant="error" title="Unable to Load Execution History">
+          <div style={{ fontSize: 12, marginBottom: 10, lineHeight: 1.4 }}>
+            {error.toLowerCase().includes('unauthorized') ||
+            error.toLowerCase().includes('access denied') ||
+            error.includes('401')
+              ? 'Authenticating workspace session. Click Retry Connection to reload.'
+              : error}
           </div>
-          <div className="drawer-loading-indeterminate" />
-        </div>
-      ) : runs.length === 0 ? (
-        <p className="state-message">No simulation runs recorded yet.</p>
-      ) : (
-        <div className="runs-vertical-list">
-          {runs.map((r) => {
-            const faultLabel = getFaultText(r);
-            const topoName = getTopologyName(r);
-            const startedAt = getStartedAtText(r);
+          <Button variant="secondary" size="sm" onClick={onRefresh} disabled={isLoading}>
+            Retry Connection
+          </Button>
+        </Alert>
+      </div>
+    );
+  }
 
-            return (
-              <div key={r.id} className="run-vertical-card">
-                <div className="run-card-header">
-                  <span className="cell-mono run-id-text" title={r.id}>
-                    run:{r.id.slice(0, 8)}
-                  </span>
-                  <StatusPill
-                    status={
-                      r.overallStatus ?? (r.status === 'running' ? 'running' : 'INCONCLUSIVE')
-                    }
-                  />
-                </div>
-                <div className="run-card-details">
-                  <div className="run-card-row">
-                    <span className="run-field-label">Topology</span>
-                    <span className="run-field-val font-semibold">{topoName}</span>
-                  </div>
-                  <div className="run-card-row">
-                    <span className="run-field-label">Fault</span>
-                    <span className="run-field-val cell-mono">{faultLabel}</span>
-                  </div>
-                  <div className="run-card-row">
-                    <span className="run-field-label">Started</span>
-                    <span className="run-field-val cell-mono">{startedAt}</span>
-                  </div>
-                </div>
-                <div className="run-card-actions">
-                  <Button variant="ghost" size="sm" onClick={() => onView(r.id)}>
-                    Details
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => onReplay(r.id)}>
-                    Replay
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => onExport(r.id)}>
-                    Export JSON
-                  </Button>
-                </div>
+  if (isLoading) {
+    return <DrawerLoadingBar label="Loading execution history from database..." />;
+  }
+
+  if (runs.length === 0) {
+    return (
+      <div
+        className="state-message"
+        style={{
+          padding: '32px 16px',
+          textAlign: 'center',
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 8,
+          margin: 0,
+        }}
+      >
+        No simulation runs recorded yet. Execute a simulation to build run history.
+      </div>
+    );
+  }
+
+  return (
+    <div className="runs-vertical-list">
+      {runs.map((r) => {
+        const faultLabel = getFaultText(r);
+        const topoName = getTopologyName(r);
+        const startedAt = getStartedAtText(r);
+
+        return (
+          <div key={r.id} className="run-vertical-card">
+            <div className="run-card-header">
+              <span className="cell-mono run-id-text" title={r.id}>
+                run:{r.id.slice(0, 8)}
+              </span>
+              <StatusPill
+                status={
+                  r.overallStatus ?? (r.status === 'running' ? 'running' : 'INCONCLUSIVE')
+                }
+              />
+            </div>
+            <div className="run-card-details">
+              <div className="run-card-row">
+                <span className="run-field-label">Topology</span>
+                <span className="run-field-val font-semibold">{topoName}</span>
               </div>
-            );
-          })}
-        </div>
-      )}
-    </Card>
+              <div className="run-card-row">
+                <span className="run-field-label">Fault</span>
+                <span className="run-field-val cell-mono">{faultLabel}</span>
+              </div>
+              <div className="run-card-row">
+                <span className="run-field-label">Started</span>
+                <span className="run-field-val cell-mono">{startedAt}</span>
+              </div>
+            </div>
+            <div className="run-card-actions">
+              <Button variant="ghost" size="sm" onClick={() => onView(r.id)}>
+                Details
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => onReplay(r.id)}>
+                Replay
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => onExport(r.id)}>
+                Export JSON
+              </Button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

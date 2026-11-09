@@ -41,9 +41,18 @@ export function ExecutiveSummaryCard({ summary, hideTitle = false }: ExecutiveSu
         </div>
       </div>
       <div className="meta-footer">
-        <span>Git Commit: {summary.gitCommit}</span>
-        <span>Host: {summary.hostDescription}</span>
-        <span>Node: {summary.nodeVersion}</span>
+        <span className="meta-pill">
+          <span className="meta-pill-label">Commit</span>
+          <span className="cell-mono">{summary.gitCommit}</span>
+        </span>
+        <span className="meta-pill">
+          <span className="meta-pill-label">Host</span>
+          <span>{summary.hostDescription}</span>
+        </span>
+        <span className="meta-pill">
+          <span className="meta-pill-label">Node</span>
+          <span className="cell-mono">{summary.nodeVersion}</span>
+        </span>
       </div>
     </Card>
   );

@@ -5226,7 +5226,7 @@ button.validation-target-chip:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 12px;
+  gap: 6px;
   padding-top: 10px;
   margin-top: 4px;
   border-top: 1px solid var(--color-border-subtle);
@@ -5234,14 +5234,146 @@ button.validation-target-chip:hover {
   color: var(--color-text-dim);
 }
 
-.meta-footer span {
+.meta-pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: var(--color-surface-hover);
-  padding: 2px 8px;
+  gap: 5px;
+  background: var(--color-surface);
+  padding: 2px 7px;
   border-radius: 4px;
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--color-border);
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.meta-pill-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-dim);
+}
+
+/* Studio Drawer Top Actions */
+.drawer-header-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 5px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.drawer-header-action-btn:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+  border-color: var(--color-border-hover);
+}
+
+.drawer-header-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Reports Drawer Target & Navigation Controls */
+.reports-target-bar {
+  display: flex;
+  align-items: center;
+  justifyContent: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+.reports-target-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.reports-target-select {
+  padding: 3px 8px;
+  font-size: 11.5px;
+  font-family: var(--font-mono, monospace);
+  flex: 1;
+  max-width: 260px;
+}
+
+.reports-action-bar {
+  display: flex;
+  justifyContent: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.reports-nav-group {
+  display: flex;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.reports-nav-btn {
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.reports-nav-btn:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.reports-nav-btn.active {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.reports-download-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.reports-download-btn {
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  font-size: 10.5px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.reports-download-btn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+  border-color: var(--color-border-hover);
 }
 
 /* Telemetry Dashboard Strip */

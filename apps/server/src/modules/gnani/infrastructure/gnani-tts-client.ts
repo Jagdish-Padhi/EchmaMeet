@@ -104,6 +104,12 @@ function deriveModelAndVoice(
 }
 
 export class GnaniTtsClient implements TextToSpeechPort {
+  private static readonly MAX_CACHE_SIZE = 150;
+  private readonly cache = new Map<
+    string,
+    { readonly audio: Uint8Array; readonly contentType: string; readonly voice: string; readonly model: string }
+  >();
+
   constructor(private readonly config: GnaniTtsConfig) {}
 
   async synthesize(request: SynthesizeRequest): Promise<SynthesizeResult> {
@@ -116,6 +122,19 @@ export class GnaniTtsClient implements TextToSpeechPort {
     const started = Date.now();
 
     const { model, voice } = deriveModelAndVoice(this.config.model, language, request.voice);
+    const speed = Math.max(0.85, Math.min(1.15, request.speed ?? 1.0));
+
+    const cacheKey = `${model}:${voice}:${language}:${speed.toFixed(2)}:${text.toLowerCase()}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached) {
+      return {
+        audio: cached.audio.slice(0),
+        contentType: cached.contentType,
+        voice: cached.voice,
+        model: cached.model,
+        latencyMs: 1,
+      };
+    }
 
     const makePayload = (m: TtsModel, v: string) => ({
       text: text.slice(0, 1000),
@@ -123,7 +142,7 @@ export class GnaniTtsClient implements TextToSpeechPort {
       model: m,
       language,
       // Gnani Timbre: 1.0 provides the pure, authentic, unadulterated native voice as provided by Gnani
-      speed: Math.max(0.85, Math.min(1.15, request.speed ?? 1.0)),
+      speed,
       audio_config: {
         sample_rate: this.config.sampleRate,
         num_channels: 1,
@@ -202,6 +221,17 @@ export class GnaniTtsClient implements TextToSpeechPort {
           }
         }
       }
+
+      if (this.cache.size >= GnaniTtsClient.MAX_CACHE_SIZE) {
+        const oldestKey = this.cache.keys().next().value;
+        if (oldestKey) this.cache.delete(oldestKey);
+      }
+      this.cache.set(cacheKey, {
+        audio,
+        contentType: 'audio/wav',
+        voice: payload.voice,
+        model: payload.model,
+      });
 
       return {
         audio,

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import type { ApiClient } from '../../../api/client';
 import type { RunId, ReportExport, BlueprintCard } from '@chaosboard/contracts';
-import { Card } from '../../../components/ui/Card';
+import { DrawerLoadingBar } from '../../../components/ui/DrawerLoadingBar';
+import { StatusPill } from '../../../components/ui/StatusPill';
+import { Alert } from '../../../components/ui/Alert';
 
 export interface ReportViewerProps {
   api: ApiClient;
@@ -100,324 +102,199 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
 
   if (loading) {
     return (
-      <Card title={hideTitle ? undefined : 'Run Report & Artifact Export'}>
-        <div
-          className="drawer-loading-box"
-          style={{ border: 'none', padding: '10px 4px', background: 'transparent' }}
-        >
-          <div className="drawer-loading-header">
-            <span className="agentic-pulse-spinner" />
-            <span className="drawer-loading-label">
-              Loading report data for <span className="cell-mono">{runId}</span>...
-            </span>
-          </div>
-          <div className="drawer-loading-indeterminate" />
-        </div>
-      </Card>
+      <div className="reports-viewer-container" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {!hideTitle && (
+          <div className="run-audit-section-title">Run Report &amp; Artifact Export</div>
+        )}
+        <DrawerLoadingBar
+          label={`Loading report data for run:${runId.slice(0, 8)}...`}
+        />
+      </div>
     );
   }
 
   if (error || !report) {
     return (
-      <Card title={hideTitle ? undefined : 'Run Report & Artifact Export'}>
-        <p className="state-message" style={{ color: 'var(--color-danger, #ef4444)' }}>
-          Error: {error ?? 'Unable to retrieve report'}
-        </p>
-      </Card>
+      <div className="reports-viewer-container" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {!hideTitle && (
+          <div className="run-audit-section-title">Run Report &amp; Artifact Export</div>
+        )}
+        <Alert variant="error" title="Report Unavailable">
+          {error ?? 'Unable to retrieve architecture report for this execution.'}
+        </Alert>
+      </div>
     );
   }
 
   return (
-    <Card title={hideTitle ? undefined : 'Run Report & Artifact Export'}>
-      {/* Action Bar */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 10,
-          marginBottom: 14,
-          paddingBottom: 10,
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
-        <div style={{ display: 'flex', gap: 6 }}>
+    <div className="reports-viewer-container" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {!hideTitle && (
+        <div className="run-audit-section-title">Run Report &amp; Artifact Export</div>
+      )}
+      {/* Action & Navigation Bar */}
+      <div className="reports-action-bar">
+        <div className="reports-nav-group">
           <button
             type="button"
+            className={`reports-nav-btn ${activeView === 'summary' ? 'active' : ''}`}
             onClick={() => setActiveView('summary')}
-            style={{
-              padding: '5px 10px',
-              borderRadius: 6,
-              background:
-                activeView === 'summary' ? 'var(--color-primary)' : 'var(--color-surface)',
-              color: activeView === 'summary' ? '#ffffff' : 'var(--color-text)',
-              border: activeView === 'summary' ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
-              cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: 12,
-            }}
           >
             Summary &amp; Card
           </button>
           <button
             type="button"
+            className={`reports-nav-btn ${activeView === 'diagram' ? 'active' : ''}`}
             onClick={() => setActiveView('diagram')}
-            style={{
-              padding: '5px 10px',
-              borderRadius: 6,
-              background:
-                activeView === 'diagram' ? 'var(--color-primary)' : 'var(--color-surface)',
-              color: activeView === 'diagram' ? '#ffffff' : 'var(--color-text)',
-              border: activeView === 'diagram' ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
-              cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: 12,
-            }}
           >
             Topology SVG
           </button>
           <button
             type="button"
+            className={`reports-nav-btn ${activeView === 'markdown' ? 'active' : ''}`}
             onClick={() => setActiveView('markdown')}
-            style={{
-              padding: '5px 10px',
-              borderRadius: 6,
-              background:
-                activeView === 'markdown' ? 'var(--color-primary)' : 'var(--color-surface)',
-              color: activeView === 'markdown' ? '#ffffff' : 'var(--color-text)',
-              border: activeView === 'markdown' ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
-              cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: 12,
-            }}
           >
             Markdown
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div className="reports-download-group">
           <button
             type="button"
+            className="reports-download-btn"
             onClick={handleDownloadMarkdown}
-            style={{
-              padding: '5px 8px',
-              borderRadius: 6,
-              background: 'var(--color-surface)',
-              color: 'var(--color-text)',
-              border: '1px solid var(--color-border)',
-              cursor: 'pointer',
-              fontSize: 11,
-            }}
+            title="Download Markdown Report"
           >
             .md
           </button>
           <button
             type="button"
+            className="reports-download-btn"
             onClick={handleDownloadJson}
-            style={{
-              padding: '5px 8px',
-              borderRadius: 6,
-              background: 'var(--color-surface)',
-              color: 'var(--color-text)',
-              border: '1px solid var(--color-border)',
-              cursor: 'pointer',
-              fontSize: 11,
-            }}
+            title="Download JSON Export"
           >
             .json
           </button>
-          <button
-            type="button"
-            onClick={handleDownloadSvg}
-            style={{
-              padding: '5px 8px',
-              borderRadius: 6,
-              background: 'var(--color-surface)',
-              color: 'var(--color-text)',
-              border: '1px solid var(--color-border)',
-              cursor: 'pointer',
-              fontSize: 11,
-            }}
-          >
-            .svg
-          </button>
+          {report.diagramSvg && (
+            <button
+              type="button"
+              className="reports-download-btn"
+              onClick={handleDownloadSvg}
+              title="Download Topology SVG"
+            >
+              .svg
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Provenance Banner */}
-      <div
-        style={{
-          background: 'var(--color-surface)',
-          padding: '8px 12px',
-          borderRadius: 6,
-          marginBottom: 14,
-          fontSize: 11,
-          color: 'var(--color-text-muted)',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: 6,
-          border: '1px solid var(--color-border)',
-        }}
-      >
-        <div>
-          <span style={{ color: 'var(--color-text-dim)' }}>Run: </span>
-          <span style={{ fontFamily: 'monospace', color: 'var(--color-text)' }}>{report.runId}</span>
-        </div>
-        <div>
-          <span style={{ color: 'var(--color-text-dim)' }}>Commit: </span>
-          <span style={{ fontFamily: 'monospace', color: 'var(--color-text)' }}>
-            {report.provenance.gitCommit}
-          </span>
-        </div>
-        <div>
-          <span style={{ color: 'var(--color-text-dim)' }}>Host: </span>
-          <span>{report.provenance.hostDescription}</span>
-        </div>
-        <div>
-          <span style={{ color: 'var(--color-text-dim)' }}>Runtime: </span>
-          <span>
-            {report.provenance.nodeVersion}
-          </span>
-        </div>
+      {/* Provenance Metadata Badge Strip */}
+      <div className="meta-footer" style={{ borderTop: 'none', paddingTop: 0, marginTop: 0 }}>
+        <span className="meta-pill">
+          <span className="meta-pill-label">Run</span>
+          <span className="cell-mono">run:{runId.slice(0, 8)}</span>
+        </span>
+        <span className="meta-pill">
+          <span className="meta-pill-label">Commit</span>
+          <span className="cell-mono">{report.provenance.gitCommit.slice(0, 7)}</span>
+        </span>
+        <span className="meta-pill">
+          <span className="meta-pill-label">Host</span>
+          <span>{report.provenance.hostDescription.split(' ')[0]}</span>
+        </span>
+        <span className="meta-pill">
+          <span className="meta-pill-label">Node</span>
+          <span className="cell-mono">{report.provenance.nodeVersion}</span>
+        </span>
       </div>
 
       {activeView === 'summary' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Authoritative Numbers */}
-          <div
-            style={{
-              background: 'var(--color-surface)',
-              padding: 12,
-              borderRadius: 8,
-              border: '1px solid var(--color-border)',
-            }}
-          >
-            <h4
-              style={{
-                margin: '0 0 10px 0',
-                color: 'var(--color-text)',
-                fontSize: 13,
-                borderBottom: '1px solid var(--color-border)',
-                paddingBottom: 6,
-              }}
-            >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Authoritative Empirical Verdicts */}
+          <div className="report-verdicts-section">
+            <div className="run-audit-section-title" style={{ marginBottom: 8 }}>
               Authoritative Empirical Verdicts
-            </h4>
+            </div>
             {report.verdicts.length === 0 ? (
-              <p style={{ color: 'var(--color-text-dim)', fontSize: 12 }}>No invariant verdicts recorded.</p>
+              <p className="state-message" style={{ margin: 0 }}>
+                No invariant verdicts recorded for this run.
+              </p>
             ) : (
-              <table style={{ width: '100%', fontSize: 11, borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ color: 'var(--color-text-muted)', borderBottom: '1px solid var(--color-border)' }}>
-                    <th style={{ textAlign: 'left', padding: '5px 4px' }}>Invariant</th>
-                    <th style={{ textAlign: 'left', padding: '5px 4px' }}>Status</th>
-                    <th style={{ textAlign: 'left', padding: '5px 4px' }}>Evidence</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.verdicts.map((v) => (
-                    <tr key={v.invariantId} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <td
-                        style={{
-                          padding: '5px 4px',
-                          color: 'var(--color-text)',
-                          fontFamily: 'monospace',
-                        }}
-                      >
-                        {v.invariantId}
-                      </td>
-                      <td style={{ padding: '5px 4px' }}>
-                        <span
-                          style={{
-                            padding: '2px 6px',
-                            borderRadius: 4,
-                            fontWeight: 'bold',
-                            fontSize: 10,
-                            background: v.status === 'PASS' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                            color: v.status === 'PASS' ? '#22c55e' : '#ef4444',
-                          }}
-                        >
-                          {v.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: '5px 4px', color: 'var(--color-text-muted)', fontSize: 11 }}>
+              <div className="verdicts-vertical-list">
+                {report.verdicts.map((v) => (
+                  <div
+                    key={v.invariantId}
+                    className={`verdict-vertical-card verdict-${v.status.toLowerCase()}`}
+                  >
+                    <div className="verdict-card-header">
+                      <div className="verdict-card-id-group">
+                        <span className="verdict-indicator-dot" />
+                        <span className="cell-mono verdict-id-cell">{v.invariantId}</span>
+                      </div>
+                      <StatusPill status={v.status} />
+                    </div>
+                    <div className="verdict-card-reason" style={{ marginTop: 6 }}>
+                      <span className="verdict-field-label">Evidence</span>
+                      <p className="verdict-reason-text">
                         {v.reason ??
                           `${v.evidence.metric} ${v.evidence.comparator} ${String(v.evidence.threshold)}`}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
+          </div>
 
-            <h4
-              style={{
-                margin: '14px 0 8px 0',
-                color: 'var(--color-text)',
-                fontSize: 13,
-                borderBottom: '1px solid var(--color-border)',
-                paddingBottom: 6,
-              }}
-            >
-              Faulted Distribution Medians
-            </h4>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: 8,
-                fontSize: 11,
-              }}
-            >
-              <div style={{ background: 'var(--color-surface-hover, rgba(255,255,255,0.04))', padding: '6px 8px', borderRadius: 4 }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>p50 Latency: </span>
-                <strong style={{ color: 'var(--color-text)' }}>
+          {/* Faulted Distribution Medians */}
+          <div className="report-medians-section">
+            <div className="run-audit-section-title" style={{ marginBottom: 8 }}>
+              Empirical Performance Metrics
+            </div>
+            <div className="summary-grid">
+              <div className="summary-metric-box">
+                <span className="summary-label">p50 Latency</span>
+                <span className="summary-value cell-mono">
                   {card?.authoritativeMetrics.p50Ms !== undefined
                     ? `${String(card.authoritativeMetrics.p50Ms)}ms`
                     : 'N/A'}
-                </strong>
+                </span>
               </div>
-              <div style={{ background: 'var(--color-surface-hover, rgba(255,255,255,0.04))', padding: '6px 8px', borderRadius: 4 }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>p99 Latency: </span>
-                <strong style={{ color: 'var(--color-text)' }}>
+              <div className="summary-metric-box">
+                <span className="summary-label">p99 Latency</span>
+                <span className="summary-value cell-mono">
                   {card?.authoritativeMetrics.p99Ms !== undefined
                     ? `${String(card.authoritativeMetrics.p99Ms)}ms`
                     : 'N/A'}
-                </strong>
+                </span>
               </div>
-              <div style={{ background: 'var(--color-surface-hover, rgba(255,255,255,0.04))', padding: '6px 8px', borderRadius: 4 }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Error Rate: </span>
-                <strong style={{ color: 'var(--color-text)' }}>
+              <div className="summary-metric-box">
+                <span className="summary-label">Error Rate</span>
+                <span className="summary-value cell-mono">
                   {card?.authoritativeMetrics.errorRate !== undefined
                     ? `${String(Math.round(card.authoritativeMetrics.errorRate * 100))}%`
                     : 'N/A'}
-                </strong>
+                </span>
               </div>
-              <div style={{ background: 'var(--color-surface-hover, rgba(255,255,255,0.04))', padding: '6px 8px', borderRadius: 4 }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Status: </span>
-                <strong
+              <div className="summary-metric-box">
+                <span className="summary-label">Run Status</span>
+                <span
+                  className="summary-value"
                   style={{
-                    color: report.status === 'completed' ? '#22c55e' : '#ef4444',
+                    textTransform: 'capitalize',
+                    color:
+                      report.status === 'completed'
+                        ? 'var(--color-success, #22c55e)'
+                        : 'var(--color-text)',
                   }}
                 >
                   {report.status}
-                </strong>
+                </span>
               </div>
             </div>
           </div>
 
           {/* Blueprint Card / Illustrative Rendering */}
-          <div
-            style={{
-              background: 'var(--color-surface)',
-              padding: 12,
-              borderRadius: 8,
-              border: '1px solid var(--color-border)',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
+          <div className="report-blueprint-section">
             <div
               style={{
                 display: 'flex',
@@ -426,15 +303,19 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
                 marginBottom: 8,
               }}
             >
-              <h4 style={{ margin: 0, color: 'var(--color-text)', fontSize: 13 }}>Topology Architecture</h4>
+              <div className="run-audit-section-title" style={{ margin: 0 }}>
+                Topology Vector Blueprint
+              </div>
               <span
                 style={{
                   fontSize: 10,
+                  fontWeight: 600,
                   textTransform: 'uppercase',
                   padding: '2px 6px',
                   borderRadius: 4,
-                  background: 'var(--color-surface-hover, rgba(255,255,255,0.08))',
-                  color: 'var(--color-text-muted)',
+                  background: 'var(--color-surface)',
+                  color: 'var(--color-text-dim)',
+                  border: '1px solid var(--color-border)',
                 }}
               >
                 Vector Blueprint
@@ -447,8 +328,8 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
                   background: 'rgba(234, 88, 12, 0.12)',
                   color: '#fb923c',
                   border: '1px solid rgba(234, 88, 12, 0.3)',
-                  borderRadius: 4,
-                  padding: '6px 8px',
+                  borderRadius: 6,
+                  padding: '6px 10px',
                   fontSize: 11,
                   marginBottom: 8,
                 }}
@@ -460,20 +341,20 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
 
             <div
               style={{
-                flex: 1,
                 minHeight: 180,
                 background: 'var(--color-bg)',
-                borderRadius: 6,
+                borderRadius: 8,
                 overflow: 'hidden',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 border: '1px solid var(--color-border)',
+                padding: 10,
               }}
             >
               {card?.mimeType === 'image/svg+xml' ? (
                 <div
-                  style={{ width: '100%', height: '100%' }}
+                  style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center' }}
                   dangerouslySetInnerHTML={{ __html: card.content }}
                 />
               ) : card?.content ? (
@@ -483,7 +364,9 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
                   style={{ maxWidth: '100%', maxHeight: 240, objectFit: 'contain' }}
                 />
               ) : (
-                <p style={{ color: 'var(--color-text-dim)', fontSize: 12 }}>No diagram available</p>
+                <p className="state-message" style={{ margin: 0 }}>
+                  No diagram available
+                </p>
               )}
             </div>
           </div>
@@ -528,6 +411,6 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
           </pre>
         </div>
       )}
-    </Card>
+    </div>
   );
 }

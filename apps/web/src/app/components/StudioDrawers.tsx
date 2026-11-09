@@ -127,6 +127,30 @@ export function StudioDrawers({
           {activeDrawer === 'repair' && (
             <StatusPill status={repairSession.status} />
           )}
+          {activeDrawer === 'runs' && (
+            <button
+              type="button"
+              className="drawer-header-action-btn"
+              onClick={runsHistory.refreshRuns}
+              disabled={runsHistory.isLoading}
+              title="Refresh execution history"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                className={runsHistory.isLoading ? 'agentic-spin' : ''}
+              >
+                <polyline points="23 4 23 10 17 10" />
+                <polyline points="1 20 1 14 7 14" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              </svg>
+              <span>Refresh</span>
+            </button>
+          )}
         </div>
 
         <button
@@ -382,39 +406,20 @@ export function StudioDrawers({
               (firstRun ? firstRun.id : null);
 
             return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="reports-drawer-view" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {runsHistory.runs.length > 0 && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 12px',
-                      background: 'var(--color-surface)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: 6,
-                    }}
-                  >
-                    <label
-                      style={{
-                        fontSize: 10.5,
-                        fontWeight: 700,
-                        color: 'var(--color-text-dim)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.04em',
-                      }}
-                    >
+                  <div className="reports-target-bar">
+                    <label className="reports-target-label">
                       Target Run
                     </label>
                     <select
                       value={activeReportRunId ?? ''}
                       onChange={(e) => setSelectedReportRunId(e.target.value as RunId)}
-                      className="input-select"
-                      style={{ padding: '3px 8px', fontSize: 12, minWidth: 200 }}
+                      className="input-select reports-target-select"
                     >
                       {runsHistory.runs.map((r: any) => (
                         <option key={r.id} value={r.id}>
-                          {r.id.slice(0, 16)}... ({r.topology?.name ?? r.topologyName ?? 'Run'})
+                          run:{r.id.slice(0, 8)} · {r.topology?.name ?? r.topologyName ?? 'Topology'}
                         </option>
                       ))}
                     </select>
@@ -446,7 +451,7 @@ export function StudioDrawers({
         {activeDrawer === 'benchmarks' && (
           <>
             {benchmarksState.isLoading && (
-              <DrawerLoadingBar label="Evaluating benchmark suite scenarios..." />
+              <DrawerLoadingBar label="Evaluating benchmark suite scenarios against sandbox..." />
             )}
             {benchmarksState.error && <Alert variant="error">{benchmarksState.error}</Alert>}
             {benchmarksState.summary && (
@@ -455,6 +460,21 @@ export function StudioDrawers({
                 <ComparisonTable results={benchmarksState.summary.results} />
                 <RepairComparisonCard results={benchmarksState.summary.results} />
               </>
+            )}
+            {!benchmarksState.isLoading && !benchmarksState.error && !benchmarksState.summary && (
+              <div
+                className="state-message"
+                style={{
+                  padding: '32px 16px',
+                  textAlign: 'center',
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 8,
+                  margin: 0,
+                }}
+              >
+                No benchmark results available. Run the benchmark suite to evaluate predictive accuracy.
+              </div>
             )}
           </>
         )}
