@@ -22,7 +22,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
             markerHeight="6"
             orient="auto-start-reverse"
           >
-            <path d="M 0 1.5 L 7.5 5 L 0 8.5 Z" fill="#475569" />
+            <path className="hero-backdrop-marker" d="M 0 1.5 L 7.5 5 L 0 8.5 Z" fill="#475569" />
           </marker>
 
           <filter id="neon-flow-glow" x="-100%" y="-100%" width="300%" height="300%">
@@ -40,6 +40,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
 
         {/* Left Vertical Flow: Gateway -> Auth -> Kafka */}
         <path
+          className="hero-backdrop-flow-line"
           d="M 140 210 L 140 310"
           fill="none"
           stroke="#334155"
@@ -47,12 +48,13 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
           markerEnd="url(#hero-arrow)"
         />
         <g>
-          <animateMotion path="M 140 210 L 140 310" dur="1.8s" repeatCount="indefinite" />
-          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-          <circle r="1.2" fill="#ffffff" />
+          <animateMotion path="M 140 210 L 140 310" dur="3.8s" repeatCount="indefinite" />
+          <circle r="2.2" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1" fill="#ffffff" />
         </g>
 
         <path
+          className="hero-backdrop-flow-line"
           d="M 140 380 L 140 480"
           fill="none"
           stroke="#334155"
@@ -60,13 +62,14 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
           markerEnd="url(#hero-arrow)"
         />
         <g>
-          <animateMotion path="M 140 380 L 140 480" dur="2s" repeatCount="indefinite" />
-          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-          <circle r="1.2" fill="#ffffff" />
+          <animateMotion path="M 140 380 L 140 480" dur="4.2s" repeatCount="indefinite" />
+          <circle r="2.2" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1" fill="#ffffff" />
         </g>
 
         {/* Bottom Interconnect: Kafka -> Order Worker -> Redis -> SLO Guard -> Patch Engine */}
         <path
+          className="hero-backdrop-flow-line"
           d="M 240 515 L 290 515 Q 310 515, 310 560 L 310 635 L 330 635"
           fill="none"
           stroke="#334155"
@@ -76,14 +79,15 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
         <g>
           <animateMotion
             path="M 240 515 L 290 515 Q 310 515, 310 560 L 310 635 L 330 635"
-            dur="3.2s"
+            dur="5.5s"
             repeatCount="indefinite"
           />
-          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-          <circle r="1.2" fill="#ffffff" />
+          <circle r="2.2" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1" fill="#ffffff" />
         </g>
 
         <path
+          className="hero-backdrop-flow-line"
           d="M 530 635 L 610 635"
           fill="none"
           stroke="#334155"
@@ -91,12 +95,13 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
           markerEnd="url(#hero-arrow)"
         />
         <g>
-          <animateMotion path="M 530 635 L 610 635" dur="2s" repeatCount="indefinite" />
-          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-          <circle r="1.2" fill="#ffffff" />
+          <animateMotion path="M 530 635 L 610 635" dur="4.0s" repeatCount="indefinite" />
+          <circle r="2.2" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1" fill="#ffffff" />
         </g>
 
         <path
+          className="hero-backdrop-flow-line"
           d="M 810 635 L 890 635"
           fill="none"
           stroke="#334155"
@@ -104,12 +109,13 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
           markerEnd="url(#hero-arrow)"
         />
         <g>
-          <animateMotion path="M 810 635 L 890 635" dur="1.9s" repeatCount="indefinite" />
-          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-          <circle r="1.2" fill="#ffffff" />
+          <animateMotion path="M 810 635 L 890 635" dur="4.2s" repeatCount="indefinite" />
+          <circle r="2.2" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1" fill="#ffffff" />
         </g>
 
         <path
+          className="hero-backdrop-flow-line"
           d="M 1090 635 L 1150 635 Q 1170 635, 1170 590 L 1170 520 L 1180 520"
           fill="none"
           stroke="#334155"
@@ -119,15 +125,16 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
         <g>
           <animateMotion
             path="M 1090 635 L 1150 635 Q 1170 635, 1170 590 L 1170 520 L 1180 520"
-            dur="3.2s"
+            dur="5.2s"
             repeatCount="indefinite"
           />
-          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-          <circle r="1.2" fill="#ffffff" />
+          <circle r="2.2" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1" fill="#ffffff" />
         </g>
 
         {/* Right Vertical Flow: SRE Node -> Meeting Room -> Patch Engine */}
         <path
+          className="hero-backdrop-flow-line"
           d="M 1290 215 L 1290 270"
           fill="none"
           stroke="#334155"
@@ -135,12 +142,13 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
           markerEnd="url(#hero-arrow)"
         />
         <g>
-          <animateMotion path="M 1290 215 L 1290 270" dur="1.6s" repeatCount="indefinite" />
-          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-          <circle r="1.2" fill="#ffffff" />
+          <animateMotion path="M 1290 215 L 1290 270" dur="3.6s" repeatCount="indefinite" />
+          <circle r="2.2" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1" fill="#ffffff" />
         </g>
 
         <path
+          className="hero-backdrop-flow-line"
           d="M 1290 420 L 1290 480"
           fill="none"
           stroke="#334155"
@@ -148,14 +156,15 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
           markerEnd="url(#hero-arrow)"
         />
         <g>
-          <animateMotion path="M 1290 420 L 1290 480" dur="1.7s" repeatCount="indefinite" />
-          <circle r="2.5" fill="#38bdf8" filter="url(#neon-flow-glow)" />
-          <circle r="1.2" fill="#ffffff" />
+          <animateMotion path="M 1290 420 L 1290 480" dur="3.8s" repeatCount="indefinite" />
+          <circle r="2.2" fill="#38bdf8" filter="url(#neon-flow-glow)" />
+          <circle r="1" fill="#ffffff" />
         </g>
 
         {/* Block 1: Ingress API Gateway (Top-Left) */}
         <g transform="translate(40, 140)">
           <rect
+            className="hero-backdrop-node"
             width="200"
             height="70"
             rx="8"
@@ -164,7 +173,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
             strokeWidth="1.2"
           />
           <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(8, 102, 255, 0.15)" />
-          <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+          <text className="hero-backdrop-text-primary" x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
             API Gateway
           </text>
           <text
@@ -177,7 +186,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
           >
             INGRESS ENTRY
           </text>
-          <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+          <text className="hero-backdrop-text-secondary" x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
             50w &bull; 5ms &bull; bounded 100
           </text>
         </g>
@@ -185,6 +194,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
         {/* Block 2: Auth Service (Mid-Left) */}
         <g transform="translate(40, 310)">
           <rect
+            className="hero-backdrop-node"
             width="200"
             height="70"
             rx="8"
@@ -193,7 +203,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
             strokeWidth="1.2"
           />
           <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.12)" />
-          <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+          <text className="hero-backdrop-text-primary" x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
             Auth Service
           </text>
           <text
@@ -206,7 +216,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
           >
             INTERNAL SERVICE
           </text>
-          <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+          <text className="hero-backdrop-text-secondary" x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
             30w &bull; 12ms &bull; rate: 500 RPS
           </text>
         </g>
@@ -214,6 +224,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
         {/* Block 3: Kafka Event Bus (Bottom-Left) */}
         <g transform="translate(40, 480)">
           <rect
+            className="hero-backdrop-node"
             width="200"
             height="70"
             rx="8"
@@ -222,7 +233,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
             strokeWidth="1.2"
           />
           <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(34, 211, 238, 0.12)" />
-          <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+          <text className="hero-backdrop-text-primary" x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
             Kafka Event Bus
           </text>
           <text
@@ -235,7 +246,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
           >
             QUEUE CONSUMER
           </text>
-          <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+          <text className="hero-backdrop-text-secondary" x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
             consume: 120 RPS &bull; lag: 0
           </text>
         </g>
@@ -243,6 +254,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
         {/* Block 4: Order Worker */}
         <g transform="translate(330, 600)">
           <rect
+            className="hero-backdrop-node"
             width="200"
             height="70"
             rx="8"
@@ -251,7 +263,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
             strokeWidth="1.2"
           />
           <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(8, 102, 255, 0.15)" />
-          <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+          <text className="hero-backdrop-text-primary" x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
             Order Worker
           </text>
           <text
@@ -264,7 +276,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
           >
             ASYNC WORKER
           </text>
-          <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+          <text className="hero-backdrop-text-secondary" x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
             40w &bull; 8ms &bull; pool: 25
           </text>
         </g>
@@ -272,6 +284,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
         {/* Block 5: Redis Cache */}
         <g transform="translate(610, 600)">
           <rect
+            className="hero-backdrop-node"
             width="200"
             height="70"
             rx="8"
@@ -280,7 +293,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
             strokeWidth="1.2"
           />
           <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(250, 204, 21, 0.12)" />
-          <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+          <text className="hero-backdrop-text-primary" x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
             Redis Cache
           </text>
           <text
@@ -293,7 +306,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
           >
             IN-MEMORY CACHE
           </text>
-          <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+          <text className="hero-backdrop-text-secondary" x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
             ttl: 60s &bull; hit-rate: 94.2%
           </text>
         </g>
@@ -301,6 +314,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
         {/* Block 6: SLO Guard */}
         <g transform="translate(890, 600)">
           <rect
+            className="hero-backdrop-node"
             width="200"
             height="70"
             rx="8"
@@ -309,7 +323,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
             strokeWidth="1.2"
           />
           <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(16, 185, 129, 0.15)" />
-          <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+          <text className="hero-backdrop-text-primary" x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
             SLO Guard
           </text>
           <text
@@ -322,7 +336,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
           >
             ALL INVARIANTS PASS
           </text>
-          <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+          <text className="hero-backdrop-text-secondary" x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
             error budget: 99.98% intact
           </text>
         </g>
@@ -330,6 +344,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
         {/* Block 7: Autonomous SRE Node (Top-Right) */}
         <g transform="translate(1180, 130)">
           <rect
+            className="hero-backdrop-node"
             width="220"
             height="85"
             rx="10"
@@ -337,7 +352,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
             stroke="rgba(56, 189, 248, 0.25)"
             strokeWidth="1.2"
           />
-          <text x="18" y="28" fill="#f8fafc" fontSize="12.5" fontWeight="700">
+          <text className="hero-backdrop-text-primary" x="18" y="28" fill="#f8fafc" fontSize="12.5" fontWeight="700">
             Autonomous SRE in Call
           </text>
           <text
@@ -350,7 +365,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
           >
             ACTIVE PARTICIPANT
           </text>
-          <text x="18" y="66" fill="#94a3b8" fontSize="10.5">
+          <text className="hero-backdrop-text-secondary" x="18" y="66" fill="#94a3b8" fontSize="10.5">
             &ldquo;Flagged 3x retry; patch ready.&rdquo;
           </text>
         </g>
@@ -358,6 +373,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
         {/* Block 8: Collaborative Meeting Room (Mid-Right) */}
         <g transform="translate(1180, 270)">
           <rect
+            className="hero-backdrop-node"
             width="220"
             height="150"
             rx="10"
@@ -366,7 +382,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
             strokeWidth="1.2"
           />
           <rect x="14" y="14" width="8" height="8" rx="4" fill="#38bdf8" />
-          <text x="28" y="21" fill="#e2e8f0" fontSize="11" fontWeight="600">
+          <text className="hero-backdrop-text-primary" x="28" y="21" fill="#e2e8f0" fontSize="11" fontWeight="600">
             #arch-review
           </text>
           <text
@@ -392,10 +408,10 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
             <text x="10" y="13.5" fill="#38bdf8" fontSize="9" fontWeight="700" textAnchor="middle">
               SC
             </text>
-            <text x="28" y="11" fill="#f1f5f9" fontSize="11" fontWeight="600">
+            <text className="hero-backdrop-text-primary" x="28" y="11" fill="#f1f5f9" fontSize="11" fontWeight="600">
               Sarah C. (Staff SRE)
             </text>
-            <text x="28" y="22" fill="#64748b" fontSize="9">
+            <text className="hero-backdrop-text-secondary" x="28" y="22" fill="#64748b" fontSize="9">
               Speaking &bull; Simulated DB lag
             </text>
           </g>
@@ -411,10 +427,10 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
             <text x="10" y="13.5" fill="#94a3b8" fontSize="9" fontWeight="700" textAnchor="middle">
               AM
             </text>
-            <text x="28" y="11" fill="#f1f5f9" fontSize="11" fontWeight="600">
+            <text className="hero-backdrop-text-primary" x="28" y="11" fill="#f1f5f9" fontSize="11" fontWeight="600">
               Alex M. (Platform Lead)
             </text>
-            <text x="28" y="22" fill="#64748b" fontSize="9">
+            <text className="hero-backdrop-text-secondary" x="28" y="22" fill="#64748b" fontSize="9">
               Accepted AI circuit breaker
             </text>
           </g>
@@ -423,6 +439,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
         {/* Block 9: Autonomous Patch Engine (Bottom-Right) */}
         <g transform="translate(1180, 480)">
           <rect
+            className="hero-backdrop-node"
             width="220"
             height="70"
             rx="8"
@@ -431,7 +448,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
             strokeWidth="1.2"
           />
           <rect x="12" y="12" width="24" height="24" rx="5" fill="rgba(56, 189, 248, 0.1)" />
-          <text x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
+          <text className="hero-backdrop-text-primary" x="44" y="24" fill="#f8fafc" fontSize="12" fontWeight="600">
             AI Patch Engine
           </text>
           <text
@@ -444,7 +461,7 @@ export const HeroBackdrop = memo(function HeroBackdrop() {
           >
             PARETO OPTIMAL
           </text>
-          <text x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
+          <text className="hero-backdrop-text-secondary" x="14" y="58" fill="#64748b" fontSize="9.5" fontFamily="var(--font-mono)">
             automated rollback armed
           </text>
         </g>

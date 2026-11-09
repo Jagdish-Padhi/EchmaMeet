@@ -4,12 +4,12 @@ export function AiSreSection() {
   return (
     <section id="ai-copilot" className="landing-section alt-bg">
       <div className="section-header">
-        <span className="section-eyebrow">YOUR AUTONOMOUS MEETING PARTICIPANT</span>
-        <h2 className="section-title">An SRE AI Agent Sitting at the Table with Your Team</h2>
+        <span className="section-eyebrow">AUTONOMOUS RELIABILITY COPILOT</span>
+        <h2 className="section-title">An AI Reliability Engineer in Every Review Session</h2>
         <p className="section-desc">
-          Echma doesn&apos;t just generate text. It sits in your review call like a principal
-          reliability engineer, hearing Hindi, English and Hinglish through Gnani Prisma, and
-          raising its hand, in your language, when it spots hidden cascading failure risks.
+          Echma participates directly in your review call, understanding speech in Hindi, English,
+          and Hinglish via Gnani Prisma. It intervenes in real time when it detects cascading
+          failure traps.
         </p>
       </div>
 
@@ -25,7 +25,7 @@ export function AiSreSection() {
             </div>
             <div className="agentic-title-group">
               <span className="agentic-name">Echma Autonomous SRE</span>
-              <span className="agentic-badge">IN MEETING NOW</span>
+              <span className="agentic-badge">ACTIVE IN MEETING</span>
             </div>
           </div>
 
@@ -35,8 +35,8 @@ export function AiSreSection() {
               <div className="reviewer-bubble">
                 <span className="reviewer-name">Staff SRE</span>
                 <p>
-                  &quot;If Checkout Service times out calling Payments, let&apos;s just add an
-                  immediate 3x retry so the user doesn&apos;t see an error.&quot;
+                  &quot;If Checkout Service times out calling Payments, let&apos;s add an immediate
+                  3x retry so users don&apos;t see an error.&quot;
                 </p>
               </div>
             </div>
@@ -56,12 +56,12 @@ export function AiSreSection() {
               <div className="ai-bubble">
                 <div className="ai-bubble-tag">ECHMA SRE &bull; RAISED HAND</div>
                 <p className="ai-bubble-warning">
-                  &quot;Careful team: immediate 3x retries on a degraded downstream service creates
-                  a <strong>Retry Storm</strong>. In our simulated 500 RPS load, downstream queue
-                  depth quadruples and drops 78% of good traffic.&quot;
+                  &quot;Immediate 3x retries against a degraded downstream service trigger a{' '}
+                  <strong>Retry Storm</strong>. In our simulated 500 RPS load, downstream queue
+                  depth quadruples and drops 78% of valid traffic.&quot;
                 </p>
                 <div className="ai-bubble-solution">
-                  <span className="solution-tag">RECOMMENDED FIX</span>
+                  <span className="solution-tag">RECOMMENDED MITIGATION</span>
                   <p>
                     Switch to <strong>Exponential Backoff + Full Jitter</strong> with a{' '}
                     <strong>Circuit Breaker (5 consecutive errors, 10s cooldown)</strong>. Error
@@ -84,30 +84,29 @@ export function AiSreSection() {
             <li>
               <span className="comparison-icon green">&#10003;</span>
               <div>
-                <strong>Listens to Voice Context:</strong> Understands what the team is trying to
-                build and contextualizes warnings to your specific architecture patterns.
+                <strong>Understands Architectural Context:</strong> Listens to voice discussion and
+                maps risks to your exact service topology and dependencies.
               </div>
             </li>
             <li>
               <span className="comparison-icon green">&#10003;</span>
               <div>
                 <strong>Detects Cascading Traps Live:</strong> Catches missing jitter, queue
-                saturation, single points of failure, and cold cache stampedes before they reach
-                code.
+                saturation, and single points of failure before code is written.
               </div>
             </li>
             <li>
               <span className="comparison-icon green">&#10003;</span>
               <div>
-                <strong>Suggests Live Proven Patches:</strong> Proposes exact circuit-breaker trip
-                thresholds and jittered backoffs with verified mathematical guarantees.
+                <strong>Suggests Empirically Proven Patches:</strong> Calculates exact circuit
+                breaker trip thresholds and retry budgets with mathematical precision.
               </div>
             </li>
             <li>
               <span className="comparison-icon green">&#10003;</span>
               <div>
-                <strong>Direct IaC Export:</strong> When the call ends, export the approved design
-                straight to production Terraform and Envoy configs in seconds.
+                <strong>Direct IaC Export:</strong> Generates production-ready Terraform modules and
+                Envoy configurations the moment you approve the fix.
               </div>
             </li>
           </ul>

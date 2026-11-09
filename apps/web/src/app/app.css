@@ -454,6 +454,19 @@ body:has(.studio-root) {
   display: inline;
 }
 
+[data-theme='light'] .hero-headline,
+[data-theme='light'] .hero-headline-primary {
+  color: #0f172a;
+}
+
+[data-theme='light'] .hero-headline-secondary {
+  color: #475569;
+}
+
+[data-theme='light'] .hero-headline-accent {
+  color: #0284c7;
+}
+
 .hero-subhead {
   font-size: 17px;
   color: var(--color-text-muted);
@@ -498,6 +511,31 @@ body:has(.studio-root) {
   z-index: 1;
   opacity: 0.35;
   transition: opacity 0.3s ease;
+}
+
+[data-theme='light'] .hero-backdrop-layer {
+  opacity: 0.22;
+}
+
+[data-theme='light'] .hero-backdrop-svg .hero-backdrop-node {
+  fill: rgba(255, 255, 255, 0.92);
+  stroke: rgba(148, 163, 184, 0.35);
+}
+
+[data-theme='light'] .hero-backdrop-svg .hero-backdrop-text-primary {
+  fill: #0f172a;
+}
+
+[data-theme='light'] .hero-backdrop-svg .hero-backdrop-text-secondary {
+  fill: #64748b;
+}
+
+[data-theme='light'] .hero-backdrop-svg .hero-backdrop-flow-line {
+  stroke: #cbd5e1;
+}
+
+[data-theme='light'] .hero-backdrop-svg .hero-backdrop-marker {
+  fill: #94a3b8;
 }
 
 .hero-backdrop-svg {

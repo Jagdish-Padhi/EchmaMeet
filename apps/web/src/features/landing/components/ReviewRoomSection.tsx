@@ -2,12 +2,12 @@ export function ReviewRoomSection() {
   return (
     <section id="meeting-room" className="landing-section">
       <div className="section-header">
-        <span className="section-eyebrow">THE REAL-TIME REVIEW ROOM</span>
-        <h2 className="section-title">Google Meet Built Inside an Architecture Canvas</h2>
+        <span className="section-eyebrow">COLLABORATIVE ARCHITECTURE REVIEW</span>
+        <h2 className="section-title">Review Architecture as a Team, Not in Silos</h2>
         <p className="section-desc">
-          Stop screen-sharing static diagrams while arguing theoretically. EchmaMeet brings your
-          entire engineering team into one shared room with voice, live cursors, and interactive
-          failure injection.
+          Stop debating architecture on static slides. EchmaMeet brings your engineering team
+          together on push-to-talk audio with live multiplayer cursors and interactive failure
+          injection.
         </p>
       </div>
 
@@ -29,20 +29,20 @@ export function ReviewRoomSection() {
               <line x1="8" y1="23" x2="16" y2="23" />
             </svg>
           </div>
-          <h3 className="step-title">Push-to-Talk Team Voice</h3>
+          <h3 className="step-title">Push-to-Talk Team Audio</h3>
           <p className="step-desc">
-            Jump into the room with zero Zoom or Meet links. Talk naturally with low-latency audio
-            while pointing at nodes and discussing connection limits together.
+            Join the review room instantly without external meeting links. Discuss service
+            boundaries and concurrency limits while navigating the canvas together.
           </p>
           <div className="step-tags">
-            <span>Instant Room Voice</span>
+            <span>Low-Latency Audio</span>
             <span>Multiplayer Cursors</span>
             <span>Zero Installs</span>
           </div>
         </div>
 
         <div className="step-card">
-          <div className="step-badge">SHARED CHAOS DIAL</div>
+          <div className="step-badge">FAULT INJECTION</div>
           <div className="step-icon-wrap">
             <svg
               viewBox="0 0 24 24"
@@ -58,19 +58,19 @@ export function ReviewRoomSection() {
           </div>
           <h3 className="step-title">Simulate Failures Live in the Call</h3>
           <p className="step-desc">
-            When an engineer asks &quot;What happens if Redis latency spikes?&quot;, turn the slider
-            live in the meeting. Everyone sees the p99 latency curve jump and requests fail in real
-            time.
+            When an engineer asks &quot;What happens if Redis latency spikes?&quot;, adjust the
+            slider live. The entire team observes the p99 latency curve jump and requests fail in
+            real time.
           </p>
           <div className="step-tags">
             <span>Packet Delay Chaos</span>
-            <span>Toxiproxy Backing</span>
+            <span>Toxiproxy Engine</span>
             <span>Deterministic Trials</span>
           </div>
         </div>
 
         <div className="step-card">
-          <div className="step-badge">SHARED CONSENSUS</div>
+          <div className="step-badge">INFRASTRUCTURE AS CODE</div>
           <div className="step-icon-wrap">
             <svg
               viewBox="0 0 24 24"
@@ -86,14 +86,13 @@ export function ReviewRoomSection() {
               <line x1="16" y1="17" x2="8" y2="17" />
             </svg>
           </div>
-          <h3 className="step-title">End the Call with Ready-to-Merge IaC</h3>
+          <h3 className="step-title">Leave the Call with Production IaC</h3>
           <p className="step-desc">
-            Don&apos;t leave with &quot;action items to follow up.&quot; EchmaMeet exports the
-            agreed, empirically proven topology straight into Terraform and Envoy configuration
-            files.
+            Turn consensus into code immediately. Export the verified, resilient topology directly
+            to Terraform and Envoy configuration files before ending the meeting.
           </p>
           <div className="step-tags">
-            <span>Production Terraform</span>
+            <span>Terraform (.tf)</span>
             <span>Envoy YAML</span>
             <span>Docker Compose</span>
           </div>

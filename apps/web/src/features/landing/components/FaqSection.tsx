@@ -7,27 +7,27 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
   {
     question: 'How does the live review meeting work?',
     answer:
-      'EchmaMeet combines high-fidelity architecture design with integrated team audio and multiplayer presence—like Google Meet built directly into a distributed systems whiteboard. Your team jumps on voice, inspects the topology together, and tests failure scenarios collaboratively with zero external meeting software required.',
+      'EchmaMeet integrates distributed systems modeling with low-latency push-to-talk voice and multiplayer presence. Your team joins a shared room, reviews the topology together, and tests failure scenarios interactively with zero third-party meeting software.',
   },
   {
     question: 'How does the AI SRE agent participate in the meeting?',
     answer:
-      'The autonomous AI SRE agent acts like a principal reliability engineer sitting in your meeting room. It listens to the discussion context, continuously analyzes live telemetry and dependency graphs in the background, warns the team when someone proposes a risky retry or timeout policy, and drops mathematically verified circuit-breaker fixes directly onto the canvas.',
+      'The autonomous AI SRE participates as a reliability specialist during your review. Powered by Gnani Prisma voice recognition, it follows the architectural discussion, analyzes topology dependency graphs, warns against risky retry configurations, and provides mathematically verified circuit breaker policies directly on canvas.',
   },
   {
     question: 'Do we need Docker or heavy local infrastructure?',
     answer:
-      'No. EchmaMeet runs completely inside your browser with lightweight background simulation daemons. You do not need to install local Docker containers, Minikube, or heavy cluster runtimes to test complex multi-service topologies.',
+      'No. EchmaMeet runs simulations in-browser with lightweight background daemons. You do not need local Docker containers, Minikube, or dedicated cluster infrastructure to test complex multi-service architectures.',
   },
   {
     question: 'Can we export our verified meeting designs straight to code?',
     answer:
-      'Yes. Once your team and the AI agent agree on the resilient topology, you can export it in one click into production-ready HashiCorp Terraform modules, Envoy Proxy YAML, and Docker Compose files before ending the meeting.',
+      'Yes. Once your team approves the resilient architecture, you can export it in one click into production-ready HashiCorp Terraform modules, Envoy Proxy configurations, and Docker Compose manifests before ending the meeting.',
   },
   {
     question: 'Is our team discussion and architecture private and secure?',
     answer:
-      'Yes. All audio streams, node configurations, and topology data are encrypted in transit with TLS 1.3 and at rest with AES-256. For organizations with strict compliance requirements, EchmaMeet can be deployed entirely inside your own private VPC or air-gapped on-premise infrastructure with SAML/SSO authentication.',
+      'All audio streams, system topologies, and configuration data are encrypted in transit via TLS 1.3 and at rest with AES-256. EchmaMeet also supports self-hosted deployment inside your private VPC or on-premise infrastructure with SAML/SSO integration.',
   },
 ];
 

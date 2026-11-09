@@ -2,16 +2,16 @@ export function HowItWorksSection() {
   return (
     <section id="how-it-works" className="landing-section">
       <div className="section-header">
-        <span className="section-eyebrow">THE 3-STEP REVIEW WORKFLOW</span>
-        <h2 className="section-title">From Debate to Verified Infrastructure in 20 Minutes</h2>
+        <span className="section-eyebrow">STREAMLINED WORKFLOW</span>
+        <h2 className="section-title">From Design Debate to Verified Infrastructure in 20 Minutes</h2>
         <p className="section-desc">
-          Replace weeks of slow email threads and speculative RFC comments with one live meeting.
+          Replace multi-week speculative RFC comments with a single evidence-based review session.
         </p>
       </div>
 
       <div className="steps-pipeline-grid">
         <div className="step-card">
-          <div className="step-badge">STEP 1</div>
+          <div className="step-badge">STAGE 1</div>
           <div className="step-icon-wrap">
             <svg
               viewBox="0 0 24 24"
@@ -27,20 +27,20 @@ export function HowItWorksSection() {
               <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
           </div>
-          <h3 className="step-title">Join the Room on Live Audio</h3>
+          <h3 className="step-title">Assemble on Push-to-Talk Audio</h3>
           <p className="step-desc">
-            Your team jumps into the room on push-to-talk voice. Drop in a proposed topology DAG or
-            import an existing Docker Compose setup.
+            Join the room with one click. Import an existing Docker Compose architecture or draw
+            services directly on the shared canvas.
           </p>
           <div className="step-tags">
-            <span>Push-to-Talk Voice</span>
-            <span>Docker Ingest</span>
-            <span>Live Cursors</span>
+            <span>Low-Latency Voice</span>
+            <span>Docker Compose Import</span>
+            <span>Shared Cursors</span>
           </div>
         </div>
 
         <div className="step-card">
-          <div className="step-badge">STEP 2</div>
+          <div className="step-badge">STAGE 2</div>
           <div className="step-icon-wrap">
             <svg
               viewBox="0 0 24 24"
@@ -53,20 +53,20 @@ export function HowItWorksSection() {
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
           </div>
-          <h3 className="step-title">Stress-Test Failure Modes Together</h3>
+          <h3 className="step-title">Simulate Extreme Failure Modes</h3>
           <p className="step-desc">
-            Simulate cross-region network lag, kill database replicas, or throttle payment APIs. The
-            entire team watches how the topology responds.
+            Inject packet latency, sever connections, and saturate queues. The entire team monitors
+            real-time p99 latency degradation.
           </p>
           <div className="step-tags">
-            <span>Real Packet Chaos</span>
+            <span>Deterministic Chaos</span>
             <span>p99 Latency Curves</span>
-            <span>Zero Production Risk</span>
+            <span>Safe Simulation</span>
           </div>
         </div>
 
         <div className="step-card">
-          <div className="step-badge">STEP 3</div>
+          <div className="step-badge">STAGE 3</div>
           <div className="step-icon-wrap">
             <svg
               viewBox="0 0 24 24"
@@ -82,15 +82,14 @@ export function HowItWorksSection() {
               <line x1="16" y1="17" x2="8" y2="17" />
             </svg>
           </div>
-          <h3 className="step-title">Accept AI Fixes &amp; Export IaC</h3>
+          <h3 className="step-title">Validate AI Fixes &amp; Export IaC</h3>
           <p className="step-desc">
-            The AI SRE detects retry storms and proposes circuit breakers. Review and accept the
-            patch together, then export directly to Terraform and Envoy configs before leaving the
-            call.
+            The AI SRE identifies cascading risks and suggests optimal circuit breakers and
+            backoffs. Verify the fix and export directly to Terraform and Envoy.
           </p>
           <div className="step-tags">
-            <span>Autonomous SRE Patches</span>
-            <span>Terraform (.tf)</span>
+            <span>AI Resiliency Patches</span>
+            <span>HashiCorp Terraform</span>
             <span>Envoy YAML</span>
           </div>
         </div>

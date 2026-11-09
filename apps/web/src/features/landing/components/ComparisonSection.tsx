@@ -2,10 +2,10 @@ export function ComparisonSection() {
   return (
     <section id="why-switch" className="landing-section">
       <div className="section-header">
-        <span className="section-eyebrow">WHY ECHMAMEET</span>
-        <h2 className="section-title">Built for Engineering Teams That Value Reliability</h2>
+        <span className="section-eyebrow">EVIDENCE OVER ASSUMPTIONS</span>
+        <h2 className="section-title">Built for Teams That Value Reliability</h2>
         <p className="section-desc">
-          Give your staff engineers and architects complete confidence before deploying new
+          Give your staff engineers and architects empirical confidence before deploying
           distributed services.
         </p>
       </div>
@@ -25,16 +25,15 @@ export function ComparisonSection() {
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
             </div>
-            <h3 className="bento-title">Consensus Through Evidence, Not Status</h3>
+            <h3 className="bento-title">Consensus Through Evidence, Not Hierarchy</h3>
           </div>
           <p className="bento-desc">
-            Instead of the most senior engineer in the room winning an argument by default,
-            EchmaMeet lets teams simulate the failure mode live. Facts settle architectural debates
-            in 5 minutes.
+            Instead of seniority dictating architecture decisions, simulate the failure mode live.
+            Empirical simulation settles debates with hard data in minutes.
           </p>
           <div className="bento-callout">
             <span className="callout-label">EVIDENCE-BASED:</span>
-            <span>Test the proposal against real chaos live in the meeting room.</span>
+            <span>Test proposals against deterministic chaos live in the meeting.</span>
           </div>
         </div>
 
@@ -53,11 +52,11 @@ export function ComparisonSection() {
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
             </div>
-            <h3 className="bento-title">Eliminate 3 AM Outages</h3>
+            <h3 className="bento-title">Eliminate Cascading Outages Pre-Deploy</h3>
           </div>
           <p className="bento-desc">
-            Most P0 outages are caused by cascading retries and missing timeouts. Catch them in the
-            design review meeting before writing production code.
+            Most severe production incidents are caused by retry amplification and missing timeouts.
+            Eliminate them in design review before shipping code.
           </p>
         </div>
 
@@ -78,8 +77,8 @@ export function ComparisonSection() {
             <h3 className="bento-title">A Principal SRE in Every Squad</h3>
           </div>
           <p className="bento-desc">
-            Give every development squad access to principal reliability engineering expertise with
-            an autonomous AI SRE actively participating in design reviews.
+            Equip every product engineering team with principal reliability expertise through an
+            autonomous AI SRE analyzing edge cases in real time.
           </p>
         </div>
 
@@ -100,18 +99,16 @@ export function ComparisonSection() {
                 <line x1="16" y1="17" x2="8" y2="17" />
               </svg>
             </div>
-            <h3 className="bento-title">From Meeting to Terraform in One Click</h3>
+            <h3 className="bento-title">From Review to Terraform in One Click</h3>
           </div>
           <p className="bento-desc">
-            Never let architecture diagrams gather dust in a wiki. Export the verified design
-            straight into production-ready HashiCorp Terraform modules and Envoy Proxy filters
-            before ending the call.
+            Never let architecture designs gather dust in a wiki. Export the verified topology
+            directly into production Terraform modules and Envoy Proxy filters before leaving the
+            meeting.
           </p>
           <div className="bento-callout">
             <span className="callout-label">PRODUCTION-READY:</span>
-            <span>
-              HashiCorp Terraform (.tf) &bull; Envoy Proxy YAML &bull; Kubernetes Manifests
-            </span>
+            <span>Terraform (.tf) &bull; Envoy Proxy YAML &bull; Docker Compose</span>
           </div>
         </div>
       </div>
