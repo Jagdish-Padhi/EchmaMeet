@@ -6,9 +6,10 @@ import { Card } from '../../../components/ui/Card';
 export interface ReportViewerProps {
   api: ApiClient;
   runId: RunId;
+  hideTitle?: boolean;
 }
 
-export function ReportViewer({ api, runId }: ReportViewerProps) {
+export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProps) {
   const [data, setData] = useState<{
     runId: RunId;
     report: ReportExport | null;
@@ -99,15 +100,26 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
 
   if (loading) {
     return (
-      <Card title="Run Report & Artifact Export">
-        <p className="state-message">Loading report data for {runId}...</p>
+      <Card title={hideTitle ? undefined : 'Run Report & Artifact Export'}>
+        <div
+          className="drawer-loading-box"
+          style={{ border: 'none', padding: '10px 4px', background: 'transparent' }}
+        >
+          <div className="drawer-loading-header">
+            <span className="agentic-pulse-spinner" />
+            <span className="drawer-loading-label">
+              Loading report data for <span className="cell-mono">{runId}</span>...
+            </span>
+          </div>
+          <div className="drawer-loading-indeterminate" />
+        </div>
       </Card>
     );
   }
 
   if (error || !report) {
     return (
-      <Card title="Run Report & Artifact Export">
+      <Card title={hideTitle ? undefined : 'Run Report & Artifact Export'}>
         <p className="state-message" style={{ color: 'var(--color-danger, #ef4444)' }}>
           Error: {error ?? 'Unable to retrieve report'}
         </p>
@@ -116,7 +128,7 @@ export function ReportViewer({ api, runId }: ReportViewerProps) {
   }
 
   return (
-    <Card title="Run Report & Artifact Export">
+    <Card title={hideTitle ? undefined : 'Run Report & Artifact Export'}>
       {/* Action Bar */}
       <div
         style={{

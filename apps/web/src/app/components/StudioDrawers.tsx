@@ -1,6 +1,6 @@
 import type { NodeId, Topology, RunId } from '@chaosboard/contracts';
 import { Alert } from '../../components/ui/Alert';
-import { Card } from '../../components/ui/Card';
+import { DrawerLoadingBar } from '../../components/ui/DrawerLoadingBar';
 import { StatusPill } from '../../components/ui/StatusPill';
 import type { ApiClient } from '../../api/client';
 import {
@@ -382,19 +382,39 @@ export function StudioDrawers({
               (firstRun ? firstRun.id : null);
 
             return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {runsHistory.runs.length > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <label style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>Run:</label>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '8px 12px',
+                      background: 'var(--color-surface)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 6,
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        color: 'var(--color-text-dim)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                      }}
+                    >
+                      Target Run
+                    </label>
                     <select
                       value={activeReportRunId ?? ''}
                       onChange={(e) => setSelectedReportRunId(e.target.value as RunId)}
                       className="input-select"
-                      style={{ padding: '4px 8px', fontSize: 12 }}
+                      style={{ padding: '3px 8px', fontSize: 12, minWidth: 200 }}
                     >
                       {runsHistory.runs.map((r: any) => (
                         <option key={r.id} value={r.id}>
-                          {r.id} ({r.topology.name} - {r.status})
+                          {r.id.slice(0, 16)}... ({r.topology.name})
                         </option>
                       ))}
                     </select>
@@ -402,13 +422,21 @@ export function StudioDrawers({
                 )}
 
                 {activeReportRunId ? (
-                  <ReportViewer api={api} runId={activeReportRunId} />
+                  <ReportViewer api={api} runId={activeReportRunId} hideTitle={true} />
                 ) : (
-                  <Card title="Architecture Reports">
-                    <p className="state-message" style={{ margin: 0 }}>
-                      No simulation runs recorded yet. Execute a simulation to generate architecture reports.
-                    </p>
-                  </Card>
+                  <div
+                    className="state-message"
+                    style={{
+                      padding: '32px 16px',
+                      textAlign: 'center',
+                      background: 'var(--color-surface)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 8,
+                      margin: 0,
+                    }}
+                  >
+                    No simulation runs recorded yet. Execute a simulation to generate architecture reports.
+                  </div>
                 )}
               </div>
             );
@@ -418,12 +446,12 @@ export function StudioDrawers({
         {activeDrawer === 'benchmarks' && (
           <>
             {benchmarksState.isLoading && (
-              <p style={{ color: 'var(--color-text-dim)' }}>Loading benchmark summary...</p>
+              <DrawerLoadingBar label="Evaluating benchmark suite scenarios..." />
             )}
             {benchmarksState.error && <Alert variant="error">{benchmarksState.error}</Alert>}
             {benchmarksState.summary && (
               <>
-                <ExecutiveSummaryCard summary={benchmarksState.summary} />
+                <ExecutiveSummaryCard summary={benchmarksState.summary} hideTitle={true} />
                 <ComparisonTable results={benchmarksState.summary.results} />
                 <RepairComparisonCard results={benchmarksState.summary.results} />
               </>
@@ -442,6 +470,7 @@ export function StudioDrawers({
               onView={runsHistory.viewRun}
               onReplay={runsHistory.startReplay}
               onExport={runsHistory.exportRunJson}
+              hideTitle={true}
             />
 
             {runsHistory.selectedRunRecord && (

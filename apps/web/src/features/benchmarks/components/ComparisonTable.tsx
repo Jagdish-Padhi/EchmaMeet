@@ -66,15 +66,38 @@ export function ComparisonTable({ results }: ComparisonTableProps) {
         <div className="benchmarks-vertical-list">
           {results.map((r) => {
             if (!r.agreement || !r.empiricalRun) {
+              const pred = r.staticPredictions[0];
+              const predP99 = pred?.predictedMetrics?.p99LatencyMs;
+              const predErr = pred?.predictedMetrics?.errorRate;
+
               return (
                 <div key={r.scenarioId} className="benchmark-vertical-card">
                   <div className="benchmark-card-header">
                     <span className="cell-mono benchmark-id-text">{r.scenarioId}</span>
-                    <span className="bench-pred-badge">Prediction Only</span>
+                    <span className="bench-pred-badge">Model Prediction</span>
                   </div>
-                  <p className="state-message" style={{ margin: '8px 0 0', fontSize: '12px' }}>
-                    Prediction only: no measured empirical run yet.
-                  </p>
+                  <div className="benchmark-card-grid">
+                    <div className="benchmark-card-field">
+                      <span className="bench-field-label">Predicted p99</span>
+                      <span className="bench-field-val cell-mono">
+                        {predP99 !== undefined && predP99 !== null ? `${String(predP99)}ms` : '—'}
+                      </span>
+                    </div>
+                    <div className="benchmark-card-field">
+                      <span className="bench-field-label">Predicted Error Rate</span>
+                      <span className="bench-field-val cell-mono">
+                        {predErr !== undefined && predErr !== null
+                          ? `${String(Math.round(predErr * 100))}%`
+                          : '—'}
+                      </span>
+                    </div>
+                    <div className="benchmark-card-field full-width">
+                      <span className="bench-field-label">Empirical Status</span>
+                      <span className="bench-field-val" style={{ color: 'var(--color-text-dim)' }}>
+                        Awaiting Simulation Run
+                      </span>
+                    </div>
+                  </div>
                 </div>
               );
             }
@@ -142,10 +165,24 @@ export function ComparisonTable({ results }: ComparisonTableProps) {
             <tbody>
               {results.map((r) => {
                 if (!r.agreement || !r.empiricalRun) {
+                  const pred = r.staticPredictions[0];
+                  const predP99 = pred?.predictedMetrics?.p99LatencyMs;
+
                   return (
                     <tr key={r.scenarioId}>
                       <td className="cell-mono">{r.scenarioId}</td>
-                      <td colSpan={6}>Prediction only: no measured run yet</td>
+                      <td>
+                        <span className="bench-pred-badge">Predicted</span>
+                      </td>
+                      <td className="cell-mono">—</td>
+                      <td className="cell-mono">
+                        {predP99 !== undefined && predP99 !== null ? `${String(predP99)}ms` : '—'}
+                      </td>
+                      <td className="cell-mono" style={{ color: 'var(--color-text-dim)' }}>
+                        Pending
+                      </td>
+                      <td className="cell-mono">—</td>
+                      <td className="cell-mono">—</td>
                     </tr>
                   );
                 }

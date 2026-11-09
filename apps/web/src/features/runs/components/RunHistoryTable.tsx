@@ -12,6 +12,7 @@ export interface RunHistoryTableProps {
   readonly onView: (id: RunId) => void;
   readonly onReplay: (id: RunId) => void;
   readonly onExport: (id: RunId) => void;
+  readonly hideTitle?: boolean;
 }
 
 export function RunHistoryTable({
@@ -22,12 +23,13 @@ export function RunHistoryTable({
   onView,
   onReplay,
   onExport,
+  hideTitle = false,
 }: RunHistoryTableProps) {
   const [viewMode, setViewMode] = useState<'vertical' | 'table'>('vertical');
 
   return (
     <Card
-      title="Recorded Simulation Runs"
+      title={hideTitle ? undefined : 'Recorded Simulation Runs'}
       actions={
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {runs.length > 0 && (
@@ -93,10 +95,21 @@ export function RunHistoryTable({
             Retry Connection
           </Button>
         </div>
+      ) : isLoading ? (
+        <div
+          className="drawer-loading-box"
+          style={{ border: 'none', padding: '12px 4px', background: 'transparent' }}
+        >
+          <div className="drawer-loading-header">
+            <span className="agentic-pulse-spinner" />
+            <span className="drawer-loading-label">
+              Loading execution history from database...
+            </span>
+          </div>
+          <div className="drawer-loading-indeterminate" />
+        </div>
       ) : runs.length === 0 ? (
-        <p className="state-message">
-          {isLoading ? 'Loading run history...' : 'No simulation runs recorded yet.'}
-        </p>
+        <p className="state-message">No simulation runs recorded yet.</p>
       ) : viewMode === 'vertical' ? (
         <div className="runs-vertical-list">
           {runs.map((r) => {
