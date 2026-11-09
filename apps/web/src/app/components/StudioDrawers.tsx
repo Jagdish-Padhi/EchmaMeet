@@ -1,5 +1,6 @@
 import type { NodeId, Topology, RunId } from '@chaosboard/contracts';
 import { Alert } from '../../components/ui/Alert';
+import { StatusPill } from '../../components/ui/StatusPill';
 import type { ApiClient } from '../../api/client';
 import {
   EdgeInspector,
@@ -131,6 +132,9 @@ export function StudioDrawers({
             >
               {board.entryNodeId === selectedNode.id ? 'Ingress Entry' : 'Set as Ingress'}
             </button>
+          )}
+          {activeDrawer === 'repair' && (
+            <StatusPill status={repairSession.status} />
           )}
         </div>
 

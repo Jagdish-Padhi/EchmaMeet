@@ -1,8 +1,6 @@
 import type { EdgeId, Fault, RepairProposerKind, RepairStatus, Topology } from '@chaosboard/contracts';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
-import { Card } from '../../../components/ui/Card';
-import { StatusPill } from '../../../components/ui/StatusPill';
 
 export interface RepairControlsProps {
   readonly status: RepairStatus | 'idle' | 'starting';
@@ -117,13 +115,8 @@ export function RepairControls({
   const optimizationBlocked = !canStart || !hasEdges;
 
   return (
-    <Card
-      title="Optimization Pipeline"
-      actions={<StatusPill status={status} />}
-      className="repair-controls-card"
-    >
-      <div className="repair-controls-content">
-        {/* Failure Diagnostic & Quick Recovery */}
+    <div className="repair-controls-panel">
+      {/* Failure Diagnostic & Quick Recovery */}
         {isFailed && (
           <div className="optimizer-banner-failed">
             <Alert variant="error" title="Resilience Optimization Blocked">
@@ -300,7 +293,6 @@ export function RepairControls({
             </Button>
           )}
         </div>
-      </div>
-    </Card>
+    </div>
   );
 }
