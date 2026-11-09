@@ -196,83 +196,244 @@ export function StudioNavbar({
 
             {isMorePrimitivesOpen && (
               <div className="navbar-more-menu" onMouseLeave={() => setIsMorePrimitivesOpen(false)}>
+                {/* 1. Ingress & Gateways */}
+                <div className="navbar-more-group-header">Ingress &amp; Routing</div>
                 <button
                   type="button"
                   className="navbar-more-item"
                   onClick={() => {
                     addNode('service', {
-                      label: 'Auth Service',
-                      processingMs: 10,
-                      maxWorkers: 10,
+                      label: 'API Gateway (Envoy)',
+                      processingMs: 3,
+                      maxWorkers: 60,
                     });
                     setIsMorePrimitivesOpen(false);
                   }}
                 >
-                  <span className="palette-dot blue" />
-                  <span>Auth Service (OAuth/JWT)</span>
+                  <div className="navbar-more-item-left">
+                    <span className="palette-dot cyan" />
+                    <span className="navbar-more-item-title">API Gateway (Envoy / Kong)</span>
+                  </div>
+                  <span className="navbar-more-item-meta">3ms · 60w</span>
                 </button>
                 <button
                   type="button"
                   className="navbar-more-item"
                   onClick={() => {
                     addNode('service', {
-                      label: 'External API',
-                      processingMs: 85,
-                      maxWorkers: 5,
+                      label: 'BFF GraphQL Gateway',
+                      processingMs: 12,
+                      maxWorkers: 35,
                     });
                     setIsMorePrimitivesOpen(false);
                   }}
                 >
-                  <span className="palette-dot amber" />
-                  <span>3rd-Party External API</span>
+                  <div className="navbar-more-item-left">
+                    <span className="palette-dot cyan" />
+                    <span className="navbar-more-item-title">BFF / GraphQL Gateway</span>
+                  </div>
+                  <span className="navbar-more-item-meta">12ms · 35w</span>
                 </button>
                 <button
                   type="button"
                   className="navbar-more-item"
                   onClick={() => {
                     addNode('cache', {
-                      label: 'CDN Edge',
+                      label: 'CDN / WAF Edge',
                       processingMs: 1,
-                      maxWorkers: 50,
+                      maxWorkers: 100,
                       ttlMs: 300000,
                     });
                     setIsMorePrimitivesOpen(false);
                   }}
                 >
-                  <span className="palette-dot cyan" />
-                  <span>CDN Edge (Cloudflare/Fastly)</span>
+                  <div className="navbar-more-item-left">
+                    <span className="palette-dot cyan" />
+                    <span className="navbar-more-item-title">CDN / WAF Edge (Cloudflare)</span>
+                  </div>
+                  <span className="navbar-more-item-meta">1ms · 300s TTL</span>
                 </button>
+
+                <div className="navbar-more-divider" />
+
+                {/* 2. Microservices & Integrations */}
+                <div className="navbar-more-group-header">Services &amp; Integrations</div>
                 <button
                   type="button"
                   className="navbar-more-item"
                   onClick={() => {
-                    addNode('ledger_sink', {
-                      label: 'Financial Ledger',
-                      processingMs: 50,
-                      maxWorkers: 5,
-                      dedupeByKey: true,
+                    addNode('service', {
+                      label: 'Auth & Identity (OIDC)',
+                      processingMs: 10,
+                      maxWorkers: 25,
                     });
                     setIsMorePrimitivesOpen(false);
                   }}
                 >
-                  <span className="palette-dot green" />
-                  <span>Ledger Sink (Idempotent: Key 4)</span>
+                  <div className="navbar-more-item-left">
+                    <span className="palette-dot blue" />
+                    <span className="navbar-more-item-title">Identity Provider (OAuth2/OIDC)</span>
+                  </div>
+                  <span className="navbar-more-item-meta">10ms · 25w</span>
+                </button>
+                <button
+                  type="button"
+                  className="navbar-more-item"
+                  onClick={() => {
+                    addNode('service', {
+                      label: 'Search Cluster (OpenSearch)',
+                      processingMs: 18,
+                      maxWorkers: 20,
+                    });
+                    setIsMorePrimitivesOpen(false);
+                  }}
+                >
+                  <div className="navbar-more-item-left">
+                    <span className="palette-dot blue" />
+                    <span className="navbar-more-item-title">Search Engine (OpenSearch)</span>
+                  </div>
+                  <span className="navbar-more-item-meta">18ms · 20w</span>
+                </button>
+                <button
+                  type="button"
+                  className="navbar-more-item"
+                  onClick={() => {
+                    addNode('service', {
+                      label: 'Payment Gateway (Stripe)',
+                      processingMs: 120,
+                      maxWorkers: 8,
+                    });
+                    setIsMorePrimitivesOpen(false);
+                  }}
+                >
+                  <div className="navbar-more-item-left">
+                    <span className="palette-dot amber" />
+                    <span className="navbar-more-item-title">Payment API (Stripe / 3rd-Party)</span>
+                  </div>
+                  <span className="navbar-more-item-meta">120ms · Ext</span>
+                </button>
+
+                <div className="navbar-more-divider" />
+
+                {/* 3. Messaging & Streams */}
+                <div className="navbar-more-group-header">Async Messaging &amp; Queues</div>
+                <button
+                  type="button"
+                  className="navbar-more-item"
+                  onClick={() => {
+                    addNode('queue_consumer', {
+                      label: 'Kafka Event Stream',
+                      processingMs: 6,
+                      maxWorkers: 40,
+                      consumeRateRps: 150,
+                    });
+                    setIsMorePrimitivesOpen(false);
+                  }}
+                >
+                  <div className="navbar-more-item-left">
+                    <span className="palette-dot blue" />
+                    <span className="navbar-more-item-title">Kafka Event Stream</span>
+                  </div>
+                  <span className="navbar-more-item-meta">150 RPS · Log</span>
+                </button>
+                <button
+                  type="button"
+                  className="navbar-more-item"
+                  onClick={() => {
+                    addNode('queue_consumer', {
+                      label: 'Async Task Worker (SQS)',
+                      processingMs: 40,
+                      maxWorkers: 15,
+                      consumeRateRps: 60,
+                    });
+                    setIsMorePrimitivesOpen(false);
+                  }}
+                >
+                  <div className="navbar-more-item-left">
+                    <span className="palette-dot blue" />
+                    <span className="navbar-more-item-title">Async Worker Queue (SQS / Rabbit)</span>
+                  </div>
+                  <span className="navbar-more-item-meta">60 RPS · 15w</span>
+                </button>
+
+                <div className="navbar-more-divider" />
+
+                {/* 4. Data Stores & Sinks */}
+                <div className="navbar-more-group-header">Storage &amp; Data Sinks</div>
+                <button
+                  type="button"
+                  className="navbar-more-item"
+                  onClick={() => {
+                    addNode('service', {
+                      label: 'Document DB (DynamoDB)',
+                      processingMs: 14,
+                      maxWorkers: 30,
+                    });
+                    setIsMorePrimitivesOpen(false);
+                  }}
+                >
+                  <div className="navbar-more-item-left">
+                    <span className="palette-dot blue" />
+                    <span className="navbar-more-item-title">Document Store (DynamoDB / Mongo)</span>
+                  </div>
+                  <span className="navbar-more-item-meta">14ms · NoSQL</span>
                 </button>
                 <button
                   type="button"
                   className="navbar-more-item"
                   onClick={() => {
                     addNode('ledger_sink', {
-                      label: 'Object Store',
+                      label: 'Cloud Object Storage (S3)',
                       processingMs: 35,
-                      maxWorkers: 10,
+                      maxWorkers: 20,
                       dedupeByKey: false,
                     });
                     setIsMorePrimitivesOpen(false);
                   }}
                 >
-                  <span className="palette-dot green" />
-                  <span>S3 / Object Store Sink</span>
+                  <div className="navbar-more-item-left">
+                    <span className="palette-dot green" />
+                    <span className="navbar-more-item-title">Object Storage (AWS S3 / Blob)</span>
+                  </div>
+                  <span className="navbar-more-item-meta">35ms · Sink</span>
+                </button>
+                <button
+                  type="button"
+                  className="navbar-more-item"
+                  onClick={() => {
+                    addNode('ledger_sink', {
+                      label: 'Immutable Audit Ledger',
+                      processingMs: 50,
+                      maxWorkers: 8,
+                      dedupeByKey: true,
+                    });
+                    setIsMorePrimitivesOpen(false);
+                  }}
+                >
+                  <div className="navbar-more-item-left">
+                    <span className="palette-dot green" />
+                    <span className="navbar-more-item-title">Immutable Audit Ledger</span>
+                  </div>
+                  <span className="navbar-more-item-meta">50ms · Dedupe</span>
+                </button>
+                <button
+                  type="button"
+                  className="navbar-more-item"
+                  onClick={() => {
+                    addNode('ledger_sink', {
+                      label: 'Observability Sink (ClickHouse)',
+                      processingMs: 12,
+                      maxWorkers: 30,
+                      dedupeByKey: false,
+                    });
+                    setIsMorePrimitivesOpen(false);
+                  }}
+                >
+                  <div className="navbar-more-item-left">
+                    <span className="palette-dot green" />
+                    <span className="navbar-more-item-title">Telemetry &amp; Log Sink (ClickHouse)</span>
+                  </div>
+                  <span className="navbar-more-item-meta">12ms · Metrics</span>
                 </button>
               </div>
             )}
