@@ -2,11 +2,10 @@ export function ComparisonSection() {
   return (
     <section id="why-switch" className="landing-section">
       <div className="section-header">
-        <span className="section-eyebrow">EVIDENCE OVER ASSUMPTIONS</span>
+        <span className="section-eyebrow">WHY ECHMAMEET</span>
         <h2 className="section-title">Built for Teams That Value Reliability</h2>
         <p className="section-desc">
-          Give your staff engineers and architects empirical confidence before deploying
-          distributed services.
+          Give your engineering team total confidence before deploying distributed services.
         </p>
       </div>
 

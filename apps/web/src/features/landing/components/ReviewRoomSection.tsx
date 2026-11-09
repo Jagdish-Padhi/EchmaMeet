@@ -2,12 +2,11 @@ export function ReviewRoomSection() {
   return (
     <section id="meeting-room" className="landing-section">
       <div className="section-header">
-        <span className="section-eyebrow">COLLABORATIVE ARCHITECTURE REVIEW</span>
-        <h2 className="section-title">Review Architecture as a Team, Not in Silos</h2>
+        <span className="section-eyebrow">LIVE REVIEW ROOMS</span>
+        <h2 className="section-title">Review System Design and Test Failures in One Call</h2>
         <p className="section-desc">
-          Stop debating architecture on static slides. EchmaMeet brings your engineering team
-          together on push-to-talk audio with live multiplayer cursors and interactive failure
-          injection.
+          Stop guessing how services behave on static slides. Talk over low-latency audio, point at
+          services together, and test failure scenarios directly on the canvas.
         </p>
       </div>
 

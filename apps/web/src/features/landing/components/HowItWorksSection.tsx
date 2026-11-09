@@ -2,10 +2,10 @@ export function HowItWorksSection() {
   return (
     <section id="how-it-works" className="landing-section">
       <div className="section-header">
-        <span className="section-eyebrow">STREAMLINED WORKFLOW</span>
+        <span className="section-eyebrow">HOW IT WORKS</span>
         <h2 className="section-title">From Design Debate to Verified Infrastructure in 20 Minutes</h2>
         <p className="section-desc">
-          Replace multi-week speculative RFC comments with a single evidence-based review session.
+          Replace slow, multi-week RFC comment threads with one live review session.
         </p>
       </div>
 
