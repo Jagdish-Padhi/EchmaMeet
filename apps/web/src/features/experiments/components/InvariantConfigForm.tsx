@@ -32,9 +32,6 @@ export function InvariantConfigForm({
 
   return (
     <Card title="System Invariants &amp; SLOs" className="config-card">
-      <p className="card-subtext">
-        Simulation verifies if these quantitative reliability bounds hold during chaos injection:
-      </p>
       <div className="invariants-list">
         {invariants.map((inv, idx) => {
           const metricMeta = METRIC_LABELS[inv.metric] ?? { label: inv.metric, unit: '' };

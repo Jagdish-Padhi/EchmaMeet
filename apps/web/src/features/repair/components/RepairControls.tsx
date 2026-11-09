@@ -198,9 +198,6 @@ export function RepairControls({
                 Connect at least two services on canvas to target
               </div>
             )}
-            <span className="field-help-text">
-              The service dependency path to subject to chaos conditions.
-            </span>
           </div>
 
           {/* Fault Profile Selection */}
@@ -217,9 +214,6 @@ export function RepairControls({
               <option value="reset_drop">Connection Reset &amp; Drop (TCP reset at 50ms)</option>
               <option value="stall_1200">Connection Stall / Blackhole (1200ms hold)</option>
             </select>
-            <span className="field-help-text">
-              Underlying degradation tested against circuit breakers and retries.
-            </span>
           </div>
 
           {/* Strategy Selection */}
@@ -231,14 +225,9 @@ export function RepairControls({
               disabled={isRunning}
               onChange={(e) => onProposerChange(e.target.value as RepairProposerKind)}
             >
-              <option value="model">Adaptive AI Optimizer (Trace-guided policy synthesis)</option>
-              <option value="rule_based">Deterministic SRE Rules (Exponential backoff &amp; breaker heuristics)</option>
+              <option value="model">Adaptive AI Optimizer (Trace-guided synthesis)</option>
+              <option value="rule_based">Deterministic SRE Rules (Exponential backoff heuristics)</option>
             </select>
-            <span className="field-help-text">
-              {proposerKind === 'model'
-                ? 'Synthesizes targeted policies from latency percentiles and error metrics.'
-                : 'Deterministic heuristics apply production golden-ratio retry and breaker limits.'}
-            </span>
           </div>
 
           {/* Search Budget */}
@@ -257,9 +246,6 @@ export function RepairControls({
                 </button>
               ))}
             </div>
-            <span className="field-help-text">
-              Stops earlier if all SLO invariants pass before budget exhausted.
-            </span>
           </div>
         </div>
 

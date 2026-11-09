@@ -105,8 +105,8 @@ export function StudioDrawers({
             {activeDrawer === 'chaos' && 'Chaos Fault & Invariants'}
             {activeDrawer === 'telemetry' && 'Live Telemetry & Verdicts'}
             {activeDrawer === 'repair' && 'Resilience Policy Optimizer'}
-            {activeDrawer === 'voice' && 'Gnani Voice Studio'}
-            {activeDrawer === 'reports' && 'Export & Blueprint Card'}
+            {activeDrawer === 'voice' && 'Voice & Speech Stack'}
+            {activeDrawer === 'reports' && 'Architecture Reports'}
             {activeDrawer === 'benchmarks' && 'Benchmark Suite'}
             {activeDrawer === 'runs' && 'Execution History'}
           </div>

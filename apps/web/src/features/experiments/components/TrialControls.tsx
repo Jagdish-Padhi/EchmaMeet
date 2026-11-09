@@ -42,10 +42,6 @@ export function TrialControls({
               })
             }
           />
-          <span className="field-help-text">
-            Executes {String(config.trials)} baseline trials + {String(config.trials)} faulted
-            trials ({String(config.trials * 2)} total)
-          </span>
         </label>
 
         <div className="fields-split-row">

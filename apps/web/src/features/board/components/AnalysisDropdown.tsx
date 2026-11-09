@@ -37,15 +37,15 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
   const getLabel = () => {
     switch (activeTab) {
       case 'voice':
-        return 'Voice Studio';
+        return 'Voice';
       case 'telemetry':
         return 'Telemetry';
       case 'chaos':
-        return 'Chaos Faults';
+        return 'Chaos';
       case 'repair':
         return 'Optimizer';
       case 'runs':
-        return 'Run History';
+        return 'History';
       case 'benchmarks':
         return 'Benchmarks';
       case 'reports':
@@ -54,7 +54,7 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
         return 'Inspector';
       case 'none':
       default:
-        return 'Studio Panels';
+        return 'Panels';
     }
   };
 
@@ -103,8 +103,8 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
 
       {isOpen && (
         <div className="meetings-menu analysis-menu" role="menu">
-          {/* Section: Speech & Copilot */}
-          <div className="menu-section-header">Speech Intelligence (Gnani)</div>
+          {/* Section: Speech */}
+          <div className="menu-section-header">Speech (Gnani AI)</div>
           <button
             type="button"
             className={`meetings-menu-item ${activeTab === 'voice' ? 'active-item' : ''}`}
@@ -126,16 +126,13 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
               </svg>
             </div>
             <div className="menu-item-content">
-              <div className="menu-item-title">Gnani Voice Studio</div>
-              <div className="menu-item-subtitle">
-                Push-to-talk, live streaming STT, and voice ledger
-              </div>
+              <div className="menu-item-title">Voice &amp; Speech Stack</div>
             </div>
           </button>
 
-          {/* Section: Resilience Simulation */}
+          {/* Section: Simulation */}
           <div className="menu-divider" />
-          <div className="menu-section-header">Resilience Simulation</div>
+          <div className="menu-section-header">Chaos &amp; Resilience</div>
           <button
             type="button"
             className={`meetings-menu-item ${activeTab === 'telemetry' ? 'active-item' : ''}`}
@@ -155,10 +152,7 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
               </svg>
             </div>
             <div className="menu-item-content">
-              <div className="menu-item-title">Live Telemetry &amp; Verdicts</div>
-              <div className="menu-item-subtitle">
-                p99 latency, throughput, error rates, and SLO checks
-              </div>
+              <div className="menu-item-title">Telemetry &amp; SLO Verdicts</div>
             </div>
           </button>
 
@@ -181,10 +175,7 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
               </svg>
             </div>
             <div className="menu-item-content">
-              <div className="menu-item-title">Chaos Faults &amp; Rules</div>
-              <div className="menu-item-subtitle">
-                Inject downstream latency, packet loss, or stalls
-              </div>
+              <div className="menu-item-title">Chaos Faults &amp; Invariants</div>
             </div>
           </button>
 
@@ -209,13 +200,10 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
             </div>
             <div className="menu-item-content">
               <div className="menu-item-title">Resilience Policy Optimizer</div>
-              <div className="menu-item-subtitle">
-                Autonomous heuristic &amp; ML policy search
-              </div>
             </div>
           </button>
 
-          {/* Section: Observability & History */}
+          {/* Section: Observability */}
           <div className="menu-divider" />
           <div className="menu-section-header">Observability &amp; History</div>
           <button
@@ -238,10 +226,7 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
               </svg>
             </div>
             <div className="menu-item-content">
-              <div className="menu-item-title">Execution History</div>
-              <div className="menu-item-subtitle">
-                Inspect past trial logs, events, and replay
-              </div>
+              <div className="menu-item-title">Execution History &amp; Replay</div>
             </div>
           </button>
 
@@ -267,9 +252,6 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
             </div>
             <div className="menu-item-content">
               <div className="menu-item-title">Benchmark Suite</div>
-              <div className="menu-item-subtitle">
-                Compare baseline vs faulted architecture results
-              </div>
             </div>
           </button>
 
@@ -296,9 +278,6 @@ export function AnalysisDropdown({ activeTab, onSelectTab }: AnalysisDropdownPro
             </div>
             <div className="menu-item-content">
               <div className="menu-item-title">Architecture Reports</div>
-              <div className="menu-item-subtitle">
-                Executive blueprint and resilience summary
-              </div>
             </div>
           </button>
         </div>

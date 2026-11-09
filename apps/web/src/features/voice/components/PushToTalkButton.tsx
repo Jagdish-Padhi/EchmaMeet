@@ -1,5 +1,4 @@
 import React from 'react';
-import { Button } from '../../../components/ui/Button';
 
 export interface PushToTalkButtonProps {
   readonly isRecording: boolean;
@@ -89,21 +88,6 @@ export const PushToTalkButton: React.FC<PushToTalkButtonProps> = ({
           </span>
         </button>
       </div>
-
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Button
-          variant={isRecording ? 'danger' : 'secondary'}
-          size="sm"
-          onClick={isRecording ? onStopRecording : onStartRecording}
-          disabled={isProcessing}
-        >
-          {isRecording ? 'Stop Recording' : 'Click to Toggle Recording'}
-        </Button>
-      </div>
-
-      <span style={{ fontSize: 11, color: '#94a3b8' }}>
-        Single-speaker push-to-talk. Audio streams directly to backend with zero persistent storage.
-      </span>
     </div>
   );
 };
