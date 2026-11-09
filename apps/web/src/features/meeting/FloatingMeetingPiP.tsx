@@ -208,7 +208,6 @@ export function FloatingMeetingPiP({
     stopAllMedia();
     setShowLeaveModal(false);
     onLeaveMeeting();
-    toast.info('You left the review meeting.', 'Meeting Ended');
   };
 
   const handleCopyLink = () => {

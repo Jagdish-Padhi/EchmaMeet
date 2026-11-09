@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -33,6 +34,7 @@ let toastCounter = 0;
 
 export function ToastProvider({ children }: { readonly children: ReactNode }) {
   const [toasts, setToasts] = useState<readonly ToastItem[]>([]);
+  const recentToastsRef = useRef<Map<string, number>>(new Map());
 
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -40,11 +42,59 @@ export function ToastProvider({ children }: { readonly children: ReactNode }) {
 
   const showToast = useCallback(
     (item: Omit<ToastItem, 'id'>) => {
-      const id = `toast_${Date.now()}_${++toastCounter}`;
-      const durationMs = item.durationMs ?? (item.kind === 'error' ? 5000 : 3800);
+      const now = Date.now();
+      const cleanMsg = (item.message || '').trim().toLowerCase();
+      const cleanTitle = (item.title || '').trim().toLowerCase();
+      const key = `${item.kind}:${cleanTitle}:${cleanMsg}`;
+
+      // 1. Exact Duplicate Throttle (prevent identical toasts within 2000ms)
+      const lastShown = recentToastsRef.current.get(key);
+      if (lastShown && now - lastShown < 2000) {
+        return '';
+      }
+
+      // 2. Semantic Meeting Exit Throttle (prevents duplicate leave toasts from PiP + Navbar + Root)
+      const isMeetingLeave =
+        cleanMsg.includes('left the') ||
+        cleanTitle.includes('session ended') ||
+        cleanTitle.includes('meeting ended') ||
+        cleanMsg.includes('meeting ended');
+      if (isMeetingLeave) {
+        const lastLeave = recentToastsRef.current.get('semantic:meeting-exit');
+        if (lastLeave && now - lastLeave < 2500) {
+          return '';
+        }
+        recentToastsRef.current.set('semantic:meeting-exit', now);
+      }
+
+      // 3. Media Device Permission Duplicate Throttle
+      const isMediaDevice =
+        cleanTitle.includes('media') ||
+        cleanMsg.includes('camera') ||
+        cleanMsg.includes('microphone');
+      if (isMediaDevice) {
+        const lastMedia = recentToastsRef.current.get('semantic:media-device');
+        if (lastMedia && now - lastMedia < 3000) {
+          return '';
+        }
+        recentToastsRef.current.set('semantic:media-device', now);
+      }
+
+      recentToastsRef.current.set(key, now);
+
+      // Periodically clean up expired entries from the map
+      if (recentToastsRef.current.size > 50) {
+        for (const [k, time] of recentToastsRef.current.entries()) {
+          if (now - time > 10000) recentToastsRef.current.delete(k);
+        }
+      }
+
+      const id = `toast_${now}_${++toastCounter}`;
+      const durationMs = item.durationMs ?? (item.kind === 'error' ? 5000 : 3500);
       const newToast: ToastItem = { ...item, id, durationMs };
 
-      setToasts((prev) => [...prev.slice(-4), newToast]); // keep max 5 toasts
+      // Keep at most 3 simultaneous toasts to prevent viewport cluttering
+      setToasts((prev) => [...prev.slice(-2), newToast]);
 
       if (durationMs > 0) {
         window.setTimeout(() => {
