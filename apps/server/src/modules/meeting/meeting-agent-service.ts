@@ -57,6 +57,11 @@ const sreHazardObjectSchema = z.looseObject({
           maxDepth: z.number().int().optional(),
         })
         .optional(),
+      concurrency: z
+        .object({
+          maxWorkers: z.number().int().optional(),
+        })
+        .optional(),
       retry: z
         .object({
           maxAttempts: z.number().int().optional(),

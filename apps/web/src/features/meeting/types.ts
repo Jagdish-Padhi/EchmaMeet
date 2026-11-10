@@ -3,6 +3,7 @@ import type { EdgeId, EdgePolicy, NodeId } from '@chaosboard/contracts';
 export interface SreHazardPatch extends Partial<EdgePolicy> {
   readonly mode?: 'sync_call' | 'async_enqueue';
   readonly queue?: { mode: 'bounded' | 'unbounded'; maxDepth?: number };
+  readonly concurrency?: { maxWorkers?: number };
 }
 
 export interface SreHazard {

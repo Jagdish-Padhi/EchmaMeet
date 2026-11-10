@@ -287,19 +287,35 @@ export function useMeetingAgent({
     [evaluateTopology],
   );
 
-  const evictHazard = useCallback((hazardIdOrTargetEdgeId: string) => {
-    if (!hazardIdOrTargetEdgeId) return;
-    setHazards((prev) => {
-      const next = prev.filter(
-        (h) => h.id !== hazardIdOrTargetEdgeId && h.targetEdgeId !== hazardIdOrTargetEdgeId,
-      );
-      if (next.length === 0) {
-        setAiRaisedHand(false);
-        setPermissionRequested(false);
-      }
-      return next;
-    });
-  }, []);
+  const evictHazard = useCallback(
+    (hazardIdOrTargetId?: string, explicitEdgeId?: string, explicitNodeId?: string) => {
+      if (!hazardIdOrTargetId && !explicitEdgeId && !explicitNodeId) return;
+      const cleanTarget = (hazardIdOrTargetId || '').replace(/^hazard-/, '');
+      setHazards((prev) => {
+        const next = prev.filter((h) => {
+          const cleanHId = h.id.replace(/^hazard-/, '');
+          if (cleanTarget && (cleanHId === cleanTarget || h.id === hazardIdOrTargetId)) {
+            return false;
+          }
+          if (
+            (hazardIdOrTargetId &&
+              (h.targetEdgeId === hazardIdOrTargetId || h.targetNodeId === hazardIdOrTargetId)) ||
+            (explicitEdgeId && h.targetEdgeId === explicitEdgeId) ||
+            (explicitNodeId && h.targetNodeId === explicitNodeId)
+          ) {
+            return false;
+          }
+          return true;
+        });
+        if (next.length === 0) {
+          setAiRaisedHand(false);
+          setPermissionRequested(false);
+        }
+        return next;
+      });
+    },
+    [],
+  );
 
   const reEvaluate = useCallback(
     async (prospectiveBoard?: BoardState) => {

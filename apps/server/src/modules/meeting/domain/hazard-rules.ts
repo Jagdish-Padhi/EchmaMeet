@@ -19,8 +19,10 @@ export interface RuleHazard {
     };
     readonly breaker?: { enabled?: boolean; failureThresholdPct?: number; cooldownMs?: number };
     readonly timeoutMs?: number | null;
+    readonly fallback?: 'none' | 'fail_fast_503' | 'serve_stale';
     readonly idempotency?: { sendKey: boolean };
     readonly queue?: { mode: 'bounded' | 'unbounded'; maxDepth?: number };
+    readonly concurrency?: { maxWorkers?: number };
   };
   /** Short Hindi rendering used for spoken replies. */
   readonly riskHi: string;
@@ -94,6 +96,7 @@ export function detectHazards(topology: Topology): RuleHazard[] {
       ...(cycle.path[0] ? { targetNodeId: cycle.path[0] } : {}),
       ...(primaryEdgeId ? { targetEdgeId: primaryEdgeId } : {}),
       patch: {
+        mode: 'async_enqueue',
         breaker: {
           enabled: true,
           failureThresholdPct: 50,
@@ -179,6 +182,8 @@ export function detectHazards(topology: Topology): RuleHazard[] {
         recommendation: 'Enable full jitter and a circuit breaker with 2s cooldown.',
         targetEdgeId: edge.id,
         patch: {
+          timeoutMs: 500,
+          fallback: 'fail_fast_503',
           retry: { maxAttempts: 2, jitter: 'full', backoffBaseMs: 100 },
           breaker: { enabled: true, failureThresholdPct: 50, cooldownMs: 3000 },
         },
@@ -195,7 +200,12 @@ export function detectHazards(topology: Topology): RuleHazard[] {
         riskHi: `${source?.label ?? edge.source} से ${target?.label ?? edge.target} पर ${timeoutMs === null ? 'कोई टाइमआउट नहीं है' : `${String(timeoutMs)} मिलीसेकंड का टाइमआउट बहुत लंबा है`}, इससे अटके कॉल वर्कर्स रोक सकते हैं।`,
         recommendation: 'Set a timeout of about 500 to 1000 ms with fail-fast fallback.',
         targetEdgeId: edge.id,
-        patch: { timeoutMs: 500 },
+        patch: {
+          timeoutMs: 500,
+          fallback: 'fail_fast_503',
+          retry: { maxAttempts: retry.maxAttempts > 0 ? retry.maxAttempts : 2, jitter: 'full', backoffBaseMs: 100 },
+          breaker: { enabled: true, failureThresholdPct: 50, cooldownMs: 3000 },
+        },
       });
     }
 
@@ -209,7 +219,12 @@ export function detectHazards(topology: Topology): RuleHazard[] {
         recommendation: 'Send an idempotency key on every write.',
         targetEdgeId: edge.id,
         targetNodeId: target.id,
-        patch: { idempotency: { sendKey: true } },
+        patch: {
+          timeoutMs: 800,
+          fallback: 'fail_fast_503',
+          breaker: { enabled: true, failureThresholdPct: 40, cooldownMs: 3000 },
+          idempotency: { sendKey: true },
+        },
       });
     }
 
@@ -231,6 +246,12 @@ export function detectHazards(topology: Topology): RuleHazard[] {
         recommendation: `Scale ${target?.label ?? edge.target} concurrency to at least ${String(sourceWorkers)} workers or bound queue depth with backpressure.`,
         targetEdgeId: edge.id,
         ...(target?.id ? { targetNodeId: target.id } : {}),
+        patch: {
+          timeoutMs: 500,
+          fallback: 'fail_fast_503',
+          breaker: { enabled: true, failureThresholdPct: 50, cooldownMs: 3000 },
+          concurrency: { maxWorkers: Math.max(sourceWorkers, 20) },
+        },
       });
     }
   }

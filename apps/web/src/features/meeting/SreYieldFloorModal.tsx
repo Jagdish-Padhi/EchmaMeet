@@ -7,7 +7,11 @@ export interface SreYieldFloorModalProps {
   readonly isOpen: boolean;
   readonly hazards: readonly SreHazard[];
   readonly onClose: () => void;
-  readonly onApplyPatch: (edgeId: EdgeId, patch: Partial<EdgePolicy>) => void;
+  readonly onApplyPatch: (
+    edgeId?: EdgeId,
+    patch?: Partial<EdgePolicy>,
+    hazardId?: string,
+  ) => void;
   readonly onRunProof: (targetEdgeId: EdgeId) => void;
 }
 
@@ -110,49 +114,59 @@ export function SreYieldFloorModal({
             </Button>
           )}
 
-          {currentHazard.targetEdgeId && currentHazard.patch && (
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  onApplyPatch(
-                    currentHazard.targetEdgeId as EdgeId,
-                    currentHazard.patch as Partial<EdgePolicy>,
-                  );
-                  onClose();
-                }}
-                title="Automatically update connection with recommended resilience settings"
-              >
-                Apply Fix
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => {
-                  onApplyPatch(
-                    currentHazard.targetEdgeId as EdgeId,
-                    currentHazard.patch as Partial<EdgePolicy>,
-                  );
-                  onRunProof(currentHazard.targetEdgeId as EdgeId);
-                  onClose();
-                }}
-                title="Apply fix and run simulation to verify resilience live"
-                style={{
-                  background: '#0284c7',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
-                Remediate &amp; Verify (5s)
-              </Button>
-            </>
-          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              onApplyPatch(
+                currentHazard.targetEdgeId as EdgeId | undefined,
+                currentHazard.patch as Partial<EdgePolicy> | undefined,
+                currentHazard.id,
+              );
+              onClose();
+            }}
+            title="Automatically update architecture with recommended resilience settings"
+          >
+            Apply Fix
+          </Button>
+
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => {
+              onApplyPatch(
+                currentHazard.targetEdgeId as EdgeId | undefined,
+                currentHazard.patch as Partial<EdgePolicy> | undefined,
+                currentHazard.id,
+              );
+              if (currentHazard.targetEdgeId) {
+                onRunProof(currentHazard.targetEdgeId as EdgeId);
+              }
+              onClose();
+            }}
+            title="Apply fix and run simulation to verify resilience live"
+            style={{
+              background: '#0284c7',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+            Remediate &amp; Verify (5s)
+          </Button>
 
           <Button variant="ghost" size="sm" onClick={onClose}>
             Dismiss

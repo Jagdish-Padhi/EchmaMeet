@@ -25,8 +25,11 @@ export function detectSreHazards(board: BoardState): SreHazard[] {
         recommendation:
           'Enable exponential backoff with full jitter and configure a 50% trip circuit breaker with 2s cooldown.',
         patch: {
+          timeoutMs: 500,
+          fallback: 'fail_fast_503',
           retry: {
             ...edge.policy.retry,
+            maxAttempts: 3,
             jitter: 'full',
             backoffBaseMs: 50,
             backoffMultiplier: 2,
@@ -55,6 +58,21 @@ export function detectSreHazards(board: BoardState): SreHazard[] {
         patch: {
           timeoutMs: 500,
           fallback: 'fail_fast_503',
+          retry: {
+            ...edge.policy.retry,
+            maxAttempts: edge.policy.retry.maxAttempts > 0 ? edge.policy.retry.maxAttempts : 3,
+            jitter: 'full',
+            backoffBaseMs: 50,
+            backoffMultiplier: 2,
+            maxBackoffMs: 500,
+          },
+          breaker: {
+            enabled: true,
+            failureThresholdPct: 50,
+            windowRequests: 20,
+            cooldownMs: 2000,
+            halfOpenProbes: 2,
+          },
         },
       });
     }
@@ -70,6 +88,8 @@ export function detectSreHazards(board: BoardState): SreHazard[] {
         recommendation:
           'Activate circuit breaker with 2 half-open probe recovery and enable idempotency token header.',
         patch: {
+          timeoutMs: 800,
+          fallback: 'fail_fast_503',
           breaker: {
             enabled: true,
             failureThresholdPct: 40,
@@ -98,6 +118,18 @@ export function detectSreHazards(board: BoardState): SreHazard[] {
         severity: 'high',
         risk: `Service [${sourceNode.label}] (${String(sourceNode.concurrency.maxWorkers)} workers) connects into [${targetNode.label}] (${String(targetNode.concurrency.maxWorkers)} workers). Upstream concurrency can saturate downstream queues under burst traffic.`,
         recommendation: `Scale [${targetNode.label}] workers to match caller concurrency or configure rate limiting.`,
+        patch: {
+          timeoutMs: 500,
+          fallback: 'fail_fast_503',
+          breaker: {
+            enabled: true,
+            failureThresholdPct: 50,
+            windowRequests: 20,
+            cooldownMs: 2000,
+            halfOpenProbes: 2,
+          },
+          concurrency: { maxWorkers: Math.max(sourceNode.concurrency.maxWorkers, 20) },
+        },
       });
     }
   }
@@ -160,6 +192,7 @@ export function detectSreHazards(board: BoardState): SreHazard[] {
       recommendation:
         'Break the sync call cycle by decoupling with an asynchronous event queue or isolating state.',
       patch: {
+        mode: 'async_enqueue',
         breaker: {
           enabled: true,
           failureThresholdPct: 50,
@@ -183,6 +216,9 @@ export function detectSreHazards(board: BoardState): SreHazard[] {
         risk: `Service [${node.label}] is configured with an unbounded queue. Under sustained traffic surges, memory footprint will grow monotonically leading to OOM crash.`,
         recommendation:
           'Bound the queue depth to 100 requests with 429 / 503 backpressure rejection.',
+        patch: {
+          queue: { mode: 'bounded', maxDepth: 100 },
+        },
       });
     }
   }
