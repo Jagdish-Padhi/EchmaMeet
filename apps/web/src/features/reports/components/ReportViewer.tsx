@@ -4,6 +4,7 @@ import type { RunId, ReportExport, BlueprintCard } from '@chaosboard/contracts';
 import { DrawerLoadingBar } from '../../../components/ui/DrawerLoadingBar';
 import { StatusPill } from '../../../components/ui/StatusPill';
 import { Alert } from '../../../components/ui/Alert';
+import { formatEmpiricalFinding } from '../../experiments/utils/verdictFormatters';
 
 export interface ReportViewerProps {
   api: ApiClient;
@@ -232,11 +233,44 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
                       </div>
                       <StatusPill status={v.status} />
                     </div>
+
+                    <div className="verdict-card-grid">
+                      <div className="verdict-card-field">
+                        <span className="verdict-field-label">Metric</span>
+                        <span className="verdict-field-value cell-mono">{v.evidence.metric}</span>
+                      </div>
+                      <div className="verdict-card-field">
+                        <span className="verdict-field-label">Threshold</span>
+                        <span className="verdict-field-value cell-mono">
+                          {v.evidence.comparator} {String(v.evidence.threshold)}
+                        </span>
+                      </div>
+                      <div className="verdict-card-field">
+                        <span className="verdict-field-label">Faulted Median</span>
+                        <span className="verdict-field-value cell-mono">
+                          {v.evidence.faultedAggregate && v.evidence.faultedAggregate.median !== null
+                            ? `${v.evidence.faultedAggregate.median.toFixed(1)}${
+                                v.evidence.faultedAggregate.iqr !== null
+                                  ? ` (IQR ${v.evidence.faultedAggregate.iqr.toFixed(1)})`
+                                  : ''
+                              }`
+                            : 'N/A'}
+                        </span>
+                      </div>
+                      <div className="verdict-card-field">
+                        <span className="verdict-field-label">Baseline Median</span>
+                        <span className="verdict-field-value cell-mono">
+                          {v.evidence.baselineAggregate && v.evidence.baselineAggregate.median !== null
+                            ? `${v.evidence.baselineAggregate.median.toFixed(1)}`
+                            : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+
                     <div className="verdict-card-reason" style={{ marginTop: 6 }}>
-                      <span className="verdict-field-label">Evidence</span>
+                      <span className="verdict-field-label">Empirical Finding</span>
                       <p className="verdict-reason-text">
-                        {v.reason ??
-                          `${v.evidence.metric} ${v.evidence.comparator} ${String(v.evidence.threshold)}`}
+                        {formatEmpiricalFinding(v)}
                       </p>
                     </div>
                   </div>

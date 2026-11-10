@@ -8,6 +8,7 @@ import type {
 } from '@chaosboard/contracts';
 import { Card } from '../../../components/ui/Card';
 import { StatusPill } from '../../../components/ui/StatusPill';
+import { formatEmpiricalFinding } from '../utils/verdictFormatters';
 
 export interface VerdictsSummaryProps {
   readonly verdicts: readonly InvariantVerdict[] | null;
@@ -118,7 +119,7 @@ export function VerdictsSummary({ verdicts, overallStatus, finalRecord }: Verdic
 
                 <div className="verdict-card-reason">
                   <span className="verdict-field-label">Empirical Finding</span>
-                  <p className="verdict-reason-text">{v.reason ?? 'Threshold check verified'}</p>
+                  <p className="verdict-reason-text">{formatEmpiricalFinding(v)}</p>
                 </div>
               </div>
             );

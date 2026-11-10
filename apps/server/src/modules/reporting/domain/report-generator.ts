@@ -84,7 +84,14 @@ export function generateMarkdownReport(options: GenerateReportOptions): string {
     lines.push('| Invariant ID | Metric | Comparator | Threshold | Status | Evidence / Reason |');
     lines.push('|---|---|---|---|---|---|');
     for (const verdict of runRecord.verdicts) {
-      const reason = verdict.reason ?? 'N/A';
+      const fMed = verdict.evidence.faultedAggregate?.median;
+      const comp = verdict.evidence.comparator;
+      const thresh = verdict.evidence.threshold;
+      const reason =
+        verdict.reason ??
+        (fMed !== null && fMed !== undefined
+          ? `Measured ${verdict.evidence.metric} = ${fMed.toFixed(1)} (${comp} ${String(thresh)})`
+          : `${verdict.evidence.metric} ${comp} ${String(thresh)}`);
       lines.push(
         `| \`${verdict.invariantId}\` | ${verdict.evidence.metric} | ${verdict.evidence.comparator} | ${String(verdict.evidence.threshold)} | **${verdict.status}** | ${reason} |`,
       );
