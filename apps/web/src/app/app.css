@@ -5358,14 +5358,16 @@ button.validation-target-chip:hover {
 }
 
 .reports-download-btn {
-  padding: 3px 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
   border-radius: 5px;
   background: var(--color-surface);
   color: var(--color-text-muted);
   border: 1px solid var(--color-border);
-  font-size: 10.5px;
-  font-family: var(--font-mono, monospace);
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -5374,6 +5376,16 @@ button.validation-target-chip:hover {
   background: var(--color-surface-hover);
   color: var(--color-text);
   border-color: var(--color-border-hover);
+}
+
+.reports-count-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 2px 6px;
 }
 
 /* Telemetry Dashboard Strip */

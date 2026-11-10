@@ -27,7 +27,8 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
     error: null,
   });
 
-  const [activeView, setActiveView] = useState<'summary' | 'markdown' | 'diagram'>('summary');
+  const [activeView, setActiveView] = useState<'summary' | 'markdown'>('summary');
+  const [copiedMarkdown, setCopiedMarkdown] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,6 +102,17 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
     URL.revokeObjectURL(url);
   };
 
+  const handleCopyMarkdown = async () => {
+    if (!report?.markdown) return;
+    try {
+      await navigator.clipboard.writeText(report.markdown);
+      setCopiedMarkdown(true);
+      setTimeout(() => setCopiedMarkdown(false), 2000);
+    } catch {
+      // Fallback
+    }
+  };
+
   if (loading) {
     return (
       <div className="reports-viewer-container" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -132,6 +144,7 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
       {!hideTitle && (
         <div className="run-audit-section-title">Run Report &amp; Artifact Export</div>
       )}
+
       {/* Action & Navigation Bar */}
       <div className="reports-action-bar">
         <div className="reports-nav-group">
@@ -140,21 +153,14 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
             className={`reports-nav-btn ${activeView === 'summary' ? 'active' : ''}`}
             onClick={() => setActiveView('summary')}
           >
-            Summary &amp; Card
-          </button>
-          <button
-            type="button"
-            className={`reports-nav-btn ${activeView === 'diagram' ? 'active' : ''}`}
-            onClick={() => setActiveView('diagram')}
-          >
-            Topology SVG
+            Executive Report
           </button>
           <button
             type="button"
             className={`reports-nav-btn ${activeView === 'markdown' ? 'active' : ''}`}
             onClick={() => setActiveView('markdown')}
           >
-            Markdown
+            Architecture ADR
           </button>
         </div>
 
@@ -163,58 +169,81 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
             type="button"
             className="reports-download-btn"
             onClick={handleDownloadMarkdown}
-            title="Download Markdown Report"
+            title="Export Markdown Architectural Decision Record"
           >
-            .md
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>ADR (.md)</span>
           </button>
           <button
             type="button"
             className="reports-download-btn"
             onClick={handleDownloadJson}
-            title="Download JSON Export"
+            title="Export Telemetry JSON"
           >
-            .json
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>Data (.json)</span>
           </button>
           {report.diagramSvg && (
             <button
               type="button"
               className="reports-download-btn"
               onClick={handleDownloadSvg}
-              title="Download Topology SVG"
+              title="Export Vector Architecture Diagram"
             >
-              .svg
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span>Diagram (.svg)</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Provenance Metadata Badge Strip */}
-      <div className="meta-footer" style={{ borderTop: 'none', paddingTop: 0, marginTop: 0 }}>
+      {/* Clean Provenance Metadata Strip */}
+      <div className="meta-footer" style={{ borderTop: 'none', paddingTop: 0, marginTop: 0, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
         <span className="meta-pill">
           <span className="meta-pill-label">Run</span>
-          <span className="cell-mono">run:{runId.slice(0, 8)}</span>
+          <span className="cell-mono">{runId.slice(0, 8)}</span>
+        </span>
+        <span className="meta-pill">
+          <span className="meta-pill-label">Topology</span>
+          <span>{report.topology.name}</span>
         </span>
         <span className="meta-pill">
           <span className="meta-pill-label">Commit</span>
           <span className="cell-mono">{report.provenance.gitCommit.slice(0, 7)}</span>
         </span>
         <span className="meta-pill">
-          <span className="meta-pill-label">Host</span>
-          <span>{report.provenance.hostDescription.split(' ')[0]}</span>
-        </span>
-        <span className="meta-pill">
-          <span className="meta-pill-label">Node</span>
-          <span className="cell-mono">{report.provenance.nodeVersion}</span>
+          <span className="meta-pill-label">Status</span>
+          <span style={{ textTransform: 'capitalize', fontWeight: 600, color: report.status === 'completed' ? 'var(--color-success, #22c55e)' : 'var(--color-text)' }}>
+            {report.status}
+          </span>
         </span>
       </div>
 
       {activeView === 'summary' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {/* Authoritative Empirical Verdicts */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Section 1: Invariant SLO Verdicts */}
           <div className="report-verdicts-section">
-            <div className="run-audit-section-title" style={{ marginBottom: 8 }}>
-              Authoritative Empirical Verdicts
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div className="run-audit-section-title" style={{ margin: 0 }}>
+                SLO Invariant Verdicts
+              </div>
+              <span className="reports-count-badge">
+                {report.verdicts.length} Invariant{report.verdicts.length === 1 ? '' : 's'} Evaluated
+              </span>
             </div>
+
             {report.verdicts.length === 0 ? (
               <p className="state-message" style={{ margin: 0 }}>
                 No invariant verdicts recorded for this run.
@@ -279,17 +308,17 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
             )}
           </div>
 
-          {/* Faulted Distribution Medians */}
+          {/* Section 2: Performance Distribution */}
           <div className="report-medians-section">
             <div className="run-audit-section-title" style={{ marginBottom: 8 }}>
-              Empirical Performance Metrics
+              Performance Distribution
             </div>
             <div className="summary-grid">
               <div className="summary-metric-box">
                 <span className="summary-label">p50 Latency</span>
                 <span className="summary-value cell-mono">
                   {card?.authoritativeMetrics.p50Ms !== undefined
-                    ? `${String(card.authoritativeMetrics.p50Ms)}ms`
+                    ? `${String(card.authoritativeMetrics.p50Ms)} ms`
                     : 'N/A'}
                 </span>
               </div>
@@ -297,7 +326,7 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
                 <span className="summary-label">p99 Latency</span>
                 <span className="summary-value cell-mono">
                   {card?.authoritativeMetrics.p99Ms !== undefined
-                    ? `${String(card.authoritativeMetrics.p99Ms)}ms`
+                    ? `${String(card.authoritativeMetrics.p99Ms)} ms`
                     : 'N/A'}
                 </span>
               </div>
@@ -305,12 +334,12 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
                 <span className="summary-label">Error Rate</span>
                 <span className="summary-value cell-mono">
                   {card?.authoritativeMetrics.errorRate !== undefined
-                    ? `${String(Math.round(card.authoritativeMetrics.errorRate * 100))}%`
+                    ? `${(card.authoritativeMetrics.errorRate * 100).toFixed(1)}%`
                     : 'N/A'}
                 </span>
               </div>
               <div className="summary-metric-box">
-                <span className="summary-label">Run Status</span>
+                <span className="summary-label">Run Outcome</span>
                 <span
                   className="summary-value"
                   style={{
@@ -327,7 +356,7 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
             </div>
           </div>
 
-          {/* Blueprint Card / Illustrative Rendering */}
+          {/* Section 3: Architecture Topology Snapshot */}
           <div className="report-blueprint-section">
             <div
               style={{
@@ -338,68 +367,55 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
               }}
             >
               <div className="run-audit-section-title" style={{ margin: 0 }}>
-                Topology Vector Blueprint
+                Architecture Topology
               </div>
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  padding: '2px 6px',
-                  borderRadius: 4,
-                  background: 'var(--color-surface)',
-                  color: 'var(--color-text-dim)',
-                  border: '1px solid var(--color-border)',
-                }}
-              >
-                Vector Blueprint
-              </span>
+              {report.diagramSvg && (
+                <button
+                  type="button"
+                  onClick={handleDownloadSvg}
+                  className="reports-download-btn"
+                  title="Export Scalable Vector Diagram"
+                  style={{ padding: '2px 8px', fontSize: 10 }}
+                >
+                  Download .svg
+                </button>
+              )}
             </div>
-
-            {card?.fallbackReason && (
-              <div
-                style={{
-                  background: 'rgba(234, 88, 12, 0.12)',
-                  color: '#fb923c',
-                  border: '1px solid rgba(234, 88, 12, 0.3)',
-                  borderRadius: 6,
-                  padding: '6px 10px',
-                  fontSize: 11,
-                  marginBottom: 8,
-                }}
-              >
-                <strong>Degraded: </strong>
-                {card.fallbackReason}
-              </div>
-            )}
 
             <div
               style={{
                 minHeight: 180,
                 background: 'var(--color-bg)',
                 borderRadius: 8,
-                overflow: 'hidden',
+                overflow: 'auto',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 border: '1px solid var(--color-border)',
-                padding: 10,
+                padding: 12,
               }}
             >
-              {card?.mimeType === 'image/svg+xml' ? (
+              {report.diagramSvg ? (
                 <div
                   style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center' }}
-                  dangerouslySetInnerHTML={{ __html: card.content }}
+                  dangerouslySetInnerHTML={{ __html: report.diagramSvg }}
                 />
               ) : card?.content ? (
-                <img
-                  src={card.content}
-                  alt="System Blueprint Card"
-                  style={{ maxWidth: '100%', maxHeight: 240, objectFit: 'contain' }}
-                />
+                card.mimeType === 'image/svg+xml' ? (
+                  <div
+                    style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center' }}
+                    dangerouslySetInnerHTML={{ __html: card.content }}
+                  />
+                ) : (
+                  <img
+                    src={card.content}
+                    alt="System Topology Diagram"
+                    style={{ maxWidth: '100%', maxHeight: 240, objectFit: 'contain' }}
+                  />
+                )
               ) : (
                 <p className="state-message" style={{ margin: 0 }}>
-                  No diagram available
+                  No topology diagram available for this run.
                 </p>
               )}
             </div>
@@ -407,42 +423,60 @@ export function ReportViewer({ api, runId, hideTitle = false }: ReportViewerProp
         </div>
       )}
 
-      {activeView === 'diagram' && (
-        <div
-          style={{
-            background: 'var(--color-bg)',
-            padding: 14,
-            borderRadius: 8,
-            border: '1px solid var(--color-border)',
-            overflow: 'auto',
-          }}
-        >
-          <div dangerouslySetInnerHTML={{ __html: report.diagramSvg }} />
-        </div>
-      )}
-
       {activeView === 'markdown' && (
-        <div
-          style={{
-            background: 'var(--color-bg)',
-            padding: 14,
-            borderRadius: 8,
-            border: '1px solid var(--color-border)',
-            overflow: 'auto',
-            maxHeight: 500,
-          }}
-        >
-          <pre
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)' }}>
+              Architecture Decision Record (Markdown)
+            </span>
+            <button
+              type="button"
+              className="reports-download-btn"
+              onClick={handleCopyMarkdown}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              {copiedMarkdown ? (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  <span>Copy Markdown</span>
+                </>
+              )}
+            </button>
+          </div>
+          <div
             style={{
-              margin: 0,
-              fontSize: 11,
-              fontFamily: 'monospace',
-              color: 'var(--color-text)',
-              whiteSpace: 'pre-wrap',
+              background: 'var(--color-bg)',
+              padding: 14,
+              borderRadius: 8,
+              border: '1px solid var(--color-border)',
+              overflow: 'auto',
+              maxHeight: 520,
             }}
           >
-            {report.markdown}
-          </pre>
+            <pre
+              style={{
+                margin: 0,
+                fontSize: 11.5,
+                lineHeight: 1.5,
+                fontFamily: 'var(--font-mono, monospace)',
+                color: 'var(--color-text)',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+              }}
+            >
+              {report.markdown}
+            </pre>
+          </div>
         </div>
       )}
     </div>
